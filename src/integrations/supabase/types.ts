@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      battles: {
+        Row: {
+          battle_log: Json | null
+          created_at: string | null
+          id: string
+          rng_seed: string
+          team_a: Json
+          team_b: Json
+          type: Database["public"]["Enums"]["battle_type"]
+          winner: Database["public"]["Enums"]["battle_winner"] | null
+        }
+        Insert: {
+          battle_log?: Json | null
+          created_at?: string | null
+          id?: string
+          rng_seed: string
+          team_a: Json
+          team_b: Json
+          type?: Database["public"]["Enums"]["battle_type"]
+          winner?: Database["public"]["Enums"]["battle_winner"] | null
+        }
+        Update: {
+          battle_log?: Json | null
+          created_at?: string | null
+          id?: string
+          rng_seed?: string
+          team_a?: Json
+          team_b?: Json
+          type?: Database["public"]["Enums"]["battle_type"]
+          winner?: Database["public"]["Enums"]["battle_winner"] | null
+        }
+        Relationships: []
+      }
       comments: {
         Row: {
           content: string
@@ -101,6 +134,70 @@ export type Database = {
           },
         ]
       }
+      matchups: {
+        Row: {
+          battle_id: string | null
+          created_at: string | null
+          id: string
+          result: Database["public"]["Enums"]["matchup_result"] | null
+          season_id: string
+          team_a: Json | null
+          team_b: Json | null
+          updated_at: string | null
+          user_a_id: string
+          user_b_id: string
+          week_id: string
+        }
+        Insert: {
+          battle_id?: string | null
+          created_at?: string | null
+          id?: string
+          result?: Database["public"]["Enums"]["matchup_result"] | null
+          season_id: string
+          team_a?: Json | null
+          team_b?: Json | null
+          updated_at?: string | null
+          user_a_id: string
+          user_b_id: string
+          week_id: string
+        }
+        Update: {
+          battle_id?: string | null
+          created_at?: string | null
+          id?: string
+          result?: Database["public"]["Enums"]["matchup_result"] | null
+          season_id?: string
+          team_a?: Json | null
+          team_b?: Json | null
+          updated_at?: string | null
+          user_a_id?: string
+          user_b_id?: string
+          week_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matchups_battle_id_fkey"
+            columns: ["battle_id"]
+            isOneToOne: false
+            referencedRelation: "battles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matchups_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "seasons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matchups_week_id_fkey"
+            columns: ["week_id"]
+            isOneToOne: false
+            referencedRelation: "weeks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       posts: {
         Row: {
           comments_count: number
@@ -143,7 +240,12 @@ export type Database = {
           bio: string | null
           created_at: string
           display_name: string | null
+          google_id: string | null
           id: string
+          rating_elo: number | null
+          season_losses: number | null
+          season_ties: number | null
+          season_wins: number | null
           updated_at: string
         }
         Insert: {
@@ -151,7 +253,12 @@ export type Database = {
           bio?: string | null
           created_at?: string
           display_name?: string | null
+          google_id?: string | null
           id: string
+          rating_elo?: number | null
+          season_losses?: number | null
+          season_ties?: number | null
+          season_wins?: number | null
           updated_at?: string
         }
         Update: {
@@ -159,10 +266,146 @@ export type Database = {
           bio?: string | null
           created_at?: string
           display_name?: string | null
+          google_id?: string | null
           id?: string
+          rating_elo?: number | null
+          season_losses?: number | null
+          season_ties?: number | null
+          season_wins?: number | null
           updated_at?: string
         }
         Relationships: []
+      }
+      seasons: {
+        Row: {
+          created_at: string | null
+          current_week_number: number | null
+          end_date: string
+          id: string
+          name: string
+          start_date: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_week_number?: number | null
+          end_date: string
+          id?: string
+          name: string
+          start_date: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_week_number?: number | null
+          end_date?: string
+          id?: string
+          name?: string
+          start_date?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      spiders: {
+        Row: {
+          created_at: string | null
+          damage: number
+          defense: number
+          hit_points: number
+          id: string
+          image_url: string
+          is_approved: boolean | null
+          nickname: string
+          owner_id: string
+          power_score: number
+          rarity: Database["public"]["Enums"]["spider_rarity"]
+          rng_seed: string
+          special_attacks: Json | null
+          species: string
+          speed: number
+          updated_at: string | null
+          venom: number
+          webcraft: number
+        }
+        Insert: {
+          created_at?: string | null
+          damage: number
+          defense: number
+          hit_points: number
+          id?: string
+          image_url: string
+          is_approved?: boolean | null
+          nickname: string
+          owner_id: string
+          power_score?: number
+          rarity?: Database["public"]["Enums"]["spider_rarity"]
+          rng_seed: string
+          special_attacks?: Json | null
+          species?: string
+          speed: number
+          updated_at?: string | null
+          venom: number
+          webcraft: number
+        }
+        Update: {
+          created_at?: string | null
+          damage?: number
+          defense?: number
+          hit_points?: number
+          id?: string
+          image_url?: string
+          is_approved?: boolean | null
+          nickname?: string
+          owner_id?: string
+          power_score?: number
+          rarity?: Database["public"]["Enums"]["spider_rarity"]
+          rng_seed?: string
+          special_attacks?: Json | null
+          species?: string
+          speed?: number
+          updated_at?: string | null
+          venom?: number
+          webcraft?: number
+        }
+        Relationships: []
+      }
+      weeks: {
+        Row: {
+          created_at: string | null
+          end_date: string
+          id: string
+          is_locked: boolean | null
+          season_id: string
+          start_date: string
+          week_number: number
+        }
+        Insert: {
+          created_at?: string | null
+          end_date: string
+          id?: string
+          is_locked?: boolean | null
+          season_id: string
+          start_date: string
+          week_number: number
+        }
+        Update: {
+          created_at?: string | null
+          end_date?: string
+          id?: string
+          is_locked?: boolean | null
+          season_id?: string
+          start_date?: string
+          week_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weeks_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "seasons"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -172,7 +415,10 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      battle_type: "SANDBOX" | "MATCHUP"
+      battle_winner: "A" | "B" | "TIE"
+      matchup_result: "A_WIN" | "B_WIN" | "TIE" | "NO_CONTEST"
+      spider_rarity: "COMMON" | "UNCOMMON" | "RARE" | "EPIC" | "LEGENDARY"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -299,6 +545,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      battle_type: ["SANDBOX", "MATCHUP"],
+      battle_winner: ["A", "B", "TIE"],
+      matchup_result: ["A_WIN", "B_WIN", "TIE", "NO_CONTEST"],
+      spider_rarity: ["COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY"],
+    },
   },
 } as const
