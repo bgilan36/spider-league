@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/auth/AuthProvider";
 
 const Index = () => {
+  console.log("Index: Component rendering, about to call useAuth");
   const { user, signOut } = useAuth();
+  console.log("Index: useAuth successful, user:", !!user);
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <Helmet>
