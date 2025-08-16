@@ -25,12 +25,32 @@ const Auth = () => {
   }, [user, loading, navigate]);
 
   const handleGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: redirectUrl },
-    });
-    if (error) {
-      toast({ title: "Google sign-in failed", description: error.message, variant: "destructive" });
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: true,
+        },
+      });
+      if (error) throw error;
+
+      const url = data?.url;
+      if (!url) throw new Error("No OAuth URL returned from Supabase.");
+
+      // Prefer navigating the top window (break out of the iframe)
+      if (window.top && window.top !== window.self) {
+        try {
+          window.top.location.href = url;
+          return;
+        } catch {
+          // ignore and fallback to new tab
+        }
+      }
+      // Fallback: open in a new tab to avoid iframe X-Frame-Options issues
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (err: any) {
+      toast({ title: "Google sign-in failed", description: err.message, variant: "destructive" });
     }
   };
 
