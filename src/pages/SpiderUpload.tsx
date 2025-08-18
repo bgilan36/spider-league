@@ -9,6 +9,45 @@ import { useToast } from "@/components/ui/use-toast";
 import { Upload, Camera, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
+import { classifyImage } from "@/hooks/useImageClassifier";
+
+const titleCase = (str: string) =>
+  str
+    .replace(/[_-]+/g, " ")
+    .split(" ")
+    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+    .join(" ");
+
+const generateNickname = (species: string) => {
+  const adjectives = [
+    "Shadow",
+    "Crimson",
+    "Iron",
+    "Silk",
+    "Night",
+    "Ember",
+    "Storm",
+    "Ghost",
+    "Venom",
+    "Glimmer",
+  ];
+  const nouns = [
+    "Weaver",
+    "Stalker",
+    "Spinner",
+    "Fang",
+    "Crawler",
+    "Prowler",
+    "Skitter",
+    "Bite",
+    "Warden",
+    "Hunter",
+  ];
+  const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+  const noun = nouns[Math.floor(Math.random() * nouns.length)];
+  const hint = species.split(" ")[0];
+  return `${adj}${noun} ${hint}`.trim();
+};
 
 const SpiderUpload = () => {
   const { user } = useAuth();
@@ -74,11 +113,43 @@ const SpiderUpload = () => {
           }
         } catch (err: any) {
           console.error('AI identification failed:', err);
-          toast({ 
-            title: 'AI analysis failed', 
-            description: 'You can enter details manually or try another image.',
-            variant: "destructive" 
-          });
+          // Fallback: run a lightweight on-device classifier in the browser
+          try {
+            toast({
+              title: 'Server AI failed — using fallback',
+              description: 'Running a lightweight classifier in your browser.',
+            });
+
+            const base64Local = await fileToBase64(file);
+            const results = await classifyImage(base64Local);
+
+            if (Array.isArray(results) && results.length > 0) {
+              const top = results[0] as { label: string; score: number };
+              const primaryLabel = String(top.label || '').split(',')[0];
+              const speciesLocal = titleCase(primaryLabel);
+              setSpecies(speciesLocal);
+
+              const nick = generateNickname(speciesLocal);
+              setNickname(nick);
+
+              const statsLocal = generateSpiderStats();
+              setSpiderStats(statsLocal);
+
+              toast({
+                title: 'Analyzed (fallback)',
+                description: `Meet ${nick} — ${speciesLocal}!`,
+              });
+            } else {
+              throw new Error('No results from on-device classifier');
+            }
+          } catch (fallbackErr: any) {
+            console.error('Fallback classification failed:', fallbackErr);
+            toast({
+              title: 'AI analysis failed',
+              description: 'You can enter details manually or try another image.',
+              variant: 'destructive',
+            });
+          }
         } finally {
           setIdentifying(false);
         }
