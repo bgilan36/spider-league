@@ -19,20 +19,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     console.log("AuthProvider: Setting up auth listener");
     
-    // Set up auth state listener FIRST
+    // DEVELOPMENT: Auto-provide a mock user to bypass login
+    const mockUser = {
+      id: 'dev-user-123',
+      email: 'dev@spiderleague.com',
+      aud: 'authenticated',
+      role: 'authenticated',
+      email_confirmed_at: new Date().toISOString(),
+      phone: '',
+      confirmed_at: new Date().toISOString(),
+      last_sign_in_at: new Date().toISOString(),
+      app_metadata: {},
+      user_metadata: {},
+      identities: [],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      is_anonymous: false,
+    } as User;
+
+    const mockSession = {
+      user: mockUser,
+      access_token: 'mock-token',
+      refresh_token: 'mock-refresh',
+      expires_in: 3600,
+      expires_at: Date.now() + 3600000,
+      token_type: 'bearer',
+    } as Session;
+
+    // Set mock user immediately for development
+    setUser(mockUser);
+    setSession(mockSession);
+    setLoading(false);
+
+    console.log("AuthProvider: Using mock user for development");
+
+    // Keep auth listener for when we re-enable real auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
       console.log("AuthProvider: Auth state changed", { event: _event, hasSession: !!newSession });
-      setSession(newSession);
-      setUser(newSession?.user ?? null);
-      setLoading(false);
-    });
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data }) => {
-      console.log("AuthProvider: Initial session check", { hasSession: !!data.session });
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-      setLoading(false);
+      // For now, ignore real auth changes and keep using mock user
     });
 
     return () => {
