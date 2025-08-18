@@ -114,13 +114,40 @@ serve(async (req) => {
     const { mime, bytes } = parseBase64Image(image);
     const blob = new Blob([bytes], { type: mime });
 
-    // Use a reliable general-purpose classifier
-    const results = await hf.imageClassification({
-      model: "microsoft/resnet-50",
-      data: blob as unknown as File, // API accepts Blob/File
-    });
+    // Use a reliable general-purpose classifier (via direct HF Inference API)
+    const modelId = "google/vit-base-patch16-224";
+    let results: any = [];
+    let attempts = 0;
+    while (attempts < 3) {
+      attempts++;
+      const resp = await fetch(`https://api-inference.huggingface.co/models/${modelId}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": mime || "application/octet-stream",
+          "x-wait-for-model": "true",
+        },
+        body: blob, // send raw image bytes
+      });
+      if (resp.status === 503) {
+        const info = await resp.json().catch(() => ({}));
+        const waitMs = Math.min(8000, Math.max(1000, Math.round((info.estimated_time || 2) * 1000)));
+        console.log(`Model loading, retrying in ${waitMs}ms`);
+        await new Promise((r) => setTimeout(r, waitMs));
+        continue;
+      }
+      if (!resp.ok) {
+        const t = await resp.text().catch(() => "");
+        throw new Error(`HF classify failed (${resp.status}): ${t}`);
+      }
+      results = await resp.json();
+      break;
+    }
 
-    const sorted = (Array.isArray(results) ? results : [])
+    const flat = Array.isArray(results)
+      ? results
+      : (results && Array.isArray((results as any)[0]) ? (results as any)[0] : []);
+    const sorted = (flat as any[])
       .sort((a: any, b: any) => (b.score ?? 0) - (a.score ?? 0))
       .slice(0, Math.max(1, Math.min(10, Number(topK) || 5)));
 
