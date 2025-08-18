@@ -6,12 +6,16 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-function toUint8ArrayFromBase64(base64: string): Uint8Array {
+function parseBase64Image(base64: string): { mime: string; bytes: Uint8Array } {
   const cleaned = base64.includes(",") ? base64.split(",")[1] : base64;
+  const header = base64.includes(",") ? base64.split(",")[0] : "";
+  let mime = "image/jpeg";
+  const m = header.match(/data:(.*?);base64/);
+  if (m && m[1]) mime = m[1];
   const binary = atob(cleaned);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return bytes;
+  return { mime, bytes };
 }
 
 function titleCase(str: string) {
@@ -55,6 +59,31 @@ function generateNickname(species: string) {
   return `${base} ${hint}`.trim();
 }
 
+// Fallback stat generator (used if LLM fails)
+function generateFallbackStats() {
+  const baseStats = {
+    hit_points: Math.floor(Math.random() * 50) + 50,
+    damage: Math.floor(Math.random() * 30) + 20,
+    speed: Math.floor(Math.random() * 40) + 30,
+    defense: Math.floor(Math.random() * 35) + 25,
+    venom: Math.floor(Math.random() * 45) + 15,
+    webcraft: Math.floor(Math.random() * 40) + 20,
+  };
+  const power_score = Object.values(baseStats).reduce((sum, stat) => sum + (stat as number), 0);
+  let rarity: "COMMON" | "RARE" | "EPIC" | "LEGENDARY";
+  if (power_score >= 280) rarity = "LEGENDARY";
+  else if (power_score >= 240) rarity = "EPIC";
+  else if (power_score >= 200) rarity = "RARE";
+  else rarity = "COMMON";
+  return { ...baseStats, power_score, rarity };
+}
+
+function clampInt(n: unknown, min: number, max: number) {
+  const v = Math.round(Number(n));
+  if (Number.isNaN(v)) return min;
+  return Math.max(min, Math.min(max, v));
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -82,8 +111,8 @@ serve(async (req) => {
 
     const hf = new HfInference(token);
 
-    const bytes = toUint8ArrayFromBase64(image);
-    const blob = new Blob([bytes]);
+    const { mime, bytes } = parseBase64Image(image);
+    const blob = new Blob([bytes], { type: mime });
 
     // Use a reliable general-purpose classifier
     const results = await hf.imageClassification({
@@ -99,10 +128,55 @@ serve(async (req) => {
     const species = titleCase(speciesRaw);
     const nickname = generateNickname(species);
 
+    // Ask an LLM to propose attribute stats based on species
+    let aiStats: any = null;
+    try {
+      const prompt = `You are assigning battle attributes for a spider species. Return ONLY valid JSON with integer fields between 10 and 100 inclusive: 
+{"hit_points":<int>,"damage":<int>,"speed":<int>,"defense":<int>,"venom":<int>,"webcraft":<int>} 
+Base scores should reflect the real-world traits implied by the species name: "${species}" (e.g., venom for widows, speed for hunters). No commentary.`;
+
+      const gen = await hf.textGeneration({
+        model: "meta-llama/Meta-Llama-3.1-8B-Instruct",
+        inputs: prompt,
+        parameters: { max_new_tokens: 150, temperature: 0.7, return_full_text: false },
+      } as any);
+
+      const generated = Array.isArray(gen)
+        ? (gen[0] as any)?.generated_text || ""
+        : (gen as any)?.generated_text || "";
+      const match = generated.match(/\{[\s\S]*\}/);
+      if (match) aiStats = JSON.parse(match[0]);
+    } catch (e) {
+      console.error("LLM stats generation failed:", e);
+    }
+
+    // Validate and clamp stats; fallback if needed
+    let stats;
+    if (aiStats) {
+      stats = {
+        hit_points: clampInt(aiStats.hit_points, 10, 100),
+        damage: clampInt(aiStats.damage, 10, 100),
+        speed: clampInt(aiStats.speed, 10, 100),
+        defense: clampInt(aiStats.defense, 10, 100),
+        venom: clampInt(aiStats.venom, 10, 100),
+        webcraft: clampInt(aiStats.webcraft, 10, 100),
+      };
+      const power_score = Object.values(stats).reduce((sum, v) => sum + Number(v), 0);
+      let rarity: "COMMON" | "RARE" | "EPIC" | "LEGENDARY";
+      if (power_score >= 280) rarity = "LEGENDARY";
+      else if (power_score >= 240) rarity = "EPIC";
+      else if (power_score >= 200) rarity = "RARE";
+      else rarity = "COMMON";
+      stats = { ...stats, power_score, rarity };
+    } else {
+      stats = generateFallbackStats();
+    }
+
     const payload = {
       species,
       nickname,
       candidates: sorted.map((r: any) => ({ label: titleCase(r.label), score: r.score })),
+      stats,
     };
 
     console.log("spider-identify result:", payload);

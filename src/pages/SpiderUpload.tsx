@@ -22,6 +22,7 @@ const SpiderUpload = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [identifying, setIdentifying] = useState(false);
+  const [spiderStats, setSpiderStats] = useState<any | null>(null);
 
   const fileToBase64 = (file: File) =>
     new Promise<string>((resolve, reject) => {
@@ -47,6 +48,7 @@ const SpiderUpload = () => {
           if (error) throw error;
           if (data?.species && !species) setSpecies(data.species);
           if (data?.nickname && !nickname) setNickname(data.nickname);
+          if (data?.stats) setSpiderStats(data.stats);
           if (data?.species) {
             toast({ title: 'Species suggested', description: `We think it\'s: ${data.species}` });
           }
@@ -113,8 +115,8 @@ const SpiderUpload = () => {
         .from('spiders')
         .getPublicUrl(fileName);
 
-      // Generate spider stats
-      const stats = generateSpiderStats();
+      // Generate or reuse AI stats
+      const finalStats = spiderStats || generateSpiderStats();
 
       // Create spider record
       const { error: insertError } = await supabase
@@ -125,7 +127,7 @@ const SpiderUpload = () => {
           species: species.trim(),
           image_url: publicUrl,
           rng_seed: Math.random().toString(36).substring(7),
-          ...stats,
+          ...finalStats,
         });
 
       if (insertError) throw insertError;
