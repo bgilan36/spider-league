@@ -1,1 +1,4 @@
 project_id = "wdqsgswrkrxjeesahshc"
+
+[functions.spider-identify]
+verify_jwt = false

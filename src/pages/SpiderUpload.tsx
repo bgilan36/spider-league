@@ -21,13 +21,41 @@ const SpiderUpload = () => {
   const [species, setSpecies] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [identifying, setIdentifying] = useState(false);
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const fileToBase64 = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       if (file.type.startsWith('image/')) {
         setSelectedFile(file);
         setPreviewUrl(URL.createObjectURL(file));
+        // Identify species & suggest nickname via Edge Function
+        try {
+          setIdentifying(true);
+          const base64 = await fileToBase64(file);
+          const { data, error } = await supabase.functions.invoke('spider-identify', {
+            body: { image: base64, topK: 5 },
+          });
+          if (error) throw error;
+          if (data?.species && !species) setSpecies(data.species);
+          if (data?.nickname && !nickname) setNickname(data.nickname);
+          if (data?.species) {
+            toast({ title: 'Species suggested', description: `We think it\'s: ${data.species}` });
+          }
+        } catch (err: any) {
+          console.error('Identification failed:', err);
+          toast({ title: 'Identification failed', description: 'You can still enter details manually.' });
+        } finally {
+          setIdentifying(false);
+        }
       } else {
         toast({ title: "Invalid file", description: "Please select an image file.", variant: "destructive" });
       }
@@ -149,8 +177,9 @@ const SpiderUpload = () => {
                       <div className="space-y-4">
                         <img 
                           src={previewUrl} 
-                          alt="Spider preview" 
+                          alt="Spider preview for identification" 
                           className="mx-auto max-h-48 rounded-lg object-cover"
+                          loading="lazy"
                         />
                         <p className="text-sm text-muted-foreground">Click to change image</p>
                       </div>
@@ -197,11 +226,11 @@ const SpiderUpload = () => {
                   </div>
                 </div>
 
-                <Button type="submit" className="w-full" disabled={uploading}>
+                <Button type="submit" className="w-full" disabled={uploading || identifying}>
                   {uploading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating Spider...
+                      {identifying ? 'Identifying...' : 'Creating Spider...'}
                     </>
                   ) : (
                     <>
