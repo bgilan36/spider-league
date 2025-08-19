@@ -9,6 +9,7 @@ interface AuthContextValue {
   signOut: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
+  signInWithGoogle: () => Promise<{ error: any }>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -65,6 +66,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error };
   };
 
+  const signInWithGoogle = async () => {
+    const redirectUrl = `${window.location.origin}/`;
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: redirectUrl,
+      }
+    });
+    if (!error) {
+      console.log('Redirecting to Google OAuth', data?.url);
+    }
+    return { error };
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
   };
@@ -72,7 +87,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   console.log("AuthProvider: Rendering with", { hasUser: !!user, loading });
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut, signIn, signUp }}>
+    <AuthContext.Provider value={{ user, session, loading, signOut, signIn, signUp, signInWithGoogle }}>
       {children}
     </AuthContext.Provider>
   );

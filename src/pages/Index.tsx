@@ -10,7 +10,7 @@ import { Upload, Trophy, Users, Sword, Loader2 } from "lucide-react";
 import { useState } from "react";
 
 const Index = () => {
-  const { user, signOut, signIn, signUp, loading: authLoading } = useAuth();
+  const { user, signOut, signIn, signUp, signInWithGoogle, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
@@ -84,6 +84,33 @@ const Index = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              <div className="space-y-3 mb-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={async () => {
+                    setLoading(true);
+                    const { error } = await signInWithGoogle();
+                    if (error) {
+                      toast({ title: "Google sign-in failed", description: error.message, variant: "destructive" });
+                      setLoading(false);
+                    }
+                    // On success, Supabase will redirect to Google and come back
+                  }}
+                  disabled={loading}
+                >
+                  {/* Simple Google "G" svg */}
+                  <svg className="mr-2 h-4 w-4" viewBox="0 0 533.5 544.3" aria-hidden="true">
+                    <path fill="#EA4335" d="M533.5 278.4c0-18.5-1.7-37-5.3-54.9H272.1v103.9h147.1c-6.2 33.6-25.6 62-54.6 80.9v67h88.4c51.7-47.6 80.5-117.9 80.5-196.9z"/>
+                    <path fill="#34A853" d="M272.1 544.3c73.6 0 135.4-24.3 180.6-66.1l-88.4-67c-24.5 16.4-56 26-92.2 26-70.8 0-130.7-47.7-152.2-111.8H28.8v70.2c45 89.4 137.6 148.7 243.3 148.7z"/>
+                    <path fill="#4A90E2" d="M119.9 325.4c-10.3-30.9-10.3-64.6 0-95.5V159.7H28.8c-41.9 83.7-41.9 182.4 0 266.1l91.1-70.4z"/>
+                    <path fill="#FBBC05" d="M272.1 106.2c39.9-.6 78.2 14 107.5 41.1l80.1-80.1C413.1 24.6 343.7-1.2 272.1 0 166.4 0 73.8 59.3 28.8 148.7l91.1 70.2C141.4 154.8 201.3 106.9 272.1 106.2z"/>
+                  </svg>
+                  Continue with Google
+                </Button>
+                <div className="text-center text-xs text-muted-foreground">or continue with email</div>
+              </div>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
