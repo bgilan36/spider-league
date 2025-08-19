@@ -62,6 +62,7 @@ const SpiderUpload = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [identifying, setIdentifying] = useState(false);
   const [spiderStats, setSpiderStats] = useState<any | null>(null);
+  const [analysisSource, setAnalysisSource] = useState<'server' | 'local' | null>(null);
 
   const fileToBase64 = (file: File) =>
     new Promise<string>((resolve, reject) => {
@@ -71,88 +72,93 @@ const SpiderUpload = () => {
       reader.readAsDataURL(file);
     });
 
+  const analyzeImage = async (file: File) => {
+    setAnalysisSource(null);
+    try {
+      setIdentifying(true);
+      toast({ title: 'Analyzing spider...', description: 'AI is generating nickname and species!' });
+      
+      const base64 = await fileToBase64(file);
+      const { data, error } = await supabase.functions.invoke('spider-identify', {
+        body: { image: base64, topK: 5 },
+      });
+      
+      if (error) throw error;
+      
+      // Auto-populate fields (but allow user to edit)
+      if (data?.species) {
+        setSpecies(data.species);
+        setAnalysisSource('server');
+        console.log('AI suggested species:', data.species);
+      }
+      if (data?.nickname) {
+        setNickname(data.nickname);
+        console.log('AI suggested nickname:', data.nickname);
+      }
+      if (data?.stats) {
+        setSpiderStats(data.stats);
+        console.log('AI generated stats:', data.stats);
+      }
+      
+      // Show success message
+      if (data?.species && data?.nickname) {
+        toast({ 
+          title: 'Spider analyzed (Server AI)!', 
+          description: `Meet ${data.nickname} - ${data.species}!` 
+        });
+      }
+    } catch (err: any) {
+      console.error('AI identification failed:', err);
+      // Fallback: run a lightweight on-device classifier in the browser
+      try {
+        toast({
+          title: 'Server AI failed — using local AI',
+          description: 'Running a lightweight classifier in your browser.',
+        });
+
+        const base64Local = await fileToBase64(file);
+        const results = await classifyImage(base64Local);
+
+        if (Array.isArray(results) && results.length > 0) {
+          const top = results[0] as { label: string; score: number };
+          const primaryLabel = String(top.label || '').split(',')[0];
+          const speciesLocal = titleCase(primaryLabel);
+          setSpecies(speciesLocal);
+          setAnalysisSource('local');
+
+          const nick = generateNickname(speciesLocal);
+          setNickname(nick);
+
+          const statsLocal = generateSpiderStats();
+          setSpiderStats(statsLocal);
+
+          toast({
+            title: 'Analyzed (Local AI)!',
+            description: `Meet ${nick} — ${speciesLocal}!`,
+          });
+        } else {
+          throw new Error('No results from on-device classifier');
+        }
+      } catch (fallbackErr: any) {
+        console.error('Fallback classification failed:', fallbackErr);
+        toast({
+          title: 'AI analysis failed',
+          description: 'You can enter details manually or try another image.',
+          variant: 'destructive',
+        });
+      }
+    } finally {
+      setIdentifying(false);
+    }
+  };
+
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       if (file.type.startsWith('image/')) {
         setSelectedFile(file);
         setPreviewUrl(URL.createObjectURL(file));
-        
-        // Auto-generate spider nickname and species using AI
-        try {
-          setIdentifying(true);
-          toast({ title: 'Analyzing spider...', description: 'AI is generating nickname and species!' });
-          
-          const base64 = await fileToBase64(file);
-          const { data, error } = await supabase.functions.invoke('spider-identify', {
-            body: { image: base64, topK: 5 },
-          });
-          
-          if (error) throw error;
-          
-          // Auto-populate fields (but allow user to edit)
-          if (data?.species) {
-            setSpecies(data.species);
-            console.log('AI suggested species:', data.species);
-          }
-          if (data?.nickname) {
-            setNickname(data.nickname);
-            console.log('AI suggested nickname:', data.nickname);
-          }
-          if (data?.stats) {
-            setSpiderStats(data.stats);
-            console.log('AI generated stats:', data.stats);
-          }
-          
-          // Show success message
-          if (data?.species && data?.nickname) {
-            toast({ 
-              title: 'Spider analyzed!', 
-              description: `Meet ${data.nickname} - ${data.species}!` 
-            });
-          }
-        } catch (err: any) {
-          console.error('AI identification failed:', err);
-          // Fallback: run a lightweight on-device classifier in the browser
-          try {
-            toast({
-              title: 'Server AI failed — using fallback',
-              description: 'Running a lightweight classifier in your browser.',
-            });
-
-            const base64Local = await fileToBase64(file);
-            const results = await classifyImage(base64Local);
-
-            if (Array.isArray(results) && results.length > 0) {
-              const top = results[0] as { label: string; score: number };
-              const primaryLabel = String(top.label || '').split(',')[0];
-              const speciesLocal = titleCase(primaryLabel);
-              setSpecies(speciesLocal);
-
-              const nick = generateNickname(speciesLocal);
-              setNickname(nick);
-
-              const statsLocal = generateSpiderStats();
-              setSpiderStats(statsLocal);
-
-              toast({
-                title: 'Analyzed (fallback)',
-                description: `Meet ${nick} — ${speciesLocal}!`,
-              });
-            } else {
-              throw new Error('No results from on-device classifier');
-            }
-          } catch (fallbackErr: any) {
-            console.error('Fallback classification failed:', fallbackErr);
-            toast({
-              title: 'AI analysis failed',
-              description: 'You can enter details manually or try another image.',
-              variant: 'destructive',
-            });
-          }
-        } finally {
-          setIdentifying(false);
-        }
+        await analyzeImage(file);
       } else {
         toast({ title: "Invalid file", description: "Please select an image file.", variant: "destructive" });
       }
@@ -315,7 +321,9 @@ const SpiderUpload = () => {
                       required
                     />
                     {nickname && !identifying && (
-                      <p className="text-xs text-muted-foreground">✨ Auto-generated by AI (editable)</p>
+                      <p className="text-xs text-muted-foreground">
+                        ✨ Auto-generated by {analysisSource === 'server' ? 'Server AI' : analysisSource === 'local' ? 'Local AI' : 'AI'} (editable)
+                      </p>
                     )}
                   </div>
                   <div className="space-y-2">
@@ -332,7 +340,22 @@ const SpiderUpload = () => {
                       required
                     />
                     {species && !identifying && (
-                      <p className="text-xs text-muted-foreground">✨ Auto-identified by AI (editable)</p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground">
+                          ✨ Auto-identified by {analysisSource === 'server' ? 'Server AI' : analysisSource === 'local' ? 'Local AI' : 'AI'} (editable)
+                        </p>
+                        {selectedFile && !identifying && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => analyzeImage(selectedFile)}
+                            className="h-6 px-2 text-xs"
+                          >
+                            Re-analyze
+                          </Button>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>

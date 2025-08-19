@@ -121,17 +121,23 @@ serve(async (req) => {
     while (attempts < 3) {
       attempts++;
       try {
+        console.log(`Attempt ${attempts}: Calling HF imageClassification with model ${modelId}`);
         results = await hf.imageClassification({
           model: modelId,
-          data: blob as unknown as File,
+          data: blob,
+          parameters: {
+            top_k: Math.max(1, Math.min(10, Number(topK) || 5))
+          }
         });
+        console.log(`HF imageClassification success:`, results);
         break;
       } catch (err: any) {
         const msg = String(err?.message || err);
-        const shouldRetry = /503|rate|timeout|temporar/i.test(msg);
+        console.error(`HF imageClassification attempt ${attempts} failed:`, msg);
+        const shouldRetry = /503|rate|timeout|temporar|403/i.test(msg);
         if (attempts < 3 && shouldRetry) {
           const waitMs = Math.min(8000, 1000 * attempts);
-          console.log(`HF imageClassification retry ${attempts} in ${waitMs}ms:`, msg);
+          console.log(`HF imageClassification retry ${attempts} in ${waitMs}ms due to:`, msg);
           await new Promise((r) => setTimeout(r, waitMs));
           continue;
         }
