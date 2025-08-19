@@ -76,7 +76,7 @@ const SpiderUpload = () => {
     setAnalysisSource(null);
     try {
       setIdentifying(true);
-      toast({ title: 'Analyzing spider...', description: 'AI is generating nickname and species!' });
+      toast({ title: 'Analyzing spider...', description: 'Please wait while we identify your spider.' });
       
       const base64 = await fileToBase64(file);
       const { data, error } = await supabase.functions.invoke('spider-identify', {
@@ -103,7 +103,7 @@ const SpiderUpload = () => {
       // Show success message
       if (data?.species && data?.nickname) {
         toast({ 
-          title: 'Spider analyzed (Server AI)!', 
+          title: 'Spider analyzed!', 
           description: `Meet ${data.nickname} - ${data.species}!` 
         });
       }
@@ -112,8 +112,8 @@ const SpiderUpload = () => {
       // Fallback: run a lightweight on-device classifier in the browser
       try {
         toast({
-          title: 'Server AI failed — using local AI',
-          description: 'Running a lightweight classifier in your browser.',
+          title: 'Analyzing with backup method...',
+          description: 'Please wait while we try another approach.',
         });
 
         const base64Local = await fileToBase64(file);
@@ -133,7 +133,7 @@ const SpiderUpload = () => {
           setSpiderStats(statsLocal);
 
           toast({
-            title: 'Analyzed (Local AI)!',
+            title: 'Spider analyzed!',
             description: `Meet ${nick} — ${speciesLocal}!`,
           });
         } else {
@@ -201,9 +201,15 @@ const SpiderUpload = () => {
 
     setUploading(true);
     try {
+      // Check if user is authenticated
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) {
+        throw new Error("You must be logged in to upload spiders");
+      }
+
       // Upload image to storage
       const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      const fileName = `${authUser.id}/${Date.now()}.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
         .from('spiders')
@@ -219,11 +225,11 @@ const SpiderUpload = () => {
       // Generate or reuse AI stats
       const finalStats = spiderStats || generateSpiderStats();
 
-      // Create spider record
+      // Create spider record with authenticated user ID
       const { error: insertError } = await supabase
         .from('spiders')
         .insert({
-          owner_id: user.id,
+          owner_id: authUser.id, // Use the authenticated user ID directly
           nickname: nickname.trim(),
           species: species.trim(),
           image_url: publicUrl,
@@ -236,6 +242,7 @@ const SpiderUpload = () => {
       toast({ title: "Spider uploaded!", description: "Your spider has been created and is pending approval." });
       navigate("/collection");
     } catch (error: any) {
+      console.error("Upload error:", error);
       toast({ title: "Upload failed", description: error.message, variant: "destructive" });
     } finally {
       setUploading(false);
