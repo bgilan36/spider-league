@@ -10,7 +10,7 @@ import { Upload, Trophy, Users, Sword, Loader2 } from "lucide-react";
 import { useState } from "react";
 
 const Index = () => {
-  const { user, signOut, signIn, signUp, signInWithGoogle, loading: authLoading } = useAuth();
+  const { user, signOut, signIn, signUp, signInWithGoogle, signInAsDemo, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
@@ -108,6 +108,24 @@ const Index = () => {
                     <path fill="#FBBC05" d="M272.1 106.2c39.9-.6 78.2 14 107.5 41.1l80.1-80.1C413.1 24.6 343.7-1.2 272.1 0 166.4 0 73.8 59.3 28.8 148.7l91.1 70.2C141.4 154.8 201.3 106.9 272.1 106.2z"/>
                   </svg>
                   Continue with Google
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="w-full"
+                  onClick={async () => {
+                    setLoading(true);
+                    const { error } = await signInAsDemo();
+                    if (error) {
+                      toast({ title: "Demo sign-in failed", description: error.message, variant: "destructive" });
+                    } else {
+                      toast({ title: "Signed in as Demo User", variant: "default" });
+                    }
+                    setLoading(false);
+                  }}
+                  disabled={loading}
+                >
+                  🕷️ Sign in as Demo User (Development)
                 </Button>
                 <div className="text-center text-xs text-muted-foreground">or continue with email</div>
               </div>

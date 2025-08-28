@@ -10,6 +10,7 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signInWithGoogle: () => Promise<{ error: any }>;
+  signInAsDemo: () => Promise<{ error: any }>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -80,6 +81,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error };
   };
 
+  const signInAsDemo = async () => {
+    // Try to sign in first
+    let { error } = await supabase.auth.signInWithPassword({
+      email: 'demo@spiderleague.com',
+      password: 'demo123456',
+    });
+    
+    // If user doesn't exist, create the account
+    if (error && error.message.includes('Invalid login credentials')) {
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: 'demo@spiderleague.com',
+        password: 'demo123456',
+      });
+      
+      if (!signUpError) {
+        // Now try signing in again
+        const signInResult = await supabase.auth.signInWithPassword({
+          email: 'demo@spiderleague.com',
+          password: 'demo123456',
+        });
+        error = signInResult.error;
+      } else {
+        error = signUpError;
+      }
+    }
+    
+    return { error };
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
   };
@@ -87,7 +117,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   console.log("AuthProvider: Rendering with", { hasUser: !!user, loading });
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut, signIn, signUp, signInWithGoogle }}>
+    <AuthContext.Provider value={{ user, session, loading, signOut, signIn, signUp, signInWithGoogle, signInAsDemo }}>
       {children}
     </AuthContext.Provider>
   );
