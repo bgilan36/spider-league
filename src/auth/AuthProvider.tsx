@@ -95,16 +95,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         password: 'demo123456',
       });
       
-      if (!signUpError) {
-        // Now try signing in again
-        const signInResult = await supabase.auth.signInWithPassword({
-          email: 'demo@spiderleague.com',
-          password: 'demo123456',
-        });
-        error = signInResult.error;
-      } else {
+      if (signUpError) {
         error = signUpError;
+      } else {
+        // Return a custom error asking user to disable email confirmation
+        error = {
+          message: 'Demo account created! Please disable "Confirm email" in Supabase Authentication settings, then try again.'
+        } as any;
       }
+    } else if (error && error.message.includes('Email not confirmed')) {
+      // Return a helpful message for unconfirmed email
+      error = {
+        message: 'Please disable "Confirm email" in your Supabase Authentication settings for easier development testing.'
+      } as any;
     }
     
     return { error };
