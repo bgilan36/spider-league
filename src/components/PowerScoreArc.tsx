@@ -3,7 +3,7 @@ import React from 'react';
 interface PowerScoreArcProps {
   score: number;
   maxScore?: number;
-  size?: number;
+  size?: number | "small" | "medium" | "large";
 }
 
 const PowerScoreArc: React.FC<PowerScoreArcProps> = ({ 
@@ -11,9 +11,21 @@ const PowerScoreArc: React.FC<PowerScoreArcProps> = ({
   maxScore = 100, 
   size = 80 
 }) => {
+  // Convert size variants to numbers
+  const getSizeValue = (size: number | "small" | "medium" | "large"): number => {
+    if (typeof size === 'number') return size;
+    switch (size) {
+      case 'small': return 60;
+      case 'medium': return 80;
+      case 'large': return 100;
+      default: return 80;
+    }
+  };
+
+  const sizeValue = getSizeValue(size);
   const percentage = Math.min(score / maxScore, 1);
-  const strokeWidth = 6;
-  const radius = (size - strokeWidth) / 2;
+  const strokeWidth = sizeValue <= 60 ? 4 : 6;
+  const radius = (sizeValue - strokeWidth) / 2;
   const circumference = Math.PI * radius; // Half circle
   const strokeDasharray = circumference;
   const strokeDashoffset = circumference * (1 - percentage);
@@ -30,16 +42,16 @@ const PowerScoreArc: React.FC<PowerScoreArcProps> = ({
 
   return (
     <div className="flex flex-col items-center">
-      <div className="relative" style={{ width: size, height: size / 2 + 10 }}>
+      <div className="relative" style={{ width: sizeValue, height: sizeValue / 2 + 10 }}>
         <svg
-          width={size}
-          height={size / 2 + 10}
+          width={sizeValue}
+          height={sizeValue / 2 + 10}
           className="transform -rotate-0"
           style={{ overflow: 'visible' }}
         >
           {/* Background arc */}
           <path
-            d={`M ${strokeWidth/2} ${size/2} A ${radius} ${radius} 0 0 1 ${size - strokeWidth/2} ${size/2}`}
+            d={`M ${strokeWidth/2} ${sizeValue/2} A ${radius} ${radius} 0 0 1 ${sizeValue - strokeWidth/2} ${sizeValue/2}`}
             fill="none"
             stroke="hsl(var(--muted))"
             strokeWidth={strokeWidth}
@@ -48,7 +60,7 @@ const PowerScoreArc: React.FC<PowerScoreArcProps> = ({
           
           {/* Progress arc */}
           <path
-            d={`M ${strokeWidth/2} ${size/2} A ${radius} ${radius} 0 0 1 ${size - strokeWidth/2} ${size/2}`}
+            d={`M ${strokeWidth/2} ${sizeValue/2} A ${radius} ${radius} 0 0 1 ${sizeValue - strokeWidth/2} ${sizeValue/2}`}
             fill="none"
             stroke={scoreColor}
             strokeWidth={strokeWidth}
@@ -64,10 +76,10 @@ const PowerScoreArc: React.FC<PowerScoreArcProps> = ({
         {/* Score text */}
         <div className="absolute inset-0 flex items-end justify-center pb-1">
           <div className="text-center">
-            <div className="text-xl font-bold" style={{ color: scoreColor }}>
+            <div className={`font-bold ${sizeValue <= 60 ? 'text-sm' : 'text-xl'}`} style={{ color: scoreColor }}>
               {score}
             </div>
-            <div className="text-xs text-muted-foreground font-medium">
+            <div className={`text-muted-foreground font-medium ${sizeValue <= 60 ? 'text-xs' : 'text-xs'}`}>
               Power Score
             </div>
           </div>

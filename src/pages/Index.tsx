@@ -4,11 +4,24 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/auth/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
-import { Upload, Trophy, Users, Sword, Loader2, Map, Lightbulb } from "lucide-react";
-import { useState } from "react";
+import { Upload, Trophy, Users, Loader2, Lightbulb, Plus } from "lucide-react";
+import { useState, useEffect } from "react";
 import { HowItWorksModal } from "@/components/HowItWorksModal";
+import { supabase } from "@/integrations/supabase/client";
+import PowerScoreArc from "@/components/PowerScoreArc";
+
+interface Spider {
+  id: string;
+  nickname: string;
+  species: string;
+  image_url: string;
+  rarity: "COMMON" | "RARE" | "EPIC" | "LEGENDARY" | "UNCOMMON";
+  power_score: number;
+  is_approved: boolean;
+}
 
 const Index = () => {
   const { user, signOut, signIn, signUp, signInWithGoogle, signInAsDemo, loading: authLoading } = useAuth();
@@ -17,6 +30,45 @@ const Index = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [userSpiders, setUserSpiders] = useState<Spider[]>([]);
+  const [spidersLoading, setSpidersLoading] = useState(true);
+
+  const rarityColors = {
+    COMMON: "bg-gray-500",
+    UNCOMMON: "bg-green-500", 
+    RARE: "bg-blue-500",
+    EPIC: "bg-purple-500",
+    LEGENDARY: "bg-amber-500"
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchUserSpiders();
+    } else {
+      setUserSpiders([]);
+      setSpidersLoading(false);
+    }
+  }, [user]);
+
+  const fetchUserSpiders = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('spiders')
+        .select('id, nickname, species, image_url, rarity, power_score, is_approved')
+        .eq('owner_id', user.id)
+        .order('power_score', { ascending: false })
+        .limit(6);
+
+      if (error) throw error;
+      setUserSpiders(data || []);
+    } catch (error) {
+      console.error('Error fetching spiders:', error);
+    } finally {
+      setSpidersLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -236,40 +288,88 @@ const Index = () => {
       </header>
 
       <main className="container mx-auto px-6 py-8">
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-            <Link to="/upload" className="block">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Upload Spider</CardTitle>
-                  <Upload className="h-5 w-5 text-primary" />
-                </div>
-                <CardDescription>Add a new fighter to your collection</CardDescription>
-              </CardHeader>
-            </Link>
-          </Card>
+        {/* My Collection Section */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold mb-2">My Collection</h2>
+              <p className="text-muted-foreground">Your spider fighters ranked by power</p>
+            </div>
+            <Button asChild className="gradient-button relative z-10">
+              <Link to="/upload" className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Upload Spider
+              </Link>
+            </Button>
+          </div>
 
+          {spidersLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          ) : userSpiders.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6 text-center py-12">
+                <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No spiders yet</h3>
+                <p className="text-muted-foreground mb-6">Upload your first spider to start building your collection</p>
+                <Button asChild className="gradient-button relative z-10">
+                  <Link to="/upload" className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    Upload Your First Spider
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+              {userSpiders.map((spider) => (
+                <div key={spider.id} className="spider-card-mini">
+                  <div className="aspect-square relative mb-3 rounded-md overflow-hidden">
+                    <img 
+                      src={spider.image_url} 
+                      alt={spider.nickname}
+                      className="w-full h-full object-cover"
+                    />
+                    <Badge 
+                      className={`absolute top-1 right-1 text-xs ${rarityColors[spider.rarity]} text-white`}
+                    >
+                      {spider.rarity}
+                    </Badge>
+                  </div>
+                  <div className="text-center">
+                    <h4 className="font-medium text-sm mb-1 truncate">{spider.nickname}</h4>
+                    <p className="text-xs text-muted-foreground mb-2 truncate">{spider.species}</p>
+                    <div className="flex justify-center">
+                      <PowerScoreArc score={spider.power_score} size="small" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {userSpiders.length > 0 && (
+                <Link to="/collection" className="spider-card-mini flex items-center justify-center text-center group">
+                  <div>
+                    <Plus className="h-8 w-8 text-muted-foreground group-hover:text-primary mx-auto mb-2 transition-colors" />
+                    <p className="text-sm text-muted-foreground group-hover:text-primary transition-colors">View All</p>
+                  </div>
+                </Link>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <Card className="cursor-pointer hover:shadow-lg transition-shadow">
             <Link to="/collection" className="block">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">My Collection</CardTitle>
+                  <CardTitle className="text-lg">Full Collection</CardTitle>
                   <Trophy className="h-5 w-5 text-primary" />
                 </div>
-                <CardDescription>View and manage your spiders</CardDescription>
+                <CardDescription>View and manage all your spiders</CardDescription>
               </CardHeader>
             </Link>
-          </Card>
-
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow opacity-60">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">Battles</CardTitle>
-                <Sword className="h-5 w-5 text-primary" />
-              </div>
-              <CardDescription>Coming soon...</CardDescription>
-            </CardHeader>
           </Card>
 
           <Card className="cursor-pointer hover:shadow-lg transition-shadow">
