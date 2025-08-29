@@ -82,17 +82,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signInAsDemo = async () => {
-    // Try to sign in first
+    const baseEmail = 'demo@spiderleague.com';
+    const password = 'demo123456';
+
+    // 1) Try the stable demo account first
     let { error } = await supabase.auth.signInWithPassword({
-      email: 'demo@spiderleague.com',
-      password: 'demo123456',
+      email: baseEmail,
+      password,
     });
 
-    // If user doesn't exist, create the account then sign in
-    if (error && (error.message.includes('Invalid login credentials') || error.message.toLowerCase().includes('invalid'))) {
+    if (!error) {
+      return { error };
+    }
+
+    const needsEphemeral =
+      !!error &&
+      (error.message.toLowerCase().includes('email not confirmed') ||
+        error.message.toLowerCase().includes('invalid'));
+
+    // 2) Fallback: create a fresh ephemeral demo user to bypass old unconfirmed users
+    if (needsEphemeral) {
+      const demoEmail = `demo+${Date.now()}@spiderleague.com`;
+      console.log('AuthProvider: Using ephemeral demo email', demoEmail);
+
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email: 'demo@spiderleague.com',
-        password: 'demo123456',
+        email: demoEmail,
+        password,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
         },
@@ -104,17 +119,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Sign up returned a session when email confirmation is disabled
         error = null as any;
       } else {
-        // No session returned; try signing in again
+        // No session returned; try signing in again with the ephemeral email
         const signInResult = await supabase.auth.signInWithPassword({
-          email: 'demo@spiderleague.com',
-          password: 'demo123456',
+          email: demoEmail,
+          password,
         });
         error = signInResult.error;
       }
-    } else if (error && error.message.includes('Email not confirmed')) {
+    } else if (error && error.message.toLowerCase().includes('email not confirmed')) {
       // Helpful message for unconfirmed email (should not occur if email confirmation is disabled)
       error = {
-        message: 'Email not confirmed. If testing locally, disable "Confirm email" in Supabase Authentication settings or delete the existing demo user and try again.'
+        message:
+          'Email not confirmed. If testing locally, disable "Confirm email" in Supabase Authentication settings or delete the existing demo user and try again.',
       } as any;
     }
 
