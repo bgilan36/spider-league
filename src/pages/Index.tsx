@@ -346,14 +346,6 @@ const Index = () => {
                   </div>
                 </div>
               ))}
-              {userSpiders.length > 0 && (
-                <Link to="/collection" className="spider-card-mini flex items-center justify-center text-center group">
-                  <div>
-                    <Plus className="h-8 w-8 text-muted-foreground group-hover:text-primary mx-auto mb-2 transition-colors" />
-                    <p className="text-sm text-muted-foreground group-hover:text-primary transition-colors">View All</p>
-                  </div>
-                </Link>
-              )}
             </div>
           )}
         </div>
