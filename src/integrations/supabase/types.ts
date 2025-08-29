@@ -367,7 +367,15 @@ export type Database = {
           venom?: number
           webcraft?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "spiders_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       weekly_rankings: {
         Row: {
