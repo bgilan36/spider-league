@@ -12,6 +12,7 @@ import { useState, useEffect } from "react";
 import { HowItWorksModal } from "@/components/HowItWorksModal";
 import { supabase } from "@/integrations/supabase/client";
 import PowerScoreArc from "@/components/PowerScoreArc";
+import SpiderDetailsModal from "@/components/SpiderDetailsModal";
 
 interface Spider {
   id: string;
@@ -20,7 +21,14 @@ interface Spider {
   image_url: string;
   rarity: "COMMON" | "RARE" | "EPIC" | "LEGENDARY" | "UNCOMMON";
   power_score: number;
+  hit_points: number;
+  damage: number;
+  speed: number;
+  defense: number;
+  venom: number;
+  webcraft: number;
   is_approved: boolean;
+  owner_id?: string;
 }
 
 const Index = () => {
@@ -33,6 +41,10 @@ const Index = () => {
   const [userSpiders, setUserSpiders] = useState<Spider[]>([]);
   const [spidersLoading, setSpidersLoading] = useState(true);
   const [userGlobalRank, setUserGlobalRank] = useState<number | null>(null);
+  const [selectedSpider, setSelectedSpider] = useState<Spider | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [topLeaderboardSpiders, setTopLeaderboardSpiders] = useState<Spider[]>([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(true);
 
   const rarityColors = {
     COMMON: "bg-gray-500",
@@ -51,6 +63,7 @@ const Index = () => {
       setUserGlobalRank(null);
       setSpidersLoading(false);
     }
+    fetchTopLeaderboardSpiders();
   }, [user]);
 
   const fetchUserGlobalRank = async () => {
@@ -89,7 +102,7 @@ const Index = () => {
     try {
       const { data, error } = await supabase
         .from('spiders')
-        .select('id, nickname, species, image_url, rarity, power_score, is_approved')
+        .select('id, nickname, species, image_url, rarity, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved')
         .eq('owner_id', user.id)
         .order('power_score', { ascending: false })
         .limit(6);
@@ -101,6 +114,36 @@ const Index = () => {
     } finally {
       setSpidersLoading(false);
     }
+  };
+
+  const fetchTopLeaderboardSpiders = async () => {
+    try {
+      setLeaderboardLoading(true);
+      
+      const { data, error } = await supabase
+        .from('spiders')
+        .select(`
+          id, nickname, species, image_url, rarity, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved, owner_id,
+          profiles (
+            display_name
+          )
+        `)
+        .eq('is_approved', true)
+        .order('power_score', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      setTopLeaderboardSpiders(data || []);
+    } catch (error) {
+      console.error('Error fetching top spiders:', error);
+    } finally {
+      setLeaderboardLoading(false);
+    }
+  };
+
+  const handleSpiderClick = (spider: Spider) => {
+    setSelectedSpider(spider);
+    setIsModalOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -363,7 +406,11 @@ const Index = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
               {userSpiders.map((spider) => (
-                <div key={spider.id} className="spider-card-mini">
+                <div 
+                  key={spider.id} 
+                  className="spider-card-mini cursor-pointer hover:scale-105 transition-transform"
+                  onClick={() => handleSpiderClick(spider)}
+                >
                   <div className="aspect-square relative mb-3 rounded-md overflow-hidden">
                     <img 
                       src={spider.image_url} 
@@ -390,7 +437,7 @@ const Index = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <Card className="cursor-pointer hover:shadow-lg transition-shadow">
             <Link to="/collection" className="block">
               <CardHeader className="pb-3">
@@ -402,22 +449,98 @@ const Index = () => {
               </CardHeader>
             </Link>
           </Card>
+        </div>
 
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-            <Link to="/leaderboard" className="block">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Leaderboard</CardTitle>
-                  <Users className="h-5 w-5 text-primary" />
-                </div>
-                <CardDescription>View top-ranked spider fighters</CardDescription>
-              </CardHeader>
-            </Link>
-          </Card>
+        {/* Leaderboard Section */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold mb-2">Global Leaderboard</h2>
+              <p className="text-muted-foreground">Top 10 most powerful spider fighters</p>
+            </div>
+            <Button asChild variant="outline">
+              <Link to="/leaderboard" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                View Full Leaderboard
+              </Link>
+            </Button>
+          </div>
 
+          {leaderboardLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          ) : topLeaderboardSpiders.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6 text-center py-12">
+                <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No spiders yet</h3>
+                <p className="text-muted-foreground">Be the first to upload a spider and claim the top spot!</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {topLeaderboardSpiders.map((spider, index) => {
+                const rank = index + 1;
+                const ownerName = (spider as any).profiles?.display_name || `User ${spider.owner_id?.slice(0, 8)}`;
+                return (
+                  <Card key={spider.id} className={`hover:shadow-md transition-shadow ${rank <= 3 ? 'ring-1 ring-primary/20' : ''}`}>
+                    <CardContent className="flex items-center gap-4 p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 text-center">
+                          {rank === 1 && <Trophy className="h-5 w-5 text-amber-500 mx-auto" />}
+                          {rank === 2 && <Trophy className="h-5 w-5 text-gray-400 mx-auto" />}
+                          {rank === 3 && <Trophy className="h-5 w-5 text-amber-600 mx-auto" />}
+                          {rank > 3 && <span className="font-bold text-lg">#{rank}</span>}
+                        </div>
+                        <Badge variant={rank <= 3 ? "default" : "secondary"} className="font-bold">
+                          {rank === 1 ? "1st" : rank === 2 ? "2nd" : rank === 3 ? "3rd" : `${rank}th`}
+                        </Badge>
+                      </div>
+                      
+                      <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
+                        <img 
+                          src={spider.image_url} 
+                          alt={spider.nickname}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-semibold truncate">{spider.nickname}</h4>
+                          <Badge 
+                            className={`text-xs ${rarityColors[spider.rarity]} text-white`}
+                          >
+                            {spider.rarity}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground truncate">{spider.species}</p>
+                        <p className="text-xs text-muted-foreground truncate">Owner: {ownerName}</p>
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        <PowerScoreArc score={spider.power_score} size="small" />
+                        <div className="text-right">
+                          <div className="text-xl font-bold">{spider.power_score}</div>
+                          <div className="text-xs text-muted-foreground">Power</div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </div>
 
       </main>
+      
+      <SpiderDetailsModal 
+        spider={selectedSpider}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   );
 };
