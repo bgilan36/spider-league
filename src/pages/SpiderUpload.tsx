@@ -271,6 +271,13 @@ const SpiderUpload = () => {
           </div>
           
           <div className="text-center mb-8">
+            <div className="flex justify-center mb-4">
+              <img 
+                src="/lovable-uploads/72396214-19a6-4e47-b07c-6dd315d94727.png" 
+                alt="Spider League Logo" 
+                className="h-16 w-auto"
+              />
+            </div>
             <h1 className="text-3xl font-bold mb-2">Upload Your Spider</h1>
             <p className="text-muted-foreground">Upload a photo and we'll generate battle stats for your spider</p>
           </div>

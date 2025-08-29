@@ -165,9 +165,16 @@ const SpiderCollection = () => {
         </div>
         
         <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Spider Collection</h1>
-            <p className="text-muted-foreground">Manage your fighters and discover others</p>
+          <div className="flex items-center gap-4">
+            <img 
+              src="/lovable-uploads/72396214-19a6-4e47-b07c-6dd315d94727.png" 
+              alt="Spider League Logo" 
+              className="h-12 w-auto"
+            />
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Spider Collection</h1>
+              <p className="text-muted-foreground">Manage your fighters and discover others</p>
+            </div>
           </div>
           <Button asChild>
             <Link to="/upload">

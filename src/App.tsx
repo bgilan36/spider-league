@@ -13,6 +13,9 @@ import { AuthProvider } from "@/auth/AuthProvider";
 
 const queryClient = new QueryClient();
 
+// Set dark theme as default
+document.documentElement.classList.add('dark');
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <HelmetProvider>

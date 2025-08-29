@@ -71,6 +71,13 @@ const Index = () => {
         </Helmet>
         <div className="w-full max-w-md px-6">
           <div className="text-center mb-8">
+            <div className="flex justify-center mb-4">
+              <img 
+                src="/lovable-uploads/72396214-19a6-4e47-b07c-6dd315d94727.png" 
+                alt="Spider League Logo" 
+                className="h-20 w-auto"
+              />
+            </div>
             <h1 className="text-3xl font-bold mb-2">Spider League</h1>
             <p className="text-muted-foreground">Battle Spiders Online</p>
           </div>
@@ -202,9 +209,16 @@ const Index = () => {
       <header className="border-b bg-card">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">Spider League</h1>
-              <p className="text-sm text-muted-foreground">Welcome back, fighter!</p>
+            <div className="flex items-center gap-3">
+              <img 
+                src="/lovable-uploads/72396214-19a6-4e47-b07c-6dd315d94727.png" 
+                alt="Spider League Logo" 
+                className="h-8 w-auto"
+              />
+              <div>
+                <h1 className="text-2xl font-bold">Spider League</h1>
+                <p className="text-sm text-muted-foreground">Welcome back, fighter!</p>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <HowItWorksModal />
