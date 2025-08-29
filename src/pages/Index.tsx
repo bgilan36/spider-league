@@ -213,7 +213,7 @@ const Index = () => {
               <img 
                 src="/lovable-uploads/3a8558c8-28e5-4ad2-8bb8-425536ee81ca.png" 
                 alt="Spider League Logo" 
-                className="h-8 w-auto"
+                className="h-12 w-auto"
               />
               <div>
                 <h1 className="text-2xl font-bold">Spider League</h1>
