@@ -397,7 +397,22 @@ export type Database = {
           updated_at?: string
           week_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "weekly_rankings_spider_id_fkey"
+            columns: ["spider_id"]
+            isOneToOne: false
+            referencedRelation: "spiders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_rankings_week_id_fkey"
+            columns: ["week_id"]
+            isOneToOne: false
+            referencedRelation: "weeks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       weeks: {
         Row: {
