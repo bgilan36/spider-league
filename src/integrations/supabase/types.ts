@@ -369,6 +369,36 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_rankings: {
+        Row: {
+          created_at: string
+          id: string
+          power_score: number
+          rank_position: number | null
+          spider_id: string
+          updated_at: string
+          week_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          power_score: number
+          rank_position?: number | null
+          spider_id: string
+          updated_at?: string
+          week_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          power_score?: number
+          rank_position?: number | null
+          spider_id?: string
+          updated_at?: string
+          week_id?: string
+        }
+        Relationships: []
+      }
       weeks: {
         Row: {
           created_at: string | null
@@ -412,7 +442,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_current_week: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      update_weekly_rankings: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       battle_type: "SANDBOX" | "MATCHUP"
