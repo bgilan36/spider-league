@@ -8,6 +8,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
 import { Upload, Trophy, Users, Sword, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { HowItWorksModal } from "@/components/HowItWorksModal";
 
 const Index = () => {
   const { user, signOut, signIn, signUp, signInWithGoogle, signInAsDemo, loading: authLoading } = useAuth();
@@ -260,41 +261,16 @@ const Index = () => {
           </Card>
         </div>
 
-        {/* Welcome Section */}
+        {/* How it Works Section */}
         <Card>
           <CardHeader>
-            <CardTitle>Getting Started</CardTitle>
+            <CardTitle>Welcome to Spider League</CardTitle>
             <CardDescription>
-              New to Spider League? Here's how to begin your journey:
+              Ready to build your spider army and compete for glory?
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center p-4 border rounded-lg">
-                <Upload className="h-8 w-8 mx-auto mb-2 text-primary" />
-                <h3 className="font-semibold mb-1">1. Upload Your Spider</h3>
-                <p className="text-sm text-muted-foreground">Take a photo and we'll generate battle stats</p>
-              </div>
-              <div className="text-center p-4 border rounded-lg opacity-60">
-                <Sword className="h-8 w-8 mx-auto mb-2 text-primary" />
-                <h3 className="font-semibold mb-1">2. Enter Battles</h3>
-                <p className="text-sm text-muted-foreground">Compete in weekly matchups (coming soon)</p>
-              </div>
-              <div className="text-center p-4 border rounded-lg opacity-60">
-                <Trophy className="h-8 w-8 mx-auto mb-2 text-primary" />
-                <h3 className="font-semibold mb-1">3. Climb Rankings</h3>
-                <p className="text-sm text-muted-foreground">Rise through the leagues (coming soon)</p>
-              </div>
-            </div>
-            
-            <div className="text-center pt-4">
-              <Button asChild size="lg">
-                <Link to="/upload">
-                  <Upload className="mr-2 h-4 w-4" />
-                  Upload Your First Spider
-                </Link>
-              </Button>
-            </div>
+          <CardContent className="text-center py-6">
+            <HowItWorksModal />
           </CardContent>
         </Card>
       </main>
