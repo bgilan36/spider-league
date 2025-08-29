@@ -154,6 +154,16 @@ const SpiderCollection = () => {
       </Helmet>
 
       <main className="container mx-auto px-6 py-8">
+        <div className="flex items-center gap-2 mb-6">
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/" className="text-muted-foreground hover:text-foreground">
+              ← Home
+            </Link>
+          </Button>
+          <span className="text-muted-foreground">/</span>
+          <span className="text-sm font-medium">Collection</span>
+        </div>
+        
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold mb-2">Spider Collection</h1>
