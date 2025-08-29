@@ -1,12 +1,12 @@
 import { useState, useRef } from "react";
 import { Helmet } from "react-helmet-async";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { Upload, Camera, Loader2 } from "lucide-react";
+import { Upload, Camera, Loader2, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
 import { classifyImage } from "@/hooks/useImageClassifier";
@@ -260,6 +260,16 @@ const SpiderUpload = () => {
       
       <main className="container mx-auto px-6 py-8">
         <div className="max-w-2xl mx-auto">
+          <div className="mb-6">
+            <Link 
+              to="/" 
+              className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="mr-1 h-4 w-4" />
+              Back to Home
+            </Link>
+          </div>
+          
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold mb-2">Upload Your Spider</h1>
             <p className="text-muted-foreground">Upload a photo and we'll generate battle stats for your spider</p>
