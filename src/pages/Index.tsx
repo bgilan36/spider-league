@@ -221,10 +221,9 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/roadmap" className="flex items-center gap-2">
+              <Button variant="outline" size="icon" asChild>
+                <Link to="/roadmap">
                   <Lightbulb className="h-4 w-4" />
-                  Feature Ideas
                 </Link>
               </Button>
               <HowItWorksModal />
@@ -285,17 +284,6 @@ const Index = () => {
             </Link>
           </Card>
 
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-            <Link to="/roadmap" className="block">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Roadmap</CardTitle>
-                  <Map className="h-5 w-5 text-primary" />
-                </div>
-                <CardDescription>View development progress & submit ideas</CardDescription>
-              </CardHeader>
-            </Link>
-          </Card>
         </div>
 
       </main>
