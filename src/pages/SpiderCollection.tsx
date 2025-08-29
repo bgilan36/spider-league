@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Plus, Trophy, Zap, Shield, Target, Droplet, Globe } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
+import PowerScoreArc from "@/components/PowerScoreArc";
 
 interface Spider {
   id: string;
@@ -101,12 +102,11 @@ const SpiderCollection = () => {
           {spider.rarity}
         </Badge>
       </div>
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-4">
         <CardTitle className="text-lg">{spider.nickname}</CardTitle>
         <CardDescription>{spider.species}</CardDescription>
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium">Power Score</span>
-          <span className="text-lg font-bold text-primary">{spider.power_score}</span>
+        <div className="flex justify-center mt-2">
+          <PowerScoreArc score={spider.power_score} />
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
