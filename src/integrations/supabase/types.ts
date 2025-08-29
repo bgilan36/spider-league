@@ -465,6 +465,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_species_bias: {
+        Args: {
+          in_damage: number
+          in_defense: number
+          in_hit_points: number
+          in_speed: number
+          in_venom: number
+          in_webcraft: number
+          species: string
+        }
+        Returns: {
+          damage: number
+          defense: number
+          hit_points: number
+          speed: number
+          venom: number
+          webcraft: number
+        }[]
+      }
       get_current_week: {
         Args: Record<PropertyKey, never>
         Returns: string
