@@ -24,6 +24,9 @@ interface Spider {
   webcraft: number;
   owner_id: string;
   created_at: string;
+  profiles: {
+    display_name: string | null;
+  } | null;
 }
 
 const Leaderboard = () => {
@@ -64,14 +67,19 @@ const Leaderboard = () => {
 
       const { data: spiders, error } = await supabase
         .from('spiders')
-        .select('*')
+        .select(`
+          *,
+          profiles (
+            display_name
+          )
+        `)
         .eq('is_approved', true)
         .order('power_score', { ascending: false })
         .limit(100);
 
       if (error) throw error;
 
-      setTopSpiders(spiders || []);
+      setTopSpiders((spiders || []) as any);
     } catch (error: any) {
       console.error("Error fetching leaderboard:", error);
       toast({ 
@@ -141,38 +149,51 @@ const Leaderboard = () => {
           <div className="space-y-4">
             {/* Top 3 Featured */}
             {topSpiders.slice(0, 3).length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <div className="space-y-4 mb-8">
                 {topSpiders.slice(0, 3).map((spider, index) => {
                   const rank = index + 1;
+                  const ownerName = spider.profiles?.display_name || `User ${spider.owner_id.slice(0, 8)}`;
                   return (
-                    <Card key={spider.id} className={`relative ${rank === 1 ? 'ring-2 ring-amber-500' : ''}`}>
-                      <div className="absolute top-4 left-4 flex items-center gap-2">
-                        {getRankIcon(rank)}
-                        <Badge variant="secondary" className="font-bold">
-                          {getRankBadge(rank)}
-                        </Badge>
-                      </div>
-                      <Badge 
-                        variant="secondary" 
-                        className={`absolute top-4 right-4 ${rarityColors[spider.rarity]} text-white`}
-                      >
-                        {spider.rarity}
-                      </Badge>
-                      <div className="aspect-square overflow-hidden rounded-t-lg">
-                        <img 
-                          src={spider.image_url} 
-                          alt={`${spider.nickname} - ${spider.species}`}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      </div>
-                      <CardHeader className="pb-4">
-                        <CardTitle className="text-lg text-center">{spider.nickname}</CardTitle>
-                        <CardDescription className="text-center">{spider.species}</CardDescription>
-                        <div className="flex justify-center mt-2">
-                          <PowerScoreArc score={spider.power_score} />
+                    <Card key={spider.id} className={`${rank === 1 ? 'ring-2 ring-amber-500' : ''}`}>
+                      <CardContent className="flex items-center gap-4 p-6">
+                        <div className="flex items-center gap-3">
+                          {getRankIcon(rank)}
+                          <Badge variant="secondary" className="font-bold text-lg px-3 py-1">
+                            {getRankBadge(rank)}
+                          </Badge>
                         </div>
-                      </CardHeader>
+                        
+                        <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
+                          <img 
+                            src={spider.image_url} 
+                            alt={`${spider.nickname} - ${spider.species}`}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        </div>
+                        
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-bold text-xl">{spider.nickname}</h3>
+                            <Badge 
+                              variant="secondary" 
+                              className={`${rarityColors[spider.rarity]} text-white`}
+                            >
+                              {spider.rarity}
+                            </Badge>
+                          </div>
+                          <p className="text-muted-foreground">{spider.species}</p>
+                          <p className="text-sm text-muted-foreground">Owner: {ownerName}</p>
+                        </div>
+                        
+                        <div className="flex items-center gap-4">
+                          <PowerScoreArc score={spider.power_score} />
+                          <div className="text-right">
+                            <div className="text-3xl font-bold">{spider.power_score}</div>
+                            <div className="text-sm text-muted-foreground">Power Score</div>
+                          </div>
+                        </div>
+                      </CardContent>
                     </Card>
                   );
                 })}
@@ -183,6 +204,7 @@ const Leaderboard = () => {
             <div className="space-y-2">
               {topSpiders.slice(3).map((spider, index) => {
                 const rank = index + 4;
+                const ownerName = spider.profiles?.display_name || `User ${spider.owner_id.slice(0, 8)}`;
                 return (
                   <Card key={spider.id} className="hover:shadow-md transition-shadow">
                     <CardContent className="flex items-center gap-4 p-4">
@@ -204,6 +226,7 @@ const Leaderboard = () => {
                         <div className="min-w-0 flex-1">
                           <h3 className="font-semibold truncate">{spider.nickname}</h3>
                           <p className="text-sm text-muted-foreground truncate">{spider.species}</p>
+                          <p className="text-xs text-muted-foreground truncate">Owner: {ownerName}</p>
                         </div>
                       </div>
                       
