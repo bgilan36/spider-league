@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/auth/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
-import { Upload, Trophy, Users, Sword, Loader2 } from "lucide-react";
+import { Upload, Trophy, Users, Sword, Loader2, Map, Lightbulb } from "lucide-react";
 import { useState } from "react";
 import { HowItWorksModal } from "@/components/HowItWorksModal";
 
@@ -221,6 +221,12 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/roadmap" className="flex items-center gap-2">
+                  <Lightbulb className="h-4 w-4" />
+                  Feature Ideas
+                </Link>
+              </Button>
               <HowItWorksModal />
               <Button variant="outline" onClick={signOut}>
                 Sign out
@@ -232,7 +238,7 @@ const Index = () => {
 
       <main className="container mx-auto px-6 py-8">
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <Card className="cursor-pointer hover:shadow-lg transition-shadow">
             <Link to="/upload" className="block">
               <CardHeader className="pb-3">
@@ -275,6 +281,18 @@ const Index = () => {
                   <Users className="h-5 w-5 text-primary" />
                 </div>
                 <CardDescription>View top-ranked spider fighters</CardDescription>
+              </CardHeader>
+            </Link>
+          </Card>
+
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+            <Link to="/roadmap" className="block">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Roadmap</CardTitle>
+                  <Map className="h-5 w-5 text-primary" />
+                </div>
+                <CardDescription>View development progress & submit ideas</CardDescription>
               </CardHeader>
             </Link>
           </Card>
