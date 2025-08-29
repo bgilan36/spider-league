@@ -234,12 +234,13 @@ const SpiderUpload = () => {
           species: species.trim(),
           image_url: publicUrl,
           rng_seed: Math.random().toString(36).substring(7),
+          is_approved: true,
           ...finalStats,
         });
 
       if (insertError) throw insertError;
 
-      toast({ title: "Spider uploaded!", description: "Your spider has been created and is pending approval." });
+      toast({ title: "Spider uploaded!", description: "Your spider is ready for battle!" });
       navigate("/collection");
     } catch (error: any) {
       console.error("Upload error:", error);

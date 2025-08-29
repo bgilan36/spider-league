@@ -69,11 +69,10 @@ const SpiderCollection = () => {
 
       if (userError) throw userError;
 
-      // Fetch all approved spiders
+      // Fetch all spiders
       const { data: approvedSpiders, error: approvedError } = await supabase
         .from('spiders')
         .select('*')
-        .eq('is_approved', true)
         .order('power_score', { ascending: false })
         .limit(50);
 
@@ -101,11 +100,6 @@ const SpiderCollection = () => {
         >
           {spider.rarity}
         </Badge>
-        {!spider.is_approved && (
-          <Badge variant="outline" className="absolute top-2 left-2 bg-background">
-            Pending Approval
-          </Badge>
-        )}
       </div>
       <CardHeader className="pb-2">
         <CardTitle className="text-lg">{spider.nickname}</CardTitle>
@@ -115,7 +109,10 @@ const SpiderCollection = () => {
           <span className="text-lg font-bold text-primary">{spider.power_score}</span>
         </div>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          A powerful {spider.species.toLowerCase()} with exceptional {spider.venom > 70 ? 'venom production' : spider.webcraft > 70 ? 'web crafting abilities' : spider.speed > 70 ? 'agility and speed' : spider.defense > 70 ? 'defensive capabilities' : 'combat prowess'}. This spider excels in battle with its {spider.damage > 70 ? 'devastating attacks' : spider.hit_points > 70 ? 'incredible endurance' : 'balanced fighting style'}.
+        </p>
         {Object.entries(statIcons).map(([stat, Icon]) => (
           <div key={stat} className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2">
