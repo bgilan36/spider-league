@@ -32,6 +32,7 @@ const Index = () => {
   const [loading, setLoading] = useState(false);
   const [userSpiders, setUserSpiders] = useState<Spider[]>([]);
   const [spidersLoading, setSpidersLoading] = useState(true);
+  const [userGlobalRank, setUserGlobalRank] = useState<number | null>(null);
 
   const rarityColors = {
     COMMON: "bg-gray-500",
@@ -44,11 +45,43 @@ const Index = () => {
   useEffect(() => {
     if (user) {
       fetchUserSpiders();
+      fetchUserGlobalRank();
     } else {
       setUserSpiders([]);
+      setUserGlobalRank(null);
       setSpidersLoading(false);
     }
   }, [user]);
+
+  const fetchUserGlobalRank = async () => {
+    if (!user) return;
+    
+    try {
+      // Get user's current ELO rating
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('rating_elo')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      if (userProfile?.rating_elo) {
+        // Get rank by counting users with higher ELO
+        const { count, error: rankError } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .gt('rating_elo', userProfile.rating_elo);
+
+        if (rankError) throw rankError;
+
+        // User's rank is count + 1 (users with higher ELO + themselves)
+        setUserGlobalRank((count || 0) + 1);
+      }
+    } catch (error) {
+      console.error('Error fetching user rank:', error);
+    }
+  };
 
   const fetchUserSpiders = async () => {
     if (!user) return;
@@ -288,12 +321,18 @@ const Index = () => {
       </header>
 
       <main className="container mx-auto px-6 py-8">
-        {/* My Collection Section */}
+        {/* My Spider Squad Section */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold mb-2">My Collection</h2>
-              <p className="text-muted-foreground">Your spider fighters ranked by power</p>
+              <div className="flex items-center gap-3 mb-2">
+                <h2 className="text-2xl font-bold">My Spider Squad</h2>
+                {userGlobalRank && (
+                  <Badge variant="secondary" className="text-sm">
+                    Global Rank #{userGlobalRank}
+                  </Badge>
+                )}
+              </div>
             </div>
             <Button asChild className="gradient-button relative z-10">
               <Link to="/upload" className="flex items-center gap-2">
