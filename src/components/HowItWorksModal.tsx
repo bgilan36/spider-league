@@ -14,9 +14,8 @@ export const HowItWorksModal = () => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" size="lg">
-          <HelpCircle className="mr-2 h-4 w-4" />
-          How it Works
+        <Button variant="ghost" size="sm">
+          <HelpCircle className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">

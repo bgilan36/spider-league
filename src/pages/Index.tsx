@@ -206,9 +206,12 @@ const Index = () => {
               <h1 className="text-2xl font-bold">Spider League</h1>
               <p className="text-sm text-muted-foreground">Welcome back, fighter!</p>
             </div>
-            <Button variant="outline" onClick={signOut}>
-              Sign out
-            </Button>
+            <div className="flex items-center gap-2">
+              <HowItWorksModal />
+              <Button variant="outline" onClick={signOut}>
+                Sign out
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -261,18 +264,6 @@ const Index = () => {
           </Card>
         </div>
 
-        {/* How it Works Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Welcome to Spider League</CardTitle>
-            <CardDescription>
-              Ready to build your spider army and compete for glory?
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center py-6">
-            <HowItWorksModal />
-          </CardContent>
-        </Card>
       </main>
     </div>
   );
