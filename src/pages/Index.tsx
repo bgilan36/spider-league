@@ -267,14 +267,16 @@ const Index = () => {
             </CardHeader>
           </Card>
 
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow opacity-60">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">Leaderboard</CardTitle>
-                <Users className="h-5 w-5 text-primary" />
-              </div>
-              <CardDescription>Coming soon...</CardDescription>
-            </CardHeader>
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+            <Link to="/leaderboard" className="block">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Leaderboard</CardTitle>
+                  <Users className="h-5 w-5 text-primary" />
+                </div>
+                <CardDescription>View top-ranked spider fighters</CardDescription>
+              </CardHeader>
+            </Link>
           </Card>
         </div>
 

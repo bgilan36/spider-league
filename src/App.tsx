@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import SpiderUpload from "./pages/SpiderUpload";
 import SpiderCollection from "./pages/SpiderCollection";
+import Leaderboard from "./pages/Leaderboard";
 import { AuthProvider } from "@/auth/AuthProvider";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/upload" element={<SpiderUpload />} />
               <Route path="/collection" element={<SpiderCollection />} />
+              <Route path="/leaderboard" element={<Leaderboard />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
