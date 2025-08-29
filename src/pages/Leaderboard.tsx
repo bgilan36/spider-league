@@ -119,7 +119,7 @@ const Leaderboard = () => {
           <div className="text-center">
             <div className="flex justify-center mb-4">
               <img 
-                src="/lovable-uploads/72396214-19a6-4e47-b07c-6dd315d94727.png" 
+                src="/lovable-uploads/3a8558c8-28e5-4ad2-8bb8-425536ee81ca.png" 
                 alt="Spider League Logo" 
                 className="h-16 w-auto"
               />
