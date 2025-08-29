@@ -87,32 +87,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       email: 'demo@spiderleague.com',
       password: 'demo123456',
     });
-    
-    // If user doesn't exist, create the account
-    if (error && error.message.includes('Invalid login credentials')) {
-      const { error: signUpError } = await supabase.auth.signUp({
+
+    // If user doesn't exist, create the account then sign in
+    if (error && (error.message.includes('Invalid login credentials') || error.message.toLowerCase().includes('invalid'))) {
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: 'demo@spiderleague.com',
         password: 'demo123456',
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+        },
       });
-      
+
       if (signUpError) {
         error = signUpError;
+      } else if (signUpData?.session) {
+        // Sign up returned a session when email confirmation is disabled
+        error = null as any;
       } else {
-        // Return a custom error asking user to disable email confirmation
-        error = {
-          message: 'Demo account created! Please disable "Confirm email" in Supabase Authentication settings, then try again.'
-        } as any;
+        // No session returned; try signing in again
+        const signInResult = await supabase.auth.signInWithPassword({
+          email: 'demo@spiderleague.com',
+          password: 'demo123456',
+        });
+        error = signInResult.error;
       }
     } else if (error && error.message.includes('Email not confirmed')) {
-      // Return a helpful message for unconfirmed email
+      // Helpful message for unconfirmed email (should not occur if email confirmation is disabled)
       error = {
-        message: 'Please disable "Confirm email" in your Supabase Authentication settings for easier development testing.'
+        message: 'Email not confirmed. If testing locally, disable "Confirm email" in Supabase Authentication settings or delete the existing demo user and try again.'
       } as any;
     }
-    
+
     return { error };
   };
-
   const signOut = async () => {
     await supabase.auth.signOut();
   };
