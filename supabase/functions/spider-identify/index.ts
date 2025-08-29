@@ -84,6 +84,65 @@ function clampInt(n: unknown, min: number, max: number) {
   return Math.max(min, Math.min(max, v));
 }
 
+// Apply species-specific biases to ensure more realistic attributes
+function applySpeciesBias(species: string, stats: { hit_points: number; damage: number; speed: number; defense: number; venom: number; webcraft: number; }) {
+  const s = (species || "").toLowerCase();
+  let { hit_points, damage, speed, defense, venom, webcraft } = stats;
+
+  const clamp = (n: number) => clampInt(n, 10, 100) as number;
+
+  if (s.includes("widow")) {
+    venom = Math.max(venom, 95);
+    damage = Math.max(damage, 70);
+    speed = Math.min(speed, 60);
+    webcraft = Math.min(webcraft, 50);
+    hit_points = Math.max(hit_points, 55);
+  } else if (s.includes("recluse")) {
+    venom = Math.max(venom, 90);
+    damage = Math.max(damage, 70);
+    webcraft = Math.min(webcraft, 50);
+  } else if (s.includes("tarantula")) {
+    hit_points = Math.max(hit_points, 95);
+    defense = Math.max(defense, 80);
+    damage = Math.max(damage, 80);
+    speed = Math.min(speed, 55);
+    venom = Math.min(venom, 60);
+    webcraft = Math.min(webcraft, 60);
+  } else if (s.includes("barn") || s.includes("orb") || s.includes("weaver") || s.includes("garden")) {
+    webcraft = Math.max(webcraft, 80);
+    venom = Math.min(venom, 45);
+    damage = Math.min(damage, 65);
+    defense = Math.max(defense, 60);
+    hit_points = Math.max(hit_points, 60);
+  } else if (s.includes("wolf")) {
+    speed = Math.max(speed, 85);
+    damage = Math.max(damage, 75);
+    webcraft = Math.min(webcraft, 40);
+    venom = Math.max(venom, 60);
+    hit_points = Math.max(hit_points, 70);
+  } else if (s.includes("jump")) {
+    speed = Math.max(speed, 80);
+    damage = Math.max(damage, 65);
+    webcraft = Math.min(webcraft, 35);
+    hit_points = Math.max(hit_points, 55);
+    defense = Math.max(defense, 55);
+  } else if (s.includes("huntsman")) {
+    speed = Math.max(speed, 90);
+    damage = Math.max(damage, 75);
+    hit_points = Math.max(hit_points, 80);
+    webcraft = Math.min(webcraft, 30);
+  }
+
+  return {
+    hit_points: clamp(hit_points),
+    damage: clamp(damage),
+    speed: clamp(speed),
+    defense: clamp(defense),
+    venom: clamp(venom),
+    webcraft: clamp(webcraft),
+  };
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -176,27 +235,33 @@ Base scores should reflect the real-world traits implied by the species name: "$
       console.error("LLM stats generation failed:", e);
     }
 
-    // Validate and clamp stats; fallback if needed
-    let stats;
-    if (aiStats) {
-      stats = {
-        hit_points: clampInt(aiStats.hit_points, 10, 100),
-        damage: clampInt(aiStats.damage, 10, 100),
-        speed: clampInt(aiStats.speed, 10, 100),
-        defense: clampInt(aiStats.defense, 10, 100),
-        venom: clampInt(aiStats.venom, 10, 100),
-        webcraft: clampInt(aiStats.webcraft, 10, 100),
-      };
-      const power_score = Object.values(stats).reduce((sum, v) => sum + Number(v), 0);
-      let rarity: "COMMON" | "RARE" | "EPIC" | "LEGENDARY";
-      if (power_score >= 280) rarity = "LEGENDARY";
-      else if (power_score >= 240) rarity = "EPIC";
-      else if (power_score >= 200) rarity = "RARE";
-      else rarity = "COMMON";
-      stats = { ...stats, power_score, rarity };
-    } else {
-      stats = generateFallbackStats();
-    }
+// Validate and clamp stats; fallback if needed, then apply species bias
+let baseStats;
+if (aiStats) {
+  baseStats = {
+    hit_points: clampInt(aiStats.hit_points, 10, 100),
+    damage: clampInt(aiStats.damage, 10, 100),
+    speed: clampInt(aiStats.speed, 10, 100),
+    defense: clampInt(aiStats.defense, 10, 100),
+    venom: clampInt(aiStats.venom, 10, 100),
+    webcraft: clampInt(aiStats.webcraft, 10, 100),
+  };
+} else {
+  baseStats = generateFallbackStats();
+}
+
+// Ensure realistic attributes by species
+let statsCore = applySpeciesBias(species, baseStats);
+
+// Compute power score and rarity after biasing
+const power_score = Object.values(statsCore).reduce((sum, v) => sum + Number(v), 0);
+let rarity: "COMMON" | "RARE" | "EPIC" | "LEGENDARY";
+if (power_score >= 280) rarity = "LEGENDARY";
+else if (power_score >= 240) rarity = "EPIC";
+else if (power_score >= 200) rarity = "RARE";
+else rarity = "COMMON";
+
+const stats = { ...statsCore, power_score, rarity };
 
     const payload = {
       species,

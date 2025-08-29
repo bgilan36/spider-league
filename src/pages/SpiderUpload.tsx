@@ -165,8 +165,65 @@ const SpiderUpload = () => {
     }
   };
 
+  const applySpeciesBias = (speciesName: string, stats: { hit_points: number; damage: number; speed: number; defense: number; venom: number; webcraft: number; }) => {
+    const s = (speciesName || "").toLowerCase();
+    let { hit_points, damage, speed, defense, venom, webcraft } = stats;
+    const clamp = (n: number) => Math.max(10, Math.min(100, Math.round(n)));
+
+    if (s.includes('widow')) {
+      venom = Math.max(venom, 95);
+      damage = Math.max(damage, 70);
+      speed = Math.min(speed, 60);
+      webcraft = Math.min(webcraft, 50);
+      hit_points = Math.max(hit_points, 55);
+    } else if (s.includes('recluse')) {
+      venom = Math.max(venom, 90);
+      damage = Math.max(damage, 70);
+      webcraft = Math.min(webcraft, 50);
+    } else if (s.includes('tarantula')) {
+      hit_points = Math.max(hit_points, 95);
+      defense = Math.max(defense, 80);
+      damage = Math.max(damage, 80);
+      speed = Math.min(speed, 55);
+      venom = Math.min(venom, 60);
+      webcraft = Math.min(webcraft, 60);
+    } else if (s.includes('barn') || s.includes('orb') || s.includes('weaver') || s.includes('garden')) {
+      webcraft = Math.max(webcraft, 80);
+      venom = Math.min(venom, 45);
+      damage = Math.min(damage, 65);
+      defense = Math.max(defense, 60);
+      hit_points = Math.max(hit_points, 60);
+    } else if (s.includes('wolf')) {
+      speed = Math.max(speed, 85);
+      damage = Math.max(damage, 75);
+      webcraft = Math.min(webcraft, 40);
+      venom = Math.max(venom, 60);
+      hit_points = Math.max(hit_points, 70);
+    } else if (s.includes('jump')) {
+      speed = Math.max(speed, 80);
+      damage = Math.max(damage, 65);
+      webcraft = Math.min(webcraft, 35);
+      hit_points = Math.max(hit_points, 55);
+      defense = Math.max(defense, 55);
+    } else if (s.includes('huntsman')) {
+      speed = Math.max(speed, 90);
+      damage = Math.max(damage, 75);
+      hit_points = Math.max(hit_points, 80);
+      webcraft = Math.min(webcraft, 30);
+    }
+
+    return {
+      hit_points: clamp(hit_points),
+      damage: clamp(damage),
+      speed: clamp(speed),
+      defense: clamp(defense),
+      venom: clamp(venom),
+      webcraft: clamp(webcraft),
+    };
+  };
+
   const generateSpiderStats = () => {
-    // Generate random stats based on rarity
+    // Generate random stats, then bias by species if available
     const baseStats = {
       hit_points: Math.floor(Math.random() * 50) + 50, // 50-100
       damage: Math.floor(Math.random() * 30) + 20, // 20-50
@@ -175,10 +232,10 @@ const SpiderUpload = () => {
       venom: Math.floor(Math.random() * 45) + 15, // 15-60
       webcraft: Math.floor(Math.random() * 40) + 20, // 20-60
     };
-    
-    const power_score = Object.values(baseStats).reduce((sum, stat) => sum + stat, 0);
-    
-    // Determine rarity based on power score
+
+    const biased = species ? applySpeciesBias(species, baseStats) : baseStats;
+    const power_score = Object.values(biased).reduce((sum, stat) => sum + (stat as number), 0);
+
     let rarity: "COMMON" | "RARE" | "EPIC" | "LEGENDARY";
     if (power_score >= 280) rarity = "LEGENDARY";
     else if (power_score >= 240) rarity = "EPIC";
@@ -186,7 +243,7 @@ const SpiderUpload = () => {
     else rarity = "COMMON";
 
     return {
-      ...baseStats,
+      ...biased,
       power_score,
       rarity,
     };
