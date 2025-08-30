@@ -242,7 +242,6 @@ const Index = () => {
               />
             </div>
             <h1 className="text-3xl font-bold mb-2">Spider League</h1>
-            <p className="text-muted-foreground">Battle Spiders Online</p>
           </div>
 
           <Card>
@@ -353,7 +352,7 @@ const Index = () => {
           </Card>
           
           <p className="text-center text-sm text-muted-foreground mt-6">
-            Upload a spider, get a fighter profile, and compete for glory.
+            Battle with spiders you find in the wild.
           </p>
         </div>
       </div>
