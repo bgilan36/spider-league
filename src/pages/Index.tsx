@@ -9,6 +9,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
 import { Upload, Trophy, Users, Loader2, Lightbulb, Plus, Sword } from "lucide-react";
 import { useState, useEffect } from "react";
+import { format } from "date-fns";
 import { HowItWorksModal } from "@/components/HowItWorksModal";
 import { UserProfileMenu } from "@/components/UserProfileMenu";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +32,7 @@ interface Spider {
   webcraft: number;
   is_approved: boolean;
   owner_id?: string;
+  created_at?: string;
 }
 
 const Index = () => {
@@ -131,7 +133,7 @@ const Index = () => {
             power_score,
             rank_position,
             spiders (
-              id, nickname, species, image_url, rarity, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved, owner_id,
+              id, nickname, species, image_url, rarity, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved, owner_id, created_at,
               profiles (
                 display_name
               )
@@ -154,7 +156,7 @@ const Index = () => {
         const { data, error } = await supabase
           .from('spiders')
           .select(`
-            id, nickname, species, image_url, rarity, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved, owner_id,
+            id, nickname, species, image_url, rarity, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved, owner_id, created_at,
             profiles (
               display_name
             )
@@ -568,28 +570,30 @@ const Index = () => {
                         />
                       </div>
                       
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1 sm:gap-2 mb-1">
-                          <h4 className="font-semibold text-sm sm:text-base truncate">{spider.nickname}</h4>
-                          <Badge 
-                            className={`text-xs ${rarityColors[spider.rarity]} text-white hidden sm:inline-flex`}
-                          >
-                            {spider.rarity}
-                          </Badge>
-                        </div>
-                        <p className="text-xs sm:text-sm text-muted-foreground truncate">{spider.species}</p>
-                        <p className="text-xs text-muted-foreground truncate hidden sm:block">Owner: {ownerName}</p>
-                      </div>
-                      
-                      <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
-                        <div className="hidden sm:block">
-                          <PowerScoreArc score={spider.power_score} size="small" />
-                        </div>
-                        <div className="text-right">
-                          <div className="text-lg sm:text-xl font-bold">{spider.power_score}</div>
-                          <div className="text-xs text-muted-foreground">Power</div>
-                        </div>
-                      </div>
+                       <div className="min-w-0 flex-1">
+                         <div className="flex items-center gap-1 sm:gap-2 mb-1">
+                           <h4 className="font-semibold text-sm sm:text-base truncate">{spider.nickname}</h4>
+                           <Badge 
+                             className={`text-xs ${rarityColors[spider.rarity]} text-white hidden sm:inline-flex`}
+                           >
+                             {spider.rarity}
+                           </Badge>
+                         </div>
+                         <p className="text-xs sm:text-sm text-muted-foreground truncate">{spider.species}</p>
+                         <p className="text-xs text-muted-foreground truncate hidden sm:block">Owner: {ownerName}</p>
+                         {spider.created_at && (
+                           <p className="text-xs text-muted-foreground">
+                             Uploaded: {format(new Date(spider.created_at), 'MMM d, yyyy')}
+                           </p>
+                         )}
+                       </div>
+                       
+                       <div className="flex items-center justify-center flex-shrink-0 min-w-[60px]">
+                         <div className="text-center">
+                           <div className="text-lg sm:text-xl font-bold">{spider.power_score}</div>
+                           <div className="text-xs text-muted-foreground">Power</div>
+                         </div>
+                       </div>
                     </CardContent>
                   </Card>
                 );
