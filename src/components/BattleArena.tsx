@@ -124,28 +124,28 @@ const BattleArena: React.FC<BattleArenaProps> = ({
     return Math.floor(baseDefense + diceBonus);
   };
 
-  // Auto-progress battle
+  // Auto-progress battle - faster timing
   useEffect(() => {
     if (battleState === 'starting') {
-      const timer = setTimeout(() => setBattleState('rolling'), 2000);
+      const timer = setTimeout(() => setBattleState('rolling'), 1000);
       return () => clearTimeout(timer);
     }
     
     if (battleState === 'rolling' && !winner) {
       setAnimatingDice(true);
       
-      // Animate dice for 2 seconds
+      // Animate dice for 1 second
       const diceTimer = setTimeout(() => {
         setAnimatingDice(false);
         setBattleState('calculating');
         calculateBattleRound();
-      }, 2000);
+      }, 1000);
       
       return () => clearTimeout(diceTimer);
     }
     
     if (battleState === 'calculating' && !winner) {
-      const timer = setTimeout(() => setBattleState('rolling'), 1500);
+      const timer = setTimeout(() => setBattleState('rolling'), 800);
       return () => clearTimeout(timer);
     }
     
@@ -309,16 +309,27 @@ const SpiderBattleCard: React.FC<{
   const healthPercentage = (health / maxHealth) * 100;
 
   return (
-    <Card className={`${isWinner ? 'ring-2 ring-green-500 bg-green-50 dark:bg-green-950' : ''} transition-all`}>
+    <Card className={`${isWinner ? 'ring-2 ring-green-500 bg-green-50 dark:bg-green-950 animate-pulse' : ''} ${
+      animating ? 'animate-pulse shadow-lg shadow-primary/20' : ''
+    } ${health <= maxHealth * 0.3 ? 'ring-1 ring-red-400 animate-pulse' : ''} transition-all duration-300`}>
       <CardHeader>
         <div className="text-center space-y-2">
           <h3 className="text-xl font-bold">{spider.nickname}</h3>
           <p className="text-sm text-muted-foreground">Owner: {ownerName}</p>
-          <img
-            src={spider.image_url}
-            alt={spider.nickname}
-            className="w-24 h-24 mx-auto rounded object-cover"
-          />
+          <div className="relative">
+            <img
+              src={spider.image_url}
+              alt={spider.nickname}
+              className={`w-24 h-24 mx-auto rounded object-cover transition-all duration-300 ${
+                animating ? 'animate-pulse scale-110' : ''
+              } ${health <= maxHealth * 0.3 ? 'animate-pulse opacity-70' : ''} ${
+                isWinner ? 'animate-bounce' : ''
+              }`}
+            />
+            {animating && (
+              <div className="absolute inset-0 bg-primary/20 rounded animate-ping" />
+            )}
+          </div>
         </div>
       </CardHeader>
       
@@ -343,7 +354,7 @@ const SpiderBattleCard: React.FC<{
               diceRolls.map((roll, index) => (
                 <div
                   key={index}
-                  className={`${animating ? 'animate-spin' : ''} transition-transform`}
+                  className={`${animating ? 'animate-spin transform scale-110' : ''} transition-transform duration-300`}
                 >
                   <DiceIcon value={roll} />
                 </div>
@@ -352,7 +363,7 @@ const SpiderBattleCard: React.FC<{
               [1, 2, 3].map((_, index) => (
                 <div
                   key={index}
-                  className={`${animating ? 'animate-spin' : ''} opacity-50`}
+                  className={`${animating ? 'animate-spin transform scale-110' : ''} opacity-50 transition-transform duration-300`}
                 >
                   <DiceIcon value={1} />
                 </div>
