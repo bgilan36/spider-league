@@ -376,7 +376,6 @@ const Index = () => {
                   </Badge>
                 )}
               </div>
-              <p className="text-sm text-muted-foreground">Your 3 most recent spider fighters</p>
             </div>
             <div className="flex items-center gap-2">
               <Button asChild variant="outline">
