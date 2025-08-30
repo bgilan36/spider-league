@@ -95,38 +95,252 @@ const BattleHistory = () => {
     try {
       setLoading(true);
 
-      // Fetch user's battles
-      const { data: battleData, error: battleError } = await supabase
-        .from('battles')
-        .select('*')
-        .or(`team_a->0->owner_id.eq.${user.id},team_b->0->owner_id.eq.${user.id}`)
-        .order('created_at', { ascending: false });
+      // Mock battle data
+      const mockBattles = [
+        {
+          id: "battle-1",
+          created_at: "2024-01-15T14:30:00Z",
+          type: "CHALLENGE",
+          team_a: [
+            {
+              owner_id: user.id,
+              nickname: "Shadowstrike",
+              species: "Black Widow",
+              image_url: "/lovable-uploads/218cca6b-fdab-43a0-9a30-c4defe401691.png"
+            }
+          ],
+          team_b: [
+            {
+              owner_id: "other-user-1",
+              nickname: "Venomfang",
+              species: "Brown Recluse",
+              image_url: "/lovable-uploads/72396214-19a6-4e47-b07c-6dd315d94727.png"
+            }
+          ],
+          winner: "A",
+          battle_log: {}
+        },
+        {
+          id: "battle-2",
+          created_at: "2024-01-12T09:15:00Z",
+          type: "CHALLENGE",
+          team_a: [
+            {
+              owner_id: "other-user-2",
+              nickname: "Webweaver",
+              species: "Orb Weaver",
+              image_url: "/lovable-uploads/3a8558c8-28e5-4ad2-8bb8-425536ee81ca.png"
+            }
+          ],
+          team_b: [
+            {
+              owner_id: user.id,
+              nickname: "Nightcrawler",
+              species: "Wolf Spider",
+              image_url: "/lovable-uploads/218cca6b-fdab-43a0-9a30-c4defe401691.png"
+            }
+          ],
+          winner: "B",
+          battle_log: {}
+        },
+        {
+          id: "battle-3",
+          created_at: "2024-01-10T16:45:00Z",
+          type: "SANDBOX",
+          team_a: [
+            {
+              owner_id: user.id,
+              nickname: "Frostbite",
+              species: "Jumping Spider",
+              image_url: "/lovable-uploads/72396214-19a6-4e47-b07c-6dd315d94727.png"
+            }
+          ],
+          team_b: [
+            {
+              owner_id: "other-user-3",
+              nickname: "Steelclaw",
+              species: "Tarantula",
+              image_url: "/lovable-uploads/3a8558c8-28e5-4ad2-8bb8-425536ee81ca.png"
+            }
+          ],
+          winner: "TIE",
+          battle_log: {}
+        },
+        {
+          id: "battle-4",
+          created_at: "2024-01-08T11:20:00Z",
+          type: "CHALLENGE",
+          team_a: [
+            {
+              owner_id: user.id,
+              nickname: "Thunderstrike",
+              species: "Black Widow",
+              image_url: "/lovable-uploads/218cca6b-fdab-43a0-9a30-c4defe401691.png"
+            }
+          ],
+          team_b: [
+            {
+              owner_id: "other-user-4",
+              nickname: "Poisonheart",
+              species: "Brown Recluse",
+              image_url: "/lovable-uploads/72396214-19a6-4e47-b07c-6dd315d94727.png"
+            }
+          ],
+          winner: "B",
+          battle_log: {}
+        }
+      ];
 
-      if (battleError) throw battleError;
+      // Mock challenge data
+      const mockChallenges = [
+        {
+          id: "challenge-1",
+          challenger_id: user.id,
+          accepter_id: "other-user-1",
+          challenger_spider_id: "spider-1",
+          accepter_spider_id: "spider-2",
+          battle_id: "battle-1",
+          winner_id: user.id,
+          loser_spider_id: null,
+          status: "COMPLETED",
+          challenge_message: "Let's see who has the stronger spider!",
+          created_at: "2024-01-15T14:00:00Z",
+          expires_at: "2024-01-16T14:00:00Z",
+          challenger_spider: {
+            nickname: "Shadowstrike",
+            species: "Black Widow",
+            image_url: "/lovable-uploads/218cca6b-fdab-43a0-9a30-c4defe401691.png"
+          },
+          accepter_spider: {
+            nickname: "Venomfang",
+            species: "Brown Recluse",
+            image_url: "/lovable-uploads/72396214-19a6-4e47-b07c-6dd315d94727.png"
+          },
+          challenger_profile: {
+            display_name: "You"
+          },
+          accepter_profile: {
+            display_name: "SpiderMaster_99"
+          }
+        },
+        {
+          id: "challenge-2",
+          challenger_id: "other-user-2",
+          accepter_id: user.id,
+          challenger_spider_id: "spider-3",
+          accepter_spider_id: "spider-4",
+          battle_id: "battle-2",
+          winner_id: user.id,
+          loser_spider_id: "spider-3",
+          status: "COMPLETED",
+          challenge_message: "Your spider looks weak, let's battle!",
+          created_at: "2024-01-12T08:30:00Z",
+          expires_at: "2024-01-13T08:30:00Z",
+          challenger_spider: {
+            nickname: "Webweaver",
+            species: "Orb Weaver",
+            image_url: "/lovable-uploads/3a8558c8-28e5-4ad2-8bb8-425536ee81ca.png"
+          },
+          accepter_spider: {
+            nickname: "Nightcrawler",
+            species: "Wolf Spider",
+            image_url: "/lovable-uploads/218cca6b-fdab-43a0-9a30-c4defe401691.png"
+          },
+          challenger_profile: {
+            display_name: "WebSlinger42"
+          },
+          accepter_profile: {
+            display_name: "You"
+          }
+        },
+        {
+          id: "challenge-3",
+          challenger_id: user.id,
+          accepter_id: null,
+          challenger_spider_id: "spider-5",
+          accepter_spider_id: null,
+          battle_id: null,
+          winner_id: null,
+          loser_spider_id: null,
+          status: "OPEN",
+          challenge_message: "Anyone brave enough to face my champion?",
+          created_at: "2024-01-16T10:00:00Z",
+          expires_at: "2024-01-17T10:00:00Z",
+          challenger_spider: {
+            nickname: "Stormspinner",
+            species: "Jumping Spider",
+            image_url: "/lovable-uploads/72396214-19a6-4e47-b07c-6dd315d94727.png"
+          },
+          accepter_spider: null,
+          challenger_profile: {
+            display_name: "You"
+          },
+          accepter_profile: null
+        },
+        {
+          id: "challenge-4",
+          challenger_id: "other-user-5",
+          accepter_id: user.id,
+          challenger_spider_id: "spider-6",
+          accepter_spider_id: "spider-7",
+          battle_id: null,
+          winner_id: null,
+          loser_spider_id: null,
+          status: "ACCEPTED",
+          challenge_message: "Time to settle this once and for all!",
+          created_at: "2024-01-14T15:30:00Z",
+          expires_at: "2024-01-15T15:30:00Z",
+          challenger_spider: {
+            nickname: "Ironjaw",
+            species: "Tarantula",
+            image_url: "/lovable-uploads/3a8558c8-28e5-4ad2-8bb8-425536ee81ca.png"
+          },
+          accepter_spider: {
+            nickname: "Quickstrike",
+            species: "Wolf Spider",
+            image_url: "/lovable-uploads/218cca6b-fdab-43a0-9a30-c4defe401691.png"
+          },
+          challenger_profile: {
+            display_name: "ArachnidKing"
+          },
+          accepter_profile: {
+            display_name: "You"
+          }
+        },
+        {
+          id: "challenge-5",
+          challenger_id: "other-user-6",
+          accepter_id: null,
+          challenger_spider_id: "spider-8",
+          accepter_spider_id: null,
+          battle_id: null,
+          winner_id: null,
+          loser_spider_id: null,
+          status: "EXPIRED",
+          challenge_message: "Looking for a worthy opponent!",
+          created_at: "2024-01-05T12:00:00Z",
+          expires_at: "2024-01-06T12:00:00Z",
+          challenger_spider: {
+            nickname: "Shadowbane",
+            species: "Black Widow",
+            image_url: "/lovable-uploads/72396214-19a6-4e47-b07c-6dd315d94727.png"
+          },
+          accepter_spider: null,
+          challenger_profile: {
+            display_name: "SpiderLord88"
+          },
+          accepter_profile: null
+        }
+      ];
 
-      // Fetch user's challenges
-      const { data: challengeData, error: challengeError } = await supabase
-        .from('battle_challenges')
-        .select(`
-          *,
-          challenger_spider:spiders!challenger_spider_id(nickname, image_url, species),
-          accepter_spider:spiders!accepter_spider_id(nickname, image_url, species),
-          challenger_profile:profiles!challenger_id(display_name),
-          accepter_profile:profiles!accepter_id(display_name)
-        `)
-        .or(`challenger_id.eq.${user.id},accepter_id.eq.${user.id}`)
-        .order('created_at', { ascending: false });
-
-      if (challengeError) throw challengeError;
-
-      setBattles((battleData || []) as any);
-      setChallenges((challengeData || []) as any);
+      setBattles(mockBattles as any);
+      setChallenges(mockChallenges as any);
       
       // Calculate stats
-      calculateStats(battleData || [], challengeData || []);
+      calculateStats(mockBattles, mockChallenges);
 
     } catch (error: any) {
-      console.error("Error fetching battle data:", error);
+      console.error("Error loading mock battle data:", error);
       toast({
         title: "Error",
         description: "Failed to load battle history",
