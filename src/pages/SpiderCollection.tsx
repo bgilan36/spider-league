@@ -191,7 +191,7 @@ const SpiderCollection = () => {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
             <img 
-              src="/lovable-uploads/3a8558c8-28e5-4ad2-8bb8-425536ee81ca.png" 
+              src="/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png" 
               alt="Spider League Logo" 
               className="h-12 w-auto"
             />

@@ -168,7 +168,7 @@ const Index = () => {
               owner_id: "other-user-2",
               nickname: "Webweaver",
               species: "Orb Weaver",
-              image_url: "/lovable-uploads/3a8558c8-28e5-4ad2-8bb8-425536ee81ca.png"
+              image_url: "/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png"
             }
           ],
           team_b: [
@@ -199,7 +199,7 @@ const Index = () => {
               owner_id: "other-user-3",
               nickname: "Steelclaw",
               species: "Tarantula",
-              image_url: "/lovable-uploads/3a8558c8-28e5-4ad2-8bb8-425536ee81ca.png"
+              image_url: "/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png"
             }
           ],
           winner: "TIE",
@@ -329,7 +329,7 @@ const Index = () => {
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
               <img 
-                src="/lovable-uploads/3a8558c8-28e5-4ad2-8bb8-425536ee81ca.png"
+                src="/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png"
                 alt="Spider League Logo" 
                 className="h-20 w-auto"
               />
@@ -467,7 +467,7 @@ const Index = () => {
             <div className="flex items-center gap-3 sm:gap-4 min-w-0">
               <div>
                 <img 
-                  src="/lovable-uploads/3a8558c8-28e5-4ad2-8bb8-425536ee81ca.png" 
+                  src="/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png" 
                   alt="Spider League Logo" 
                   className="h-10 sm:h-14 w-auto flex-shrink-0 drop-shadow-lg"
                 />
