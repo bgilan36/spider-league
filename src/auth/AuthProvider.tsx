@@ -82,22 +82,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signInAsDemo = async () => {
-    const baseEmail = 'demo@spiderleague.com';
-    // Generate a secure random password instead of hardcoded one
-    const password = Math.random().toString(36).slice(-12) + Math.random().toString(36).slice(-12);
+    // Generate cryptographically secure random password
+    const generateSecurePassword = () => {
+      const array = new Uint8Array(16);
+      crypto.getRandomValues(array);
+      return Array.from(array, byte => byte.toString(36)).join('').slice(0, 16);
+    };
 
-    // 1) Try the stable demo account first with a more generic error check
-    let { error } = await supabase.auth.signInWithPassword({
-      email: baseEmail,
-      password: 'demo123456', // Keep trying existing demo with old password first
-    });
-
-    if (!error) {
-      return { error };
-    }
-
-    // 2) Fallback: create a fresh ephemeral demo user with secure password
+    // Create a fresh ephemeral demo user with secure password
     const demoEmail = `demo+${Date.now()}@spiderleague.com`;
+    const password = generateSecurePassword();
     console.log('AuthProvider: Creating ephemeral demo account');
 
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
@@ -109,20 +103,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     if (signUpError) {
-      error = signUpError;
+      return { error: signUpError };
     } else if (signUpData?.session) {
       // Sign up returned a session when email confirmation is disabled
-      error = null as any;
+      return { error: null };
     } else {
       // No session returned; try signing in again with the ephemeral email
       const signInResult = await supabase.auth.signInWithPassword({
         email: demoEmail,
         password,
       });
-      error = signInResult.error;
+      return { error: signInResult.error };
     }
-
-    return { error };
   };
   const signOut = async () => {
     await supabase.auth.signOut();
