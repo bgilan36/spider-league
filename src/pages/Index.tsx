@@ -7,13 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/auth/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
-import { Upload, Trophy, Users, Loader2, Lightbulb, Plus } from "lucide-react";
+import { Upload, Trophy, Users, Loader2, Lightbulb, Plus, Sword } from "lucide-react";
 import { useState, useEffect } from "react";
 import { HowItWorksModal } from "@/components/HowItWorksModal";
 import { UserProfileMenu } from "@/components/UserProfileMenu";
 import { supabase } from "@/integrations/supabase/client";
 import PowerScoreArc from "@/components/PowerScoreArc";
 import SpiderDetailsModal from "@/components/SpiderDetailsModal";
+import BattleMode from "@/components/BattleMode";
 
 interface Spider {
   id: string;
@@ -473,6 +474,10 @@ const Index = () => {
           )}
         </div>
 
+        {/* Battle Mode Section */}
+        <div className="mb-8">
+          <BattleMode />
+        </div>
 
         {/* Leaderboard Section */}
         <div className="mb-8">

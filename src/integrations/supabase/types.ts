@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      battle_challenges: {
+        Row: {
+          accepter_id: string | null
+          accepter_spider_id: string | null
+          battle_id: string | null
+          challenge_message: string | null
+          challenger_id: string
+          challenger_spider_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          loser_spider_id: string | null
+          status: string
+          winner_id: string | null
+        }
+        Insert: {
+          accepter_id?: string | null
+          accepter_spider_id?: string | null
+          battle_id?: string | null
+          challenge_message?: string | null
+          challenger_id: string
+          challenger_spider_id: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          loser_spider_id?: string | null
+          status?: string
+          winner_id?: string | null
+        }
+        Update: {
+          accepter_id?: string | null
+          accepter_spider_id?: string | null
+          battle_id?: string | null
+          challenge_message?: string | null
+          challenger_id?: string
+          challenger_spider_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          loser_spider_id?: string | null
+          status?: string
+          winner_id?: string | null
+        }
+        Relationships: []
+      }
       battles: {
         Row: {
           battle_log: Json | null
@@ -552,6 +597,19 @@ export type Database = {
       get_current_week: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      resolve_battle_challenge: {
+        Args: {
+          battle_id_param: string
+          challenge_id: string
+          loser_user_id: string
+          winner_user_id: string
+        }
+        Returns: undefined
+      }
+      transfer_spider_ownership: {
+        Args: { new_owner_id: string; spider_id: string }
+        Returns: undefined
       }
       update_weekly_rankings: {
         Args: Record<PropertyKey, never>
