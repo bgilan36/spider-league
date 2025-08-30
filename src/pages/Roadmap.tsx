@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,134 +10,62 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { ArrowLeft, Plus, Users, Clock, CheckCircle, Lightbulb } from "lucide-react";
+import { ArrowLeft, Plus, Clock, CheckCircle, Lightbulb, ChevronUp, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/auth/AuthProvider";
 
-interface FeatureItem {
+interface RoadmapItem {
   id: string;
   title: string;
   description: string;
   priority: "LOW" | "MEDIUM" | "HIGH";
   category: string;
-  estimatedTime: string;
+  status: "BACKLOG" | "IN_PROGRESS" | "COMPLETED";
+  upvote_count: number;
+  user_has_upvoted?: boolean;
 }
 
 interface KanbanColumn {
   id: string;
   title: string;
   description: string;
-  items: FeatureItem[];
+  items: RoadmapItem[];
   color: string;
   icon: React.ReactNode;
 }
 
 const Roadmap = () => {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [isSubmissionOpen, setIsSubmissionOpen] = useState(false);
   const [featureTitle, setFeatureTitle] = useState("");
   const [featureDescription, setFeatureDescription] = useState("");
   const [featurePriority, setFeaturePriority] = useState<"LOW" | "MEDIUM" | "HIGH">("MEDIUM");
+  const [roadmapItems, setRoadmapItems] = useState<RoadmapItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [upvotingItems, setUpvotingItems] = useState<Set<string>>(new Set());
 
-  // Placeholder roadmap data
-  const kanbanColumns: KanbanColumn[] = [
+  const kanbanColumns: Omit<KanbanColumn, 'items'>[] = [
     {
-      id: "backlog",
+      id: "BACKLOG",
       title: "Backlog",
       description: "Ideas and features under consideration",
       color: "bg-gray-500",
       icon: <Lightbulb className="h-5 w-5" />,
-      items: [
-        {
-          id: "1",
-          title: "Spider Battle Arena",
-          description: "Real-time multiplayer spider battles with spectator mode",
-          priority: "HIGH",
-          category: "Combat",
-          estimatedTime: "6-8 weeks"
-        },
-        {
-          id: "2",
-          title: "Mobile App",
-          description: "Native mobile app for iOS and Android",
-          priority: "MEDIUM",
-          category: "Platform",
-          estimatedTime: "12-16 weeks"
-        },
-        {
-          id: "3",
-          title: "Spider Trading Market",
-          description: "Marketplace for trading spiders between players",
-          priority: "MEDIUM",
-          category: "Economy",
-          estimatedTime: "8-10 weeks"
-        }
-      ]
     },
     {
-      id: "in-progress",
+      id: "IN_PROGRESS",
       title: "In Progress",
       description: "Currently being developed",
       color: "bg-blue-500",
       icon: <Clock className="h-5 w-5" />,
-      items: [
-        {
-          id: "4",
-          title: "Weekly Leaderboards",
-          description: "Time-based ranking system that resets weekly",
-          priority: "HIGH",
-          category: "Competition",
-          estimatedTime: "2-3 weeks"
-        },
-        {
-          id: "5",
-          title: "Enhanced Spider AI",
-          description: "Improved spider classification and rarity detection",
-          priority: "HIGH",
-          category: "AI/ML",
-          estimatedTime: "4-5 weeks"
-        }
-      ]
     },
     {
-      id: "testing",
-      title: "Testing",
-      description: "Features in testing and QA phase",
-      color: "bg-yellow-500",
-      icon: <Users className="h-5 w-5" />,
-      items: [
-        {
-          id: "6",
-          title: "User Profiles Enhancement",
-          description: "Extended user profiles with achievements and stats",
-          priority: "MEDIUM",
-          category: "Social",
-          estimatedTime: "1-2 weeks"
-        }
-      ]
-    },
-    {
-      id: "completed",
+      id: "COMPLETED",
       title: "Completed",
       description: "Recently shipped features",
       color: "bg-green-500",
       icon: <CheckCircle className="h-5 w-5" />,
-      items: [
-        {
-          id: "7",
-          title: "Spider Upload System",
-          description: "AI-powered spider identification and classification",
-          priority: "HIGH",
-          category: "Core",
-          estimatedTime: "Completed"
-        },
-        {
-          id: "8",
-          title: "Power Score System",
-          description: "Dynamic spider power calculation algorithm",
-          priority: "HIGH",
-          category: "Core",
-          estimatedTime: "Completed"
-        }
-      ]
     }
   ];
 
@@ -145,6 +73,141 @@ const Roadmap = () => {
     LOW: "bg-gray-500",
     MEDIUM: "bg-yellow-500",
     HIGH: "bg-red-500"
+  };
+
+  useEffect(() => {
+    fetchRoadmapItems();
+  }, [user]);
+
+  const fetchRoadmapItems = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch roadmap items
+      const { data: items, error: itemsError } = await supabase
+        .from('roadmap_items')
+        .select('*')
+        .order('upvote_count', { ascending: false });
+
+      if (itemsError) throw itemsError;
+
+      let itemsWithUpvotes: RoadmapItem[];
+
+      // If user is logged in, check which items they have upvoted
+      if (user) {
+        const { data: userUpvotes, error: upvotesError } = await supabase
+          .from('roadmap_upvotes')
+          .select('roadmap_item_id')
+          .eq('user_id', user.id);
+
+        if (upvotesError) throw upvotesError;
+
+        const upvotedItemIds = new Set(userUpvotes?.map(u => u.roadmap_item_id) || []);
+        
+        itemsWithUpvotes = (items || []).map(item => ({
+          id: item.id,
+          title: item.title,
+          description: item.description,
+          priority: item.priority as "LOW" | "MEDIUM" | "HIGH",
+          category: item.category,
+          status: item.status as "BACKLOG" | "IN_PROGRESS" | "COMPLETED",
+          upvote_count: item.upvote_count,
+          user_has_upvoted: upvotedItemIds.has(item.id)
+        }));
+      } else {
+        itemsWithUpvotes = (items || []).map(item => ({
+          id: item.id,
+          title: item.title,
+          description: item.description,
+          priority: item.priority as "LOW" | "MEDIUM" | "HIGH",
+          category: item.category,
+          status: item.status as "BACKLOG" | "IN_PROGRESS" | "COMPLETED",
+          upvote_count: item.upvote_count,
+          user_has_upvoted: false
+        }));
+      }
+
+      setRoadmapItems(itemsWithUpvotes);
+    } catch (error) {
+      console.error('Error fetching roadmap items:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load roadmap items.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpvote = async (itemId: string) => {
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "You must be signed in to upvote roadmap items.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setUpvotingItems(prev => new Set([...prev, itemId]));
+
+    try {
+      const item = roadmapItems.find(i => i.id === itemId);
+      if (!item) return;
+
+      if (item.user_has_upvoted) {
+        // Remove upvote
+        const { error } = await supabase
+          .from('roadmap_upvotes')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('roadmap_item_id', itemId);
+
+        if (error) throw error;
+
+        // Update local state
+        setRoadmapItems(prev =>
+          prev.map(i =>
+            i.id === itemId
+              ? { ...i, user_has_upvoted: false, upvote_count: i.upvote_count - 1 }
+              : i
+          )
+        );
+      } else {
+        // Add upvote
+        const { error } = await supabase
+          .from('roadmap_upvotes')
+          .insert({
+            user_id: user.id,
+            roadmap_item_id: itemId
+          });
+
+        if (error) throw error;
+
+        // Update local state
+        setRoadmapItems(prev =>
+          prev.map(i =>
+            i.id === itemId
+              ? { ...i, user_has_upvoted: true, upvote_count: i.upvote_count + 1 }
+              : i
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error updating upvote:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update upvote. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setUpvotingItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(itemId);
+        return newSet;
+      });
+    }
   };
 
   const handleFeatureSubmission = () => {
@@ -169,6 +232,12 @@ const Roadmap = () => {
     setFeaturePriority("MEDIUM");
     setIsSubmissionOpen(false);
   };
+
+  // Group items by status
+  const columnsWithItems: KanbanColumn[] = kanbanColumns.map(column => ({
+    ...column,
+    items: roadmapItems.filter(item => item.status === column.id)
+  }));
 
   return (
     <div className="min-h-screen bg-background">
@@ -200,7 +269,7 @@ const Roadmap = () => {
               />
             </div>
             <h1 className="text-4xl font-bold mb-2">Development Roadmap</h1>
-            <p className="text-muted-foreground">Track our progress and submit your feature ideas</p>
+            <p className="text-muted-foreground">Track our progress, upvote features you want, and submit your ideas</p>
           </div>
         </div>
 
@@ -265,53 +334,72 @@ const Roadmap = () => {
           </Dialog>
         </div>
 
-        {/* Kanban Board */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {kanbanColumns.map((column) => (
-            <div key={column.id} className="space-y-4">
-              <div className="flex items-center gap-2">
-                <div className={`p-2 rounded-md ${column.color} text-white`}>
-                  {column.icon}
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-6 w-6 animate-spin" />
+          </div>
+        ) : (
+          /* Kanban Board - Now with 3 columns instead of 4 (removed Testing) */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {columnsWithItems.map((column) => (
+              <div key={column.id} className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className={`p-2 rounded-md ${column.color} text-white`}>
+                    {column.icon}
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg">{column.title}</h3>
+                    <p className="text-sm text-muted-foreground">{column.description}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-lg">{column.title}</h3>
-                  <p className="text-sm text-muted-foreground">{column.description}</p>
+                
+                <div className="space-y-3">
+                  {column.items.map((item) => (
+                    <Card key={item.id} className="hover:shadow-md transition-shadow">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <CardTitle className="text-sm font-medium leading-tight">
+                            {item.title}
+                          </CardTitle>
+                          <Badge 
+                            variant="secondary" 
+                            className={`${priorityColors[item.priority]} text-white text-xs`}
+                          >
+                            {item.priority}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <CardDescription className="text-xs mb-3">
+                          {item.description}
+                        </CardDescription>
+                        <div className="flex justify-between items-center">
+                          <Badge variant="outline" className="text-xs">
+                            {item.category}
+                          </Badge>
+                          <Button
+                            variant={item.user_has_upvoted ? "default" : "outline"}
+                            size="sm"
+                            className="flex items-center gap-1 h-7 px-2"
+                            onClick={() => handleUpvote(item.id)}
+                            disabled={upvotingItems.has(item.id)}
+                          >
+                            {upvotingItems.has(item.id) ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <ChevronUp className="h-3 w-3" />
+                            )}
+                            <span className="text-xs">{item.upvote_count}</span>
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
               </div>
-              
-              <div className="space-y-3">
-                {column.items.map((item) => (
-                  <Card key={item.id} className="hover:shadow-md transition-shadow">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <CardTitle className="text-sm font-medium leading-tight">
-                          {item.title}
-                        </CardTitle>
-                        <Badge 
-                          variant="secondary" 
-                          className={`${priorityColors[item.priority]} text-white text-xs`}
-                        >
-                          {item.priority}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <CardDescription className="text-xs mb-3">
-                        {item.description}
-                      </CardDescription>
-                      <div className="flex justify-between items-center text-xs text-muted-foreground">
-                        <Badge variant="outline" className="text-xs">
-                          {item.category}
-                        </Badge>
-                        <span>{item.estimatedTime}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         <div className="mt-12 text-center">
           <Card className="max-w-2xl mx-auto">
@@ -319,7 +407,7 @@ const Roadmap = () => {
               <h3 className="text-lg font-semibold mb-2">Want to contribute?</h3>
               <p className="text-muted-foreground mb-4">
                 We're always looking for feedback and ideas from our community. 
-                Submit your feature requests and help shape the future of Spider League!
+                Upvote features you want to see and submit your own feature requests!
               </p>
               <Dialog open={isSubmissionOpen} onOpenChange={setIsSubmissionOpen}>
                 <DialogTrigger asChild>
