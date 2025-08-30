@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Dice1, Dice2, Dice3, Dice4, Dice5, Dice6, Zap, Heart, Shield, Skull } from 'lucide-react';
+import BattleRecapModal from './BattleRecapModal';
 
 interface Spider {
   id: string;
@@ -54,6 +55,8 @@ const BattleArena: React.FC<BattleArenaProps> = ({
   });
   const [winner, setWinner] = useState<Spider | null>(null);
   const [animatingDice, setAnimatingDice] = useState(false);
+  const [showRecapModal, setShowRecapModal] = useState(false);
+  const [battleId, setBattleId] = useState<string>('');
 
   // Battle calculation function
   const calculateBattleRound = () => {
@@ -176,8 +179,8 @@ const BattleArena: React.FC<BattleArenaProps> = ({
         .single();
 
       if (battleData) {
-        const loser = winner.id === spider1.id ? spider2 : spider1;
-        onBattleComplete(winner, loser, battleData.id);
+        setBattleId(battleData.id);
+        setShowRecapModal(true);
       }
     } catch (error) {
       console.error('Error saving battle:', error);
@@ -271,15 +274,24 @@ const BattleArena: React.FC<BattleArenaProps> = ({
           </CardContent>
         </Card>
 
-        {/* Complete Battle Button */}
-        {winner && (
-          <div className="text-center">
-            <Button size="lg" onClick={() => onBattleComplete(winner, winner.id === spider1.id ? spider2 : spider1, '')}>
-              Complete Battle
-            </Button>
-          </div>
-        )}
       </div>
+
+      {/* Battle Recap Modal */}
+      {winner && (
+        <BattleRecapModal
+          isOpen={showRecapModal}
+          onClose={() => {
+            const loser = winner.id === spider1.id ? spider2 : spider1;
+            onBattleComplete(winner, loser, battleId);
+            setShowRecapModal(false);
+          }}
+          winner={winner}
+          loser={winner.id === spider1.id ? spider2 : spider1}
+          winnerOwner={winner.id === spider1.id ? challenger : accepter}
+          loserOwner={winner.id === spider1.id ? accepter : challenger}
+          battleLog={battleLog}
+        />
+      )}
     </div>
   );
 };
