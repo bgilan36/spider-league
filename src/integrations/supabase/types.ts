@@ -66,6 +66,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "battle_challenges_battle_id_fkey"
+            columns: ["battle_id"]
+            isOneToOne: false
+            referencedRelation: "battles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "battle_challenges_challenger_spider_id_fkey"
             columns: ["challenger_spider_id"]
             isOneToOne: false
