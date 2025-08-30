@@ -369,24 +369,30 @@ const Index = () => {
       </Helmet>
       
       {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
+      <header className="glass-card border-b border-border/30 sticky top-0 z-40 backdrop-blur-xl">
+        <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <img 
-                src="/lovable-uploads/3a8558c8-28e5-4ad2-8bb8-425536ee81ca.png" 
-                alt="Spider League Logo" 
-                className="h-8 sm:h-12 w-auto flex-shrink-0"
-              />
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+              <div className="floating">
+                <img 
+                  src="/lovable-uploads/3a8558c8-28e5-4ad2-8bb8-425536ee81ca.png" 
+                  alt="Spider League Logo" 
+                  className="h-10 sm:h-14 w-auto flex-shrink-0 drop-shadow-lg"
+                />
+              </div>
               <div className="min-w-0">
-                <h1 className="text-lg sm:text-2xl font-bold truncate">Spider League</h1>
-                <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">Welcome back, fighter!</p>
+                <h1 className="text-xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent truncate">
+                  Spider League
+                </h1>
+                <p className="text-sm sm:text-base text-muted-foreground hidden sm:block font-medium">
+                  Welcome back, champion! 🕷️
+                </p>
               </div>
             </div>
-            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-              <Button variant="outline" size="icon" asChild className="h-8 w-8 sm:h-10 sm:w-10">
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+              <Button variant="glass" size="icon" asChild className="h-10 w-10 sm:h-12 sm:w-12 pulse-glow">
                 <Link to="/roadmap">
-                  <Lightbulb className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <Lightbulb className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Link>
               </Button>
               <div className="hidden sm:block">
