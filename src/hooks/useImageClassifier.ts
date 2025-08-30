@@ -2,6 +2,21 @@ import { pipeline } from "@huggingface/transformers";
 
 let classifierPromise: Promise<any> | null = null;
 
+// Enhanced confidence thresholds inspired by Picture Insect's accuracy standards
+const CONFIDENCE_THRESHOLDS = {
+  VERY_HIGH: 0.85,
+  HIGH: 0.7,
+  MEDIUM: 0.5,
+  LOW: 0.3
+};
+
+// Spider-specific keywords for result filtering
+const SPIDER_KEYWORDS = [
+  'spider', 'arachnid', 'tarantula', 'widow', 'recluse', 'funnel', 'wolf', 
+  'jumping', 'orb', 'huntsman', 'crab', 'lynx', 'nursery', 'cobweb',
+  'phoneutria', 'latrodectus', 'loxosceles', 'atrax', 'sicarius'
+];
+
 async function getClassifier() {
   if (!classifierPromise) {
     classifierPromise = pipeline(
@@ -47,7 +62,80 @@ function resizeImage(base64: string, maxSize = 512): Promise<string> {
   });
 }
 
-export async function classifyImage(image: string | Blob) {
+// Enhanced spider-specific result filtering
+function filterSpiderResults(results: Array<{ label: string; score: number }>): Array<{ label: string; score: number }> {
+  return results.filter(result => {
+    const label = result.label.toLowerCase();
+    
+    // Check if label contains spider-related keywords
+    const isSpiderRelated = SPIDER_KEYWORDS.some(keyword => 
+      label.includes(keyword)
+    );
+    
+    // Also check for taxonomic patterns (genus species format)
+    const hasTaxonomicFormat = /^[a-z]+ [a-z]+/.test(label);
+    
+    // Keep results that are spider-related or have high confidence and taxonomic format
+    return isSpiderRelated || (result.score > CONFIDENCE_THRESHOLDS.HIGH && hasTaxonomicFormat);
+  });
+}
+
+// Enhanced confidence scoring based on multiple factors
+function calculateEnhancedConfidence(
+  results: Array<{ label: string; score: number }>, 
+  topResult: { label: string; score: number }
+): {
+  confidence: number;
+  reliability: 'very_high' | 'high' | 'medium' | 'low';
+  reason: string;
+} {
+  const { score } = topResult;
+  const label = topResult.label.toLowerCase();
+  
+  // Base confidence from model
+  let confidence = score;
+  let reason = `Base model confidence: ${(score * 100).toFixed(1)}%`;
+  
+  // Boost confidence for spider-specific matches
+  const isSpiderSpecific = SPIDER_KEYWORDS.some(keyword => label.includes(keyword));
+  if (isSpiderSpecific) {
+    confidence = Math.min(0.95, confidence * 1.2);
+    reason += ' + Spider-specific keyword match';
+  }
+  
+  // Boost confidence if there's a significant gap between top 2 results
+  if (results.length > 1) {
+    const gap = results[0].score - results[1].score;
+    if (gap > 0.3) {
+      confidence = Math.min(0.98, confidence * 1.1);
+      reason += ' + Clear winner (large gap)';
+    }
+  }
+  
+  // Determine reliability level
+  let reliability: 'very_high' | 'high' | 'medium' | 'low';
+  if (confidence >= CONFIDENCE_THRESHOLDS.VERY_HIGH) {
+    reliability = 'very_high';
+  } else if (confidence >= CONFIDENCE_THRESHOLDS.HIGH) {
+    reliability = 'high';
+  } else if (confidence >= CONFIDENCE_THRESHOLDS.MEDIUM) {
+    reliability = 'medium';
+  } else {
+    reliability = 'low';
+  }
+  
+  return { confidence, reliability, reason };
+}
+
+export async function classifyImage(image: string | Blob): Promise<{
+  results: Array<{ label: string; score: number }>;
+  topResult: { label: string; score: number };
+  confidence: {
+    confidence: number;
+    reliability: 'very_high' | 'high' | 'medium' | 'low';
+    reason: string;
+  };
+}> {
   try {
     let processedImage = image;
     
@@ -57,10 +145,28 @@ export async function classifyImage(image: string | Blob) {
     }
     
     const classifier = await getClassifier();
-    const outputs = await classifier(processedImage as any, { topk: 5 });
-    return outputs as Array<{ label: string; score: number }>;
+    const rawOutputs = await classifier(processedImage as any, { topk: 10 });
+    
+    // Filter for spider-related results
+    const filteredResults = filterSpiderResults(rawOutputs);
+    
+    // If no spider-related results, keep top 5 original results
+    const results = filteredResults.length > 0 ? filteredResults.slice(0, 5) : rawOutputs.slice(0, 5);
+    
+    if (results.length === 0) {
+      throw new Error('No classification results returned');
+    }
+    
+    const topResult = results[0];
+    const confidence = calculateEnhancedConfidence(results, topResult);
+    
+    return {
+      results,
+      topResult,
+      confidence
+    };
   } catch (error) {
-    console.error('Image classification failed:', error);
+    console.error('Enhanced image classification failed:', error);
     throw new Error(`Classification failed: ${error}`);
   }
 }
