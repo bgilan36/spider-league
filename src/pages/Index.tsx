@@ -51,6 +51,8 @@ const Index = () => {
   const [topLeaderboardSpiders, setTopLeaderboardSpiders] = useState<Spider[]>([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(true);
   const [leaderboardType, setLeaderboardType] = useState<'alltime' | 'weekly'>('alltime');
+  const [recentBattles, setRecentBattles] = useState<any[]>([]);
+  const [battlesLoading, setBattlesLoading] = useState(true);
 
   const rarityColors = {
     COMMON: "bg-gray-500",
@@ -64,10 +66,13 @@ const Index = () => {
     if (user) {
       fetchUserSpiders();
       fetchUserGlobalRank();
+      fetchRecentBattles();
     } else {
       setUserSpiders([]);
       setUserGlobalRank(null);
       setSpidersLoading(false);
+      setBattlesLoading(false);
+      setRecentBattles([]);
     }
     fetchTopLeaderboardSpiders();
   }, [user, leaderboardType]);
@@ -119,6 +124,93 @@ const Index = () => {
       console.error('Error fetching spiders:', error);
     } finally {
       setSpidersLoading(false);
+    }
+  };
+
+  const fetchRecentBattles = async () => {
+    if (!user) return;
+    
+    try {
+      setBattlesLoading(true);
+      
+      // Mock recent battles for now (same as BattleHistory component)
+      const mockBattles = [
+        {
+          id: "battle-1",
+          created_at: "2024-01-15T14:30:00Z",
+          type: "CHALLENGE",
+          team_a: [
+            {
+              owner_id: user.id,
+              nickname: "Shadowstrike",
+              species: "Black Widow",
+              image_url: "/lovable-uploads/218cca6b-fdab-43a0-9a30-c4defe401691.png"
+            }
+          ],
+          team_b: [
+            {
+              owner_id: "other-user-1",
+              nickname: "Venomfang",
+              species: "Brown Recluse", 
+              image_url: "/lovable-uploads/72396214-19a6-4e47-b07c-6dd315d94727.png"
+            }
+          ],
+          winner: "A",
+          battle_log: {}
+        },
+        {
+          id: "battle-2",
+          created_at: "2024-01-12T09:15:00Z",
+          type: "CHALLENGE",
+          team_a: [
+            {
+              owner_id: "other-user-2",
+              nickname: "Webweaver",
+              species: "Orb Weaver",
+              image_url: "/lovable-uploads/3a8558c8-28e5-4ad2-8bb8-425536ee81ca.png"
+            }
+          ],
+          team_b: [
+            {
+              owner_id: user.id,
+              nickname: "Nightcrawler", 
+              species: "Wolf Spider",
+              image_url: "/lovable-uploads/218cca6b-fdab-43a0-9a30-c4defe401691.png"
+            }
+          ],
+          winner: "B",
+          battle_log: {}
+        },
+        {
+          id: "battle-3",
+          created_at: "2024-01-10T16:45:00Z",
+          type: "SANDBOX",
+          team_a: [
+            {
+              owner_id: user.id,
+              nickname: "Frostbite",
+              species: "Jumping Spider",
+              image_url: "/lovable-uploads/72396214-19a6-4e47-b07c-6dd315d94727.png"
+            }
+          ],
+          team_b: [
+            {
+              owner_id: "other-user-3",
+              nickname: "Steelclaw",
+              species: "Tarantula",
+              image_url: "/lovable-uploads/3a8558c8-28e5-4ad2-8bb8-425536ee81ca.png"
+            }
+          ],
+          winner: "TIE",
+          battle_log: {}
+        }
+      ];
+      
+      setRecentBattles(mockBattles.slice(0, 3)); // Only show 3 most recent
+    } catch (error) {
+      console.error('Error fetching recent battles:', error);
+    } finally {
+      setBattlesLoading(false);
     }
   };
 
@@ -496,6 +588,113 @@ const Index = () => {
         {/* Battle Mode Section */}
         <div className="mb-8">
           <BattleMode />
+        </div>
+
+        {/* Recent Battles Section */}
+        <div className="mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold mb-2">Recent Battles</h2>
+              <p className="text-sm sm:text-base text-muted-foreground">
+                Your latest combat encounters
+              </p>
+            </div>
+            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
+              <Link to="/battle-history" className="flex items-center justify-center gap-2">
+                <Sword className="h-4 w-4" />
+                <span className="hidden sm:inline">View All Battles</span>
+                <span className="sm:hidden">View All</span>
+              </Link>
+            </Button>
+          </div>
+
+          {battlesLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          ) : recentBattles.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6 text-center py-12">
+                <Sword className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No battles yet</h3>
+                <p className="text-muted-foreground">Start challenging other players to see your battle history!</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {recentBattles.map((battle) => {
+                const teamA = Array.isArray(battle.team_a) ? battle.team_a : [];
+                const teamB = Array.isArray(battle.team_b) ? battle.team_b : [];
+                const isUserTeamA = teamA?.[0]?.owner_id === user.id;
+                const userSpider = isUserTeamA ? teamA[0] : teamB[0];
+                const opponentSpider = isUserTeamA ? teamB[0] : teamA[0];
+                
+                let resultBadge;
+                let resultText;
+                if (!battle.winner) {
+                  resultBadge = <Badge variant="secondary">In Progress</Badge>;
+                  resultText = "In Progress";
+                } else if (battle.winner === "TIE") {
+                  resultBadge = <Badge variant="outline">Tie</Badge>;
+                  resultText = "Tied";
+                } else {
+                  const userWon = (battle.winner === "A" && isUserTeamA) || 
+                                  (battle.winner === "B" && !isUserTeamA);
+                  resultBadge = userWon ? 
+                    <Badge className="bg-green-500 text-white">Victory</Badge> : 
+                    <Badge variant="destructive">Defeat</Badge>;
+                  resultText = userWon ? "Won" : "Lost";
+                }
+                
+                return (
+                  <Card key={battle.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="flex items-center gap-2 sm:gap-4 p-3 sm:p-4">
+                      <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                        {/* User Spider */}
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-md overflow-hidden flex-shrink-0">
+                          <img 
+                            src={userSpider?.image_url} 
+                            alt={userSpider?.nickname}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm truncate">{userSpider?.nickname}</p>
+                          <p className="text-xs text-muted-foreground truncate">{userSpider?.species}</p>
+                        </div>
+                        
+                        {/* VS */}
+                        <div className="flex-shrink-0 mx-2">
+                          <span className="text-xs font-bold text-muted-foreground">VS</span>
+                        </div>
+                        
+                        {/* Opponent Spider */}
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-md overflow-hidden flex-shrink-0">
+                          <img 
+                            src={opponentSpider?.image_url} 
+                            alt={opponentSpider?.nickname}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm truncate">{opponentSpider?.nickname}</p>
+                          <p className="text-xs text-muted-foreground truncate">{opponentSpider?.species}</p>
+                        </div>
+                      </div>
+                      
+                      {/* Result and Date */}
+                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                        {resultBadge}
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(battle.created_at), 'MMM d')}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Leaderboard Section */}
