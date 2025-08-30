@@ -465,7 +465,7 @@ const Index = () => {
         <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-              <div className="floating">
+              <div>
                 <img 
                   src="/lovable-uploads/3a8558c8-28e5-4ad2-8bb8-425536ee81ca.png" 
                   alt="Spider League Logo" 
