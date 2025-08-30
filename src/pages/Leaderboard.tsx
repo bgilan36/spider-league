@@ -355,10 +355,12 @@ const Leaderboard = () => {
                       </div>
                       <p className="text-muted-foreground">{spider.species}</p>
                       <p className="text-sm text-muted-foreground">Owner: {ownerName}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Uploaded: {new Date(spider.created_at).toLocaleDateString()}
+                      </p>
                     </div>
                     
-                    <div className="flex items-center gap-4">
-                      <PowerScoreArc score={spider.power_score} />
+                    <div className="flex items-center">
                       <div className="text-right">
                         <div className="text-3xl font-bold">{spider.power_score}</div>
                         <div className="text-sm text-muted-foreground">Power Score</div>
@@ -398,6 +400,9 @@ const Leaderboard = () => {
                       <h3 className="font-semibold truncate">{spider.nickname}</h3>
                       <p className="text-sm text-muted-foreground truncate">{spider.species}</p>
                       <p className="text-xs text-muted-foreground truncate">Owner: {ownerName}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        Uploaded: {new Date(spider.created_at).toLocaleDateString()}
+                      </p>
                     </div>
                   </div>
                   
