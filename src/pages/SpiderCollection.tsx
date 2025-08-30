@@ -4,10 +4,10 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/components/ui/use-toast";
-import { Plus, Trophy, Zap, Shield, Target, Droplet, Globe } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Trophy, Zap, Shield, Target, Droplet, Globe, ArrowUpDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
 import PowerScoreArc from "@/components/PowerScoreArc";
@@ -32,8 +32,8 @@ interface Spider {
 const SpiderCollection = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [mySpiders, setMySpiders] = useState<Spider[]>([]);
-  const [allSpiders, setAllSpiders] = useState<Spider[]>([]);
+  const [spiders, setSpiders] = useState<Spider[]>([]);
+  const [sortBy, setSortBy] = useState<"newest" | "power_score" | "recent">("newest");
   const [loading, setLoading] = useState(true);
 
   const rarityColors = {
@@ -70,21 +70,33 @@ const SpiderCollection = () => {
 
       if (userError) throw userError;
 
-      // Fetch all spiders
-      const { data: approvedSpiders, error: approvedError } = await supabase
-        .from('spiders')
-        .select('*')
-        .order('power_score', { ascending: false })
-        .limit(50);
-
-      if (approvedError) throw approvedError;
-
-      setMySpiders(userSpiders || []);
-      setAllSpiders(approvedSpiders || []);
+      setSpiders(userSpiders || []);
     } catch (error: any) {
       toast({ title: "Error", description: "Failed to load spiders.", variant: "destructive" });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const getSortedSpiders = () => {
+    if (!spiders.length) return [];
+    
+    const sortedSpiders = [...spiders];
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    
+    switch (sortBy) {
+      case "power_score":
+        return sortedSpiders.sort((a, b) => b.power_score - a.power_score);
+      case "recent":
+        return sortedSpiders.filter(spider => 
+          new Date(spider.created_at) >= oneWeekAgo
+        ).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      case "newest":
+      default:
+        return sortedSpiders.sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
     }
   };
 
@@ -172,8 +184,8 @@ const SpiderCollection = () => {
               className="h-12 w-auto"
             />
             <div>
-              <h1 className="text-3xl font-bold mb-2">Spider Collection</h1>
-              <p className="text-muted-foreground">Manage your fighters and discover others</p>
+              <h1 className="text-3xl font-bold mb-2">My Spider Collection</h1>
+              <p className="text-muted-foreground">View and manage your fighters ({spiders.length} total)</p>
             </div>
           </div>
           <Button asChild>
@@ -184,50 +196,52 @@ const SpiderCollection = () => {
           </Button>
         </div>
 
-        <Tabs defaultValue="my-spiders" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="my-spiders">My Spiders ({mySpiders.length})</TabsTrigger>
-            <TabsTrigger value="all-spiders">All Fighters ({allSpiders.length})</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="my-spiders" className="mt-6">
-            {mySpiders.length === 0 ? (
+        <div className="flex items-center gap-4 mb-6">
+          <div className="flex items-center gap-2">
+            <ArrowUpDown className="h-4 w-4" />
+            <span className="text-sm font-medium">Sort by:</span>
+          </div>
+          <Select value={sortBy} onValueChange={(value: "newest" | "power_score" | "recent") => setSortBy(value)}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Upload Date (Newest)</SelectItem>
+              <SelectItem value="power_score">Power Score (Highest)</SelectItem>
+              <SelectItem value="recent">Past Week</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {spiders.length === 0 ? (
+          <Card>
+            <CardContent className="pt-6 text-center">
+              <p className="text-muted-foreground mb-4">You haven't uploaded any spiders yet.</p>
+              <Button asChild>
+                <Link to="/upload">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Upload Your First Spider
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            {sortBy === "recent" && getSortedSpiders().length === 0 ? (
               <Card>
                 <CardContent className="pt-6 text-center">
-                  <p className="text-muted-foreground mb-4">You haven't uploaded any spiders yet.</p>
-                  <Button asChild>
-                    <Link to="/upload">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Upload Your First Spider
-                    </Link>
-                  </Button>
+                  <p className="text-muted-foreground">No spiders uploaded in the past week.</p>
                 </CardContent>
               </Card>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {mySpiders.map((spider) => (
+                {getSortedSpiders().map((spider) => (
                   <SpiderCard key={spider.id} spider={spider} />
                 ))}
               </div>
             )}
-          </TabsContent>
-          
-          <TabsContent value="all-spiders" className="mt-6">
-            {allSpiders.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6 text-center">
-                  <p className="text-muted-foreground">No approved spiders yet. Be the first to upload!</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {allSpiders.map((spider) => (
-                  <SpiderCard key={spider.id} spider={spider} showOwner />
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+          </>
+        )}
       </main>
     </div>
   );
