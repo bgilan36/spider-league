@@ -391,8 +391,8 @@ const ChallengeCard: React.FC<{
               disabled={loading}
               className="w-full flex items-center gap-2"
             >
-              <Trophy className="w-4 h-4" />
-              Accept Challenge
+              <Sword className="w-4 h-4" />
+              Battle
             </Button>
           )}
           
