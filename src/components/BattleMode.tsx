@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
@@ -6,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Sword, Timer, Trophy, AlertCircle } from 'lucide-react';
+import { Sword, Timer, Trophy, AlertCircle, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import BattleArena from './BattleArena';
 
@@ -247,10 +248,19 @@ const BattleMode: React.FC = () => {
 
       {/* Active Challenges */}
       <div className="space-y-4">
-        <h3 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-          Active Challenges
-        </h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+            Active Challenges
+          </h3>
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/battle-history" className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              <span className="hidden sm:inline">Battle History</span>
+              <span className="sm:hidden">History</span>
+            </Link>
+          </Button>
+        </div>
         
         {challenges.length === 0 ? (
           <Card>

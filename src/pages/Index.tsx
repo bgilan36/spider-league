@@ -420,6 +420,13 @@ const Index = () => {
                   <span className="sm:hidden">Collection</span>
                 </Link>
               </Button>
+              <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
+                <Link to="/battle-history" className="flex items-center justify-center gap-2">
+                  <Sword className="h-4 w-4" />
+                  <span className="hidden sm:inline">Battle History</span>
+                  <span className="sm:hidden">History</span>
+                </Link>
+              </Button>
               <Button asChild className="gradient-button relative z-10 w-full sm:w-auto" size="sm">
                 <Link to="/upload" className="flex items-center justify-center gap-2">
                   <Plus className="h-4 w-4" />
