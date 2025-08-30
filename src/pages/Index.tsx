@@ -476,9 +476,6 @@ const Index = () => {
                 <h1 className="text-xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent truncate">
                   Spider League
                 </h1>
-                <p className="text-sm sm:text-base text-muted-foreground hidden sm:block font-medium">
-                  Welcome back, champion! 🕷️
-                </p>
               </div>
             </div>
             <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
