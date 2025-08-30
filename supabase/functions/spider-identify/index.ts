@@ -84,49 +84,93 @@ function clampInt(n: unknown, min: number, max: number) {
   return Math.max(min, Math.min(max, v));
 }
 
-// Apply species-specific biases to ensure more realistic attributes
+// Apply species-specific biases to ensure more realistic attributes (informed by ScienceFocus & SpiderSpotter)
 function applySpeciesBias(species: string, stats: { hit_points: number; damage: number; speed: number; defense: number; venom: number; webcraft: number; }) {
   const s = (species || "").toLowerCase();
   let { hit_points, damage, speed, defense, venom, webcraft } = stats;
 
   const clamp = (n: number) => clampInt(n, 10, 100) as number;
 
-  if (s.includes("widow")) {
+  // Specific high-risk species first
+  if (s.includes("funnel") || s.includes("funnel-web") || s.includes("atrax") || s.includes("hadronyche")) {
+    // Sydney funnel-web and relatives: extremely venomous, fast, robust, web builders
+    venom = 100;
+    damage = Math.max(damage, 85);
+    speed = Math.max(speed, 80);
+    defense = Math.max(defense, 80);
+    hit_points = Math.max(hit_points, 75);
+    webcraft = Math.max(webcraft, 70);
+  } else if ((s.includes("phoneutria") || s.includes("wandering")) || (s.includes("banana") && !s.includes("orb") && !s.includes("nephila"))) {
+    // Brazilian wandering spider (Phoneutria): highly venomous, aggressive, very fast, low web use
+    venom = Math.max(venom, 98);
+    damage = Math.max(damage, 85);
+    speed = Math.max(speed, 90);
+    defense = Math.max(defense, 65);
+    hit_points = Math.max(hit_points, 70);
+    webcraft = Math.min(webcraft, 40);
+  } else if (s.includes("sicarius") || (s.includes("six") && s.includes("eye") && s.includes("sand"))) {
+    // Six-eyed sand spider (Sicarius): very potent venom, armored ambusher, low web use, slower
+    venom = Math.max(venom, 97);
+    damage = Math.max(damage, 70);
+    speed = Math.min(speed, 55);
+    defense = Math.max(defense, 80);
+    hit_points = Math.max(hit_points, 65);
+    webcraft = Math.min(webcraft, 30);
+  } else if (s.includes("redback") || s.includes("hasselti")) {
+    // Australian redback (Latrodectus hasselti): widow-type
+    venom = Math.max(venom, 97);
+    damage = Math.max(damage, 70);
+    speed = Math.min(speed, 60);
+    webcraft = Math.min(webcraft, 50);
+    hit_points = Math.max(hit_points, 55);
+  } else if (s.includes("missulena") || (s.includes("mouse") && s.includes("spider"))) {
+    // Mouse spiders (Missulena): potent venom, sturdy build
+    venom = Math.max(venom, 92);
+    damage = Math.max(damage, 75);
+    speed = Math.max(speed, 70);
+    defense = Math.max(defense, 70);
+    hit_points = Math.max(hit_points, 65);
+    webcraft = Math.min(webcraft, 45);
+  } else if (s.includes("widow") || s.includes("latrodectus")) {
     venom = Math.max(venom, 95);
     damage = Math.max(damage, 70);
     speed = Math.min(speed, 60);
     webcraft = Math.min(webcraft, 50);
     hit_points = Math.max(hit_points, 55);
-  } else if (s.includes("recluse")) {
+  } else if (s.includes("recluse") || s.includes("loxosceles")) {
     venom = Math.max(venom, 90);
     damage = Math.max(damage, 70);
     webcraft = Math.min(webcraft, 50);
-  } else if (s.includes("tarantula")) {
+  } else if (s.includes("tarantula") || s.includes("theraphosa") || s.includes("aphonopelma")) {
     hit_points = Math.max(hit_points, 95);
     defense = Math.max(defense, 80);
     damage = Math.max(damage, 80);
     speed = Math.min(speed, 55);
     venom = Math.min(venom, 60);
     webcraft = Math.min(webcraft, 60);
-  } else if (s.includes("barn") || s.includes("orb") || s.includes("weaver") || s.includes("garden")) {
+  } else if (
+    s.includes("barn") || s.includes("orb") || s.includes("weaver") || s.includes("garden") || s.includes("nephila") || s.includes("golden orb") ||
+    (s.includes("banana") && (s.includes("orb") || s.includes("nephila")))
+  ) {
+    // Orb-weavers: excellent web builders, weak venom
     webcraft = Math.max(webcraft, 80);
     venom = Math.min(venom, 45);
     damage = Math.min(damage, 65);
     defense = Math.max(defense, 60);
     hit_points = Math.max(hit_points, 60);
-  } else if (s.includes("wolf")) {
+  } else if (s.includes("wolf") || s.includes("lycosa")) {
     speed = Math.max(speed, 85);
     damage = Math.max(damage, 75);
     webcraft = Math.min(webcraft, 40);
     venom = Math.max(venom, 60);
     hit_points = Math.max(hit_points, 70);
-  } else if (s.includes("jump")) {
+  } else if (s.includes("jump") || s.includes("salticidae")) {
     speed = Math.max(speed, 80);
     damage = Math.max(damage, 65);
     webcraft = Math.min(webcraft, 35);
     hit_points = Math.max(hit_points, 55);
     defense = Math.max(defense, 55);
-  } else if (s.includes("huntsman")) {
+  } else if (s.includes("huntsman") || s.includes("heteropoda")) {
     speed = Math.max(speed, 90);
     damage = Math.max(damage, 75);
     hit_points = Math.max(hit_points, 80);
