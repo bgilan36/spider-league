@@ -596,18 +596,18 @@ const Index = () => {
                          )}
                        </div>
                        
-                       <div className="flex items-center justify-between flex-shrink-0 min-w-[60px]">
-                         <div className="text-center mr-3">
-                           <div className="text-lg sm:text-xl font-bold">{spider.power_score}</div>
-                           <div className="text-xs text-muted-foreground">Power</div>
-                         </div>
-                         <BattleButton 
-                           targetSpider={spider} 
-                           size="sm" 
-                           variant="outline"
-                           className="ml-2"
-                         />
-                       </div>
+                        <div className="flex items-center gap-4 flex-shrink-0">
+                          <div className="text-center min-w-[80px]">
+                            <div className="text-lg sm:text-xl font-bold">{spider.power_score}</div>
+                            <div className="text-xs text-muted-foreground">Power</div>
+                          </div>
+                          <BattleButton 
+                            targetSpider={spider} 
+                            size="sm" 
+                            variant="outline"
+                            context="leaderboard"
+                          />
+                        </div>
                     </CardContent>
                   </Card>
                 );

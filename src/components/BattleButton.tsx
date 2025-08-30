@@ -29,13 +29,15 @@ interface BattleButtonProps {
   size?: "sm" | "default";
   variant?: "default" | "outline" | "ghost";
   className?: string;
+  context?: "leaderboard" | "collection"; // Add context prop
 }
 
 const BattleButton: React.FC<BattleButtonProps> = ({ 
   targetSpider, 
   size = "sm", 
   variant = "outline",
-  className = ""
+  className = "",
+  context = "collection"
 }) => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -58,6 +60,11 @@ const BattleButton: React.FC<BattleButtonProps> = ({
 
   // Check if this is the user's own spider
   const isOwnSpider = user && targetSpider.owner_id === user.id;
+  
+  // Hide battle button for own spiders on leaderboards (use Battle Mode instead)
+  if (context === "leaderboard" && isOwnSpider) {
+    return null;
+  }
   
   // Determine button text and action
   const buttonText = isOwnSpider ? "Battle" : "Challenge";

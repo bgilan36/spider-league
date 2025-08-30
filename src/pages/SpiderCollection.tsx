@@ -150,6 +150,7 @@ const SpiderCollection = () => {
             targetSpider={{...spider, owner_id: spider.owner_id || user?.id}} 
             size="sm" 
             variant="outline"
+            context="collection"
             className="w-full"
           />
         </div>

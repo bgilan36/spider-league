@@ -380,12 +380,12 @@ const Leaderboard = () => {
                       </p>
                     </div>
                     
-                    <div className="flex items-center">
-                      <div className="text-right">
-                        <div className="text-3xl font-bold">{spider.power_score}</div>
-                        <div className="text-sm text-muted-foreground">Power Score</div>
-                      </div>
-                    </div>
+                     <div className="flex items-center">
+                       <div className="text-center min-w-[80px]">
+                         <div className="text-3xl font-bold">{spider.power_score}</div>
+                         <div className="text-sm text-muted-foreground">Power Score</div>
+                       </div>
+                     </div>
                   </CardContent>
                 </Card>
               );
@@ -426,19 +426,19 @@ const Leaderboard = () => {
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-4">
-                    <Badge 
-                      variant="secondary" 
-                      className={`${rarityColors[spider.rarity]} text-white`}
-                    >
-                      {spider.rarity}
-                    </Badge>
-                    
-                    <div className="text-right">
-                      <div className="text-2xl font-bold">{spider.power_score}</div>
-                      <div className="text-xs text-muted-foreground">Power Score</div>
-                    </div>
-                  </div>
+                   <div className="flex items-center gap-4">
+                     <Badge 
+                       variant="secondary" 
+                       className={`${rarityColors[spider.rarity]} text-white`}
+                     >
+                       {spider.rarity}
+                     </Badge>
+                     
+                     <div className="text-center min-w-[80px]">
+                       <div className="text-2xl font-bold">{spider.power_score}</div>
+                       <div className="text-xs text-muted-foreground">Power Score</div>
+                     </div>
+                   </div>
                 </CardContent>
               </Card>
             );
