@@ -226,35 +226,40 @@ const BattleMode: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold gradient-text">Battle Mode</h2>
-          <p className="text-muted-foreground">Challenge other players and claim their spiders!</p>
+          <h2 className="text-2xl sm:text-3xl font-bold gradient-text">Battle Mode</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">Challenge other players and claim their spiders!</p>
         </div>
         
         {user && userSpiders.length > 0 && (
-          <Button onClick={() => setShowChallengeForm(true)} className="flex items-center gap-2">
+          <Button 
+            onClick={() => setShowChallengeForm(true)} 
+            className="flex items-center gap-2 w-full sm:w-auto"
+            size="sm"
+          >
             <Sword className="w-4 h-4" />
-            Create Challenge
+            <span className="hidden sm:inline">Create Challenge</span>
+            <span className="sm:hidden">Challenge</span>
           </Button>
         )}
       </div>
 
       {/* Active Challenges */}
       <div className="space-y-4">
-        <h3 className="text-xl font-semibold flex items-center gap-2">
-          <AlertCircle className="w-5 h-5" />
+        <h3 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5" />
           Active Challenges
         </h3>
         
         {challenges.length === 0 ? (
           <Card>
-            <CardContent className="p-6 text-center">
-              <p className="text-muted-foreground">No active challenges at the moment</p>
+            <CardContent className="p-4 sm:p-6 text-center">
+              <p className="text-sm sm:text-base text-muted-foreground">No active challenges at the moment</p>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {challenges.map((challenge) => (
               <ChallengeCard
                 key={challenge.id}
@@ -279,25 +284,25 @@ const BattleMode: React.FC = () => {
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium">Select Your Spider</label>
-              <div className="grid gap-2 mt-2">
+              <div className="grid gap-2 mt-2 max-h-60 overflow-y-auto">
                 {userSpiders.map((spider) => (
                   <div
                     key={spider.id}
-                    className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                    className={`p-2 sm:p-3 border rounded-lg cursor-pointer transition-colors ${
                       selectedSpider?.id === spider.id ? 'border-primary bg-primary/10' : 'hover:bg-muted'
                     }`}
                     onClick={() => setSelectedSpider(spider)}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
                       <img
                         src={spider.image_url}
                         alt={spider.nickname}
-                        className="w-12 h-12 rounded object-cover"
+                        className="w-10 h-10 sm:w-12 sm:h-12 rounded object-cover flex-shrink-0"
                       />
-                      <div>
-                        <p className="font-medium">{spider.nickname}</p>
-                        <p className="text-sm text-muted-foreground">{spider.species}</p>
-                        <p className="text-sm font-bold">Power: {spider.power_score}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium truncate">{spider.nickname}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground truncate">{spider.species}</p>
+                        <p className="text-xs sm:text-sm font-bold">Power: {spider.power_score}</p>
                       </div>
                     </div>
                   </div>
@@ -363,24 +368,24 @@ const ChallengeCard: React.FC<{
           </div>
         </CardHeader>
         
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-3">
+        <CardContent className="space-y-4 p-3 sm:p-6">
+          <div className="flex items-center gap-2 sm:gap-3">
             <img
               src={challenge.challenger_spider?.image_url}
               alt={challenge.challenger_spider?.nickname}
-              className="w-16 h-16 rounded object-cover"
+              className="w-12 h-12 sm:w-16 sm:h-16 rounded object-cover flex-shrink-0"
             />
-            <div>
-              <p className="font-medium">{challenge.challenger_spider?.species}</p>
-              <p className="text-sm text-muted-foreground">
+            <div className="min-w-0 flex-1">
+              <p className="font-medium text-sm sm:text-base truncate">{challenge.challenger_spider?.species}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">
                 By: {challenge.challenger_profile?.display_name || 'Unknown'}
               </p>
-              <p className="text-sm font-bold">Power: {challenge.challenger_spider?.power_score}</p>
+              <p className="text-xs sm:text-sm font-bold">Power: {challenge.challenger_spider?.power_score}</p>
             </div>
           </div>
 
           {challenge.challenge_message && (
-            <p className="text-sm italic text-muted-foreground">
+            <p className="text-xs sm:text-sm italic text-muted-foreground line-clamp-2">
               "{challenge.challenge_message}"
             </p>
           )}
@@ -390,6 +395,7 @@ const ChallengeCard: React.FC<{
               onClick={() => setShowAcceptDialog(true)}
               disabled={loading}
               className="w-full flex items-center gap-2"
+              size="sm"
             >
               <Sword className="w-4 h-4" />
               Battle
@@ -397,7 +403,7 @@ const ChallengeCard: React.FC<{
           )}
           
           {currentUserId === challenge.challenger_id && (
-            <Badge variant="secondary" className="w-full justify-center">
+            <Badge variant="secondary" className="w-full justify-center text-xs">
               Your Challenge
             </Badge>
           )}

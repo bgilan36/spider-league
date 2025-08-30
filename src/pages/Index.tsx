@@ -367,57 +367,61 @@ const Index = () => {
       
       {/* Header */}
       <header className="border-b bg-card">
-        <div className="container mx-auto px-6 py-4">
+        <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <img 
                 src="/lovable-uploads/3a8558c8-28e5-4ad2-8bb8-425536ee81ca.png" 
                 alt="Spider League Logo" 
-                className="h-12 w-auto"
+                className="h-8 sm:h-12 w-auto flex-shrink-0"
               />
-              <div>
-                <h1 className="text-2xl font-bold">Spider League</h1>
-                <p className="text-sm text-muted-foreground">Welcome back, fighter!</p>
+              <div className="min-w-0">
+                <h1 className="text-lg sm:text-2xl font-bold truncate">Spider League</h1>
+                <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">Welcome back, fighter!</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" asChild>
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              <Button variant="outline" size="icon" asChild className="h-8 w-8 sm:h-10 sm:w-10">
                 <Link to="/roadmap">
-                  <Lightbulb className="h-4 w-4" />
+                  <Lightbulb className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Link>
               </Button>
-              <HowItWorksModal />
+              <div className="hidden sm:block">
+                <HowItWorksModal />
+              </div>
               <UserProfileMenu />
             </div>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-8">
+      <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-8">
         {/* My Spider Squad Section */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
             <div>
-              <div className="flex items-center gap-3 mb-2">
-                <h2 className="text-2xl font-bold">My Spider Squad</h2>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                <h2 className="text-xl sm:text-2xl font-bold">My Spider Squad</h2>
                 {userGlobalRank && (
-                  <Badge variant="secondary" className="text-sm">
+                  <Badge variant="secondary" className="text-sm w-fit">
                     Global Rank #{userGlobalRank}
                   </Badge>
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button asChild variant="outline">
-                <Link to="/collection" className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
+                <Link to="/collection" className="flex items-center justify-center gap-2">
                   <Trophy className="h-4 w-4" />
-                  Full Collection
+                  <span className="hidden sm:inline">Full Collection</span>
+                  <span className="sm:hidden">Collection</span>
                 </Link>
               </Button>
-              <Button asChild className="gradient-button relative z-10">
-                <Link to="/upload" className="flex items-center gap-2">
+              <Button asChild className="gradient-button relative z-10 w-full sm:w-auto" size="sm">
+                <Link to="/upload" className="flex items-center justify-center gap-2">
                   <Plus className="h-4 w-4" />
-                  Upload Spider
+                  <span className="hidden sm:inline">Upload Spider</span>
+                  <span className="sm:hidden">Upload</span>
                 </Link>
               </Button>
             </div>
@@ -481,14 +485,14 @@ const Index = () => {
 
         {/* Leaderboard Section */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
             <div className="flex-1">
-              <div className="flex items-center gap-4 mb-2">
-                <h2 className="text-2xl font-bold">Global Leaderboard</h2>
-                <div className="flex bg-muted rounded-lg p-1">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-2">
+                <h2 className="text-xl sm:text-2xl font-bold">Global Leaderboard</h2>
+                <div className="flex bg-muted rounded-lg p-1 w-fit">
                   <button
                     onClick={() => setLeaderboardType('alltime')}
-                    className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                    className={`px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-colors ${
                       leaderboardType === 'alltime' 
                         ? 'bg-background text-foreground shadow-sm' 
                         : 'text-muted-foreground hover:text-foreground'
@@ -498,7 +502,7 @@ const Index = () => {
                   </button>
                   <button
                     onClick={() => setLeaderboardType('weekly')}
-                    className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                    className={`px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-colors ${
                       leaderboardType === 'weekly' 
                         ? 'bg-background text-foreground shadow-sm' 
                         : 'text-muted-foreground hover:text-foreground'
@@ -508,17 +512,18 @@ const Index = () => {
                   </button>
                 </div>
               </div>
-              <p className="text-muted-foreground">
+              <p className="text-sm sm:text-base text-muted-foreground">
                 {leaderboardType === 'alltime' 
                   ? 'Top 10 most powerful spider fighters of all time'
                   : 'Top 10 spider fighters for this week'
                 }
               </p>
             </div>
-            <Button asChild variant="outline">
-              <Link to="/leaderboard" className="flex items-center gap-2">
+            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
+              <Link to="/leaderboard" className="flex items-center justify-center gap-2">
                 <Users className="h-4 w-4" />
-                View Full Leaderboard
+                <span className="hidden sm:inline">View Full Leaderboard</span>
+                <span className="sm:hidden">Leaderboard</span>
               </Link>
             </Button>
           </div>
@@ -541,21 +546,21 @@ const Index = () => {
                 const rank = index + 1;
                 const ownerName = (spider as any).profiles?.display_name || `User ${spider.owner_id?.slice(0, 8)}`;
                 return (
-                  <Card key={spider.id} className={`hover:shadow-md transition-shadow ${rank <= 3 ? 'ring-1 ring-primary/20' : ''}`}>
-                    <CardContent className="flex items-center gap-4 p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 text-center">
-                          {rank === 1 && <Trophy className="h-5 w-5 text-amber-500 mx-auto" />}
-                          {rank === 2 && <Trophy className="h-5 w-5 text-gray-400 mx-auto" />}
-                          {rank === 3 && <Trophy className="h-5 w-5 text-amber-600 mx-auto" />}
-                          {rank > 3 && <span className="font-bold text-lg">#{rank}</span>}
+                   <Card key={spider.id} className={`hover:shadow-md transition-shadow ${rank <= 3 ? 'ring-1 ring-primary/20' : ''}`}>
+                    <CardContent className="flex items-center gap-2 sm:gap-4 p-3 sm:p-4">
+                      <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
+                        <div className="w-6 sm:w-8 text-center">
+                          {rank === 1 && <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500 mx-auto" />}
+                          {rank === 2 && <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mx-auto" />}
+                          {rank === 3 && <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600 mx-auto" />}
+                          {rank > 3 && <span className="font-bold text-sm sm:text-lg">#{rank}</span>}
                         </div>
-                        <Badge variant={rank <= 3 ? "default" : "secondary"} className="font-bold">
+                        <Badge variant={rank <= 3 ? "default" : "secondary"} className="font-bold text-xs sm:text-sm hidden sm:inline-flex">
                           {rank === 1 ? "1st" : rank === 2 ? "2nd" : rank === 3 ? "3rd" : `${rank}th`}
                         </Badge>
                       </div>
                       
-                      <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden flex-shrink-0">
                         <img 
                           src={spider.image_url} 
                           alt={spider.nickname}
@@ -564,22 +569,24 @@ const Index = () => {
                       </div>
                       
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-semibold truncate">{spider.nickname}</h4>
+                        <div className="flex items-center gap-1 sm:gap-2 mb-1">
+                          <h4 className="font-semibold text-sm sm:text-base truncate">{spider.nickname}</h4>
                           <Badge 
-                            className={`text-xs ${rarityColors[spider.rarity]} text-white`}
+                            className={`text-xs ${rarityColors[spider.rarity]} text-white hidden sm:inline-flex`}
                           >
                             {spider.rarity}
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground truncate">{spider.species}</p>
-                        <p className="text-xs text-muted-foreground truncate">Owner: {ownerName}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground truncate">{spider.species}</p>
+                        <p className="text-xs text-muted-foreground truncate hidden sm:block">Owner: {ownerName}</p>
                       </div>
                       
-                      <div className="flex items-center gap-3">
-                        <PowerScoreArc score={spider.power_score} size="small" />
+                      <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
+                        <div className="hidden sm:block">
+                          <PowerScoreArc score={spider.power_score} size="small" />
+                        </div>
                         <div className="text-right">
-                          <div className="text-xl font-bold">{spider.power_score}</div>
+                          <div className="text-lg sm:text-xl font-bold">{spider.power_score}</div>
                           <div className="text-xs text-muted-foreground">Power</div>
                         </div>
                       </div>
