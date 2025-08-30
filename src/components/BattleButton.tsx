@@ -91,6 +91,37 @@ const BattleButton: React.FC<BattleButtonProps> = ({
     }
   };
 
+  // Create direct challenge with the current spider (for collection context)
+  const handleDirectChallenge = async () => {
+    if (!targetSpider || !user || !isOwnSpider) return;
+
+    setLoading(true);
+
+    // Create an open challenge with this spider
+    const { error } = await supabase
+      .from('battle_challenges')
+      .insert({
+        challenger_id: user.id,
+        challenger_spider_id: targetSpider.id,
+        challenge_message: `${targetSpider.nickname} seeks a worthy opponent!`
+      });
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create challenge",
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Challenge Created!",
+        description: `${targetSpider.nickname} is now looking for opponents`,
+      });
+    }
+    
+    setLoading(false);
+  };
+
   // Create battle challenge or offer spider for battle
   const handleBattleAction = async (challengerSpider: Spider) => {
     if (!targetSpider || !user) return;
@@ -151,7 +182,12 @@ const BattleButton: React.FC<BattleButtonProps> = ({
         className={className}
         onClick={(e) => {
           e.stopPropagation();
-          setShowDialog(true);
+          // For collection context with own spiders, auto-create challenge
+          if (context === "collection" && isOwnSpider) {
+            handleDirectChallenge();
+          } else {
+            setShowDialog(true);
+          }
         }}
       >
         <Sword className="h-4 w-4" />

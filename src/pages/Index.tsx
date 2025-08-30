@@ -557,28 +557,45 @@ const Index = () => {
               {userSpiders.map((spider) => (
                 <div 
                   key={spider.id} 
-                  className="spider-card-mini cursor-pointer hover:scale-105 transition-transform"
-                  onClick={() => handleSpiderClick(spider)}
+                  className="spider-card-mini relative group"
                 >
-                  <div className="aspect-square relative mb-3 rounded-md overflow-hidden">
-                    <img 
-                      src={spider.image_url} 
-                      alt={spider.nickname}
-                      className="w-full h-full object-cover"
-                    />
-                    <Badge 
-                      className={`absolute top-1 right-1 text-xs ${rarityColors[spider.rarity]} text-white`}
-                    >
-                      {spider.rarity}
-                    </Badge>
-                  </div>
-                  <div className="text-center">
-                    <h4 className="font-medium text-sm mb-1 truncate">{spider.nickname}</h4>
-                    <p className="text-xs text-muted-foreground mb-2 truncate">{spider.species}</p>
-                    <div className="flex justify-center">
-                      <PowerScoreArc score={spider.power_score} size="small" />
+                  <div 
+                    className="cursor-pointer hover:scale-105 transition-transform"
+                    onClick={() => handleSpiderClick(spider)}
+                  >
+                    <div className="aspect-square relative mb-3 rounded-md overflow-hidden">
+                      <img 
+                        src={spider.image_url} 
+                        alt={spider.nickname}
+                        className="w-full h-full object-cover"
+                      />
+                      <Badge 
+                        className={`absolute top-1 right-1 text-xs ${rarityColors[spider.rarity]} text-white`}
+                      >
+                        {spider.rarity}
+                      </Badge>
+                    </div>
+                    <div className="text-center">
+                      <h4 className="font-medium text-sm mb-1 truncate">{spider.nickname}</h4>
+                      <p className="text-xs text-muted-foreground mb-2 truncate">{spider.species}</p>
+                      <div className="flex justify-center">
+                        <PowerScoreArc score={spider.power_score} size="small" />
+                      </div>
                     </div>
                   </div>
+                  
+                  {/* Battle Button - only show for approved spiders */}
+                  {spider.is_approved && (
+                    <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <BattleButton 
+                        targetSpider={spider} 
+                        size="sm" 
+                        variant="default"
+                        context="collection"
+                        className="shadow-lg"
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
