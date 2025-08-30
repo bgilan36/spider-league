@@ -17,6 +17,7 @@ import PowerScoreArc from "@/components/PowerScoreArc";
 import SpiderDetailsModal from "@/components/SpiderDetailsModal";
 import BattleMode from "@/components/BattleMode";
 import BattleButton from "@/components/BattleButton";
+import ActiveChallengesPreview from "@/components/ActiveChallengesPreview";
 
 interface Spider {
   id: string;
@@ -600,6 +601,11 @@ const Index = () => {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Active Challenges Section */}
+        <div className="mb-8">
+          <ActiveChallengesPreview />
         </div>
 
         {/* Battle Mode Section */}

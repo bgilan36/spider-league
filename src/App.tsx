@@ -12,6 +12,7 @@ import SpiderCollection from "./pages/SpiderCollection";
 import Leaderboard from "./pages/Leaderboard";
 import Roadmap from "./pages/Roadmap";
 import BattleHistory from "./pages/BattleHistory";
+import BattleMode from "./pages/BattleMode";
 import { AuthProvider } from "@/auth/AuthProvider";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="/collection" element={<SpiderCollection />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/battle-history" element={<BattleHistory />} />
+              <Route path="/battle-mode" element={<BattleMode />} />
               <Route path="/roadmap" element={<Roadmap />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
