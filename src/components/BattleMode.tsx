@@ -98,13 +98,21 @@ const BattleMode: React.FC = () => {
     if (!selectedSpider || !user) return;
 
     setLoading(true);
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('battle_challenges')
       .insert({
         challenger_id: user.id,
         challenger_spider_id: selectedSpider.id,
         challenge_message: challengeMessage || `${selectedSpider.nickname} seeks a worthy opponent!`
-      });
+      })
+      .select(`
+        *,
+        challenger_spider:spiders!challenger_spider_id(
+          id, nickname, species, image_url, power_score, hit_points, damage, speed, defense, venom, webcraft, created_at, owner_id
+        ),
+        challenger_profile:profiles!challenger_id(display_name)
+      `)
+      .single();
 
     if (error) {
       toast({
@@ -117,10 +125,15 @@ const BattleMode: React.FC = () => {
         title: "Challenge Posted!",
         description: "Your battle challenge is now live",
       });
+      
+      // Immediately add the new challenge to the local state
+      if (data) {
+        setChallenges(prev => [data as unknown as BattleChallenge, ...prev]);
+      }
+      
       setShowChallengeForm(false);
       setSelectedSpider(null);
       setChallengeMessage('');
-      fetchChallenges();
     }
     setLoading(false);
   };
