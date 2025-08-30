@@ -43,7 +43,7 @@ interface BattleChallenge {
   challenger_profile?: { display_name: string };
 }
 
-const BattleMode: React.FC = () => {
+const BattleMode: React.FC<{ showChallenges?: boolean }> = ({ showChallenges = true }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [challenges, setChallenges] = useState<BattleChallenge[]>([]);
@@ -295,42 +295,44 @@ const BattleMode: React.FC = () => {
       </div>
 
       {/* Active Challenges */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-            Active Challenges
-          </h3>
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/battle-history" className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              <span className="hidden sm:inline">Battle History</span>
-              <span className="sm:hidden">History</span>
-            </Link>
-          </Button>
-        </div>
-        
-        {challenges.length === 0 ? (
-          <Card>
-            <CardContent className="p-4 sm:p-6 text-center">
-              <p className="text-sm sm:text-base text-muted-foreground">No active challenges at the moment</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {challenges.map((challenge) => (
-              <ChallengeCard
-                key={challenge.id}
-                challenge={challenge}
-                userSpiders={userSpiders}
-                onAccept={acceptChallenge}
-                loading={loading}
-                currentUserId={user?.id}
-              />
-            ))}
+      {showChallenges && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+              Active Challenges
+            </h3>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/battle-history" className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                <span className="hidden sm:inline">Battle History</span>
+                <span className="sm:hidden">History</span>
+              </Link>
+            </Button>
           </div>
-        )}
-      </div>
+          
+          {challenges.length === 0 ? (
+            <Card>
+              <CardContent className="p-4 sm:p-6 text-center">
+                <p className="text-sm sm:text-base text-muted-foreground">No active challenges at the moment</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {challenges.map((challenge) => (
+                <ChallengeCard
+                  key={challenge.id}
+                  challenge={challenge}
+                  userSpiders={userSpiders}
+                  onAccept={acceptChallenge}
+                  loading={loading}
+                  currentUserId={user?.id}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Challenge Creation Dialog */}
       <Dialog open={showChallengeForm} onOpenChange={setShowChallengeForm}>

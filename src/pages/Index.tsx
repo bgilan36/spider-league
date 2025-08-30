@@ -610,7 +610,7 @@ const Index = () => {
 
         {/* Battle Mode Section */}
         <div className="mb-8">
-          <BattleMode />
+          <BattleMode showChallenges={false} />
         </div>
 
         {/* Recent Battles Section */}
