@@ -60,10 +60,10 @@ const BattleMode: React.FC = () => {
       .from('battle_challenges')
       .select(`
         *,
-        challenger_spider:spiders!challenger_spider_id(
+        challenger_spider:spiders!battle_challenges_challenger_spider_id_fkey(
           id, nickname, species, image_url, power_score, hit_points, damage, speed, defense, venom, webcraft, created_at, owner_id
         ),
-        challenger_profile:profiles!challenger_id(display_name)
+        challenger_profile:profiles!battle_challenges_challenger_id_fkey(display_name)
       `)
       .eq('status', 'OPEN')
       .gt('expires_at', new Date().toISOString())
@@ -114,10 +114,10 @@ const BattleMode: React.FC = () => {
         })
         .select(`
           *,
-          challenger_spider:spiders!challenger_spider_id(
+          challenger_spider:spiders!battle_challenges_challenger_spider_id_fkey(
             id, nickname, species, image_url, power_score, hit_points, damage, speed, defense, venom, webcraft, created_at, owner_id
           ),
-          challenger_profile:profiles!challenger_id(display_name)
+          challenger_profile:profiles!battle_challenges_challenger_id_fkey(display_name)
         `)
         .single();
 
