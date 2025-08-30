@@ -104,8 +104,8 @@ const Index = () => {
         .from('spiders')
         .select('id, nickname, species, image_url, rarity, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved')
         .eq('owner_id', user.id)
-        .order('power_score', { ascending: false })
-        .limit(6);
+        .order('created_at', { ascending: false })
+        .limit(3);
 
       if (error) throw error;
       setUserSpiders(data || []);
@@ -376,13 +376,22 @@ const Index = () => {
                   </Badge>
                 )}
               </div>
+              <p className="text-sm text-muted-foreground">Your 3 most recent spider fighters</p>
             </div>
-            <Button asChild className="gradient-button relative z-10">
-              <Link to="/upload" className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Upload Spider
-              </Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button asChild variant="outline">
+                <Link to="/collection" className="flex items-center gap-2">
+                  <Trophy className="h-4 w-4" />
+                  Full Collection
+                </Link>
+              </Button>
+              <Button asChild className="gradient-button relative z-10">
+                <Link to="/upload" className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  Upload Spider
+                </Link>
+              </Button>
+            </div>
           </div>
 
           {spidersLoading ? (
@@ -404,7 +413,7 @@ const Index = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {userSpiders.map((spider) => (
                 <div 
                   key={spider.id} 
@@ -436,20 +445,6 @@ const Index = () => {
           )}
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-            <Link to="/collection" className="block">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Full Collection</CardTitle>
-                  <Trophy className="h-5 w-5 text-primary" />
-                </div>
-                <CardDescription>View and manage all your spiders</CardDescription>
-              </CardHeader>
-            </Link>
-          </Card>
-        </div>
 
         {/* Leaderboard Section */}
         <div className="mb-8">
