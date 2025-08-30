@@ -11,6 +11,7 @@ import { Plus, Trophy, Zap, Shield, Target, Droplet, Globe, ArrowUpDown } from "
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
 import PowerScoreArc from "@/components/PowerScoreArc";
+import BattleButton from "@/components/BattleButton";
 
 interface Spider {
   id: string;
@@ -26,6 +27,7 @@ interface Spider {
   webcraft: number;
   power_score: number;
   is_approved: boolean;
+  owner_id?: string;
   created_at: string;
 }
 
@@ -142,6 +144,15 @@ const SpiderCollection = () => {
             </div>
           </div>
         ))}
+        
+        <div className="pt-4 border-t flex justify-center">
+          <BattleButton 
+            targetSpider={{...spider, owner_id: spider.owner_id || user?.id}} 
+            size="sm" 
+            variant="outline"
+            className="w-full"
+          />
+        </div>
       </CardContent>
     </Card>
   );

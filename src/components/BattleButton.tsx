@@ -51,11 +51,19 @@ const BattleButton: React.FC<BattleButtonProps> = ({
     return new Date(spiderCreatedAt) >= sevenDaysAgo;
   };
 
-  // Check if user can challenge this spider
-  const canChallenge = user && 
-    targetSpider.owner_id !== user.id && 
+  // Check if user can interact with this spider (own or others')
+  const canInteract = user && 
     targetSpider.is_approved && 
     isEligibleForBattle(targetSpider.created_at);
+
+  // Check if this is the user's own spider
+  const isOwnSpider = user && targetSpider.owner_id === user.id;
+  
+  // Determine button text and action
+  const buttonText = isOwnSpider ? "Battle" : "Challenge";
+  const actionDescription = isOwnSpider 
+    ? "Offer this spider for battle challenges" 
+    : `Challenge ${targetSpider.nickname} to battle`;
 
   // Fetch user's eligible spiders for battle
   const fetchEligibleSpiders = async () => {
@@ -76,32 +84,45 @@ const BattleButton: React.FC<BattleButtonProps> = ({
     }
   };
 
-  // Create battle challenge
-  const createBattleChallenge = async (challengerSpider: Spider) => {
+  // Create battle challenge or offer spider for battle
+  const handleBattleAction = async (challengerSpider: Spider) => {
     if (!targetSpider || !user) return;
 
     setLoading(true);
-    const { error } = await supabase
-      .from('battle_challenges')
-      .insert({
-        challenger_id: user.id,
-        challenger_spider_id: challengerSpider.id,
-        challenge_message: `${challengerSpider.nickname} challenges ${targetSpider.nickname} to battle!`
-      });
-
-    if (error) {
+    
+    if (isOwnSpider) {
+      // Offer own spider for battle (this could be extended to create an "open challenge")
       toast({
-        title: "Error",
-        description: "Failed to create challenge",
-        variant: "destructive"
+        title: "Battle Offer Created!",
+        description: `${targetSpider.nickname} is now available for battle challenges`,
       });
     } else {
-      toast({
-        title: "Challenge Created!",
-        description: `${challengerSpider.nickname} has challenged ${targetSpider.nickname}`,
-      });
-      setShowDialog(false);
+      // Challenge another user's spider
+      const { error } = await supabase
+        .from('battle_challenges')
+        .insert({
+          challenger_id: user.id,
+          challenger_spider_id: challengerSpider.id,
+          accepter_id: targetSpider.owner_id,
+          accepter_spider_id: targetSpider.id,
+          challenge_message: `${challengerSpider.nickname} challenges ${targetSpider.nickname} to battle!`
+        });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to create challenge",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Challenge Created!",
+          description: `${challengerSpider.nickname} has challenged ${targetSpider.nickname}`,
+        });
+      }
     }
+    
+    setShowDialog(false);
     setLoading(false);
   };
 
@@ -111,7 +132,7 @@ const BattleButton: React.FC<BattleButtonProps> = ({
     }
   }, [showDialog, user]);
 
-  if (!canChallenge) {
+  if (!canInteract) {
     return null;
   }
 
@@ -127,15 +148,20 @@ const BattleButton: React.FC<BattleButtonProps> = ({
         }}
       >
         <Sword className="h-4 w-4" />
-        <span className="hidden sm:inline ml-1">Battle</span>
+        <span className="hidden sm:inline ml-1">{buttonText}</span>
       </Button>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Challenge {targetSpider.nickname}</DialogTitle>
+            <DialogTitle>
+              {isOwnSpider ? `Offer ${targetSpider.nickname} for Battle` : `Challenge ${targetSpider.nickname}`}
+            </DialogTitle>
             <DialogDescription>
-              Select one of your spiders to challenge {targetSpider.nickname} to battle
+              {isOwnSpider 
+                ? `Select one of your other spiders to pair with ${targetSpider.nickname} for battle offers`
+                : `Select one of your spiders to challenge ${targetSpider.nickname} to battle`
+              }
             </DialogDescription>
           </DialogHeader>
 
@@ -143,15 +169,15 @@ const BattleButton: React.FC<BattleButtonProps> = ({
             {userSpiders.length > 0 ? (
               <>
                 <p className="text-sm text-muted-foreground">
-                  Choose your fighter:
+                  {isOwnSpider ? "Choose your other fighter:" : "Choose your fighter:"}
                 </p>
                 <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {userSpiders.map((userSpider) => (
+                  {userSpiders.filter(spider => spider.id !== targetSpider.id).map((userSpider) => (
                     <Button
                       key={userSpider.id}
                       variant="outline"
                       className="w-full justify-between h-auto p-3"
-                      onClick={() => createBattleChallenge(userSpider)}
+                      onClick={() => handleBattleAction(userSpider)}
                       disabled={loading}
                     >
                       <div className="flex items-center gap-3">
