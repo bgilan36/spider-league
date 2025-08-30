@@ -390,7 +390,7 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-              <Button variant="glass" size="icon" asChild className="h-10 w-10 sm:h-12 sm:w-12 pulse-glow">
+              <Button variant="glass" size="icon" asChild className="h-10 w-10 sm:h-12 sm:w-12">
                 <Link to="/roadmap">
                   <Lightbulb className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Link>
@@ -453,7 +453,7 @@ const Index = () => {
                 <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No spiders yet</h3>
                 <p className="text-muted-foreground mb-6">Upload your first spider to start building your collection</p>
-                <Button asChild className="gradient-button relative z-10">
+                <Button asChild className="gradient-button relative z-10 pulse-glow">
                   <Link to="/upload" className="flex items-center gap-2">
                     <Plus className="h-4 w-4" />
                     Upload Your First Spider
