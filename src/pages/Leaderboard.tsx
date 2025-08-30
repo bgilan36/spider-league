@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Trophy, Medal, Award, ArrowLeft, Crown, Star, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import PowerScoreArc from "@/components/PowerScoreArc";
+import SpiderDetailsModal from "@/components/SpiderDetailsModal";
 
 interface Spider {
   id: string;
@@ -24,6 +25,7 @@ interface Spider {
   defense: number;
   venom: number;
   webcraft: number;
+  is_approved: boolean;
   owner_id: string;
   created_at: string;
   profiles: {
@@ -57,6 +59,18 @@ const Leaderboard = () => {
   const [currentWeekId, setCurrentWeekId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"all-time" | "weekly">("all-time");
+  const [selectedSpider, setSelectedSpider] = useState<Spider | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleSpiderClick = (spider: Spider) => {
+    setSelectedSpider(spider);
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setSelectedSpider(null);
+  };
 
   const rarityColors = {
     COMMON: "bg-gray-500",
@@ -281,6 +295,12 @@ const Leaderboard = () => {
             </div>
           </TabsContent>
         </Tabs>
+
+        <SpiderDetailsModal
+          spider={selectedSpider}
+          isOpen={isModalOpen}
+          onClose={handleModalClose}
+        />
       </main>
     </div>
   );
@@ -325,7 +345,7 @@ const Leaderboard = () => {
               const rank = index + 1;
               const ownerName = spider.profiles?.display_name || `User ${spider.owner_id.slice(0, 8)}`;
               return (
-                <Card key={spider.id} className={`${rank === 1 ? 'ring-2 ring-amber-500' : ''}`}>
+                <Card key={spider.id} className={`${rank === 1 ? 'ring-2 ring-amber-500' : ''} cursor-pointer hover:shadow-lg transition-all`} onClick={() => handleSpiderClick(spider)}>
                   <CardContent className="flex items-center gap-4 p-6">
                     <div className="flex items-center gap-3">
                       {getRankIcon(rank)}
@@ -379,7 +399,7 @@ const Leaderboard = () => {
             const rank = index + 4;
             const ownerName = spider.profiles?.display_name || `User ${spider.owner_id.slice(0, 8)}`;
             return (
-              <Card key={spider.id} className="hover:shadow-md transition-shadow">
+              <Card key={spider.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleSpiderClick(spider)}>
                 <CardContent className="flex items-center gap-4 p-4">
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div className="flex items-center gap-2 w-16">
