@@ -629,6 +629,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      sanitize_plain_text: {
+        Args: { t: string }
+        Returns: string
+      }
       transfer_spider_ownership: {
         Args: { new_owner_id: string; spider_id: string }
         Returns: undefined
