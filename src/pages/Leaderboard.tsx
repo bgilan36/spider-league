@@ -11,6 +11,7 @@ import { Trophy, Medal, Award, ArrowLeft, Crown, Star, Calendar, ChevronLeft, Ch
 import { supabase } from "@/integrations/supabase/client";
 import PowerScoreArc from "@/components/PowerScoreArc";
 import SpiderDetailsModal from "@/components/SpiderDetailsModal";
+import BattleButton from "@/components/BattleButton";
 
 interface Spider {
   id: string;
@@ -363,28 +364,33 @@ const Leaderboard = () => {
                       />
                     </div>
                     
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-bold text-xl">{spider.nickname}</h3>
-                        <Badge 
-                          variant="secondary" 
-                          className={`${rarityColors[spider.rarity]} text-white`}
-                        >
-                          {spider.rarity}
-                        </Badge>
-                      </div>
-                      <p className="text-muted-foreground">{spider.species}</p>
-                      <p className="text-sm text-muted-foreground">Owner: {ownerName}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Uploaded: {new Date(spider.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    
-                     <div className="flex items-center">
-                       <div className="text-center min-w-[80px]">
-                         <div className="text-3xl font-bold">{spider.power_score}</div>
-                         <div className="text-sm text-muted-foreground">Power Score</div>
+                     <div className="min-w-0 flex-1">
+                       <div className="flex items-center gap-2 mb-1">
+                         <h3 className="font-bold text-xl">{spider.nickname}</h3>
+                         <Badge 
+                           variant="secondary" 
+                           className={`${rarityColors[spider.rarity]} text-white`}
+                         >
+                           {spider.rarity}
+                         </Badge>
                        </div>
+                       <p className="text-muted-foreground">{spider.species}</p>
+                       <p className="text-sm text-muted-foreground">Owner: {ownerName}</p>
+                       <p className="text-sm text-muted-foreground">
+                         Uploaded: {new Date(spider.created_at).toLocaleDateString()}
+                       </p>
+                     </div>
+                     
+                     <BattleButton 
+                       targetSpider={spider} 
+                       size="sm" 
+                       variant="outline"
+                       context="leaderboard"
+                     />
+                     
+                     <div className="text-right flex-shrink-0 ml-4">
+                       <div className="text-3xl font-bold">{spider.power_score}</div>
+                       <div className="text-sm text-muted-foreground">Power Score</div>
                      </div>
                   </CardContent>
                 </Card>
@@ -416,28 +422,33 @@ const Leaderboard = () => {
                       />
                     </div>
                     
-                    <div className="min-w-0 flex-1">
-                      <h3 className="font-semibold truncate">{spider.nickname}</h3>
-                      <p className="text-sm text-muted-foreground truncate">{spider.species}</p>
-                      <p className="text-xs text-muted-foreground truncate">Owner: {ownerName}</p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        Uploaded: {new Date(spider.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                  
-                   <div className="flex items-center gap-4">
-                     <Badge 
-                       variant="secondary" 
-                       className={`${rarityColors[spider.rarity]} text-white`}
-                     >
-                       {spider.rarity}
-                     </Badge>
-                     
-                     <div className="text-center min-w-[80px]">
-                       <div className="text-2xl font-bold">{spider.power_score}</div>
-                       <div className="text-xs text-muted-foreground">Power Score</div>
+                     <div className="min-w-0 flex-1">
+                       <h3 className="font-semibold truncate">{spider.nickname}</h3>
+                       <p className="text-sm text-muted-foreground truncate">{spider.species}</p>
+                       <p className="text-xs text-muted-foreground truncate">Owner: {ownerName}</p>
+                       <p className="text-xs text-muted-foreground truncate">
+                         Uploaded: {new Date(spider.created_at).toLocaleDateString()}
+                       </p>
                      </div>
+                   </div>
+                   
+                   <BattleButton 
+                     targetSpider={spider} 
+                     size="sm" 
+                     variant="outline"
+                     context="leaderboard"
+                   />
+                   
+                   <Badge 
+                     variant="secondary" 
+                     className={`${rarityColors[spider.rarity]} text-white ml-2`}
+                   >
+                     {spider.rarity}
+                   </Badge>
+                   
+                   <div className="text-right flex-shrink-0 ml-4">
+                     <div className="text-2xl font-bold">{spider.power_score}</div>
+                     <div className="text-xs text-muted-foreground">Power Score</div>
                    </div>
                 </CardContent>
               </Card>

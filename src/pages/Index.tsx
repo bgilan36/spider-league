@@ -578,35 +578,34 @@ const Index = () => {
                         />
                       </div>
                       
-                       <div className="min-w-0 flex-1">
-                         <div className="flex items-center gap-1 sm:gap-2 mb-1">
-                           <h4 className="font-semibold text-sm sm:text-base truncate">{spider.nickname}</h4>
-                           <Badge 
-                             className={`text-xs ${rarityColors[spider.rarity]} text-white hidden sm:inline-flex`}
-                           >
-                             {spider.rarity}
-                           </Badge>
-                         </div>
-                         <p className="text-xs sm:text-sm text-muted-foreground truncate">{spider.species}</p>
-                         <p className="text-xs text-muted-foreground truncate hidden sm:block">Owner: {ownerName}</p>
-                         {spider.created_at && (
-                           <p className="text-xs text-muted-foreground">
-                             Uploaded: {format(new Date(spider.created_at), 'MMM d, yyyy')}
-                           </p>
-                         )}
-                       </div>
-                       
-                        <div className="flex items-center gap-4 flex-shrink-0">
-                          <div className="text-center min-w-[80px]">
-                            <div className="text-lg sm:text-xl font-bold">{spider.power_score}</div>
-                            <div className="text-xs text-muted-foreground">Power</div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1 sm:gap-2 mb-1">
+                            <h4 className="font-semibold text-sm sm:text-base truncate">{spider.nickname}</h4>
+                            <Badge 
+                              className={`text-xs ${rarityColors[spider.rarity]} text-white hidden sm:inline-flex`}
+                            >
+                              {spider.rarity}
+                            </Badge>
                           </div>
-                          <BattleButton 
-                            targetSpider={spider} 
-                            size="sm" 
-                            variant="outline"
-                            context="leaderboard"
-                          />
+                          <p className="text-xs sm:text-sm text-muted-foreground truncate">{spider.species}</p>
+                          <p className="text-xs text-muted-foreground truncate hidden sm:block">Owner: {ownerName}</p>
+                          {spider.created_at && (
+                            <p className="text-xs text-muted-foreground">
+                              Uploaded: {format(new Date(spider.created_at), 'MMM d, yyyy')}
+                            </p>
+                          )}
+                        </div>
+                        
+                        <BattleButton 
+                          targetSpider={spider} 
+                          size="sm" 
+                          variant="outline"
+                          context="leaderboard"
+                        />
+                        
+                        <div className="text-right flex-shrink-0 ml-4">
+                          <div className="text-lg sm:text-xl font-bold">{spider.power_score}</div>
+                          <div className="text-xs text-muted-foreground">Power</div>
                         </div>
                     </CardContent>
                   </Card>
