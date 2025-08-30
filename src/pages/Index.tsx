@@ -45,6 +45,7 @@ const Index = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [topLeaderboardSpiders, setTopLeaderboardSpiders] = useState<Spider[]>([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(true);
+  const [leaderboardType, setLeaderboardType] = useState<'alltime' | 'weekly'>('alltime');
 
   const rarityColors = {
     COMMON: "bg-gray-500",
@@ -64,7 +65,7 @@ const Index = () => {
       setSpidersLoading(false);
     }
     fetchTopLeaderboardSpiders();
-  }, [user]);
+  }, [user, leaderboardType]);
 
   const fetchUserGlobalRank = async () => {
     if (!user) return;
@@ -120,20 +121,49 @@ const Index = () => {
     try {
       setLeaderboardLoading(true);
       
-      const { data, error } = await supabase
-        .from('spiders')
-        .select(`
-          id, nickname, species, image_url, rarity, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved, owner_id,
-          profiles (
-            display_name
-          )
-        `)
-        .eq('is_approved', true)
-        .order('power_score', { ascending: false })
-        .limit(10);
+      if (leaderboardType === 'weekly') {
+        // Fetch weekly rankings
+        const { data, error } = await supabase
+          .from('weekly_rankings')
+          .select(`
+            power_score,
+            rank_position,
+            spiders (
+              id, nickname, species, image_url, rarity, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved, owner_id,
+              profiles (
+                display_name
+              )
+            )
+          `)
+          .order('rank_position', { ascending: true })
+          .limit(10);
 
-      if (error) throw error;
-      setTopLeaderboardSpiders(data || []);
+        if (error) throw error;
+        
+        // Transform the data to match the Spider interface
+        const transformedData = (data || []).map(ranking => ({
+          ...ranking.spiders,
+          profiles: ranking.spiders?.profiles
+        })).filter(spider => spider && spider.id) as Spider[];
+        
+        setTopLeaderboardSpiders(transformedData);
+      } else {
+        // Fetch all-time rankings (existing logic)
+        const { data, error } = await supabase
+          .from('spiders')
+          .select(`
+            id, nickname, species, image_url, rarity, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved, owner_id,
+            profiles (
+              display_name
+            )
+          `)
+          .eq('is_approved', true)
+          .order('power_score', { ascending: false })
+          .limit(10);
+
+        if (error) throw error;
+        setTopLeaderboardSpiders(data || []);
+      }
     } catch (error) {
       console.error('Error fetching top spiders:', error);
     } finally {
@@ -448,9 +478,38 @@ const Index = () => {
         {/* Leaderboard Section */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold mb-2">Global Leaderboard</h2>
-              <p className="text-muted-foreground">Top 10 most powerful spider fighters</p>
+            <div className="flex-1">
+              <div className="flex items-center gap-4 mb-2">
+                <h2 className="text-2xl font-bold">Global Leaderboard</h2>
+                <div className="flex bg-muted rounded-lg p-1">
+                  <button
+                    onClick={() => setLeaderboardType('alltime')}
+                    className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                      leaderboardType === 'alltime' 
+                        ? 'bg-background text-foreground shadow-sm' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    All-Time
+                  </button>
+                  <button
+                    onClick={() => setLeaderboardType('weekly')}
+                    className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                      leaderboardType === 'weekly' 
+                        ? 'bg-background text-foreground shadow-sm' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Weekly
+                  </button>
+                </div>
+              </div>
+              <p className="text-muted-foreground">
+                {leaderboardType === 'alltime' 
+                  ? 'Top 10 most powerful spider fighters of all time'
+                  : 'Top 10 spider fighters for this week'
+                }
+              </p>
             </div>
             <Button asChild variant="outline">
               <Link to="/leaderboard" className="flex items-center gap-2">
