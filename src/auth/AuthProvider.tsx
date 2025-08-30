@@ -73,12 +73,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       provider: 'google',
       options: {
         redirectTo: redirectUrl,
+        skipBrowserRedirect: true,
       }
     });
-    if (!error) {
-      console.log('Redirecting to Google OAuth', data?.url);
+    if (error) return { error };
+
+    const url = data?.url;
+    if (url) {
+      try {
+        if (window.top && window.top !== window.self) {
+          // Break out of iframe to avoid X-Frame-Options block from Google
+          window.top.location.href = url;
+        } else {
+          window.location.href = url;
+        }
+      } catch {
+        // Fallback to opening a new tab
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
     }
-    return { error };
+    return { error: null };
   };
 
   const signInAsDemo = async () => {
