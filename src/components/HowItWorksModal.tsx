@@ -35,8 +35,11 @@ export const HowItWorksModal = () => {
             </h3>
             <div className="space-y-2 text-sm">
               <p>1. <strong>Upload Your Spider:</strong> Take a clear photo of any spider you find</p>
-              <p>2. <strong>AI Analysis:</strong> Our system identifies the species and generates battle stats</p>
-              <p>3. <strong>Collection:</strong> Your spider joins your fighter roster with unique abilities</p>
+              <p>2. <strong>Weekly Limit:</strong> Each user can upload only ONE ranked spider per week</p>
+              <p>3. <strong>Week Reset:</strong> New upload window starts every Sunday at 12am PT</p>
+              <p>4. <strong>AI Analysis:</strong> Our system identifies the species and generates battle stats</p>
+              <p>5. <strong>Ranking:</strong> Only your first weekly spider gets ranked on leaderboards</p>
+              <p>6. <strong>Collection:</strong> Your spider joins your fighter roster with unique abilities</p>
             </div>
           </section>
 

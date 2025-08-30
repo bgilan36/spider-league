@@ -561,6 +561,36 @@ export type Database = {
           },
         ]
       }
+      weekly_uploads: {
+        Row: {
+          created_at: string
+          first_spider_id: string | null
+          id: string
+          updated_at: string
+          upload_count: number
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          first_spider_id?: string | null
+          id?: string
+          updated_at?: string
+          upload_count?: number
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          created_at?: string
+          first_spider_id?: string | null
+          id?: string
+          updated_at?: string
+          upload_count?: number
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
       weeks: {
         Row: {
           created_at: string | null
@@ -623,9 +653,21 @@ export type Database = {
           webcraft: number
         }[]
       }
+      can_user_upload_this_week: {
+        Args: { user_id_param: string }
+        Returns: boolean
+      }
+      get_current_pt_week_start: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_current_week: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      increment_weekly_upload: {
+        Args: { spider_id_param: string; user_id_param: string }
+        Returns: undefined
       }
       resolve_battle_challenge: {
         Args: {

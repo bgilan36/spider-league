@@ -308,6 +308,25 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
         throw new Error("You must be logged in to upload spiders");
       }
 
+      // Check weekly upload limit
+      const { data: canUpload, error: checkError } = await supabase.rpc('can_user_upload_this_week', { 
+        user_id_param: authUser.id 
+      });
+      
+      if (checkError) {
+        console.error("Error checking upload limit:", checkError);
+        throw new Error("Error checking upload permissions");
+      }
+      
+      if (!canUpload) {
+        toast({ 
+          title: "Weekly limit reached", 
+          description: "You can only upload one ranked spider per week. Week resets on Sunday at 12am PT.", 
+          variant: "destructive" 
+        });
+        return;
+      }
+
       // Upload image to storage
       const fileExt = selectedFile.name.split('.').pop();
       const fileName = `${authUser.id}/${Date.now()}.${fileExt}`;
@@ -327,7 +346,7 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
       const finalStats = spiderStats || generateSpiderStats();
 
       // Create spider record with authenticated user ID
-      const { error: insertError } = await supabase
+      const { data: insertData, error: insertError } = await supabase
         .from('spiders')
         .insert({
           owner_id: authUser.id, // Use the authenticated user ID directly
@@ -337,9 +356,22 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
           rng_seed: Math.random().toString(36).substring(7),
           is_approved: true,
           ...finalStats,
-        });
+        })
+        .select('id')
+        .single();
 
       if (insertError) throw insertError;
+
+      // Track weekly upload
+      const { error: trackError } = await supabase.rpc('increment_weekly_upload', {
+        user_id_param: authUser.id,
+        spider_id_param: insertData.id
+      });
+      
+      if (trackError) {
+        console.error("Error tracking weekly upload:", trackError);
+        // Don't fail the upload, just log the error
+      }
 
       toast({ title: "Spider uploaded!", description: "Your spider is ready for battle!" });
       navigate("/collection");
