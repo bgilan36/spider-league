@@ -58,20 +58,41 @@ const BattleMode: React.FC = () => {
   const fetchChallenges = async () => {
     const { data, error } = await supabase
       .from('battle_challenges')
-      .select(`
-        *,
-        challenger_spider:spiders!battle_challenges_challenger_spider_id_fkey(
-          id, nickname, species, image_url, power_score, hit_points, damage, speed, defense, venom, webcraft, created_at, owner_id
-        ),
-        challenger_profile:profiles!battle_challenges_challenger_id_fkey(display_name)
-      `)
+      .select('*')
       .eq('status', 'OPEN')
       .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false });
 
-    if (data && !error) {
-      setChallenges(data as unknown as BattleChallenge[]);
+    if (error) {
+      console.error('Error fetching challenges:', error);
+      toast({ title: "Error fetching challenges", description: error.message, variant: "destructive" });
+      return;
     }
+
+    // Fetch related data separately
+    const challengesWithData = await Promise.all((data || []).map(async (challenge) => {
+      // Fetch challenger spider
+      const { data: spider } = await supabase
+        .from('spiders')
+        .select('*')
+        .eq('id', challenge.challenger_spider_id)
+        .single();
+
+      // Fetch challenger profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('id', challenge.challenger_id)
+        .single();
+
+      return {
+        ...challenge,
+        challenger_spider: spider,
+        challenger_profile: profile
+      };
+    }));
+
+    setChallenges(challengesWithData);
   };
 
   // Fetch user's eligible spiders (uploaded in last 7 days)
@@ -112,13 +133,7 @@ const BattleMode: React.FC = () => {
           challenger_spider_id: selectedSpider.id,
           challenge_message: challengeMessage || `${selectedSpider.nickname} seeks a worthy opponent!`
         })
-        .select(`
-          *,
-          challenger_spider:spiders!battle_challenges_challenger_spider_id_fkey(
-            id, nickname, species, image_url, power_score, hit_points, damage, speed, defense, venom, webcraft, created_at, owner_id
-          ),
-          challenger_profile:profiles!battle_challenges_challenger_id_fkey(display_name)
-        `)
+        .select('*')
         .single();
 
       if (error) {
@@ -138,10 +153,8 @@ const BattleMode: React.FC = () => {
         description: "Your battle challenge is now live",
       });
       
-      // Add the new challenge to local state if data exists
-      if (data) {
-        setChallenges(prev => [data as unknown as BattleChallenge, ...prev]);
-      }
+      // Refresh challenges to show the new one
+      fetchChallenges();
       
       // Reset form
       setShowChallengeForm(false);
