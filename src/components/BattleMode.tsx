@@ -98,44 +98,66 @@ const BattleMode: React.FC = () => {
     if (!selectedSpider || !user) return;
 
     setLoading(true);
-    const { data, error } = await supabase
-      .from('battle_challenges')
-      .insert({
+    try {
+      console.log('Creating challenge with:', {
         challenger_id: user.id,
         challenger_spider_id: selectedSpider.id,
         challenge_message: challengeMessage || `${selectedSpider.nickname} seeks a worthy opponent!`
-      })
-      .select(`
-        *,
-        challenger_spider:spiders!challenger_spider_id(
-          id, nickname, species, image_url, power_score, hit_points, damage, speed, defense, venom, webcraft, created_at, owner_id
-        ),
-        challenger_profile:profiles!challenger_id(display_name)
-      `)
-      .single();
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create challenge",
-        variant: "destructive"
       });
-    } else {
+
+      const { data, error } = await supabase
+        .from('battle_challenges')
+        .insert({
+          challenger_id: user.id,
+          challenger_spider_id: selectedSpider.id,
+          challenge_message: challengeMessage || `${selectedSpider.nickname} seeks a worthy opponent!`
+        })
+        .select(`
+          *,
+          challenger_spider:spiders!challenger_spider_id(
+            id, nickname, species, image_url, power_score, hit_points, damage, speed, defense, venom, webcraft, created_at, owner_id
+          ),
+          challenger_profile:profiles!challenger_id(display_name)
+        `)
+        .single();
+
+      if (error) {
+        console.error('Challenge creation error:', error);
+        toast({
+          title: "Error",
+          description: `Failed to create challenge: ${error.message}`,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      console.log('Challenge created successfully:', data);
+      
       toast({
         title: "Challenge Posted!",
         description: "Your battle challenge is now live",
       });
       
-      // Immediately add the new challenge to the local state
+      // Add the new challenge to local state if data exists
       if (data) {
         setChallenges(prev => [data as unknown as BattleChallenge, ...prev]);
       }
       
+      // Reset form
       setShowChallengeForm(false);
       setSelectedSpider(null);
       setChallengeMessage('');
+      
+    } catch (err) {
+      console.error('Unexpected error creating challenge:', err);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred while creating the challenge",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   // Accept battle challenge
