@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,8 +7,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { useAuth } from "@/auth/AuthProvider";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Sword } from "lucide-react";
 import PowerScoreArc from "@/components/PowerScoreArc";
 
 interface Spider {
@@ -24,6 +30,8 @@ interface Spider {
   venom: number;
   webcraft: number;
   is_approved: boolean;
+  owner_id?: string;
+  created_at?: string;
 }
 
 interface SpiderDetailsModalProps {
@@ -37,6 +45,73 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
   isOpen,
   onClose,
 }) => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [userSpiders, setUserSpiders] = useState<Spider[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Check if spider is eligible for battle (created within 7 days)
+  const isEligibleForBattle = (spiderCreatedAt?: string): boolean => {
+    if (!spiderCreatedAt) return false;
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    return new Date(spiderCreatedAt) >= sevenDaysAgo;
+  };
+
+  // Fetch user's eligible spiders for battle
+  const fetchEligibleSpiders = async () => {
+    if (!user) return;
+    
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const { data, error } = await supabase
+      .from('spiders')
+      .select('*')
+      .eq('owner_id', user.id)
+      .eq('is_approved', true)
+      .gte('created_at', sevenDaysAgo.toISOString());
+
+    if (data && !error) {
+      setUserSpiders(data);
+    }
+  };
+
+  // Create battle challenge
+  const createBattleChallenge = async (challengerSpider: Spider) => {
+    if (!spider || !user) return;
+
+    setLoading(true);
+    const { error } = await supabase
+      .from('battle_challenges')
+      .insert({
+        challenger_id: user.id,
+        challenger_spider_id: challengerSpider.id,
+        challenge_message: `${challengerSpider.nickname} challenges ${spider.nickname} to battle!`
+      });
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create challenge",
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Challenge Created!",
+        description: `${challengerSpider.nickname} has challenged ${spider.nickname}`,
+      });
+      onClose();
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    if (isOpen && user) {
+      fetchEligibleSpiders();
+    }
+  }, [isOpen, user]);
+
   if (!spider) return null;
 
   const rarityColors = {
@@ -118,6 +193,42 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
                 </Badge>
               </div>
             </div>
+
+            {/* Battle Section */}
+            {user && spider.owner_id !== user.id && spider.is_approved && isEligibleForBattle(spider.created_at) && (
+              <div className="pt-4 border-t">
+                <h4 className="font-medium mb-3">Challenge to Battle</h4>
+                {userSpiders.length > 0 ? (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Select one of your spiders to challenge {spider.nickname}:
+                    </p>
+                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                      {userSpiders.map((userSpider) => (
+                        <Button
+                          key={userSpider.id}
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-between"
+                          onClick={() => createBattleChallenge(userSpider)}
+                          disabled={loading}
+                        >
+                          <span>{userSpider.nickname}</span>
+                          <Sword className="h-4 w-4" />
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <Sword className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">
+                      You need approved spiders created in the last 7 days to battle
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </DialogContent>
