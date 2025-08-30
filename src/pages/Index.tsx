@@ -228,7 +228,7 @@ const Index = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Helmet>
-          <title>Spider League — Battle Spiders Online</title>
+          <title>Spider League</title>
           <meta name="description" content="Upload spiders, generate stats, and battle in weekly matchups on Spider League." />
           <link rel="canonical" href={`${window.location.origin}/`} />
         </Helmet>
