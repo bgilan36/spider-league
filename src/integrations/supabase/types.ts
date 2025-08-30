@@ -57,7 +57,29 @@ export type Database = {
           status?: string
           winner_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "battle_challenges_accepter_spider_id_fkey"
+            columns: ["accepter_spider_id"]
+            isOneToOne: false
+            referencedRelation: "spiders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "battle_challenges_challenger_spider_id_fkey"
+            columns: ["challenger_spider_id"]
+            isOneToOne: false
+            referencedRelation: "spiders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "battle_challenges_loser_spider_id_fkey"
+            columns: ["loser_spider_id"]
+            isOneToOne: false
+            referencedRelation: "spiders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       battles: {
         Row: {

@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import PowerScoreArc from "@/components/PowerScoreArc";
 import SpiderDetailsModal from "@/components/SpiderDetailsModal";
 import BattleMode from "@/components/BattleMode";
+import BattleButton from "@/components/BattleButton";
 
 interface Spider {
   id: string;
@@ -107,7 +108,7 @@ const Index = () => {
     try {
       const { data, error } = await supabase
         .from('spiders')
-        .select('id, nickname, species, image_url, rarity, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved')
+        .select('id, nickname, species, image_url, rarity, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved, created_at, owner_id')
         .eq('owner_id', user.id)
         .order('created_at', { ascending: false })
         .limit(3);
@@ -588,11 +589,17 @@ const Index = () => {
                          )}
                        </div>
                        
-                       <div className="flex items-center justify-center flex-shrink-0 min-w-[60px]">
-                         <div className="text-center">
+                       <div className="flex items-center justify-between flex-shrink-0 min-w-[60px]">
+                         <div className="text-center mr-3">
                            <div className="text-lg sm:text-xl font-bold">{spider.power_score}</div>
                            <div className="text-xs text-muted-foreground">Power</div>
                          </div>
+                         <BattleButton 
+                           targetSpider={spider} 
+                           size="sm" 
+                           variant="outline"
+                           className="ml-2"
+                         />
                        </div>
                     </CardContent>
                   </Card>
