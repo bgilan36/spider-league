@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -14,12 +15,13 @@ interface Profile {
   display_name: string | null;
   avatar_url: string | null;
   bio: string | null;
+  email_communications_enabled: boolean;
 }
 
 export const UserProfileMenu = () => {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
-  const [profile, setProfile] = useState<Profile>({ display_name: null, avatar_url: null, bio: null });
+  const [profile, setProfile] = useState<Profile>({ display_name: null, avatar_url: null, bio: null, email_communications_enabled: true });
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -36,7 +38,7 @@ export const UserProfileMenu = () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('display_name, avatar_url, bio')
+        .select('display_name, avatar_url, bio, email_communications_enabled')
         .eq('id', user.id)
         .single();
 
@@ -45,7 +47,7 @@ export const UserProfileMenu = () => {
         return;
       }
 
-      setProfile(data || { display_name: null, avatar_url: null, bio: null });
+      setProfile(data || { display_name: null, avatar_url: null, bio: null, email_communications_enabled: true });
     } catch (error) {
       console.error('Error fetching profile:', error);
     }
@@ -63,6 +65,7 @@ export const UserProfileMenu = () => {
           display_name: profile.display_name,
           avatar_url: profile.avatar_url,
           bio: profile.bio,
+          email_communications_enabled: profile.email_communications_enabled,
           updated_at: new Date().toISOString()
         });
 
@@ -206,6 +209,25 @@ export const UserProfileMenu = () => {
                 onChange={(e) => setProfile(prev => ({ ...prev, bio: e.target.value }))}
                 placeholder="Tell us about yourself..."
                 rows={3}
+              />
+            </div>
+
+            {/* Email Communications */}
+            <div className="flex items-center justify-between space-x-2">
+              <div className="space-y-1">
+                <Label htmlFor="email-communications" className="text-sm font-medium">
+                  Email Communications
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Receive updates and notifications via email
+                </p>
+              </div>
+              <Switch
+                id="email-communications"
+                checked={profile.email_communications_enabled}
+                onCheckedChange={(checked) => 
+                  setProfile(prev => ({ ...prev, email_communications_enabled: checked }))
+                }
               />
             </div>
 

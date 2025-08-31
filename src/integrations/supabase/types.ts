@@ -314,6 +314,7 @@ export type Database = {
           bio: string | null
           created_at: string
           display_name: string | null
+          email_communications_enabled: boolean
           google_id: string | null
           id: string
           rating_elo: number | null
@@ -327,6 +328,7 @@ export type Database = {
           bio?: string | null
           created_at?: string
           display_name?: string | null
+          email_communications_enabled?: boolean
           google_id?: string | null
           id: string
           rating_elo?: number | null
@@ -340,6 +342,7 @@ export type Database = {
           bio?: string | null
           created_at?: string
           display_name?: string | null
+          email_communications_enabled?: boolean
           google_id?: string | null
           id?: string
           rating_elo?: number | null
