@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { Upload, Camera, Loader2, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -63,6 +64,7 @@ const SpiderUpload = () => {
   const [identifying, setIdentifying] = useState(false);
   const [spiderStats, setSpiderStats] = useState<any | null>(null);
   const [analysisSource, setAnalysisSource] = useState<'server' | 'local' | null>(null);
+  const [candidates, setCandidates] = useState<{ label: string; score: number; modelCount?: number; models?: string[] }[]>([]);
 
   const fileToBase64 = (file: File) =>
     new Promise<string>((resolve, reject) => {
@@ -72,15 +74,42 @@ const SpiderUpload = () => {
       reader.readAsDataURL(file);
     });
 
+  // Compress image on-device to improve AI reliability and latency
+  const compressImageToBase64 = (file: File, maxDim = 1024, quality = 0.85) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let { width, height } = img;
+          const scale = Math.min(1, maxDim / Math.max(width, height));
+          width = Math.round(width * scale);
+          height = Math.round(height * scale);
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return reject(new Error('Canvas not supported'));
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = reject;
+        img.src = reader.result as string;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
   const analyzeImage = async (file: File) => {
     setAnalysisSource(null);
+    setCandidates([]);
     try {
       setIdentifying(true);
       toast({ title: 'Analyzing spider...', description: 'Please wait while we identify your spider.' });
       
-      const base64 = await fileToBase64(file);
+      const base64 = await compressImageToBase64(file, 1024, 0.85);
       const { data, error } = await supabase.functions.invoke('spider-identify', {
-        body: { image: base64, topK: 5 },
+        body: { image: base64, topK: 8 },
       });
       
       if (error) throw error;
@@ -98,6 +127,9 @@ const SpiderUpload = () => {
       if (data?.stats) {
         setSpiderStats(data.stats);
         console.log('AI generated stats:', data.stats);
+      }
+      if (Array.isArray(data?.candidates)) {
+        setCandidates(data.candidates);
       }
       
       // Show success message
@@ -117,14 +149,15 @@ const SpiderUpload = () => {
         });
 
         const base64Local = await fileToBase64(file);
-        const results = await classifyImage(base64Local);
+        const resultObj = await classifyImage(base64Local);
 
-        if (Array.isArray(results) && results.length > 0) {
-          const top = results[0] as { label: string; score: number };
+        if (resultObj?.results?.length) {
+          const top = resultObj.topResult || resultObj.results[0];
           const primaryLabel = String(top.label || '').split(',')[0];
           const speciesLocal = titleCase(primaryLabel);
           setSpecies(speciesLocal);
           setAnalysisSource('local');
+          setCandidates(resultObj.results.slice(0, 5));
 
           const nick = generateNickname(speciesLocal);
           setNickname(nick);
@@ -517,6 +550,34 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                     )}
                   </div>
                 </div>
+
+                {candidates.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Top AI suggestions</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {candidates.map((c, i) => (
+                        <Button
+                          key={c.label + i}
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSpecies(c.label);
+                            const nick = generateNickname(c.label);
+                            setNickname(nick);
+                            const updated = generateSpiderStats();
+                            setSpiderStats(updated);
+                            toast({ title: 'Suggestion applied', description: `${c.label} (${Math.round((c.score || 0) * 100)}% confidence)` });
+                          }}
+                          className="h-7 px-3"
+                        >
+                          <span className="mr-2">{c.label}</span>
+                          <Badge variant="secondary">{Math.round((c.score || 0) * 100)}%</Badge>
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <Button type="submit" className="w-full" disabled={uploading || identifying}>
                   {uploading ? (
