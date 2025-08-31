@@ -90,21 +90,22 @@ export const UserProfileMenu = () => {
 
     const file = event.target.files[0];
     const fileExt = file.name.split('.').pop();
-    const fileName = `${user.id}-${Math.random()}.${fileExt}`;
+    const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `avatars/${user.id}/${fileName}`;
 
     setUploading(true);
     try {
       // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('spiders')
-        .upload(`avatars/${fileName}`, file);
+        .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
       // Get public URL
       const { data: urlData } = supabase.storage
         .from('spiders')
-        .getPublicUrl(`avatars/${fileName}`);
+        .getPublicUrl(filePath);
 
       setProfile(prev => ({ ...prev, avatar_url: urlData.publicUrl }));
 
