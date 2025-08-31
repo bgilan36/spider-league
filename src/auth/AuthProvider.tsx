@@ -1,11 +1,13 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import SpiderLogoLoader from "@/components/SpiderLogoLoader";
 
 interface AuthContextValue {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  signingIn: boolean;
   signOut: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
@@ -19,6 +21,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [signingIn, setSigningIn] = useState(false);
 
   useEffect(() => {
     console.log("AuthProvider: Setting up auth listener");
@@ -47,10 +50,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    setSigningIn(true);
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+    if (!error) {
+      // Keep showing loader until auth state change completes
+      setTimeout(() => setSigningIn(false), 1500);
+    } else {
+      setSigningIn(false);
+    }
     return { error };
   };
 
@@ -68,6 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signInWithGoogle = async () => {
+    setSigningIn(true);
     const redirectUrl = `${window.location.origin}/`;
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -76,7 +87,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         skipBrowserRedirect: true,
       }
     });
-    if (error) return { error };
+    if (error) {
+      setSigningIn(false);
+      return { error };
+    }
 
     const url = data?.url;
     if (url) {
@@ -90,12 +104,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } catch {
         // Fallback to opening a new tab
         window.open(url, '_blank', 'noopener,noreferrer');
+        setSigningIn(false);
       }
     }
     return { error: null };
   };
 
   const signInAsDemo = async () => {
+    setSigningIn(true);
     // Generate cryptographically secure random password
     const generateSecurePassword = () => {
       const array = new Uint8Array(16);
@@ -117,9 +133,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     if (signUpError) {
+      setSigningIn(false);
       return { error: signUpError };
     } else if (signUpData?.session) {
       // Sign up returned a session when email confirmation is disabled
+      setTimeout(() => setSigningIn(false), 1500);
       return { error: null };
     } else {
       // No session returned; try signing in again with the ephemeral email
@@ -127,6 +145,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         email: demoEmail,
         password,
       });
+      if (!signInResult.error) {
+        setTimeout(() => setSigningIn(false), 1500);
+      } else {
+        setSigningIn(false);
+      }
       return { error: signInResult.error };
     }
   };
@@ -137,7 +160,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   console.log("AuthProvider: Rendering with", { hasUser: !!user, loading });
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut, signIn, signUp, signInWithGoogle, signInAsDemo }}>
+    <AuthContext.Provider value={{ user, session, loading, signingIn, signOut, signIn, signUp, signInWithGoogle, signInAsDemo }}>
+      {signingIn && <SpiderLogoLoader />}
       {children}
     </AuthContext.Provider>
   );
