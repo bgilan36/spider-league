@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import PowerScoreArc from "@/components/PowerScoreArc";
 import BattleButton from "@/components/BattleButton";
+import ShareButton from "@/components/ShareButton";
 
 interface Spider {
   id: string;
@@ -122,14 +123,23 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
               </div>
             </div>
 
-            {/* Battle Section */}
-            <div className="pt-4 border-t flex justify-center">
+            {/* Action Buttons */}
+            <div className="pt-4 border-t space-y-3">
               <BattleButton 
                 targetSpider={spider} 
                 size="default" 
                 variant="default"
                 className="w-full"
               />
+              <div className="flex justify-center">
+                <ShareButton
+                  title={`🕷️ Meet ${spider.nickname} - ${spider.rarity} Spider`}
+                  text={`Check out my ${spider.rarity.toLowerCase()} spider "${spider.nickname}" (${spider.species}) with a massive ${spider.power_score} power score! 💪 This web warrior is ready for battle in Spider League! Think your spider can win? 🏆`}
+                  hashtags={["SpiderLeague", "WebWarriors", spider.rarity, "SpiderCollection"]}
+                  variant="outline"
+                  size="default"
+                />
+              </div>
             </div>
           </div>
         </div>

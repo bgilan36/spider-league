@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, Crown, ArrowRight, Users } from 'lucide-react';
+import ShareButton from '@/components/ShareButton';
 
 interface Spider {
   id: string;
@@ -141,9 +142,16 @@ const BattleRecapModal: React.FC<BattleRecapModalProps> = ({
             </Card>
           )}
 
-          {/* Close Button */}
-          <div className="text-center">
-            <Button size="lg" onClick={onClose} className="min-w-32">
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+            <ShareButton
+              title={`🏆 Epic Spider Battle Victory!`}
+              text={`${winner.nickname} (Power: ${winner.power_score}) just CRUSHED ${loser.nickname} (Power: ${loser.power_score}) in an epic Spider League battle! 🕷️⚔️ The ownership has transferred to ${winnerOwner}! Join the battle and claim your victory!`}
+              hashtags={["SpiderLeague", "WebWarriors", "EpicBattle", "Victory"]}
+              variant="default"
+              size="lg"
+            />
+            <Button size="lg" onClick={onClose} variant="outline" className="min-w-32">
               Close Battle Recap
             </Button>
           </div>
