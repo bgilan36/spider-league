@@ -18,6 +18,7 @@ import SpiderDetailsModal from "@/components/SpiderDetailsModal";
 import BattleMode from "@/components/BattleMode";
 import BattleButton from "@/components/BattleButton";
 import ActiveChallengesPreview from "@/components/ActiveChallengesPreview";
+import BattleDetailsModal from "@/components/BattleDetailsModal";
 
 interface Spider {
   id: string;
@@ -54,6 +55,8 @@ const Index = () => {
   const [leaderboardType, setLeaderboardType] = useState<'alltime' | 'weekly'>('alltime');
   const [recentBattles, setRecentBattles] = useState<any[]>([]);
   const [battlesLoading, setBattlesLoading] = useState(true);
+  const [selectedBattle, setSelectedBattle] = useState<any>(null);
+  const [isBattleDetailsOpen, setIsBattleDetailsOpen] = useState(false);
 
   const rarityColors = {
     COMMON: "bg-gray-500",
@@ -272,6 +275,11 @@ const Index = () => {
   const handleSpiderClick = (spider: Spider) => {
     setSelectedSpider(spider);
     setIsModalOpen(true);
+  };
+
+  const handleBattleClick = (battle: any) => {
+    setSelectedBattle(battle);
+    setIsBattleDetailsOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -665,7 +673,7 @@ const Index = () => {
                 }
                 
                 return (
-                  <Card key={battle.id} className="hover:shadow-md transition-shadow">
+                  <Card key={battle.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleBattleClick(battle)}>
                     <CardContent className="flex items-center gap-2 sm:gap-4 p-3 sm:p-4">
                       <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                         {/* User Spider */}
@@ -843,6 +851,12 @@ const Index = () => {
         spider={selectedSpider}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+      />
+      
+      <BattleDetailsModal
+        isOpen={isBattleDetailsOpen}
+        onClose={() => setIsBattleDetailsOpen(false)}
+        battle={selectedBattle}
       />
     </div>
   );
