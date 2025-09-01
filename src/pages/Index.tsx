@@ -51,8 +51,10 @@ const Index = () => {
   const [selectedSpider, setSelectedSpider] = useState<Spider | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [topLeaderboardSpiders, setTopLeaderboardSpiders] = useState<Spider[]>([]);
+  const [topUsers, setTopUsers] = useState<any[]>([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(true);
   const [leaderboardType, setLeaderboardType] = useState<'alltime' | 'weekly'>('alltime');
+  const [leaderboardView, setLeaderboardView] = useState<'spiders' | 'users'>('spiders');
   const [recentBattles, setRecentBattles] = useState<any[]>([]);
   const [battlesLoading, setBattlesLoading] = useState(true);
   const [selectedBattle, setSelectedBattle] = useState<any>(null);
@@ -79,6 +81,7 @@ const Index = () => {
       setRecentBattles([]);
     }
     fetchTopLeaderboardSpiders();
+    fetchTopUsers();
   }, [user, leaderboardType]);
 
   const fetchUserGlobalRank = async () => {
@@ -237,7 +240,7 @@ const Index = () => {
             )
           `)
           .order('rank_position', { ascending: true })
-          .limit(10);
+          .limit(5);
 
         if (error) throw error;
         
@@ -260,13 +263,90 @@ const Index = () => {
           `)
           .eq('is_approved', true)
           .order('power_score', { ascending: false })
-          .limit(10);
+          .limit(5);
 
         if (error) throw error;
         setTopLeaderboardSpiders(data || []);
       }
     } catch (error) {
       console.error('Error fetching top spiders:', error);
+    } finally {
+      setLeaderboardLoading(false);
+    }
+  };
+
+  const fetchTopUsers = async () => {
+    try {
+      setLeaderboardLoading(true);
+
+      // Get user rankings with cumulative power scores
+      const { data: userRankings, error } = await supabase
+        .from('spiders')
+        .select(`
+          owner_id,
+          power_score,
+          id,
+          nickname,
+          species,
+          image_url,
+          rarity,
+          profiles!owner_id (
+            display_name,
+            avatar_url
+          )
+        `)
+        .eq('is_approved', true);
+
+      if (error) throw error;
+
+      // Process the data to calculate user cumulative scores
+      const userMap = new Map();
+      
+      userRankings?.forEach((spider: any) => {
+        const userId = spider.owner_id;
+        const existing = userMap.get(userId);
+        
+        if (existing) {
+          existing.total_power_score += spider.power_score;
+          existing.spider_count += 1;
+          // Update top spider if this one has higher power score
+          if (!existing.top_spider || spider.power_score > existing.top_spider.power_score) {
+            existing.top_spider = {
+              id: spider.id,
+              nickname: spider.nickname,
+              species: spider.species,
+              image_url: spider.image_url,
+              power_score: spider.power_score,
+              rarity: spider.rarity
+            };
+          }
+        } else {
+          userMap.set(userId, {
+            user_id: userId,
+            display_name: spider.profiles?.display_name || null,
+            avatar_url: spider.profiles?.avatar_url || null,
+            total_power_score: spider.power_score,
+            spider_count: 1,
+            top_spider: {
+              id: spider.id,
+              nickname: spider.nickname,
+              species: spider.species,
+              image_url: spider.image_url,
+              power_score: spider.power_score,
+              rarity: spider.rarity
+            }
+          });
+        }
+      });
+
+      // Convert to array and sort by total power score
+      const sortedUsers = Array.from(userMap.values())
+        .sort((a: any, b: any) => b.total_power_score - a.total_power_score)
+        .slice(0, 5);
+
+      setTopUsers(sortedUsers);
+    } catch (error) {
+      console.error('Error fetching top users:', error);
     } finally {
       setLeaderboardLoading(false);
     }
@@ -728,34 +808,34 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
             <div className="flex-1">
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-2">
-                <h2 className="text-xl sm:text-2xl font-bold">Global Leaderboard</h2>
+                <h2 className="text-xl sm:text-2xl font-bold">Leaderboards</h2>
                 <div className="flex bg-muted rounded-lg p-1 w-fit">
                   <button
-                    onClick={() => setLeaderboardType('alltime')}
+                    onClick={() => setLeaderboardView('spiders')}
                     className={`px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-colors ${
-                      leaderboardType === 'alltime' 
+                      leaderboardView === 'spiders' 
                         ? 'bg-background text-foreground shadow-sm' 
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    All-Time
+                    Top Spiders
                   </button>
                   <button
-                    onClick={() => setLeaderboardType('weekly')}
+                    onClick={() => setLeaderboardView('users')}
                     className={`px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-colors ${
-                      leaderboardType === 'weekly' 
+                      leaderboardView === 'users' 
                         ? 'bg-background text-foreground shadow-sm' 
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    Weekly
+                    Top Users
                   </button>
                 </div>
               </div>
               <p className="text-sm sm:text-base text-muted-foreground">
-                {leaderboardType === 'alltime' 
-                  ? 'Top 10 most powerful spider fighters of all time'
-                  : 'Top 10 spider fighters for this week'
+                {leaderboardView === 'spiders' 
+                  ? 'Top 5 most powerful spider fighters'
+                  : 'Top 5 trainers by cumulative power scores'
                 }
               </p>
             </div>
@@ -772,15 +852,17 @@ const Index = () => {
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin" />
             </div>
-          ) : topLeaderboardSpiders.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6 text-center py-12">
-                <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No spiders yet</h3>
-                <p className="text-muted-foreground">Be the first to upload a spider and claim the top spot!</p>
-              </CardContent>
-            </Card>
-          ) : (
+          ) : leaderboardView === 'spiders' ? (
+            // Spider Leaderboard
+            topLeaderboardSpiders.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6 text-center py-12">
+                  <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No spiders yet</h3>
+                  <p className="text-muted-foreground">Be the first to upload a spider and claim the top spot!</p>
+                </CardContent>
+              </Card>
+            ) : (
             <div className="space-y-3">
               {topLeaderboardSpiders.map((spider, index) => {
                 const rank = index + 1;
@@ -842,6 +924,75 @@ const Index = () => {
                 );
               })}
             </div>
+          )) : (
+            // User Leaderboard
+            topUsers.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6 text-center py-12">
+                  <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No users yet</h3>
+                  <p className="text-muted-foreground">Be the first to upload spiders and start competing!</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {topUsers.map((user: any, index) => {
+                  const rank = index + 1;
+                  const userName = user.display_name || `User ${user.user_id.slice(0, 8)}`;
+                  return (
+                     <Card key={user.user_id} className={`hover:shadow-md transition-shadow ${rank <= 3 ? 'ring-1 ring-primary/20' : ''}`}>
+                      <CardContent className="flex items-center gap-2 sm:gap-4 p-3 sm:p-4">
+                        <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
+                          <div className="w-6 sm:w-8 text-center">
+                            {rank === 1 && <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500 mx-auto" />}
+                            {rank === 2 && <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mx-auto" />}
+                            {rank === 3 && <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600 mx-auto" />}
+                            {rank > 3 && <span className="font-bold text-sm sm:text-lg">#{rank}</span>}
+                          </div>
+                          <Badge variant={rank <= 3 ? "default" : "secondary"} className="font-bold text-xs sm:text-sm hidden sm:inline-flex">
+                            {rank === 1 ? "1st" : rank === 2 ? "2nd" : rank === 3 ? "3rd" : `${rank}th`}
+                          </Badge>
+                        </div>
+                        
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
+                          {user.avatar_url ? (
+                            <img 
+                              src={user.avatar_url} 
+                              alt={`${userName} avatar`}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="text-sm font-bold text-muted-foreground">
+                              {userName.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                        
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1 sm:gap-2 mb-1">
+                              <h4 className="font-semibold text-sm sm:text-base truncate">{userName}</h4>
+                              <Badge variant="outline" className="text-xs">
+                                {user.spider_count} Spider{user.spider_count !== 1 ? 's' : ''}
+                              </Badge>
+                            </div>
+                            {user.top_spider && (
+                              <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                                Top: {user.top_spider.nickname} ({user.top_spider.power_score})
+                              </p>
+                            )}
+                            <p className="text-xs text-muted-foreground">Collection Power Score</p>
+                          </div>
+                          
+                          <div className="text-right flex-shrink-0 ml-4">
+                            <div className="text-lg sm:text-xl font-bold">{user.total_power_score}</div>
+                            <div className="text-xs text-muted-foreground">Total Power</div>
+                          </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )
           )}
         </div>
 
