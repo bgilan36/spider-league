@@ -136,12 +136,11 @@ const Leaderboard = () => {
       setLoading(true);
 
       const { data: userRankings, error } = await supabase
-        .rpc('get_user_rankings_all_time')
-        .limit(100);
+        .rpc('get_user_rankings_all_time');
 
       if (error) throw error;
 
-      setTopUsers(userRankings || []);
+      setTopUsers((userRankings || []) as UserRanking[]);
     } catch (error: any) {
       console.error("Error fetching user leaderboard:", error);
       toast({ 
@@ -186,12 +185,11 @@ const Leaderboard = () => {
       setLoading(true);
 
       const { data: rankings, error } = await supabase
-        .rpc('get_user_rankings_weekly', { week_id_param: weekId })
-        .limit(100);
+        .rpc('get_user_rankings_weekly', { week_id_param: weekId });
 
       if (error) throw error;
 
-      setWeeklyUserRankings(rankings || []);
+      setWeeklyUserRankings((rankings || []) as WeeklyUserRanking[]);
     } catch (error: any) {
       console.error("Error fetching weekly user rankings:", error);
       toast({ 

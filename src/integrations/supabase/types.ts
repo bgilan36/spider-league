@@ -668,6 +668,29 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_user_rankings_all_time: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          avatar_url: string
+          display_name: string
+          spider_count: number
+          top_spider: Json
+          total_power_score: number
+          user_id: string
+        }[]
+      }
+      get_user_rankings_weekly: {
+        Args: { week_id_param: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          spiders_acquired_in_battle: number
+          top_spider: Json
+          user_id: string
+          week_power_score: number
+          week_spider_count: number
+        }[]
+      }
       increment_weekly_upload: {
         Args: { spider_id_param: string; user_id_param: string }
         Returns: undefined
