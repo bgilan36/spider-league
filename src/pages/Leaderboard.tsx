@@ -34,13 +34,37 @@ interface Spider {
   } | null;
 }
 
-interface WeeklyRanking {
-  id: string;
-  spider_id: string;
-  week_id: string;
-  power_score: number;
-  rank_position: number;
-  spiders: Spider;
+interface UserRanking {
+  user_id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  total_power_score: number;
+  spider_count: number;
+  top_spider: {
+    id: string;
+    nickname: string;
+    species: string;
+    image_url: string;
+    power_score: number;
+    rarity: "COMMON" | "UNCOMMON" | "RARE" | "EPIC" | "LEGENDARY";
+  } | null;
+}
+
+interface WeeklyUserRanking {
+  user_id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  week_power_score: number;
+  week_spider_count: number;
+  spiders_acquired_in_battle: number;
+  top_spider: {
+    id: string;
+    nickname: string;
+    species: string;
+    image_url: string;
+    power_score: number;
+    rarity: "COMMON" | "UNCOMMON" | "RARE" | "EPIC" | "LEGENDARY";
+  } | null;
 }
 
 interface Week {
@@ -53,8 +77,8 @@ interface Week {
 
 const Leaderboard = () => {
   const { toast } = useToast();
-  const [topSpiders, setTopSpiders] = useState<Spider[]>([]);
-  const [weeklyRankings, setWeeklyRankings] = useState<WeeklyRanking[]>([]);
+  const [topUsers, setTopUsers] = useState<UserRanking[]>([]);
+  const [weeklyUserRankings, setWeeklyUserRankings] = useState<WeeklyUserRanking[]>([]);
   const [weeks, setWeeks] = useState<Week[]>([]);
   const [selectedWeekId, setSelectedWeekId] = useState<string>("");
   const [currentWeekId, setCurrentWeekId] = useState<string>("");
@@ -97,37 +121,29 @@ const Leaderboard = () => {
   };
 
   useEffect(() => {
-    fetchTopSpiders();
+    fetchTopUsers();
     fetchWeeks();
   }, []);
 
   useEffect(() => {
     if (activeTab === "weekly" && selectedWeekId) {
-      fetchWeeklyRankings(selectedWeekId);
+      fetchWeeklyUserRankings(selectedWeekId);
     }
   }, [activeTab, selectedWeekId]);
 
-  const fetchTopSpiders = async () => {
+  const fetchTopUsers = async () => {
     try {
       setLoading(true);
 
-      const { data: spiders, error } = await supabase
-        .from('spiders')
-        .select(`
-          *,
-          profiles (
-            display_name
-          )
-        `)
-        .eq('is_approved', true)
-        .order('power_score', { ascending: false })
+      const { data: userRankings, error } = await supabase
+        .rpc('get_user_rankings_all_time')
         .limit(100);
 
       if (error) throw error;
 
-      setTopSpiders((spiders || []) as any);
+      setTopUsers(userRankings || []);
     } catch (error: any) {
-      console.error("Error fetching leaderboard:", error);
+      console.error("Error fetching user leaderboard:", error);
       toast({ 
         title: "Error loading leaderboard", 
         description: error.message, 
@@ -165,30 +181,19 @@ const Leaderboard = () => {
     }
   };
 
-  const fetchWeeklyRankings = async (weekId: string) => {
+  const fetchWeeklyUserRankings = async (weekId: string) => {
     try {
       setLoading(true);
 
       const { data: rankings, error } = await supabase
-        .from('weekly_rankings')
-        .select(`
-          *,
-          spiders (
-            *,
-            profiles (
-              display_name
-            )
-          )
-        `)
-        .eq('week_id', weekId)
-        .order('rank_position', { ascending: true })
+        .rpc('get_user_rankings_weekly', { week_id_param: weekId })
         .limit(100);
 
       if (error) throw error;
 
-      setWeeklyRankings((rankings || []) as any);
+      setWeeklyUserRankings(rankings || []);
     } catch (error: any) {
-      console.error("Error fetching weekly rankings:", error);
+      console.error("Error fetching weekly user rankings:", error);
       toast({ 
         title: "Error loading weekly rankings", 
         description: error.message, 
@@ -246,8 +251,8 @@ const Leaderboard = () => {
                 className="h-16 w-auto"
               />
             </div>
-            <h1 className="text-4xl font-bold mb-2">Global Leaderboard</h1>
-            <p className="text-muted-foreground">The most powerful spider fighters in the league</p>
+            <h1 className="text-4xl font-bold mb-2">User Leaderboard</h1>
+            <p className="text-muted-foreground">Top trainers ranked by cumulative power scores</p>
           </div>
         </div>
 
@@ -255,16 +260,16 @@ const Leaderboard = () => {
           <TabsList className="grid w-full grid-cols-2 mb-8">
             <TabsTrigger value="all-time" className="flex items-center gap-2">
               <Trophy className="h-4 w-4" />
-              All-Time
+              All-Time Rankings
             </TabsTrigger>
             <TabsTrigger value="weekly" className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              Weekly
+              Weekly Rankings
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="all-time">
-            {renderLeaderboard(topSpiders, "all-time")}
+            {renderUserLeaderboard(topUsers, "all-time")}
           </TabsContent>
 
           <TabsContent value="weekly">
@@ -289,10 +294,7 @@ const Leaderboard = () => {
                 </div>
               )}
               
-              {renderLeaderboard(
-                weeklyRankings.map(ranking => ranking.spiders), 
-                "weekly"
-              )}
+              {renderUserLeaderboard(weeklyUserRankings, "weekly")}
             </div>
           </TabsContent>
         </Tabs>
@@ -306,30 +308,30 @@ const Leaderboard = () => {
     </div>
   );
 
-  function renderLeaderboard(spiders: Spider[], type: "all-time" | "weekly") {
+  function renderUserLeaderboard(users: UserRanking[] | WeeklyUserRanking[], type: "all-time" | "weekly") {
     if (loading) {
       return (
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
-            <p>Loading {type === "weekly" ? "weekly" : "all-time"} leaderboard...</p>
+            <p>Loading {type === "weekly" ? "weekly" : "all-time"} user rankings...</p>
           </div>
         </div>
       );
     }
 
-    if (spiders.length === 0) {
+    if (users.length === 0) {
       return (
         <Card className="text-center py-12">
           <CardContent>
             <Trophy className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
             <h3 className="text-lg font-semibold mb-2">
-              {type === "weekly" ? "No Weekly Data" : "No Spiders Yet"}
+              {type === "weekly" ? "No Weekly Data" : "No Users Yet"}
             </h3>
             <p className="text-muted-foreground">
               {type === "weekly" 
-                ? "No rankings available for this week."
-                : "Be the first to upload a spider and claim the top spot!"
+                ? "No user rankings available for this week."
+                : "Be the first to upload spiders and claim the top spot!"
               }
             </p>
           </CardContent>
@@ -340,13 +342,18 @@ const Leaderboard = () => {
     return (
       <div className="space-y-4">
         {/* Top 3 Featured */}
-        {spiders.slice(0, 3).length > 0 && (
+        {users.slice(0, 3).length > 0 && (
           <div className="space-y-4 mb-8">
-            {spiders.slice(0, 3).map((spider, index) => {
+            {users.slice(0, 3).map((user, index) => {
               const rank = index + 1;
-              const ownerName = spider.profiles?.display_name || `User ${spider.owner_id.slice(0, 8)}`;
+              const userName = user.display_name || `User ${user.user_id.slice(0, 8)}`;
+              const isWeekly = type === "weekly";
+              const powerScore = isWeekly ? (user as WeeklyUserRanking).week_power_score : (user as UserRanking).total_power_score;
+              const spiderCount = isWeekly ? (user as WeeklyUserRanking).week_spider_count : (user as UserRanking).spider_count;
+              const battleSpiders = isWeekly ? (user as WeeklyUserRanking).spiders_acquired_in_battle : 0;
+              
               return (
-                <Card key={spider.id} className={`${rank === 1 ? 'ring-2 ring-amber-500' : ''} cursor-pointer hover:shadow-lg transition-all`} onClick={() => handleSpiderClick(spider)}>
+                <Card key={user.user_id} className={`${rank === 1 ? 'ring-2 ring-amber-500' : ''} hover:shadow-lg transition-all`}>
                   <CardContent className="flex items-center gap-4 p-6">
                     <div className="flex items-center gap-3">
                       {getRankIcon(rank)}
@@ -355,43 +362,54 @@ const Leaderboard = () => {
                       </Badge>
                     </div>
                     
-                    <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
-                      <img 
-                        src={spider.image_url} 
-                        alt={`${spider.nickname} - ${spider.species}`}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
+                    <div className="w-20 h-20 rounded-full overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
+                      {user.avatar_url ? (
+                        <img 
+                          src={user.avatar_url} 
+                          alt={`${userName} avatar`}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="text-2xl font-bold text-muted-foreground">
+                          {userName.charAt(0).toUpperCase()}
+                        </div>
+                      )}
                     </div>
                     
-                     <div className="min-w-0 flex-1">
-                       <div className="flex items-center gap-2 mb-1">
-                         <h3 className="font-bold text-xl">{spider.nickname}</h3>
-                         <Badge 
-                           variant="secondary" 
-                           className={`${rarityColors[spider.rarity]} text-white`}
-                         >
-                           {spider.rarity}
-                         </Badge>
-                       </div>
-                       <p className="text-muted-foreground">{spider.species}</p>
-                       <p className="text-sm text-muted-foreground">Owner: {ownerName}</p>
-                       <p className="text-sm text-muted-foreground">
-                         Uploaded: {new Date(spider.created_at).toLocaleDateString()}
-                       </p>
-                     </div>
-                     
-                     <BattleButton 
-                       targetSpider={spider} 
-                       size="sm" 
-                       variant="outline"
-                       context="leaderboard"
-                     />
-                     
-                     <div className="text-right flex-shrink-0 ml-4">
-                       <div className="text-3xl font-bold">{spider.power_score}</div>
-                       <div className="text-sm text-muted-foreground">Power Score</div>
-                     </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-bold text-xl">{userName}</h3>
+                        <Badge variant="outline">
+                          {spiderCount} Spider{spiderCount !== 1 ? 's' : ''}
+                        </Badge>
+                        {isWeekly && battleSpiders > 0 && (
+                          <Badge variant="secondary" className="bg-red-500 text-white">
+                            +{battleSpiders} from battles
+                          </Badge>
+                        )}
+                      </div>
+                      {user.top_spider && (
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="text-sm text-muted-foreground">Top Spider:</p>
+                          <p className="text-sm font-medium">{user.top_spider.nickname}</p>
+                          <Badge 
+                            variant="secondary" 
+                            className={`${rarityColors[user.top_spider.rarity]} text-white text-xs`}
+                          >
+                            {user.top_spider.rarity}
+                          </Badge>
+                        </div>
+                      )}
+                      <p className="text-sm text-muted-foreground">
+                        {isWeekly ? 'Weekly' : 'Total'} Collection Power Score
+                      </p>
+                    </div>
+                    
+                    <div className="text-right flex-shrink-0 ml-4">
+                      <div className="text-3xl font-bold">{powerScore}</div>
+                      <div className="text-sm text-muted-foreground">Power Score</div>
+                    </div>
                   </CardContent>
                 </Card>
               );
@@ -401,11 +419,16 @@ const Leaderboard = () => {
 
         {/* Rest of the leaderboard */}
         <div className="space-y-2">
-          {spiders.slice(3).map((spider, index) => {
+          {users.slice(3).map((user, index) => {
             const rank = index + 4;
-            const ownerName = spider.profiles?.display_name || `User ${spider.owner_id.slice(0, 8)}`;
+            const userName = user.display_name || `User ${user.user_id.slice(0, 8)}`;
+            const isWeekly = type === "weekly";
+            const powerScore = isWeekly ? (user as WeeklyUserRanking).week_power_score : (user as UserRanking).total_power_score;
+            const spiderCount = isWeekly ? (user as WeeklyUserRanking).week_spider_count : (user as UserRanking).spider_count;
+            const battleSpiders = isWeekly ? (user as WeeklyUserRanking).spiders_acquired_in_battle : 0;
+            
             return (
-              <Card key={spider.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleSpiderClick(spider)}>
+              <Card key={user.user_id} className="hover:shadow-md transition-shadow">
                 <CardContent className="flex items-center gap-4 p-4">
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div className="flex items-center gap-2 w-16">
@@ -413,43 +436,45 @@ const Leaderboard = () => {
                       <span className="font-bold text-lg min-w-0">#{rank}</span>
                     </div>
                     
-                    <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                      <img 
-                        src={spider.image_url} 
-                        alt={`${spider.nickname} - ${spider.species}`}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
+                    <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
+                      {user.avatar_url ? (
+                        <img 
+                          src={user.avatar_url} 
+                          alt={`${userName} avatar`}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="text-lg font-bold text-muted-foreground">
+                          {userName.charAt(0).toUpperCase()}
+                        </div>
+                      )}
                     </div>
                     
-                     <div className="min-w-0 flex-1">
-                       <h3 className="font-semibold truncate">{spider.nickname}</h3>
-                       <p className="text-sm text-muted-foreground truncate">{spider.species}</p>
-                       <p className="text-xs text-muted-foreground truncate">Owner: {ownerName}</p>
-                       <p className="text-xs text-muted-foreground truncate">
-                         Uploaded: {new Date(spider.created_at).toLocaleDateString()}
-                       </p>
-                     </div>
-                   </div>
-                   
-                   <BattleButton 
-                     targetSpider={spider} 
-                     size="sm" 
-                     variant="outline"
-                     context="leaderboard"
-                   />
-                   
-                   <Badge 
-                     variant="secondary" 
-                     className={`${rarityColors[spider.rarity]} text-white ml-2`}
-                   >
-                     {spider.rarity}
-                   </Badge>
-                   
-                   <div className="text-right flex-shrink-0 ml-4">
-                     <div className="text-2xl font-bold">{spider.power_score}</div>
-                     <div className="text-xs text-muted-foreground">Power Score</div>
-                   </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold truncate">{userName}</h3>
+                        <Badge variant="outline" className="text-xs">
+                          {spiderCount} Spider{spiderCount !== 1 ? 's' : ''}
+                        </Badge>
+                        {isWeekly && battleSpiders > 0 && (
+                          <Badge variant="secondary" className="bg-red-500 text-white text-xs">
+                            +{battleSpiders}
+                          </Badge>
+                        )}
+                      </div>
+                      {user.top_spider && (
+                        <p className="text-xs text-muted-foreground truncate">
+                          Top: {user.top_spider.nickname} ({user.top_spider.power_score})
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="text-right flex-shrink-0 ml-4">
+                    <div className="text-2xl font-bold">{powerScore}</div>
+                    <div className="text-xs text-muted-foreground">Power Score</div>
+                  </div>
                 </CardContent>
               </Card>
             );
