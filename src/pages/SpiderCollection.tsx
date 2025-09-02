@@ -218,9 +218,9 @@ const SpiderCollection = () => {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="newest">Upload Date (Newest)</SelectItem>
-              <SelectItem value="power_score">Power Score (Highest)</SelectItem>
-              <SelectItem value="recent">Past Week</SelectItem>
+              <SelectItem value="newest">All Spiders (Newest First)</SelectItem>
+              <SelectItem value="power_score">All Spiders (Strongest First)</SelectItem>
+              <SelectItem value="recent">Past Week Only</SelectItem>
             </SelectContent>
           </Select>
         </div>
