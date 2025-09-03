@@ -39,7 +39,7 @@ const AboutUs = () => {
               About Spider League
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              The story behind the world's most unique spider battling platform
+              The story behind the world's leading spider sport
             </p>
           </div>
 
