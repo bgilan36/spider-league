@@ -1009,6 +1009,21 @@ const Index = () => {
         onClose={() => setIsBattleDetailsOpen(false)}
         battle={selectedBattle}
       />
+      
+      {/* Footer */}
+      <footer className="border-t mt-16 py-8 bg-card/30">
+        <div className="container mx-auto px-4 text-center">
+          <p className="text-muted-foreground mb-4">
+            © 2024 Spider League. Built for spider enthusiasts worldwide.
+          </p>
+          <Link 
+            to="/about" 
+            className="text-primary hover:text-primary/80 transition-colors underline"
+          >
+            About Us
+          </Link>
+        </div>
+      </footer>
     </div>
   );
 };

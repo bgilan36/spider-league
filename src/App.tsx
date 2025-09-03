@@ -13,6 +13,7 @@ import Leaderboard from "./pages/Leaderboard";
 import Roadmap from "./pages/Roadmap";
 import BattleHistory from "./pages/BattleHistory";
 import BattleMode from "./pages/BattleMode";
+import AboutUs from "./pages/AboutUs";
 import { AuthProvider } from "@/auth/AuthProvider";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
               <Route path="/battle-history" element={<BattleHistory />} />
               <Route path="/battle-mode" element={<BattleMode />} />
               <Route path="/roadmap" element={<Roadmap />} />
+              <Route path="/about" element={<AboutUs />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
