@@ -10,6 +10,7 @@ import spiderLongsleeve from "@/assets/spider-longsleeve.jpg";
 import spiderHoodie from "@/assets/spider-hoodie.jpg";
 import spiderKoozie from "@/assets/spider-koozie.jpg";
 import spiderStickers from "@/assets/spider-stickers.jpg";
+import spiderLeagueLogo from "@/assets/spider-league-logo.png";
 
 interface Product {
   id: string;
@@ -18,8 +19,6 @@ interface Product {
   price: number;
   image: string;
   category: string;
-  rating: number;
-  reviews: number;
 }
 
 const Shop = () => {
@@ -31,50 +30,40 @@ const Shop = () => {
       name: "Spider League Short Sleeve T-Shirt",
       description: "Premium cotton t-shirt featuring the iconic Spider League logo. Perfect for everyday wear or showing your spider battle pride.",
       price: 24.99,
-      image: spiderTshirt,
-      category: "apparel",
-      rating: 4.8,
-      reviews: 127
+      image: spiderLeagueLogo,
+      category: "apparel"
     },
     {
       id: "tshirt-long",
       name: "Spider League Long Sleeve T-Shirt", 
       description: "Comfortable long sleeve tee with Spider League branding. Great for cooler weather or layering.",
       price: 29.99,
-      image: spiderLongsleeve,
-      category: "apparel",
-      rating: 4.9,
-      reviews: 89
+      image: spiderLeagueLogo,
+      category: "apparel"
     },
     {
       id: "hoodie-zip",
       name: "Spider League Full-Zip Hoodie",
       description: "Premium fleece hoodie with full zip and Spider League embroidered logo. The ultimate in comfort and style.",
       price: 54.99,
-      image: spiderHoodie, 
-      category: "apparel",
-      rating: 4.9,
-      reviews: 156
+      image: spiderLeagueLogo, 
+      category: "apparel"
     },
     {
       id: "koozie",
       name: "Spider League Beer Can Koozie",
       description: "Keep your drinks cold while representing the Spider League. Fits standard 12oz cans perfectly.",
       price: 9.99,
-      image: spiderKoozie,
-      category: "accessories",
-      rating: 4.7,
-      reviews: 203
+      image: spiderLeagueLogo,
+      category: "accessories"
     },
     {
       id: "stickers",
       name: "Spider League Sticker Pack",
       description: "High-quality vinyl sticker pack featuring various Spider League designs. Weather-resistant and perfect for laptops, water bottles, and more.",
       price: 7.99,
-      image: spiderStickers,
-      category: "accessories", 
-      rating: 4.6,
-      reviews: 312
+      image: spiderLeagueLogo,
+      category: "accessories"
     }
   ];
 
@@ -134,6 +123,22 @@ const Shop = () => {
       </header>
 
       <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-8">
+        {/* Coming Soon Banner */}
+        <div className="mb-8">
+          <Card className="bg-gradient-to-r from-primary/10 to-primary-glow/10 border-primary/20">
+            <CardContent className="py-6">
+              <div className="text-center">
+                <h2 className="text-2xl sm:text-3xl font-bold text-primary mb-2">
+                  Coming Soon! 🚧
+                </h2>
+                <p className="text-muted-foreground">
+                  Our Spider League merchandise store is currently under construction. 
+                  Stay tuned for awesome gear featuring the official Spider League logo!
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
         {/* Category Filter */}
         <div className="flex flex-wrap gap-2 mb-8">
           {categories.map((category) => (
@@ -173,15 +178,6 @@ const Shop = () => {
               
               <CardHeader>
                 <CardTitle className="text-lg">{product.name}</CardTitle>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1">
-                    <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                    <span className="text-sm font-medium">{product.rating}</span>
-                  </div>
-                  <span className="text-sm text-muted-foreground">
-                    ({product.reviews} reviews)
-                  </span>
-                </div>
                 <CardDescription className="line-clamp-2">
                   {product.description}
                 </CardDescription>
@@ -200,17 +196,6 @@ const Shop = () => {
           ))}
         </div>
 
-        {/* Coming Soon Notice */}
-        <div className="mt-12 text-center">
-          <Card className="max-w-md mx-auto">
-            <CardContent className="pt-6">
-              <h3 className="text-lg font-semibold mb-2">Coming Soon!</h3>
-              <p className="text-sm text-muted-foreground">
-                Our shop is currently being set up. Check back soon to purchase official Spider League merchandise!
-              </p>
-            </CardContent>
-          </Card>
-        </div>
       </main>
     </div>
   );
