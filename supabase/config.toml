@@ -2,3 +2,6 @@ project_id = "wdqsgswrkrxjeesahshc"
 
 [functions.spider-identify]
 verify_jwt = false
+
+[functions.reset-history]
+verify_jwt = true

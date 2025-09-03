@@ -45,12 +45,21 @@ const BattleButton: React.FC<BattleButtonProps> = ({
   const [userSpiders, setUserSpiders] = useState<Spider[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Check if spider is eligible for battle (created within 7 days)
+  // PT week start for eligibility (Sunday in America/Los_Angeles)
+  const [ptWeekStart, setPtWeekStart] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchWeekStart = async () => {
+      const { data, error } = await supabase.rpc('get_current_pt_week_start');
+      if (!error && data) setPtWeekStart(data as string);
+    };
+    fetchWeekStart();
+  }, []);
+
+  // Check if spider is eligible for battle (uploaded since last Sunday PT)
   const isEligibleForBattle = (spiderCreatedAt?: string): boolean => {
-    if (!spiderCreatedAt) return false;
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    return new Date(spiderCreatedAt) >= sevenDaysAgo;
+    if (!spiderCreatedAt || !ptWeekStart) return false;
+    return new Date(spiderCreatedAt) >= new Date(ptWeekStart);
   };
 
   // Check if user can interact with this spider (own or others')
@@ -72,25 +81,30 @@ const BattleButton: React.FC<BattleButtonProps> = ({
     ? "Offer this spider for battle challenges" 
     : `Challenge ${targetSpider.nickname} to battle`;
 
-  // Fetch user's eligible spiders for battle
+  // Fetch user's eligible spiders for battle (since last Sunday PT)
   const fetchEligibleSpiders = async () => {
     if (!user) return;
-    
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    // Ensure we have week start; if not, fetch it
+    let weekStart = ptWeekStart;
+    if (!weekStart) {
+      const { data } = await supabase.rpc('get_current_pt_week_start');
+      weekStart = (data as string) || null;
+      setPtWeekStart(weekStart);
+    }
+    if (!weekStart) return;
 
     const { data, error } = await supabase
       .from('spiders')
       .select('*')
       .eq('owner_id', user.id)
       .eq('is_approved', true)
-      .gte('created_at', sevenDaysAgo.toISOString());
+      .gte('created_at', weekStart);
 
     if (data && !error) {
       setUserSpiders(data);
     }
   };
-
   // Create direct challenge with the current spider (for collection context)
   const handleDirectChallenge = async () => {
     if (!targetSpider || !user || !isOwnSpider) return;
@@ -247,7 +261,7 @@ const BattleButton: React.FC<BattleButtonProps> = ({
                 <Sword className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="font-medium mb-2">No Eligible Spiders</h3>
                 <p className="text-sm text-muted-foreground">
-                  You need approved spiders created in the last 7 days to battle
+                  You need approved spiders uploaded since last Sunday (PT) to battle
                 </p>
               </div>
             )}
