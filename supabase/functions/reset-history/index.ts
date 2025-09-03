@@ -50,7 +50,8 @@ serve(async (req: Request) => {
       'battles',
       'weekly_rankings',
       'weekly_uploads',
-      'matchups'
+      'matchups',
+      'spiders'
     ];
 
     const results: Record<string, { deleted: number | null; error?: string }> = {};

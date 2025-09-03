@@ -136,84 +136,10 @@ const Index = () => {
 
   const fetchRecentBattles = async () => {
     if (!user) return;
-    
     try {
       setBattlesLoading(true);
-      
-      // Mock recent battles for now (same as BattleHistory component)
-      const mockBattles = [
-        {
-          id: "battle-1",
-          created_at: "2024-01-15T14:30:00Z",
-          type: "CHALLENGE",
-          team_a: [
-            {
-              owner_id: user.id,
-              nickname: "Shadowstrike",
-              species: "Black Widow",
-              image_url: "/lovable-uploads/218cca6b-fdab-43a0-9a30-c4defe401691.png"
-            }
-          ],
-          team_b: [
-            {
-              owner_id: "other-user-1",
-              nickname: "Venomfang",
-              species: "Brown Recluse", 
-              image_url: "/lovable-uploads/72396214-19a6-4e47-b07c-6dd315d94727.png"
-            }
-          ],
-          winner: "A",
-          battle_log: {}
-        },
-        {
-          id: "battle-2",
-          created_at: "2024-01-12T09:15:00Z",
-          type: "CHALLENGE",
-          team_a: [
-            {
-              owner_id: "other-user-2",
-              nickname: "Webweaver",
-              species: "Orb Weaver",
-              image_url: "/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png"
-            }
-          ],
-          team_b: [
-            {
-              owner_id: user.id,
-              nickname: "Nightcrawler", 
-              species: "Wolf Spider",
-              image_url: "/lovable-uploads/218cca6b-fdab-43a0-9a30-c4defe401691.png"
-            }
-          ],
-          winner: "B",
-          battle_log: {}
-        },
-        {
-          id: "battle-3",
-          created_at: "2024-01-10T16:45:00Z",
-          type: "SANDBOX",
-          team_a: [
-            {
-              owner_id: user.id,
-              nickname: "Frostbite",
-              species: "Jumping Spider",
-              image_url: "/lovable-uploads/72396214-19a6-4e47-b07c-6dd315d94727.png"
-            }
-          ],
-          team_b: [
-            {
-              owner_id: "other-user-3",
-              nickname: "Steelclaw",
-              species: "Tarantula",
-              image_url: "/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png"
-            }
-          ],
-          winner: "TIE",
-          battle_log: {}
-        }
-      ];
-      
-      setRecentBattles(mockBattles.slice(0, 3)); // Only show 3 most recent
+      // Starting fresh: no mock data; show empty state until real battles exist
+      setRecentBattles([]);
     } catch (error) {
       console.error('Error fetching recent battles:', error);
     } finally {
