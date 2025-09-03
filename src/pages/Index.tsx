@@ -1016,12 +1016,21 @@ const Index = () => {
           <p className="text-muted-foreground mb-4">
             © 2024 Spider League. Built for spider enthusiasts worldwide.
           </p>
-          <Link 
-            to="/about" 
-            className="text-primary hover:text-primary/80 transition-colors underline"
-          >
-            About Us
-          </Link>
+          <div className="flex items-center justify-center gap-4">
+            <Link 
+              to="/about" 
+              className="text-primary hover:text-primary/80 transition-colors underline"
+            >
+              About Us
+            </Link>
+            <span className="text-muted-foreground">•</span>
+            <Link 
+              to="/shop" 
+              className="text-primary hover:text-primary/80 transition-colors underline"
+            >
+              Shop
+            </Link>
+          </div>
         </div>
       </footer>
     </div>
