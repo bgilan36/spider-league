@@ -944,13 +944,6 @@ const Index = () => {
           </p>
           <div className="flex items-center justify-center gap-4">
             <Link 
-              to="/about" 
-              className="text-primary hover:text-primary/80 transition-colors underline"
-            >
-              About Us
-            </Link>
-            <span className="text-muted-foreground">•</span>
-            <Link 
               to="/shop" 
               className="text-primary hover:text-primary/80 transition-colors underline"
             >

@@ -39,7 +39,6 @@ const App = () => (
               <Route path="/battle-history" element={<BattleHistory />} />
               <Route path="/battle-mode" element={<BattleMode />} />
               <Route path="/roadmap" element={<Roadmap />} />
-              <Route path="/about" element={<AboutUs />} />
               <Route path="/shop" element={<Shop />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
