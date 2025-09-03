@@ -51,19 +51,10 @@ const AboutUs = () => {
               </h2>
               <div className="space-y-4 text-muted-foreground">
                 <p>
-                  Spider League was born from an unlikely inspiration. Brian Gilan, the founder and creator, 
-                  was watching Tim Robinson's comedy sketches when he stumbled upon the absurd yet 
-                  captivating concept of spider competitions.
+                  Spider League was born from the Tim Robinson on Late Night. Brian was surprised there wasn't actually a Spider League app, so he made one, and got a few friends to join the fun.
                 </p>
                 <p>
-                  What started as a joke among friends quickly evolved into something much bigger. 
-                  Brian and his friends began playing their own version of the "spider game," 
-                  comparing different spider species and creating elaborate battles in their imaginations.
-                </p>
-                <p>
-                  Realizing the potential for this unique concept, Brian decided to bring the 
-                  spider battling experience to the digital world, creating a platform where 
-                  spider enthusiasts could upload, collect, and battle their eight-legged friends.
+                  What started as a joke among friends quickly evolved into something much bigger.
                 </p>
               </div>
             </div>
@@ -73,9 +64,7 @@ const AboutUs = () => {
                 The Vision
               </h3>
               <blockquote className="text-muted-foreground italic border-l-4 border-primary pl-4">
-                "I wanted to create a space where the fascinating world of spiders could be 
-                celebrated in a fun, competitive way. Every spider has its own unique characteristics 
-                and strengths - Spider League gives them a chance to shine."
+                "I wanted to create a space for people to share spiders with friends and have friendly fights."
               </blockquote>
               <p className="text-sm text-muted-foreground mt-4">
                 - Brian Gilan, Founder
