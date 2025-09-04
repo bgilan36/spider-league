@@ -9,7 +9,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground shadow-glow hover:shadow-glow hover:scale-[1.02] hover:-translate-y-0.5",
+        default: "relative overflow-hidden bg-gradient-to-br from-primary via-primary-glow to-primary text-primary-foreground shadow-glow hover:shadow-glow hover:scale-[1.02] hover:-translate-y-0.5 before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:translate-x-[-200%] hover:before:translate-x-[200%] before:transition-transform before:duration-700",
         destructive:
           "bg-destructive text-destructive-foreground shadow-md hover:bg-destructive/90 hover:shadow-lg hover:scale-[1.02]",
         outline:
@@ -18,7 +18,7 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 hover:shadow-md hover:scale-[1.02]",
         ghost: "hover:bg-accent hover:text-accent-foreground hover:scale-[1.02]",
         link: "text-primary underline-offset-4 hover:underline hover:text-primary-glow",
-        glass: "glass-card text-card-foreground hover:bg-card/80 hover:scale-[1.02] hover:shadow-glass",
+        glass: "relative overflow-hidden bg-gradient-to-br from-white/10 via-white/5 to-transparent backdrop-blur-xl border border-white/20 text-card-foreground hover:bg-gradient-to-br hover:from-white/20 hover:via-white/10 hover:to-transparent hover:scale-[1.02] hover:shadow-[0_8px_32px_rgba(31,38,135,0.37)] before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent before:translate-x-[-200%] hover:before:translate-x-[200%] before:transition-transform before:duration-500",
       },
       size: {
         default: "h-11 px-6 py-2.5",

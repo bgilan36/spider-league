@@ -733,35 +733,62 @@ const Index = () => {
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
             <div className="flex-1">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-2">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-3">
                 <h2 className="text-xl sm:text-2xl font-bold">Leaderboards</h2>
-                <div className="flex bg-muted rounded-lg p-1 w-fit">
-                  <button
-                    onClick={() => setLeaderboardView('spiders')}
-                    className={`px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-colors ${
-                      leaderboardView === 'spiders' 
-                        ? 'bg-background text-foreground shadow-sm' 
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    Top Spiders
-                  </button>
-                  <button
-                    onClick={() => setLeaderboardView('users')}
-                    className={`px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-colors ${
-                      leaderboardView === 'users' 
-                        ? 'bg-background text-foreground shadow-sm' 
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    Top Users
-                  </button>
+                <div className="flex gap-2">
+                  {/* All-Time vs Weekly Toggle */}
+                  <div className="flex bg-muted rounded-lg p-1 w-fit">
+                    <button
+                      onClick={() => setLeaderboardType('alltime')}
+                      className={`px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-colors ${
+                        leaderboardType === 'alltime' 
+                          ? 'bg-background text-foreground shadow-sm' 
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      All-Time
+                    </button>
+                    <button
+                      onClick={() => setLeaderboardType('weekly')}
+                      className={`px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-colors ${
+                        leaderboardType === 'weekly' 
+                          ? 'bg-background text-foreground shadow-sm' 
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      Weekly
+                    </button>
+                  </div>
+                  {/* Spiders vs Users Toggle */}
+                  <div className="flex bg-muted rounded-lg p-1 w-fit">
+                    <button
+                      onClick={() => setLeaderboardView('spiders')}
+                      className={`px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-colors ${
+                        leaderboardView === 'spiders' 
+                          ? 'bg-background text-foreground shadow-sm' 
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      Top Spiders
+                    </button>
+                    <button
+                      onClick={() => setLeaderboardView('users')}
+                      className={`px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-colors ${
+                        leaderboardView === 'users' 
+                          ? 'bg-background text-foreground shadow-sm' 
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      Top Users
+                    </button>
+                  </div>
                 </div>
               </div>
               <p className="text-sm sm:text-base text-muted-foreground">
+                {leaderboardType === 'weekly' ? 'This week\'s ' : 'All-time '}
                 {leaderboardView === 'spiders' 
-                  ? 'Top 5 most powerful spider fighters'
-                  : 'Top 5 trainers by cumulative power scores'
+                  ? 'top 5 most powerful spider fighters'
+                  : 'top 5 trainers by cumulative power scores'
                 }
               </p>
             </div>
