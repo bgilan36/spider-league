@@ -499,8 +499,16 @@ if (aiStats) {
 // Ensure realistic attributes by species
 let statsCore = applySpeciesBias(species, baseStats);
 
-// Compute power score and rarity after biasing
-const power_score = Object.values(statsCore).reduce((sum, v) => sum + Number(v), 0);
+// Calculate human harm rating based on danger level
+const humanHarmRating = speciesAnalysis.dangerLevel === 'extreme' ? 25 :
+                       speciesAnalysis.dangerLevel === 'high' ? 20 :
+                       speciesAnalysis.dangerLevel === 'moderate' ? 15 :
+                       speciesAnalysis.dangerLevel === 'low' ? 10 :
+                       5; // unknown/minimal danger
+
+// Compute power score including human harm rating
+const basePowerScore = Object.values(statsCore).reduce((sum, v) => sum + Number(v), 0);
+const power_score = basePowerScore + humanHarmRating;
 let rarity: "COMMON" | "RARE" | "EPIC" | "LEGENDARY";
 if (power_score >= 280) rarity = "LEGENDARY";
 else if (power_score >= 240) rarity = "EPIC";

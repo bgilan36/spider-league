@@ -45,7 +45,7 @@ interface ChallengeDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   challenge: BattleChallenge | null;
-  onChallengeAccepted?: () => void;
+  onChallengeAccepted?: (challenge: BattleChallenge, accepterSpider: Spider) => void;
 }
 
 const ChallengeDetailsModal: React.FC<ChallengeDetailsModalProps> = ({
@@ -112,12 +112,14 @@ const ChallengeDetailsModal: React.FC<ChallengeDetailsModalProps> = ({
         return;
       }
 
+      // Start battle immediately
+      onChallengeAccepted?.(challenge, selectedSpider);
+      
       toast({
         title: "Challenge Accepted!",
-        description: `You accepted ${challenge.challenger_spider?.nickname}'s challenge with ${selectedSpider.nickname}!`
+        description: `Battle starting now! ${selectedSpider.nickname} vs ${challenge.challenger_spider?.nickname}!`
       });
 
-      onChallengeAccepted?.();
       onClose();
     } catch (error) {
       console.error('Error accepting challenge:', error);

@@ -247,8 +247,9 @@ const ActiveChallengesPreview: React.FC = () => {
           setSelectedChallenge(null);
         }}
         challenge={selectedChallenge}
-        onChallengeAccepted={() => {
-          fetchRecentChallenges();
+        onChallengeAccepted={(challenge, accepterSpider) => {
+          // Redirect to battle mode to start the battle
+          window.location.href = '/battle-mode';
         }}
       />
     </div>

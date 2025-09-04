@@ -19,6 +19,7 @@ import BattleMode from "@/components/BattleMode";
 import BattleButton from "@/components/BattleButton";
 import ActiveChallengesPreview from "@/components/ActiveChallengesPreview";
 import BattleDetailsModal from "@/components/BattleDetailsModal";
+import { BattleRecapAlert } from "@/components/BattleRecapAlert";
 
 interface Spider {
   id: string;
@@ -611,6 +612,9 @@ const Index = () => {
             </div>
           )}
         </div>
+
+        {/* Battle Recaps for Challengers */}
+        <BattleRecapAlert />
 
         {/* Active Challenges Section */}
         <div className="mb-8">
