@@ -660,6 +660,10 @@ export type Database = {
         Args: { user_id_param: string }
         Returns: boolean
       }
+      get_current_pt_week_end: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_current_pt_week_start: {
         Args: Record<PropertyKey, never>
         Returns: string
