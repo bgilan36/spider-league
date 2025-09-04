@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Sword, Timer, AlertCircle, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import ChallengeDetailsModal from './ChallengeDetailsModal';
 
 interface Spider {
   id: string;
@@ -45,6 +46,8 @@ const ActiveChallengesPreview: React.FC = () => {
   const { toast } = useToast();
   const [challenges, setChallenges] = useState<BattleChallenge[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedChallenge, setSelectedChallenge] = useState<BattleChallenge | null>(null);
+  const [showChallengeModal, setShowChallengeModal] = useState(false);
 
   // Fetch recent active challenges (limit to 3)
   const fetchRecentChallenges = async () => {
@@ -171,7 +174,10 @@ const ActiveChallengesPreview: React.FC = () => {
             const isOwnChallenge = user?.id === challenge.challenger_id;
 
             return (
-              <Card key={challenge.id} className="hover:shadow-md transition-shadow">
+              <Card key={challenge.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => {
+                setSelectedChallenge(challenge);
+                setShowChallengeModal(true);
+              }}>
                 <CardContent className="flex items-center gap-2 sm:gap-4 p-3 sm:p-4">
                   <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden flex-shrink-0">
                     <img 
@@ -232,6 +238,19 @@ const ActiveChallengesPreview: React.FC = () => {
           )}
         </div>
       )}
+
+      {/* Challenge Details Modal */}
+      <ChallengeDetailsModal
+        isOpen={showChallengeModal}
+        onClose={() => {
+          setShowChallengeModal(false);
+          setSelectedChallenge(null);
+        }}
+        challenge={selectedChallenge}
+        onChallengeAccepted={() => {
+          fetchRecentChallenges();
+        }}
+      />
     </div>
   );
 };
