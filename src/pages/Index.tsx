@@ -967,7 +967,7 @@ const Index = () => {
       <footer className="border-t mt-16 py-8 bg-card/30">
         <div className="container mx-auto px-4 text-center">
           <p className="text-muted-foreground mb-4">
-            © 2024 Spider League. Built for spider enthusiasts worldwide.
+            © 2025 Spider League. Share spiders for friendly battles.
           </p>
           <div className="flex items-center justify-center gap-4">
             <Link 
