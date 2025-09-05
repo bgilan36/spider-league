@@ -84,6 +84,13 @@ const Auth = () => {
       </Helmet>
       <main className="mx-auto max-w-md px-6 py-12">
         <h1 className="text-3xl font-bold mb-6">Sign in to Spider League</h1>
+        
+        <div className="mb-8 p-4 rounded-lg bg-muted/50 border">
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Upload photos of spiders you find, let our AI identify and score them, then battle other players in turn-based combat. Challenge friends or accept challenges from the community to see whose spider reigns supreme!
+          </p>
+        </div>
+        
         <div className="space-y-4">
           <Button className="w-full" onClick={handleGoogle}>Continue with Google</Button>
           <div className="text-center text-sm text-muted-foreground">or use email</div>
