@@ -15,6 +15,7 @@ import BattleHistory from "./pages/BattleHistory";
 import BattleMode from "./pages/BattleMode";
 import AboutUs from "./pages/AboutUs";
 import Shop from "./pages/Shop";
+import UserCollection from "./pages/UserCollection";
 import { AuthProvider } from "@/auth/AuthProvider";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ const App = () => (
               <Route path="/battle-history" element={<BattleHistory />} />
               <Route path="/battle-mode" element={<BattleMode />} />
               <Route path="/roadmap" element={<Roadmap />} />
+              <Route path="/collection/:userId" element={<UserCollection />} />
               <Route path="/shop" element={<Shop />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

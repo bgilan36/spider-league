@@ -443,7 +443,32 @@ serve(async (req) => {
     }));
 
     const flat = Array.isArray(finalResults) ? finalResults : [];
-    const sorted = (flat as any[])
+    
+    // Filter results to only include spider-related classifications
+    const spiderKeywords = [
+      'spider', 'arachnid', 'tarantula', 'widow', 'recluse', 'funnel', 'wolf', 
+      'jumping', 'orb', 'huntsman', 'crab', 'lynx', 'nursery', 'cobweb',
+      'phoneutria', 'latrodectus', 'loxosceles', 'atrax', 'sicarius',
+      'nephila', 'lycosa', 'salticidae', 'theraphosidae', 'araneae'
+    ];
+
+    const excludeKeywords = [
+      'guitar', 'instrument', 'music', 'bird', 'mammal', 'reptile', 'fish', 'insect',
+      'plant', 'flower', 'tree', 'furniture', 'tool', 'vehicle', 'food', 'building',
+      'person', 'human', 'face', 'hand', 'dog', 'cat', 'car', 'house', 'acoustic'
+    ];
+
+    const spiderFiltered = flat.filter((result: any) => {
+      const label = (result.label || '').toLowerCase();
+      const hasSpiderKeyword = spiderKeywords.some(keyword => label.includes(keyword));
+      const hasExcludedTerm = excludeKeywords.some(keyword => label.includes(keyword));
+      return hasSpiderKeyword && !hasExcludedTerm;
+    });
+
+    // If no spider results found, fallback to original results but with lower confidence
+    const finalSorted = spiderFiltered.length > 0 ? spiderFiltered : flat;
+    
+    const sorted = finalSorted
       .sort((a: any, b: any) => (b.score ?? 0) - (a.score ?? 0))
       .slice(0, Math.max(1, Math.min(10, Number(topK) || 5)));
 
@@ -498,6 +523,22 @@ if (aiStats) {
 
 // Ensure realistic attributes by species
 let statsCore = applySpeciesBias(species, baseStats);
+
+// Add species-based variability (±10% variation while maintaining species characteristics)
+const addVariability = (value: number, min = 10, max = 100) => {
+  const variance = Math.floor(Math.random() * 21 - 10); // -10 to +10
+  const adjusted = Math.floor(value + (value * variance / 100));
+  return Math.max(min, Math.min(max, adjusted));
+};
+
+statsCore = {
+  hit_points: addVariability(statsCore.hit_points),
+  damage: addVariability(statsCore.damage),
+  speed: addVariability(statsCore.speed),
+  defense: addVariability(statsCore.defense),
+  venom: addVariability(statsCore.venom),
+  webcraft: addVariability(statsCore.webcraft)
+};
 
 // Calculate human harm rating based on danger level
 const humanHarmRating = speciesAnalysis.dangerLevel === 'extreme' ? 25 :

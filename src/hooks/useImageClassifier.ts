@@ -64,6 +64,13 @@ function resizeImage(base64: string, maxSize = 512): Promise<string> {
 
 // Enhanced spider-specific result filtering
 function filterSpiderResults(results: Array<{ label: string; score: number }>): Array<{ label: string; score: number }> {
+  // Exclude non-spider terms that might slip through
+  const excludeKeywords = [
+    'guitar', 'instrument', 'music', 'bird', 'mammal', 'reptile', 'fish', 'insect',
+    'plant', 'flower', 'tree', 'furniture', 'tool', 'vehicle', 'food', 'building',
+    'person', 'human', 'face', 'hand', 'dog', 'cat', 'car', 'house'
+  ];
+
   return results.filter(result => {
     const label = result.label.toLowerCase();
     
@@ -72,11 +79,13 @@ function filterSpiderResults(results: Array<{ label: string; score: number }>): 
       label.includes(keyword)
     );
     
-    // Also check for taxonomic patterns (genus species format)
-    const hasTaxonomicFormat = /^[a-z]+ [a-z]+/.test(label);
+    // Check for excluded terms
+    const hasExcludedTerm = excludeKeywords.some(keyword => 
+      label.includes(keyword)
+    );
     
-    // Keep results that are spider-related or have high confidence and taxonomic format
-    return isSpiderRelated || (result.score > CONFIDENCE_THRESHOLDS.HIGH && hasTaxonomicFormat);
+    // Only keep results that are spider-related and don't contain excluded terms
+    return isSpiderRelated && !hasExcludedTerm;
   });
 }
 

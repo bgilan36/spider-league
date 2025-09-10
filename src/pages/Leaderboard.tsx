@@ -578,7 +578,12 @@ const Leaderboard = () => {
                     
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-bold text-xl">{userName}</h3>
+                        <Link 
+                          to={`/collection/${user.user_id}`}
+                          className="hover:text-primary transition-colors"
+                        >
+                          <h3 className="font-bold text-xl">{userName}</h3>
+                        </Link>
                         <Badge variant="outline">
                           {spiderCount} Spider{spiderCount !== 1 ? 's' : ''}
                         </Badge>
@@ -652,7 +657,12 @@ const Leaderboard = () => {
                     
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold truncate">{userName}</h3>
+                        <Link 
+                          to={`/collection/${user.user_id}`}
+                          className="hover:text-primary transition-colors"
+                        >
+                          <h3 className="font-semibold truncate">{userName}</h3>
+                        </Link>
                         <Badge variant="outline" className="text-xs">
                           {spiderCount} Spider{spiderCount !== 1 ? 's' : ''}
                         </Badge>
