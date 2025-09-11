@@ -159,11 +159,11 @@ export async function classifyImage(image: string | Blob): Promise<{
     // Filter for spider-related results
     const filteredResults = filterSpiderResults(rawOutputs);
     
-    // If no spider-related results, keep top 5 original results
-    const results = filteredResults.length > 0 ? filteredResults.slice(0, 5) : rawOutputs.slice(0, 5);
+    // Only return spider-related results
+    const results = filteredResults.slice(0, 5);
     
     if (results.length === 0) {
-      throw new Error('No classification results returned');
+      throw new Error('No spider species detected');
     }
     
     const topResult = results[0];
