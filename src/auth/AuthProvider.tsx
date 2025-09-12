@@ -119,8 +119,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return Array.from(array, byte => byte.toString(36)).join('').slice(0, 16);
     };
 
-    // Create a fresh ephemeral demo user with secure password
-    const demoEmail = `demo+${Date.now()}@spiderleague.com`;
+    // Generate cryptographically secure random identifier for demo email
+    const generateSecureId = () => {
+      const array = new Uint8Array(8);
+      crypto.getRandomValues(array);
+      return Array.from(array, byte => byte.toString(36)).join('');
+    };
+
+    // Create a fresh ephemeral demo user with secure password and random identifier
+    const demoEmail = `demo+${Date.now()}_${generateSecureId()}@spiderleague.com`;
     const password = generateSecurePassword();
     console.log('AuthProvider: Creating ephemeral demo account');
 

@@ -51,7 +51,7 @@ const generateNickname = (species: string) => {
 };
 
 const SpiderUpload = () => {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -110,6 +110,9 @@ const SpiderUpload = () => {
       const base64 = await compressImageToBase64(file, 1024, 0.85);
       const { data, error } = await supabase.functions.invoke('spider-identify', {
         body: { image: base64, topK: 8 },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
       });
       
       if (error) throw error;

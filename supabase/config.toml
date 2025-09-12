@@ -1,7 +1,7 @@
 project_id = "wdqsgswrkrxjeesahshc"
 
 [functions.spider-identify]
-verify_jwt = false
+verify_jwt = true
 
 [functions.reset-history]
 verify_jwt = true
