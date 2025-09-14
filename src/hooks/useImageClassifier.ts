@@ -62,19 +62,22 @@ function resizeImage(base64: string, maxSize = 512): Promise<string> {
   });
 }
 
-// Enhanced spider-specific result filtering
+// Enhanced spider-specific result filtering - STRICTLY spiders only
 function filterSpiderResults(results: Array<{ label: string; score: number }>): Array<{ label: string; score: number }> {
-  // Exclude non-spider terms that might slip through
+  // Comprehensive list of non-spider terms to exclude
   const excludeKeywords = [
     'guitar', 'instrument', 'music', 'bird', 'mammal', 'reptile', 'fish', 'insect',
     'plant', 'flower', 'tree', 'furniture', 'tool', 'vehicle', 'food', 'building',
-    'person', 'human', 'face', 'hand', 'dog', 'cat', 'car', 'house'
+    'person', 'human', 'face', 'hand', 'dog', 'cat', 'car', 'house', 'beetle',
+    'fly', 'ant', 'bee', 'wasp', 'butterfly', 'moth', 'cricket', 'grasshopper',
+    'mosquito', 'dragonfly', 'cockroach', 'termite', 'ladybug', 'centipede',
+    'millipede', 'scorpion', 'tick', 'mite', 'flea', 'louse'
   ];
 
   return results.filter(result => {
     const label = result.label.toLowerCase();
     
-    // Check if label contains spider-related keywords
+    // Must contain spider-related keywords - strict requirement
     const isSpiderRelated = SPIDER_KEYWORDS.some(keyword => 
       label.includes(keyword)
     );
@@ -84,7 +87,7 @@ function filterSpiderResults(results: Array<{ label: string; score: number }>): 
       label.includes(keyword)
     );
     
-    // Only keep results that are spider-related and don't contain excluded terms
+    // Only keep results that are explicitly spider-related and don't contain excluded terms
     return isSpiderRelated && !hasExcludedTerm;
   });
 }
@@ -163,7 +166,7 @@ export async function classifyImage(image: string | Blob): Promise<{
     const results = filteredResults.slice(0, 5);
     
     if (results.length === 0) {
-      throw new Error('No spider species detected');
+      throw new Error('No spider species detected in this image. Please upload an image containing a spider.');
     }
     
     const topResult = results[0];
