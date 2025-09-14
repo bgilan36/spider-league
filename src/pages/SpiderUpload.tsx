@@ -178,8 +178,8 @@ const SpiderUpload = () => {
       } catch (fallbackErr: any) {
         console.error('Fallback classification failed:', fallbackErr);
         toast({
-          title: 'AI analysis failed',
-          description: 'You can enter details manually or try another image.',
+          title: 'No spider detected',
+          description: 'Please upload an image containing a spider. You can also enter details manually.',
           variant: 'destructive',
         });
       }

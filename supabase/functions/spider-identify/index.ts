@@ -20,9 +20,12 @@ function parseBase64Image(base64: string): { mime: string; bytes: Uint8Array } {
 
 // Enhanced image preprocessing for better spider identification
 function preprocessImageForSpiderID(bytes: Uint8Array, mime: string): Blob {
-  // Convert to optimal format and size for spider identification
+  // Create a proper blob for HuggingFace inference
   // This preprocessing is inspired by Picture Insect's approach
-  return new Blob([bytes], { type: mime });
+  const buffer = new ArrayBuffer(bytes.length);
+  const view = new Uint8Array(buffer);
+  view.set(bytes);
+  return new Blob([buffer], { type: mime });
 }
 
 function titleCase(str: string) {
@@ -316,7 +319,7 @@ serve(async (req) => {
     const { mime, bytes } = parseBase64Image(image);
     
     // Multi-model ensemble approach for enhanced accuracy (inspired by Picture Insect)
-    const blob = preprocessImageForSpiderID(bytes, mime);
+    const imageBlob = preprocessImageForSpiderID(bytes, mime);
     
     // Model 1: General image classification (ResNet-50) - Good baseline
     const generalModel = "microsoft/resnet-50";
@@ -347,7 +350,7 @@ serve(async (req) => {
           console.log(`Attempt ${attempts}: Calling HF imageClassification with ${model.name} model ${model.id}`);
           results = await hf.imageClassification({
             model: model.id,
-            data: blob,
+            data: imageBlob,
             parameters: {
               top_k: Math.max(1, Math.min(10, Number(topK) || 5))
             }
@@ -392,7 +395,7 @@ serve(async (req) => {
           console.log(`Fallback attempt ${attempts}: Calling HF imageClassification with model ${generalModel}`);
           allResults = await hf.imageClassification({
             model: generalModel,
-            data: blob,
+            data: imageBlob,
             parameters: {
               top_k: Math.max(1, Math.min(10, Number(topK) || 5))
             }
@@ -465,8 +468,12 @@ serve(async (req) => {
       return hasSpiderKeyword && !hasExcludedTerm;
     });
 
-    // If no spider results found, fallback to original results but with lower confidence
-    const finalSorted = spiderFiltered.length > 0 ? spiderFiltered : flat;
+    // If no spider results found, throw error - we only want spider classifications
+    if (spiderFiltered.length === 0) {
+      throw new Error("No spider species detected in this image. Please upload an image containing a spider.");
+    }
+    
+    const finalSorted = spiderFiltered;
     
     const sorted = finalSorted
       .sort((a: any, b: any) => (b.score ?? 0) - (a.score ?? 0))

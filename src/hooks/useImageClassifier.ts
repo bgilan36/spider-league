@@ -10,11 +10,14 @@ const CONFIDENCE_THRESHOLDS = {
   LOW: 0.3
 };
 
-// Spider-specific keywords for result filtering
+// Enhanced spider-specific keywords for result filtering
 const SPIDER_KEYWORDS = [
   'spider', 'arachnid', 'tarantula', 'widow', 'recluse', 'funnel', 'wolf', 
   'jumping', 'orb', 'huntsman', 'crab', 'lynx', 'nursery', 'cobweb',
-  'phoneutria', 'latrodectus', 'loxosceles', 'atrax', 'sicarius'
+  'phoneutria', 'latrodectus', 'loxosceles', 'atrax', 'sicarius',
+  'nephila', 'lycosa', 'salticidae', 'theraphosidae', 'araneae',
+  'black widow', 'brown recluse', 'garden spider', 'house spider',
+  'cellar spider', 'daddy long legs', 'harvestman'
 ];
 
 async function getClassifier() {
