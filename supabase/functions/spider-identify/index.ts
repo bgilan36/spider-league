@@ -468,12 +468,19 @@ serve(async (req) => {
       return hasSpiderKeyword && !hasExcludedTerm;
     });
 
-    // If no spider results found, throw error - we only want spider classifications
+    // Smart handling for spider classification
+    let finalSorted;
     if (spiderFiltered.length === 0) {
-      throw new Error("No spider species detected in this image. Please upload an image containing a spider.");
+      // Fallback: return top results with modified labels and lower confidence
+      console.log("No explicit spider matches, using fallback with top results");
+      finalSorted = flat.slice(0, 3).map((result: any) => ({
+        ...result,
+        label: `Possible spider: ${result.label}`,
+        score: Math.min(result.score * 0.6, 0.7) // Reduce confidence for uncertain matches
+      }));
+    } else {
+      finalSorted = spiderFiltered;
     }
-    
-    const finalSorted = spiderFiltered;
     
     const sorted = finalSorted
       .sort((a: any, b: any) => (b.score ?? 0) - (a.score ?? 0))

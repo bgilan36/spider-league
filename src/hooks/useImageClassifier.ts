@@ -65,23 +65,21 @@ function resizeImage(base64: string, maxSize = 512): Promise<string> {
   });
 }
 
-// Enhanced spider-specific result filtering - STRICTLY spiders only
+// Smart spider detection with improved accuracy
 function filterSpiderResults(results: Array<{ label: string; score: number }>): Array<{ label: string; score: number }> {
-  // Comprehensive list of non-spider terms to exclude
+  // Critical non-spider exclusions 
   const excludeKeywords = [
-    'guitar', 'instrument', 'music', 'bird', 'mammal', 'reptile', 'fish', 'insect',
+    'guitar', 'instrument', 'music', 'bird', 'mammal', 'reptile', 'fish',
     'plant', 'flower', 'tree', 'furniture', 'tool', 'vehicle', 'food', 'building',
-    'person', 'human', 'face', 'hand', 'dog', 'cat', 'car', 'house', 'beetle',
-    'fly', 'ant', 'bee', 'wasp', 'butterfly', 'moth', 'cricket', 'grasshopper',
-    'mosquito', 'dragonfly', 'cockroach', 'termite', 'ladybug', 'centipede',
-    'millipede', 'scorpion', 'tick', 'mite', 'flea', 'louse'
+    'person', 'human', 'face', 'hand', 'dog', 'cat', 'car', 'house'
   ];
 
-  return results.filter(result => {
+  // Get potentially spider-related results
+  const spiderCandidates = results.filter(result => {
     const label = result.label.toLowerCase();
     
-    // Must contain spider-related keywords - strict requirement
-    const isSpiderRelated = SPIDER_KEYWORDS.some(keyword => 
+    // Direct spider keyword match
+    const hasSpiderKeyword = SPIDER_KEYWORDS.some(keyword => 
       label.includes(keyword)
     );
     
@@ -90,9 +88,20 @@ function filterSpiderResults(results: Array<{ label: string; score: number }>): 
       label.includes(keyword)
     );
     
-    // Only keep results that are explicitly spider-related and don't contain excluded terms
-    return isSpiderRelated && !hasExcludedTerm;
+    // Include if has spider keyword and no excluded terms
+    if (hasSpiderKeyword && !hasExcludedTerm) {
+      return true;
+    }
+    
+    // Additional check for high-confidence results that might be spiders
+    // Look for arthropod-like terms with decent confidence
+    const arthropodTerms = ['arthropod', 'invertebrate', 'arachnida', 'chelicerata'];
+    const hasArthropodTerm = arthropodTerms.some(term => label.includes(term));
+    
+    return hasArthropodTerm && !hasExcludedTerm && result.score > 0.3;
   });
+
+  return spiderCandidates;
 }
 
 // Enhanced confidence scoring based on multiple factors
@@ -165,11 +174,30 @@ export async function classifyImage(image: string | Blob): Promise<{
     // Filter for spider-related results
     const filteredResults = filterSpiderResults(rawOutputs);
     
-    // Only return spider-related results
+    // Return best spider candidates
     const results = filteredResults.slice(0, 5);
     
     if (results.length === 0) {
-      throw new Error('No spider species detected in this image. Please upload an image containing a spider.');
+      // Fallback: if no clear spider matches, return top results with lower confidence
+      const topResults = rawOutputs.slice(0, 3).map(result => ({
+        ...result,
+        label: `Possible spider: ${result.label}`,
+        score: Math.min(result.score * 0.6, 0.7) // Lower confidence for uncertain matches
+      }));
+      
+      if (topResults.length === 0) {
+        throw new Error('Unable to analyze this image. Please try a clearer photo or enter details manually.');
+      }
+      
+      return {
+        results: topResults,
+        topResult: topResults[0],
+        confidence: {
+          confidence: topResults[0].score,
+          reliability: 'low' as const,
+          reason: 'Uncertain classification - manual verification recommended'
+        }
+      };
     }
     
     const topResult = results[0];
