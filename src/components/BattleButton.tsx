@@ -45,27 +45,8 @@ const BattleButton: React.FC<BattleButtonProps> = ({
   const [userSpiders, setUserSpiders] = useState<Spider[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // PT week start for eligibility (Sunday in America/Los_Angeles)
-  const [ptWeekStart, setPtWeekStart] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchWeekStart = async () => {
-      const { data, error } = await supabase.rpc('get_current_pt_week_start');
-      if (!error && data) setPtWeekStart(data as string);
-    };
-    fetchWeekStart();
-  }, []);
-
-  // Check if spider is eligible for battle (uploaded since last Sunday PT)
-  const isEligibleForBattle = (spiderCreatedAt?: string): boolean => {
-    if (!spiderCreatedAt || !ptWeekStart) return false;
-    return new Date(spiderCreatedAt) >= new Date(ptWeekStart);
-  };
-
   // Check if user can interact with this spider (own or others')
-  const canInteract = user && 
-    targetSpider.is_approved && 
-    isEligibleForBattle(targetSpider.created_at);
+  const canInteract = user && targetSpider.is_approved;
 
   // Check if this is the user's own spider
   const isOwnSpider = user && targetSpider.owner_id === user.id;
@@ -81,25 +62,15 @@ const BattleButton: React.FC<BattleButtonProps> = ({
     ? "Offer this spider for battle challenges" 
     : `Challenge ${targetSpider.nickname} to battle`;
 
-  // Fetch user's eligible spiders for battle (since last Sunday PT)
+  // Fetch user's eligible spiders for battle (all approved spiders)
   const fetchEligibleSpiders = async () => {
     if (!user) return;
-
-    // Ensure we have week start; if not, fetch it
-    let weekStart = ptWeekStart;
-    if (!weekStart) {
-      const { data } = await supabase.rpc('get_current_pt_week_start');
-      weekStart = (data as string) || null;
-      setPtWeekStart(weekStart);
-    }
-    if (!weekStart) return;
 
     const { data, error } = await supabase
       .from('spiders')
       .select('*')
       .eq('owner_id', user.id)
-      .eq('is_approved', true)
-      .gte('created_at', weekStart);
+      .eq('is_approved', true);
 
     if (data && !error) {
       setUserSpiders(data);
@@ -257,13 +228,13 @@ const BattleButton: React.FC<BattleButtonProps> = ({
                 </div>
               </>
             ) : (
-              <div className="text-center py-8">
-                <Sword className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="font-medium mb-2">No Eligible Spiders</h3>
-                <p className="text-sm text-muted-foreground">
-                  You need approved spiders uploaded since last Sunday (PT) to battle
-                </p>
-              </div>
+                <div className="text-center py-8">
+                  <Sword className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="font-medium mb-2">No Eligible Spiders</h3>
+                  <p className="text-sm text-muted-foreground">
+                    You need approved spiders to create battle challenges
+                  </p>
+                </div>
             )}
           </div>
         </DialogContent>

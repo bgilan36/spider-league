@@ -95,24 +95,15 @@ const BattleMode: React.FC<{ showChallenges?: boolean }> = ({ showChallenges = t
     setChallenges(challengesWithData);
   };
 
-  // Fetch user's eligible spiders (uploaded since last Sunday PT)
+  // Fetch user's eligible spiders (all approved spiders)
   const fetchUserSpiders = async () => {
     if (!user) return;
-    
-    // Get PT week start (Sunday)
-    const { data: weekStart, error: weekError } = await supabase.rpc('get_current_pt_week_start');
-    if (weekError || !weekStart) {
-      console.error('Failed to get PT week start:', weekError);
-      setUserSpiders([]);
-      return;
-    }
 
     const { data, error } = await supabase
       .from('spiders')
       .select('*')
       .eq('owner_id', user.id)
-      .eq('is_approved', true)
-      .gte('created_at', weekStart as string);
+      .eq('is_approved', true);
 
     if (error) {
       console.error('Error fetching eligible spiders:', error);
