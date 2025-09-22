@@ -466,7 +466,7 @@ serve(async (req) => {
       const label = (result.label || '').toLowerCase();
       const hasSpiderKeyword = spiderKeywords.some(keyword => label.includes(keyword));
       const hasExcludedTerm = excludeKeywords.some(keyword => label.includes(keyword));
-      const meetsScore = (result.score ?? 0) >= 0.25;
+      const meetsScore = (result.score ?? 0) >= 0.4;
       return hasSpiderKeyword && !hasExcludedTerm && meetsScore;
     });
 

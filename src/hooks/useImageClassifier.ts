@@ -91,8 +91,8 @@ function filterSpiderResults(results: Array<{ label: string; score: number }>): 
       label.includes(keyword)
     );
     
-    // Only keep results that are explicitly spider-related, don't contain excluded terms, and meet a minimum score
-    return isSpiderRelated && !hasExcludedTerm && result.score >= 0.25;
+    // Only keep results that are explicitly spider-related, don't contain excluded terms, and meet a higher minimum score
+    return isSpiderRelated && !hasExcludedTerm && result.score >= 0.4;
   });
 }
 
