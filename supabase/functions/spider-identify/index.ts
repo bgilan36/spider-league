@@ -458,14 +458,16 @@ serve(async (req) => {
     const excludeKeywords = [
       'guitar', 'instrument', 'music', 'bird', 'mammal', 'reptile', 'fish', 'insect',
       'plant', 'flower', 'tree', 'furniture', 'tool', 'vehicle', 'food', 'building',
-      'person', 'human', 'face', 'hand', 'dog', 'cat', 'car', 'house', 'acoustic'
+      'person', 'human', 'face', 'hand', 'dog', 'cat', 'car', 'house', 'acoustic',
+      'harvestman', 'opiliones', 'daddy long legs', 'harvester'
     ];
 
     const spiderFiltered = flat.filter((result: any) => {
       const label = (result.label || '').toLowerCase();
       const hasSpiderKeyword = spiderKeywords.some(keyword => label.includes(keyword));
       const hasExcludedTerm = excludeKeywords.some(keyword => label.includes(keyword));
-      return hasSpiderKeyword && !hasExcludedTerm;
+      const meetsScore = (result.score ?? 0) >= 0.25;
+      return hasSpiderKeyword && !hasExcludedTerm && meetsScore;
     });
 
     // If no spider results found, we only want spider classifications

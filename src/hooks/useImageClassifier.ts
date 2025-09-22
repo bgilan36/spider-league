@@ -17,7 +17,7 @@ const SPIDER_KEYWORDS = [
   'phoneutria', 'latrodectus', 'loxosceles', 'atrax', 'sicarius',
   'nephila', 'lycosa', 'salticidae', 'theraphosidae', 'araneae',
   'black widow', 'brown recluse', 'garden spider', 'house spider',
-  'cellar spider', 'daddy long legs', 'harvestman'
+  'cellar spider'
 ];
 
 async function getClassifier() {
@@ -74,7 +74,8 @@ function filterSpiderResults(results: Array<{ label: string; score: number }>): 
     'person', 'human', 'face', 'hand', 'dog', 'cat', 'car', 'house', 'beetle',
     'fly', 'ant', 'bee', 'wasp', 'butterfly', 'moth', 'cricket', 'grasshopper',
     'mosquito', 'dragonfly', 'cockroach', 'termite', 'ladybug', 'centipede',
-    'millipede', 'scorpion', 'tick', 'mite', 'flea', 'louse'
+    'millipede', 'scorpion', 'tick', 'mite', 'flea', 'louse',
+    'harvestman', 'opiliones', 'daddy long legs'
   ];
 
   return results.filter(result => {
@@ -90,8 +91,8 @@ function filterSpiderResults(results: Array<{ label: string; score: number }>): 
       label.includes(keyword)
     );
     
-    // Only keep results that are explicitly spider-related and don't contain excluded terms
-    return isSpiderRelated && !hasExcludedTerm;
+    // Only keep results that are explicitly spider-related, don't contain excluded terms, and meet a minimum score
+    return isSpiderRelated && !hasExcludedTerm && result.score >= 0.25;
   });
 }
 

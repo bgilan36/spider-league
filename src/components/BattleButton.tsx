@@ -89,15 +89,18 @@ const BattleButton: React.FC<BattleButtonProps> = ({
         challenger_id: user.id,
         challenger_spider_id: targetSpider.id,
         challenge_message: `${targetSpider.nickname} seeks a worthy opponent!`
-      });
+      })
+      .select('id')
+      .single();
 
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create challenge",
-        variant: "destructive"
-      });
-    } else {
+      if (error) {
+        console.error('Failed to create challenge (direct):', error);
+        toast({
+          title: "Error",
+          description: `Failed to create challenge: ${error.message}`,
+          variant: "destructive"
+        });
+      } else {
       toast({
         title: "Challenge Created!",
         description: `${targetSpider.nickname} is now looking for opponents`,
@@ -129,12 +132,15 @@ const BattleButton: React.FC<BattleButtonProps> = ({
           accepter_id: targetSpider.owner_id,
           accepter_spider_id: targetSpider.id,
           challenge_message: `${challengerSpider.nickname} challenges ${targetSpider.nickname} to battle!`
-        });
+        })
+        .select('id')
+        .single();
 
       if (error) {
+        console.error('Failed to create challenge (targeted):', error);
         toast({
           title: "Error",
-          description: "Failed to create challenge",
+          description: `Failed to create challenge: ${error.message}`,
           variant: "destructive"
         });
       } else {
@@ -165,6 +171,7 @@ const BattleButton: React.FC<BattleButtonProps> = ({
         variant={variant}
         size={size}
         className={className}
+        disabled={loading}
         onClick={(e) => {
           e.stopPropagation();
           // For collection context with own spiders, auto-create challenge
