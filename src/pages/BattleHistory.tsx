@@ -6,10 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import { ArrowLeft, Trophy, Swords, Clock, Target, Crown, TrendingUp, Calendar, Users } from "lucide-react";
+import { ArrowLeft, Trophy, Swords, Crown, TrendingUp, Calendar, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
 import { format } from "date-fns";
+import BattleDetailsModal from "@/components/BattleDetailsModal";
 
 interface Battle {
   id: string;
@@ -21,36 +22,6 @@ interface Battle {
   battle_log: any;
 }
 
-interface BattleChallenge {
-  id: string;
-  challenger_id: string;
-  accepter_id: string | null;
-  challenger_spider_id: string;
-  accepter_spider_id: string | null;
-  battle_id: string | null;
-  winner_id: string | null;
-  loser_spider_id: string | null;
-  status: string;
-  challenge_message: string;
-  created_at: string;
-  expires_at: string;
-  challenger_spider?: {
-    nickname: string;
-    image_url: string;
-    species: string;
-  } | null;
-  accepter_spider?: {
-    nickname: string;
-    image_url: string;
-    species: string;
-  } | null;
-  challenger_profile?: {
-    display_name: string;
-  } | null;
-  accepter_profile?: {
-    display_name: string;
-  } | null;
-}
 
 interface BattleStats {
   totalBattles: number;
@@ -58,30 +29,23 @@ interface BattleStats {
   losses: number;
   ties: number;
   winRate: number;
-  challengesSent: number;
-  challengesReceived: number;
-  spidersLost: number;
-  spidersWon: number;
 }
 
 const BattleHistory = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [battles, setBattles] = useState<Battle[]>([]);
-  const [challenges, setChallenges] = useState<BattleChallenge[]>([]);
   const [stats, setStats] = useState<BattleStats>({
     totalBattles: 0,
     wins: 0,
     losses: 0,
     ties: 0,
     winRate: 0,
-    challengesSent: 0,
-    challengesReceived: 0,
-    spidersLost: 0,
-    spidersWon: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"battles" | "challenges" | "stats">("battles");
+  const [activeTab, setActiveTab] = useState<"battles" | "stats">("battles");
+  const [selectedBattle, setSelectedBattle] = useState<Battle | null>(null);
+  const [isBattleDetailsOpen, setIsBattleDetailsOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -191,153 +155,10 @@ const BattleHistory = () => {
         }
       ];
 
-      // Mock challenge data
-      const mockChallenges = [
-        {
-          id: "challenge-1",
-          challenger_id: user.id,
-          accepter_id: "other-user-1",
-          challenger_spider_id: "spider-1",
-          accepter_spider_id: "spider-2",
-          battle_id: "battle-1",
-          winner_id: user.id,
-          loser_spider_id: null,
-          status: "COMPLETED",
-          challenge_message: "Let's see who has the stronger spider!",
-          created_at: "2024-01-15T14:00:00Z",
-          expires_at: "2024-01-16T14:00:00Z",
-          challenger_spider: {
-            nickname: "Shadowstrike",
-            species: "Black Widow",
-            image_url: "/lovable-uploads/218cca6b-fdab-43a0-9a30-c4defe401691.png"
-          },
-          accepter_spider: {
-            nickname: "Venomfang",
-            species: "Brown Recluse",
-            image_url: "/lovable-uploads/72396214-19a6-4e47-b07c-6dd315d94727.png"
-          },
-          challenger_profile: {
-            display_name: "You"
-          },
-          accepter_profile: {
-            display_name: "SpiderMaster_99"
-          }
-        },
-        {
-          id: "challenge-2",
-          challenger_id: "other-user-2",
-          accepter_id: user.id,
-          challenger_spider_id: "spider-3",
-          accepter_spider_id: "spider-4",
-          battle_id: "battle-2",
-          winner_id: user.id,
-          loser_spider_id: "spider-3",
-          status: "COMPLETED",
-          challenge_message: "Your spider looks weak, let's battle!",
-          created_at: "2024-01-12T08:30:00Z",
-          expires_at: "2024-01-13T08:30:00Z",
-          challenger_spider: {
-            nickname: "Webweaver",
-            species: "Orb Weaver",
-            image_url: "/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png"
-          },
-          accepter_spider: {
-            nickname: "Nightcrawler",
-            species: "Wolf Spider",
-            image_url: "/lovable-uploads/218cca6b-fdab-43a0-9a30-c4defe401691.png"
-          },
-          challenger_profile: {
-            display_name: "WebSlinger42"
-          },
-          accepter_profile: {
-            display_name: "You"
-          }
-        },
-        {
-          id: "challenge-3",
-          challenger_id: user.id,
-          accepter_id: null,
-          challenger_spider_id: "spider-5",
-          accepter_spider_id: null,
-          battle_id: null,
-          winner_id: null,
-          loser_spider_id: null,
-          status: "OPEN",
-          challenge_message: "Anyone brave enough to face my champion?",
-          created_at: "2024-01-16T10:00:00Z",
-          expires_at: "2024-01-17T10:00:00Z",
-          challenger_spider: {
-            nickname: "Stormspinner",
-            species: "Jumping Spider",
-            image_url: "/lovable-uploads/72396214-19a6-4e47-b07c-6dd315d94727.png"
-          },
-          accepter_spider: null,
-          challenger_profile: {
-            display_name: "You"
-          },
-          accepter_profile: null
-        },
-        {
-          id: "challenge-4",
-          challenger_id: "other-user-5",
-          accepter_id: user.id,
-          challenger_spider_id: "spider-6",
-          accepter_spider_id: "spider-7",
-          battle_id: null,
-          winner_id: null,
-          loser_spider_id: null,
-          status: "ACCEPTED",
-          challenge_message: "Time to settle this once and for all!",
-          created_at: "2024-01-14T15:30:00Z",
-          expires_at: "2024-01-15T15:30:00Z",
-          challenger_spider: {
-            nickname: "Ironjaw",
-            species: "Tarantula",
-            image_url: "/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png"
-          },
-          accepter_spider: {
-            nickname: "Quickstrike",
-            species: "Wolf Spider",
-            image_url: "/lovable-uploads/218cca6b-fdab-43a0-9a30-c4defe401691.png"
-          },
-          challenger_profile: {
-            display_name: "ArachnidKing"
-          },
-          accepter_profile: {
-            display_name: "You"
-          }
-        },
-        {
-          id: "challenge-5",
-          challenger_id: "other-user-6",
-          accepter_id: null,
-          challenger_spider_id: "spider-8",
-          accepter_spider_id: null,
-          battle_id: null,
-          winner_id: null,
-          loser_spider_id: null,
-          status: "EXPIRED",
-          challenge_message: "Looking for a worthy opponent!",
-          created_at: "2024-01-05T12:00:00Z",
-          expires_at: "2024-01-06T12:00:00Z",
-          challenger_spider: {
-            nickname: "Shadowbane",
-            species: "Black Widow",
-            image_url: "/lovable-uploads/72396214-19a6-4e47-b07c-6dd315d94727.png"
-          },
-          accepter_spider: null,
-          challenger_profile: {
-            display_name: "SpiderLord88"
-          },
-          accepter_profile: null
-        }
-      ];
-
       setBattles(mockBattles as any);
-      setChallenges(mockChallenges as any);
       
       // Calculate stats
-      calculateStats(mockBattles, mockChallenges);
+      calculateStats(mockBattles);
 
     } catch (error: any) {
       console.error("Error loading mock battle data:", error);
@@ -351,14 +172,12 @@ const BattleHistory = () => {
     }
   };
 
-  const calculateStats = (battleData: any[], challengeData: any[]) => {
+  const calculateStats = (battleData: any[]) => {
     if (!user) return;
 
     let wins = 0;
     let losses = 0;
     let ties = 0;
-    let spidersWon = 0;
-    let spidersLost = 0;
 
     // Count battle outcomes
     battleData.forEach(battle => {
@@ -378,22 +197,8 @@ const BattleHistory = () => {
       }
     });
 
-    // Count spider transfers from challenges
-    challengeData.forEach(challenge => {
-      if (challenge.status === 'COMPLETED' && challenge.winner_id && challenge.loser_spider_id) {
-        if (challenge.winner_id === user.id) {
-          spidersWon++;
-        } else {
-          spidersLost++;
-        }
-      }
-    });
-
     const totalBattles = wins + losses + ties;
     const winRate = totalBattles > 0 ? Math.round((wins / totalBattles) * 100) : 0;
-    
-    const challengesSent = challengeData.filter(c => c.challenger_id === user.id).length;
-    const challengesReceived = challengeData.filter(c => c.accepter_id === user.id).length;
 
     setStats({
       totalBattles,
@@ -401,10 +206,6 @@ const BattleHistory = () => {
       losses,
       ties,
       winRate,
-      challengesSent,
-      challengesReceived,
-      spidersWon,
-      spidersLost,
     });
   };
 
@@ -425,19 +226,9 @@ const BattleHistory = () => {
       <Badge variant="destructive">Defeat</Badge>;
   };
 
-  const getStatusBadge = (challenge: BattleChallenge) => {
-    switch (challenge.status) {
-      case 'OPEN':
-        return <Badge variant="outline">Open</Badge>;
-      case 'ACCEPTED':
-        return <Badge className="bg-blue-500 text-white">Accepted</Badge>;
-      case 'COMPLETED':
-        return <Badge className="bg-green-500 text-white">Completed</Badge>;
-      case 'EXPIRED':
-        return <Badge variant="secondary">Expired</Badge>;
-      default:
-        return <Badge variant="secondary">{challenge.status}</Badge>;
-    }
+  const handleBattleClick = (battle: Battle) => {
+    setSelectedBattle(battle);
+    setIsBattleDetailsOpen(true);
   };
 
   if (loading) {
@@ -486,14 +277,10 @@ const BattleHistory = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-8">
+          <TabsList className="grid w-full grid-cols-2 mb-8">
             <TabsTrigger value="battles" className="flex items-center gap-2">
               <Swords className="h-4 w-4" />
               Battles
-            </TabsTrigger>
-            <TabsTrigger value="challenges" className="flex items-center gap-2">
-              <Target className="h-4 w-4" />
-              Challenges
             </TabsTrigger>
             <TabsTrigger value="stats" className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
@@ -532,7 +319,7 @@ const BattleHistory = () => {
                   const opponentSpider = isUserTeamA ? teamB?.[0] : teamA?.[0];
                   
                   return (
-                    <Card key={battle.id} className="hover:shadow-md transition-shadow">
+                    <Card key={battle.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleBattleClick(battle)}>
                       <CardContent className="flex items-center gap-4 p-6">
                         <div className="flex items-center gap-4 flex-1">
                           <div className="text-center">
@@ -593,116 +380,9 @@ const BattleHistory = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="challenges">
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5" />
-                  Challenge History
-                </CardTitle>
-                <CardDescription>
-                  Track all challenges sent and received
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            {challenges.length === 0 ? (
-              <Card>
-                <CardContent className="text-center py-12">
-                  <Target className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold mb-2">No challenges yet</h3>
-                  <p className="text-muted-foreground">Your challenge history will appear here</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {challenges.map((challenge) => {
-                  const isSentByUser = challenge.challenger_id === user?.id;
-                  
-                  return (
-                    <Card key={challenge.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="flex items-center gap-4 p-6">
-                        <div className="flex items-center gap-4 flex-1">
-                          <div className="text-center">
-                            <div className="text-sm text-muted-foreground mb-1">
-                              {isSentByUser ? 'Your Spider' : 'Challenger'}
-                            </div>
-                            <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted mx-auto mb-2">
-                              {challenge.challenger_spider?.image_url && (
-                                <img 
-                                  src={challenge.challenger_spider.image_url} 
-                                  alt={challenge.challenger_spider.nickname}
-                                  className="w-full h-full object-cover"
-                                />
-                              )}
-                            </div>
-                            <div className="font-medium text-sm">
-                              {challenge.challenger_spider?.nickname || 'Unknown'}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {challenge.challenger_profile?.display_name || 'Unknown User'}
-                            </div>
-                          </div>
-                          
-                          <div className="text-center flex-shrink-0">
-                            <div className="text-xl font-bold mb-2">
-                              {isSentByUser ? 'CHALLENGED' : 'CHALLENGED BY'}
-                            </div>
-                            {getStatusBadge(challenge)}
-                          </div>
-                          
-                          <div className="text-center">
-                            <div className="text-sm text-muted-foreground mb-1">
-                              {isSentByUser ? 'Target' : 'Your Spider'}
-                            </div>
-                            <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted mx-auto mb-2">
-                              {challenge.accepter_spider?.image_url ? (
-                                <img 
-                                  src={challenge.accepter_spider.image_url} 
-                                  alt={challenge.accepter_spider.nickname}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <div className="w-full h-full bg-muted flex items-center justify-center text-xs">
-                                  Pending
-                                </div>
-                              )}
-                            </div>
-                            <div className="font-medium text-sm">
-                              {challenge.accepter_spider?.nickname || 'Pending'}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {challenge.accepter_profile?.display_name || 'Unknown User'}
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="text-right">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm text-muted-foreground">
-                              {format(new Date(challenge.created_at), 'MMM d, yyyy')}
-                            </span>
-                          </div>
-                          <div className="text-xs text-muted-foreground mb-2">
-                            Expires: {format(new Date(challenge.expires_at), 'MMM d')}
-                          </div>
-                          {challenge.winner_id && (
-                            <div className="text-xs">
-                              Winner: {challenge.winner_id === user?.id ? 'You' : 'Opponent'}
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
-          </TabsContent>
 
           <TabsContent value="stats">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Battles</CardTitle>
@@ -729,31 +409,6 @@ const BattleHistory = () => {
                 </CardContent>
               </Card>
               
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Challenges</CardTitle>
-                  <Target className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.challengesSent + stats.challengesReceived}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {stats.challengesSent} sent / {stats.challengesReceived} received
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Spider Trades</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.spidersWon + stats.spidersLost}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {stats.spidersWon} won / {stats.spidersLost} lost
-                  </p>
-                </CardContent>
-              </Card>
             </div>
 
             <Card>
@@ -799,6 +454,12 @@ const BattleHistory = () => {
             </Card>
           </TabsContent>
         </Tabs>
+        
+        <BattleDetailsModal 
+          isOpen={isBattleDetailsOpen}
+          onClose={() => setIsBattleDetailsOpen(false)}
+          battle={selectedBattle}
+        />
       </main>
     </div>
   );
