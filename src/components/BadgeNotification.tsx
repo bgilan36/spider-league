@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { X, Trophy, Crown, Award, Sword, Shield, Zap, Star, Flame, Hexagon } from "lucide-react";
+import { X, Trophy, Crown, Award, Sword, Shield, Zap, Star, Flame, Hexagon, LucideIcon } from "lucide-react";
 
 interface BadgeData {
   id: string;
@@ -20,7 +20,7 @@ interface BadgeNotificationProps {
   onDismiss: () => void;
 }
 
-const iconMap: Record<string, any> = {
+const iconMap: Record<string, LucideIcon> = {
   Trophy, Crown, Award, Sword, Shield, Zap, Star, Flame, Hexagon
 };
 

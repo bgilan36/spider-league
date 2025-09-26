@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Sword, Timer, Trophy, AlertCircle, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useBadgeSystem } from "@/hooks/useBadgeSystem";
 import BattleArena from './BattleArena';
 
 interface Spider {
@@ -46,6 +47,7 @@ interface BattleChallenge {
 const BattleMode: React.FC<{ showChallenges?: boolean }> = ({ showChallenges = true }) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { checkAndAwardBadges } = useBadgeSystem();
   const [challenges, setChallenges] = useState<BattleChallenge[]>([]);
   const [userSpiders, setUserSpiders] = useState<Spider[]>([]);
   const [showChallengeForm, setShowChallengeForm] = useState(false);
@@ -230,6 +232,16 @@ const BattleMode: React.FC<{ showChallenges?: boolean }> = ({ showChallenges = t
         title: "Battle Complete!",
         description: `${winner.nickname} has claimed victory and ownership of ${loser.nickname}!`,
       });
+
+      // Check for new badges for the winner
+      if (user && winnerId === user.id) {
+        checkAndAwardBadges(user.id);
+      }
+    }
+
+    // Check for new badges for the winner
+    if (user && winnerId === user.id) {
+      checkAndAwardBadges(user.id);
     }
 
     setActiveBattle(null);

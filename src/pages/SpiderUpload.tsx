@@ -11,6 +11,7 @@ import { Upload, Camera, Loader2, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
 import { classifyImage } from "@/hooks/useImageClassifier";
+import { useBadgeSystem } from "@/hooks/useBadgeSystem";
 
 const titleCase = (str: string) =>
   str
@@ -54,6 +55,7 @@ const SpiderUpload = () => {
   const { user, session } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { checkAndAwardBadges } = useBadgeSystem();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [uploading, setUploading] = useState(false);
@@ -410,6 +412,10 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
       }
 
       toast({ title: "Spider uploaded!", description: "Your spider is ready for battle!" });
+      
+      // Check for new badges after successful upload
+      await checkAndAwardBadges(authUser.id);
+      
       navigate("/collection");
     } catch (error: any) {
       console.error("Upload error:", error);

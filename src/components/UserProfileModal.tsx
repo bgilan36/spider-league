@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Trophy, Crown, Award, Sword, Shield, Zap, Star, Flame, Hexagon,
-  Calendar, Users, Target 
+  Calendar, Users, Target, LucideIcon
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -45,7 +45,7 @@ interface UserProfileModalProps {
   onClose: () => void;
 }
 
-const iconMap: Record<string, any> = {
+const iconMap: Record<string, LucideIcon> = {
   Trophy, Crown, Award, Sword, Shield, Zap, Star, Flame, Hexagon
 };
 
