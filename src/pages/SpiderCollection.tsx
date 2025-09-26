@@ -7,11 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/components/ui/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trophy, Zap, Shield, Target, Droplet, Globe, ArrowUpDown } from "lucide-react";
+import { Plus, Trophy, Zap, Shield, Target, Droplet, Globe, ArrowUpDown, Swords } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
 import PowerScoreArc from "@/components/PowerScoreArc";
 import BattleButton from "@/components/BattleButton";
+import BattleDetailsModal from "@/components/BattleDetailsModal";
 
 interface Spider {
   id: string;
@@ -29,6 +30,11 @@ interface Spider {
   is_approved: boolean;
   owner_id?: string;
   created_at: string;
+  battle_won_from?: {
+    battle_id: string;
+    defeated_user: string;
+    defeated_user_display_name?: string;
+  };
 }
 
 const SpiderCollection = () => {
@@ -37,6 +43,8 @@ const SpiderCollection = () => {
   const [spiders, setSpiders] = useState<Spider[]>([]);
   const [sortBy, setSortBy] = useState<"newest" | "power_score" | "recent">("newest");
   const [loading, setLoading] = useState(true);
+  const [selectedBattle, setSelectedBattle] = useState<any>(null);
+  const [showBattleModal, setShowBattleModal] = useState(false);
 
   const rarityColors = {
     COMMON: "bg-gray-500",
@@ -72,11 +80,70 @@ const SpiderCollection = () => {
 
       if (userError) throw userError;
 
-      setSpiders(userSpiders || []);
+      // Fetch battle information for spiders won through battles
+      const { data: battleChallenges, error: battleError } = await supabase
+        .from('battle_challenges')
+        .select(`
+          loser_spider_id,
+          battle_id,
+          challenger_id
+        `)
+        .eq('winner_id', user.id)
+        .eq('status', 'COMPLETED')
+        .not('loser_spider_id', 'is', null);
+
+      if (battleError) throw battleError;
+
+      // Get unique challenger IDs to fetch their profiles
+      const challengerIds = [...new Set(battleChallenges?.map(bc => bc.challenger_id) || [])];
+      const { data: challengerProfiles } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .in('id', challengerIds);
+
+      // Combine spider data with battle attribution
+      const spidersWithAttribution = (userSpiders || []).map(spider => {
+        const battleInfo = battleChallenges?.find(bc => bc.loser_spider_id === spider.id);
+        if (battleInfo) {
+          const challengerProfile = challengerProfiles?.find(p => p.id === battleInfo.challenger_id);
+          return {
+            ...spider,
+            battle_won_from: {
+              battle_id: battleInfo.battle_id,
+              defeated_user: battleInfo.challenger_id,
+              defeated_user_display_name: challengerProfile?.display_name
+            }
+          };
+        }
+        return spider;
+      });
+
+      setSpiders(spidersWithAttribution);
     } catch (error: any) {
       toast({ title: "Error", description: "Failed to load spiders.", variant: "destructive" });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleViewBattleDetails = async (battleId: string) => {
+    try {
+      const { data: battle, error } = await supabase
+        .from('battles')
+        .select('*')
+        .eq('id', battleId)
+        .single();
+
+      if (error) throw error;
+      
+      setSelectedBattle(battle);
+      setShowBattleModal(true);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load battle details",
+        variant: "destructive"
+      });
     }
   };
 
@@ -144,6 +211,18 @@ const SpiderCollection = () => {
             </div>
           </div>
         ))}
+        
+        {spider.battle_won_from && (
+          <div className="pt-3 border-t">
+            <button
+              onClick={() => handleViewBattleDetails(spider.battle_won_from!.battle_id)}
+              className="w-full flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-primary transition-colors p-2 rounded-md hover:bg-muted/50"
+            >
+              <Swords className="h-3 w-3" />
+              Won from {spider.battle_won_from.defeated_user_display_name || 'Player'} in battle
+            </button>
+          </div>
+        )}
         
         <div className="pt-4 border-t flex justify-center">
           <BattleButton 
@@ -255,6 +334,17 @@ const SpiderCollection = () => {
           </>
         )}
       </main>
+
+      {selectedBattle && (
+        <BattleDetailsModal
+          isOpen={showBattleModal}
+          onClose={() => {
+            setShowBattleModal(false);
+            setSelectedBattle(null);
+          }}
+          battle={selectedBattle}
+        />
+      )}
     </div>
   );
 };
