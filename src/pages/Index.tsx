@@ -136,11 +136,18 @@ const Index = () => {
   };
 
   const fetchRecentBattles = async () => {
-    if (!user) return;
     try {
       setBattlesLoading(true);
-      // Starting fresh: no mock data; show empty state until real battles exist
-      setRecentBattles([]);
+      
+      // Fetch recent battles from all players
+      const { data, error } = await supabase
+        .from('battles')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+      setRecentBattles(data || []);
     } catch (error) {
       console.error('Error fetching recent battles:', error);
     } finally {
@@ -632,7 +639,7 @@ const Index = () => {
             <div>
               <h2 className="text-xl sm:text-2xl font-bold mb-2">Recent Battles</h2>
               <p className="text-sm sm:text-base text-muted-foreground">
-                Your latest combat encounters
+                Latest battles across all players
               </p>
             </div>
             <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
@@ -653,7 +660,7 @@ const Index = () => {
               <CardContent className="pt-6 text-center py-12">
                 <Sword className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No battles yet</h3>
-                <p className="text-muted-foreground">Start challenging other players to see your battle history!</p>
+                <p className="text-muted-foreground">No battles have been fought yet. Be the first to battle!</p>
               </CardContent>
             </Card>
           ) : (
@@ -661,42 +668,35 @@ const Index = () => {
               {recentBattles.map((battle) => {
                 const teamA = Array.isArray(battle.team_a) ? battle.team_a : [];
                 const teamB = Array.isArray(battle.team_b) ? battle.team_b : [];
-                const isUserTeamA = teamA?.[0]?.owner_id === user.id;
-                const userSpider = isUserTeamA ? teamA[0] : teamB[0];
-                const opponentSpider = isUserTeamA ? teamB[0] : teamA[0];
+                const spiderA = teamA[0];
+                const spiderB = teamB[0];
                 
                 let resultBadge;
-                let resultText;
                 if (!battle.winner) {
                   resultBadge = <Badge variant="secondary">In Progress</Badge>;
-                  resultText = "In Progress";
                 } else if (battle.winner === "TIE") {
                   resultBadge = <Badge variant="outline">Tie</Badge>;
-                  resultText = "Tied";
+                } else if (battle.winner === "A") {
+                  resultBadge = <Badge className="bg-green-500 text-white">{spiderA?.nickname} Won</Badge>;
                 } else {
-                  const userWon = (battle.winner === "A" && isUserTeamA) || 
-                                  (battle.winner === "B" && !isUserTeamA);
-                  resultBadge = userWon ? 
-                    <Badge className="bg-green-500 text-white">Victory</Badge> : 
-                    <Badge variant="destructive">Defeat</Badge>;
-                  resultText = userWon ? "Won" : "Lost";
+                  resultBadge = <Badge className="bg-green-500 text-white">{spiderB?.nickname} Won</Badge>;
                 }
                 
                 return (
                   <Card key={battle.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleBattleClick(battle)}>
                     <CardContent className="flex items-center gap-2 sm:gap-4 p-3 sm:p-4">
                       <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                        {/* User Spider */}
+                        {/* Spider A */}
                         <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-md overflow-hidden flex-shrink-0">
                           <img 
-                            src={userSpider?.image_url} 
-                            alt={userSpider?.nickname}
+                            src={spiderA?.image_url} 
+                            alt={spiderA?.nickname}
                             className="w-full h-full object-cover"
                           />
                         </div>
                         <div className="min-w-0">
-                          <p className="font-medium text-sm truncate">{userSpider?.nickname}</p>
-                          <p className="text-xs text-muted-foreground truncate">{userSpider?.species}</p>
+                          <p className="font-medium text-sm truncate">{spiderA?.nickname}</p>
+                          <p className="text-xs text-muted-foreground truncate">{spiderA?.species}</p>
                         </div>
                         
                         {/* VS */}
@@ -704,17 +704,17 @@ const Index = () => {
                           <span className="text-xs font-bold text-muted-foreground">VS</span>
                         </div>
                         
-                        {/* Opponent Spider */}
+                        {/* Spider B */}
                         <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-md overflow-hidden flex-shrink-0">
                           <img 
-                            src={opponentSpider?.image_url} 
-                            alt={opponentSpider?.nickname}
+                            src={spiderB?.image_url} 
+                            alt={spiderB?.nickname}
                             className="w-full h-full object-cover"
                           />
                         </div>
                         <div className="min-w-0">
-                          <p className="font-medium text-sm truncate">{opponentSpider?.nickname}</p>
-                          <p className="text-xs text-muted-foreground truncate">{opponentSpider?.species}</p>
+                          <p className="font-medium text-sm truncate">{spiderB?.nickname}</p>
+                          <p className="text-xs text-muted-foreground truncate">{spiderB?.species}</p>
                         </div>
                       </div>
                       
