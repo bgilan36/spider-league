@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      badges: {
+        Row: {
+          color: string
+          created_at: string
+          criteria: Json
+          description: string
+          icon: string
+          id: string
+          name: string
+          rarity: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          criteria?: Json
+          description: string
+          icon: string
+          id?: string
+          name: string
+          rarity?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          criteria?: Json
+          description?: string
+          icon?: string
+          id?: string
+          name?: string
+          rarity?: string
+        }
+        Relationships: []
+      }
       battle_challenges: {
         Row: {
           accepter_id: string | null
@@ -519,6 +552,38 @@ export type Database = {
           },
         ]
       }
+      user_badges: {
+        Row: {
+          awarded_at: string
+          badge_id: string
+          id: string
+          progress: Json | null
+          user_id: string
+        }
+        Insert: {
+          awarded_at?: string
+          badge_id: string
+          id?: string
+          progress?: Json | null
+          user_id: string
+        }
+        Update: {
+          awarded_at?: string
+          badge_id?: string
+          id?: string
+          progress?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       weekly_rankings: {
         Row: {
           created_at: string
@@ -655,6 +720,10 @@ export type Database = {
           venom: number
           webcraft: number
         }[]
+      }
+      award_badges_for_user: {
+        Args: { user_id_param: string }
+        Returns: undefined
       }
       can_user_upload_this_week: {
         Args: { user_id_param: string }

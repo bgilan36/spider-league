@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import PowerScoreArc from "@/components/PowerScoreArc";
 import SpiderDetailsModal from "@/components/SpiderDetailsModal";
 import BattleButton from "@/components/BattleButton";
+import { UserProfileModal } from "@/components/UserProfileModal";
 
 interface Spider {
   id: string;
@@ -86,6 +87,8 @@ const Leaderboard = () => {
   const [activeTab, setActiveTab] = useState<"all-time" | "weekly">("all-time");
   const [selectedSpider, setSelectedSpider] = useState<Spider | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
 
   const handleSpiderClick = (spider: Spider) => {
     setSelectedSpider(spider);
@@ -95,6 +98,16 @@ const Leaderboard = () => {
   const handleModalClose = () => {
     setIsModalOpen(false);
     setSelectedSpider(null);
+  };
+
+  const handleUserClick = (userId: string) => {
+    setSelectedUserId(userId);
+    setIsUserModalOpen(true);
+  };
+
+  const handleUserModalClose = () => {
+    setIsUserModalOpen(false);
+    setSelectedUserId(null);
   };
 
   const rarityColors = {
@@ -503,6 +516,12 @@ const Leaderboard = () => {
           isOpen={isModalOpen}
           onClose={handleModalClose}
         />
+
+        <UserProfileModal
+          userId={selectedUserId}
+          isOpen={isUserModalOpen}
+          onClose={handleUserModalClose}
+        />
       </main>
     </div>
   );
@@ -578,12 +597,12 @@ const Leaderboard = () => {
                     
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <Link 
-                          to={`/collection/${user.user_id}`}
-                          className="hover:text-primary transition-colors"
+                        <button 
+                          onClick={() => handleUserClick(user.user_id)}
+                          className="hover:text-primary transition-colors cursor-pointer"
                         >
                           <h3 className="font-bold text-xl">{userName}</h3>
-                        </Link>
+                        </button>
                         <Badge variant="outline">
                           {spiderCount} Spider{spiderCount !== 1 ? 's' : ''}
                         </Badge>
@@ -656,13 +675,13 @@ const Leaderboard = () => {
                     </div>
                     
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Link 
-                          to={`/collection/${user.user_id}`}
-                          className="hover:text-primary transition-colors"
-                        >
-                          <h3 className="font-semibold truncate">{userName}</h3>
-                        </Link>
+                       <div className="flex items-center gap-2 mb-1">
+                         <button 
+                           onClick={() => handleUserClick(user.user_id)}
+                           className="hover:text-primary transition-colors cursor-pointer"
+                         >
+                           <h3 className="font-semibold truncate">{userName}</h3>
+                         </button>
                         <Badge variant="outline" className="text-xs">
                           {spiderCount} Spider{spiderCount !== 1 ? 's' : ''}
                         </Badge>

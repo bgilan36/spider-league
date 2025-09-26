@@ -12,6 +12,9 @@ import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { HowItWorksModal } from "@/components/HowItWorksModal";
 import { UserProfileMenu } from "@/components/UserProfileMenu";
+import { BadgeNotification } from "@/components/BadgeNotification";
+import { useBadgeSystem } from "@/hooks/useBadgeSystem";
+import { UserProfileModal } from "@/components/UserProfileModal";
 import { supabase } from "@/integrations/supabase/client";
 import PowerScoreArc from "@/components/PowerScoreArc";
 import SpiderDetailsModal from "@/components/SpiderDetailsModal";
@@ -46,6 +49,9 @@ const Index = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const { newBadge, showBadgeNotification, checkAndAwardBadges, dismissBadgeNotification } = useBadgeSystem();
   const [userSpiders, setUserSpiders] = useState<Spider[]>([]);
   const [spidersLoading, setSpidersLoading] = useState(true);
   const [userGlobalRank, setUserGlobalRank] = useState<number | null>(null);
@@ -289,6 +295,16 @@ const Index = () => {
   const handleSpiderClick = (spider: Spider) => {
     setSelectedSpider(spider);
     setIsModalOpen(true);
+  };
+
+  const handleUserClick = (userId: string) => {
+    setSelectedUserId(userId);
+    setIsUserModalOpen(true);
+  };
+
+  const handleUserModalClose = () => {
+    setIsUserModalOpen(false);
+    setSelectedUserId(null);
   };
 
   const handleBattleClick = (battle: any) => {
@@ -926,8 +942,13 @@ const Index = () => {
                         </div>
                         
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1 sm:gap-2 mb-1">
-                              <h4 className="font-semibold text-sm sm:text-base truncate">{userName}</h4>
+                             <div className="flex items-center gap-1 sm:gap-2 mb-1">
+                               <button 
+                                 onClick={() => handleUserClick(user.user_id)}
+                                 className="hover:text-primary transition-colors cursor-pointer"
+                               >
+                                 <h4 className="font-semibold text-sm sm:text-base truncate">{userName}</h4>
+                               </button>
                               <Badge variant="outline" className="text-xs">
                                 {user.spider_count} Spider{user.spider_count !== 1 ? 's' : ''}
                               </Badge>
@@ -965,6 +986,18 @@ const Index = () => {
         isOpen={isBattleDetailsOpen}
         onClose={() => setIsBattleDetailsOpen(false)}
         battle={selectedBattle}
+      />
+
+      <UserProfileModal
+        userId={selectedUserId}
+        isOpen={isUserModalOpen}
+        onClose={handleUserModalClose}
+      />
+
+      <BadgeNotification
+        badge={newBadge}
+        isVisible={showBadgeNotification}
+        onDismiss={dismissBadgeNotification}
       />
       
       {/* Footer */}
