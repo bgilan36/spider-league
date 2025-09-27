@@ -6,10 +6,11 @@ import BattleModeComponent from "@/components/BattleMode";
 
 const BattleMode = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden pb-safe">
       <Helmet>
         <title>Battle Mode — Spider League</title>
         <meta name="description" content="Challenge other players and claim their spiders in epic Spider League battles." />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
         <link rel="canonical" href={`${window.location.origin}/battle-mode`} />
       </Helmet>
       

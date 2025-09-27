@@ -144,12 +144,29 @@ All colors MUST be HSL.
     background-image: url('/lovable-uploads/218cca6b-fdab-43a0-9a30-c4defe401691.png');
     background-size: cover;
     background-position: center;
-    background-attachment: fixed;
+    background-attachment: scroll; /* Changed from fixed for mobile performance */
     background-repeat: no-repeat;
     position: relative;
     overflow-x: hidden;
     overflow-y: auto;
     min-height: 100vh;
+    /* Mobile scrolling improvements */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: none;
+  }
+
+  /* Mobile viewport height fix */
+  @supports (-webkit-touch-callout: none) {
+    body {
+      min-height: -webkit-fill-available;
+    }
+  }
+
+  /* Ensure mobile keyboard doesn't break layout */
+  @media screen and (max-width: 768px) {
+    body {
+      background-attachment: scroll;
+    }
   }
 
   body::before {

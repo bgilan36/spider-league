@@ -491,10 +491,11 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden pb-safe">
       <Helmet>
         <title>Dashboard — Spider League</title>
         <meta name="description" content="Manage your spider fighters and compete in Spider League battles." />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
         <link rel="canonical" href={`${window.location.origin}/`} />
       </Helmet>
       

@@ -435,48 +435,52 @@ const Leaderboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <Helmet>
         <title>User Leaderboard — Spider League</title>
         <meta name="description" content="View the top-ranked spider trainers by cumulative power scores." />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
         <link rel="canonical" href={`${window.location.origin}/leaderboard`} />
       </Helmet>
       
-      <main className="container mx-auto px-6 py-8">
-        <div className="flex items-center gap-2 mb-6">
+      <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 pb-safe">
+        <div className="flex items-center gap-2 mb-4 sm:mb-6">
           <Button variant="ghost" size="sm" asChild>
             <Link to="/" className="text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="mr-1 h-4 w-4" />
-              Back to Home
+              <ArrowLeft className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Back to Home</span>
+              <span className="sm:hidden">Home</span>
             </Link>
           </Button>
           <span className="text-muted-foreground">/</span>
-          <span className="text-sm font-medium">Leaderboard</span>
+          <span className="text-xs sm:text-sm font-medium">Leaderboard</span>
         </div>
         
-        <div className="flex items-center justify-center mb-8">
+        <div className="flex items-center justify-center mb-6 sm:mb-8">
           <div className="text-center">
-            <div className="flex justify-center mb-4">
+            <div className="flex justify-center mb-3 sm:mb-4">
               <img 
                 src="/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png" 
                 alt="Spider League Logo" 
-                className="h-16 w-auto"
+                className="h-12 sm:h-16 w-auto"
               />
             </div>
-            <h1 className="text-4xl font-bold mb-2">User Leaderboard</h1>
-            <p className="text-muted-foreground">Top trainers ranked by cumulative power scores</p>
+            <h1 className="text-2xl sm:text-4xl font-bold mb-1 sm:mb-2">User Leaderboard</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">Top trainers ranked by cumulative power scores</p>
           </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "all-time" | "weekly")} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-8">
-            <TabsTrigger value="all-time" className="flex items-center gap-2">
-              <Trophy className="h-4 w-4" />
-              All-Time Rankings
+          <TabsList className="grid w-full grid-cols-2 mb-6 sm:mb-8">
+            <TabsTrigger value="all-time" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <Trophy className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">All-Time Rankings</span>
+              <span className="sm:hidden">All-Time</span>
             </TabsTrigger>
-            <TabsTrigger value="weekly" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Weekly Rankings
+            <TabsTrigger value="weekly" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Weekly Rankings</span>
+              <span className="sm:hidden">Weekly</span>
             </TabsTrigger>
           </TabsList>
 

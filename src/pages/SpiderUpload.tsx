@@ -470,12 +470,12 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
             <CardContent>
               <form onSubmit={handleUpload} className="space-y-6">
                 {/* Image Upload */}
-                <div className="space-y-2">
-                  <Label>Spider Image</Label>
-                  <div 
-                    className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center cursor-pointer hover:border-muted-foreground/50 transition-colors"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
+                 <div className="space-y-2">
+                   <Label>Spider Image</Label>
+                   <div 
+                     className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 sm:p-8 text-center cursor-pointer hover:border-muted-foreground/50 transition-colors"
+                     onClick={() => fileInputRef.current?.click()}
+                   >
                     {previewUrl ? (
                       <div className="space-y-4">
                         <img 
@@ -505,8 +505,8 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                   />
                 </div>
 
-                {/* Spider Details */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 {/* Spider Details */}
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="nickname" className="flex items-center gap-2">
                       Spider Nickname

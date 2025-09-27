@@ -249,51 +249,53 @@ const SpiderCollection = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <Helmet>
         <title>Spider Collection — Spider League</title>
         <meta name="description" content="View your spider collection and discover other fighters in Spider League." />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
         <link rel="canonical" href={`${window.location.origin}/collection`} />
       </Helmet>
 
-      <main className="container mx-auto px-6 py-8">
-        <div className="flex items-center gap-2 mb-6">
+      <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 pb-safe">
+        <div className="flex items-center gap-2 mb-4 sm:mb-6">
           <Button variant="ghost" size="sm" asChild>
             <Link to="/" className="text-muted-foreground hover:text-foreground">
-              ← Home
+              ← <span className="hidden sm:inline">Home</span>
             </Link>
           </Button>
           <span className="text-muted-foreground">/</span>
-          <span className="text-sm font-medium">Collection</span>
+          <span className="text-xs sm:text-sm font-medium">Collection</span>
         </div>
         
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
             <img 
               src="/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png" 
               alt="Spider League Logo" 
-              className="h-12 w-auto"
+              className="h-10 sm:h-12 w-auto flex-shrink-0"
             />
-            <div>
-              <h1 className="text-3xl font-bold mb-2">My Spider Collection</h1>
-              <p className="text-muted-foreground">View and manage your fighters ({spiders.length} total)</p>
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-3xl font-bold mb-1 sm:mb-2 truncate">My Spider Collection</h1>
+              <p className="text-muted-foreground text-sm sm:text-base">View and manage your fighters ({spiders.length} total)</p>
             </div>
           </div>
-          <Button asChild>
+          <Button asChild size="sm" className="w-full sm:w-auto">
             <Link to="/upload">
-              <Plus className="mr-2 h-4 w-4" />
-              Upload Spider
+              <Plus className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Upload Spider</span>
+              <span className="sm:hidden">Upload</span>
             </Link>
           </Button>
         </div>
 
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
           <div className="flex items-center gap-2">
-            <ArrowUpDown className="h-4 w-4" />
-            <span className="text-sm font-medium">Sort by:</span>
+            <ArrowUpDown className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="text-xs sm:text-sm font-medium">Sort by:</span>
           </div>
           <Select value={sortBy} onValueChange={(value: "newest" | "power_score" | "recent") => setSortBy(value)}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-full sm:w-[240px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -325,7 +327,7 @@ const SpiderCollection = () => {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                 {getSortedSpiders().map((spider) => (
                   <SpiderCard key={spider.id} spider={spider} />
                 ))}

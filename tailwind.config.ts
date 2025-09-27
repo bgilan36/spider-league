@@ -12,7 +12,10 @@ export default {
 	theme: {
 		container: {
 			center: true,
-			padding: '2rem',
+			padding: {
+				DEFAULT: '1rem',
+				sm: '2rem',
+			},
 			screens: {
 				'2xl': '1400px'
 			}
@@ -140,6 +143,9 @@ export default {
 				'float': 'float 6s ease-in-out infinite',
 				'pulse-glow': 'pulse-glow 3s ease-in-out infinite',
 				'shimmer': 'shimmer 2s linear infinite'
+			},
+			spacing: {
+				'safe': 'env(safe-area-inset-bottom)',
 			}
 		}
 	},
