@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { X, Trophy, Crown, Award, Sword, Shield, Zap, Star, Flame, Hexagon, LucideIcon } from "lucide-react";
+import { X } from "lucide-react";
+import { BadgeIcon } from "@/components/BadgeIcon";
 
 interface BadgeData {
   id: string;
@@ -20,9 +21,6 @@ interface BadgeNotificationProps {
   onDismiss: () => void;
 }
 
-const iconMap: Record<string, LucideIcon> = {
-  Trophy, Crown, Award, Sword, Shield, Zap, Star, Flame, Hexagon
-};
 
 const rarityColors = {
   common: 'bg-gray-500',
@@ -47,7 +45,7 @@ export const BadgeNotification = ({ badge, isVisible, onDismiss }: BadgeNotifica
 
   if (!badge) return null;
 
-  const IconComponent = iconMap[badge.icon] || Trophy;
+  
 
   return (
     <AnimatePresence>
@@ -66,10 +64,10 @@ export const BadgeNotification = ({ badge, isVisible, onDismiss }: BadgeNotifica
                   initial={{ rotate: 0, scale: 1 }}
                   animate={{ rotate: [0, -10, 10, -5, 5, 0], scale: [1, 1.1, 1] }}
                   transition={{ duration: 0.8, delay: 0.2 }}
-                  className={`p-3 rounded-full flex-shrink-0 ${rarityColors[badge.rarity]}`}
+                  className={`p-3 rounded-full flex-shrink-0 ${rarityColors[badge.rarity]} flex items-center justify-center`}
                   style={{ backgroundColor: badge.color }}
                 >
-                  <IconComponent className="h-8 w-8 text-white" />
+                  <BadgeIcon badgeName={badge.name} size="md" className="brightness-0 invert" />
                 </motion.div>
 
                 <div className="flex-1 min-w-0">

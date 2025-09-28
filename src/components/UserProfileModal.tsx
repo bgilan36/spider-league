@@ -4,10 +4,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { 
-  Trophy, Crown, Award, Sword, Shield, Zap, Star, Flame, Hexagon,
-  Calendar, Users, Target, LucideIcon
-} from "lucide-react";
+import { Calendar, Users, Target } from "lucide-react";
+import { BadgeIcon } from "@/components/BadgeIcon";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -45,9 +43,6 @@ interface UserProfileModalProps {
   onClose: () => void;
 }
 
-const iconMap: Record<string, LucideIcon> = {
-  Trophy, Crown, Award, Sword, Shield, Zap, Star, Flame, Hexagon
-};
 
 const rarityColors = {
   common: 'bg-gray-500',
@@ -224,7 +219,7 @@ export const UserProfileModal = ({ userId, isOpen, onClose }: UserProfileModalPr
                 <Card>
                   <CardContent className="p-4 text-center">
                     <div className="flex items-center justify-center mb-2">
-                      <Zap className="h-5 w-5 text-amber-500" />
+                      <BadgeIcon badgeName="Power Player" size="sm" />
                     </div>
                     <div className="text-2xl font-bold">{stats.total_power_score.toLocaleString()}</div>
                     <div className="text-xs text-muted-foreground">Total Power</div>
@@ -234,7 +229,7 @@ export const UserProfileModal = ({ userId, isOpen, onClose }: UserProfileModalPr
                 <Card>
                   <CardContent className="p-4 text-center">
                     <div className="flex items-center justify-center mb-2">
-                      <Trophy className="h-5 w-5 text-green-500" />
+                      <BadgeIcon badgeName="First Victory" size="sm" />
                     </div>
                     <div className="text-2xl font-bold">{stats.battles_won}</div>
                     <div className="text-xs text-muted-foreground">Victories</div>
@@ -263,7 +258,7 @@ export const UserProfileModal = ({ userId, isOpen, onClose }: UserProfileModalPr
               {badges.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {badges.map((userBadge) => {
-                    const IconComponent = iconMap[userBadge.badge.icon] || Trophy;
+                    
                     return (
                       <Card key={userBadge.id} className="transition-colors hover:bg-muted/50">
                         <CardContent className="p-4">
@@ -272,7 +267,7 @@ export const UserProfileModal = ({ userId, isOpen, onClose }: UserProfileModalPr
                               className={`p-2 rounded-full ${rarityColors[userBadge.badge.rarity]}`}
                               style={{ backgroundColor: userBadge.badge.color }}
                             >
-                              <IconComponent className="h-5 w-5 text-white" />
+                              <BadgeIcon badgeName={userBadge.badge.name} size="sm" className="brightness-0 invert" />
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center space-x-2 mb-1">
@@ -301,7 +296,7 @@ export const UserProfileModal = ({ userId, isOpen, onClose }: UserProfileModalPr
               ) : (
                 <Card>
                   <CardContent className="p-8 text-center">
-                    <Award className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <BadgeIcon badgeName="First Victory" size="lg" className="mx-auto mb-4 opacity-50" />
                     <p className="text-muted-foreground">No achievements earned yet</p>
                     <p className="text-sm text-muted-foreground mt-2">
                       Start battling and collecting spiders to earn badges!

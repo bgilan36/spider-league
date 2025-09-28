@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, User, Trophy, Crown, Zap } from 'lucide-react';
+import { Loader2, User } from 'lucide-react';
+import { BadgeIcon } from '@/components/BadgeIcon';
 import { supabase } from '@/integrations/supabase/client';
 import PowerScoreArc from '@/components/PowerScoreArc';
 
@@ -193,7 +194,7 @@ const UserSnapshotModal: React.FC<UserSnapshotModalProps> = ({
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Trophy className="w-5 h-5" />
+                    <BadgeIcon badgeName="First Victory" size="sm" />
                     Badges ({badges.length})
                   </CardTitle>
                 </CardHeader>
@@ -204,7 +205,9 @@ const UserSnapshotModal: React.FC<UserSnapshotModalProps> = ({
                         key={userBadge.id}
                         className="p-3 border rounded-lg text-center space-y-2 hover:shadow-md transition-shadow"
                       >
-                        <div className="text-2xl">{userBadge.badge.icon}</div>
+                        <div className="flex justify-center">
+                          <BadgeIcon badgeName={userBadge.badge.name} size="lg" />
+                        </div>
                         <div>
                           <p className="text-sm font-medium">{userBadge.badge.name}</p>
                           <Badge 
@@ -226,7 +229,7 @@ const UserSnapshotModal: React.FC<UserSnapshotModalProps> = ({
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Crown className="w-5 h-5" />
+                  <BadgeIcon badgeName="Spider Collector" size="sm" />
                   Spider Collection ({spiders.length})
                 </CardTitle>
               </CardHeader>
