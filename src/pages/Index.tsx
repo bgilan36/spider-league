@@ -23,6 +23,7 @@ import BattleButton from "@/components/BattleButton";
 import ActiveChallengesPreview from "@/components/ActiveChallengesPreview";
 import BattleDetailsModal from "@/components/BattleDetailsModal";
 import { BattleRecapAlert } from "@/components/BattleRecapAlert";
+import ClickableUsername from "@/components/ClickableUsername";
 
 interface Spider {
   id: string;
@@ -931,7 +932,15 @@ const Index = () => {
                             </Badge>
                           </div>
                           <p className="text-xs sm:text-sm text-muted-foreground truncate">{spider.species}</p>
-                          <p className="text-xs text-muted-foreground truncate hidden sm:block">Owner: {ownerName}</p>
+                          <p className="text-xs text-muted-foreground truncate hidden sm:block">
+                            Owner: {spider.owner_id ? (
+                              <ClickableUsername 
+                                userId={spider.owner_id} 
+                                displayName={ownerName}
+                                className="text-foreground hover:text-primary"
+                              />
+                            ) : ownerName}
+                          </p>
                           {spider.created_at && (
                             <p className="text-xs text-muted-foreground">
                               Uploaded: {format(new Date(spider.created_at), 'MMM d, yyyy')}
@@ -1000,17 +1009,17 @@ const Index = () => {
                         </div>
                         
                           <div className="min-w-0 flex-1">
-                             <div className="flex items-center gap-1 sm:gap-2 mb-1">
-                               <button 
-                                 onClick={() => handleUserClick(user.user_id)}
-                                 className="hover:text-primary transition-colors cursor-pointer"
-                               >
-                                 <h4 className="font-semibold text-sm sm:text-base truncate">{userName}</h4>
-                               </button>
-                              <Badge variant="outline" className="text-xs">
-                                {user.spider_count} Spider{user.spider_count !== 1 ? 's' : ''}
-                              </Badge>
-                            </div>
+                              <div className="flex items-center gap-1 sm:gap-2 mb-1">
+                                <ClickableUsername 
+                                  userId={user.user_id} 
+                                  displayName={userName}
+                                  variant="ghost"
+                                  className="font-semibold text-sm sm:text-base truncate hover:text-primary p-0 h-auto"
+                                />
+                               <Badge variant="outline" className="text-xs">
+                                 {user.spider_count} Spider{user.spider_count !== 1 ? 's' : ''}
+                               </Badge>
+                             </div>
                             {user.top_spider && (
                               <p className="text-xs sm:text-sm text-muted-foreground truncate">
                                 Top: {user.top_spider.nickname} ({user.top_spider.power_score})

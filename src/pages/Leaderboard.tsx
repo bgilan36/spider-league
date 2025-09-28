@@ -13,6 +13,7 @@ import PowerScoreArc from "@/components/PowerScoreArc";
 import SpiderDetailsModal from "@/components/SpiderDetailsModal";
 import BattleButton from "@/components/BattleButton";
 import { UserProfileModal } from "@/components/UserProfileModal";
+import ClickableUsername from "@/components/ClickableUsername";
 
 interface Spider {
   id: string;
@@ -601,12 +602,12 @@ const Leaderboard = () => {
                     
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <button 
-                          onClick={() => handleUserClick(user.user_id)}
-                          className="hover:text-primary transition-colors cursor-pointer"
-                        >
-                          <h3 className="font-bold text-xl">{userName}</h3>
-                        </button>
+                        <ClickableUsername 
+                          userId={user.user_id} 
+                          displayName={userName}
+                          variant="ghost"
+                          className="font-bold text-xl hover:text-primary p-0 h-auto"
+                        />
                         <Badge variant="outline">
                           {spiderCount} Spider{spiderCount !== 1 ? 's' : ''}
                         </Badge>
@@ -680,15 +681,15 @@ const Leaderboard = () => {
                     
                     <div className="min-w-0 flex-1">
                        <div className="flex items-center gap-2 mb-1">
-                         <button 
-                           onClick={() => handleUserClick(user.user_id)}
-                           className="hover:text-primary transition-colors cursor-pointer"
-                         >
-                           <h3 className="font-semibold truncate">{userName}</h3>
-                         </button>
-                        <Badge variant="outline" className="text-xs">
-                          {spiderCount} Spider{spiderCount !== 1 ? 's' : ''}
-                        </Badge>
+                          <ClickableUsername 
+                            userId={user.user_id} 
+                            displayName={userName}
+                            variant="ghost"
+                            className="font-semibold truncate hover:text-primary p-0 h-auto"
+                          />
+                         <Badge variant="outline" className="text-xs">
+                           {spiderCount} Spider{spiderCount !== 1 ? 's' : ''}
+                         </Badge>
                         {isWeekly && battleSpiders > 0 && (
                           <Badge variant="secondary" className="bg-red-500 text-white text-xs">
                             +{battleSpiders}

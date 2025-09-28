@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Trophy, Crown, ArrowRight, Users, Clock, Target } from 'lucide-react';
 import { format } from 'date-fns';
 import ShareButton from '@/components/ShareButton';
+import ClickableUsername from '@/components/ClickableUsername';
+import { supabase } from '@/integrations/supabase/client';
 
 interface BattleDetailsModalProps {
   isOpen: boolean;
@@ -13,12 +15,47 @@ interface BattleDetailsModalProps {
   battle: any; // Battle data from the recent battles
 }
 
+interface UserProfile {
+  id: string;
+  display_name: string | null;
+}
+
 const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
   isOpen,
   onClose,
   battle
 }) => {
-  if (!battle) return null;
+  const [userProfiles, setUserProfiles] = useState<{ [key: string]: UserProfile }>({});
+
+  useEffect(() => {
+    if (battle && isOpen) {
+      fetchUserProfiles();
+    }
+  }, [battle, isOpen]);
+
+  const fetchUserProfiles = async () => {
+    if (!battle.team_a?.[0]?.owner_id || !battle.team_b?.[0]?.owner_id) return;
+
+    const userIds = [battle.team_a[0].owner_id, battle.team_b[0].owner_id];
+    
+    try {
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .in('id', userIds);
+
+      if (error) throw error;
+
+      const profilesMap = (profiles || []).reduce((acc, profile) => {
+        acc[profile.id] = profile;
+        return acc;
+      }, {} as { [key: string]: UserProfile });
+
+      setUserProfiles(profilesMap);
+    } catch (error) {
+      console.error('Error fetching user profiles:', error);
+    }
+  };
 
   // Helper function to get winner and loser
   const getWinnerLoser = () => {
@@ -40,7 +77,13 @@ const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
     };
   };
 
+  if (!battle) return null;
+
   const { winner, loser, isDraw } = getWinnerLoser();
+
+  // Get user profiles for team owners
+  const teamAProfile = battle.team_a?.[0]?.owner_id ? userProfiles[battle.team_a[0].owner_id] : null;
+  const teamBProfile = battle.team_b?.[0]?.owner_id ? userProfiles[battle.team_b[0].owner_id] : null;
 
   // Mock battle rounds data (in a real app, this would come from battle_log)
   const rounds = [
@@ -122,6 +165,15 @@ const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
                 <div>
                   <h3 className="font-bold text-lg">{battle.team_a[0].nickname}</h3>
                   <p className="text-sm text-muted-foreground">{battle.team_a[0].species}</p>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Owner: {teamAProfile ? (
+                      <ClickableUsername 
+                        userId={battle.team_a[0].owner_id} 
+                        displayName={teamAProfile.display_name}
+                        className="text-foreground"
+                      />
+                    ) : 'Unknown'}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -149,6 +201,15 @@ const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
                 <div>
                   <h3 className="font-bold text-lg">{battle.team_b[0].nickname}</h3>
                   <p className="text-sm text-muted-foreground">{battle.team_b[0].species}</p>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Owner: {teamBProfile ? (
+                      <ClickableUsername 
+                        userId={battle.team_b[0].owner_id} 
+                        displayName={teamBProfile.display_name}
+                        className="text-foreground"
+                      />
+                    ) : 'Unknown'}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -161,7 +222,21 @@ const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
                 <div className="flex items-center justify-center gap-4 text-center">
                   <div className="space-y-1">
                     <Users className="w-6 h-6 mx-auto text-muted-foreground" />
-                    <p className="font-semibold">{loser?.owner_id === battle.team_a[0].owner_id ? "Team A Owner" : "Team B Owner"}</p>
+                    {teamBProfile && winner?.id === battle.team_a[0].id ? (
+                      <ClickableUsername 
+                        userId={battle.team_b[0].owner_id} 
+                        displayName={teamBProfile.display_name}
+                        variant="ghost"
+                        className="font-semibold"
+                      />
+                    ) : teamAProfile && winner?.id === battle.team_b[0].id ? (
+                      <ClickableUsername 
+                        userId={battle.team_a[0].owner_id} 
+                        displayName={teamAProfile.display_name}
+                        variant="ghost"
+                        className="font-semibold"
+                      />
+                    ) : <p className="font-semibold">Previous Owner</p>}
                     <p className="text-sm text-muted-foreground">Previous Owner</p>
                   </div>
                   
@@ -172,7 +247,21 @@ const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
                   
                   <div className="space-y-1">
                     <Crown className="w-6 h-6 mx-auto text-yellow-500" />
-                    <p className="font-semibold">{winner?.owner_id === battle.team_a[0].owner_id ? "Team A Owner" : "Team B Owner"}</p>
+                    {teamAProfile && winner?.id === battle.team_a[0].id ? (
+                      <ClickableUsername 
+                        userId={battle.team_a[0].owner_id} 
+                        displayName={teamAProfile.display_name}
+                        variant="ghost"
+                        className="font-semibold"
+                      />
+                    ) : teamBProfile && winner?.id === battle.team_b[0].id ? (
+                      <ClickableUsername 
+                        userId={battle.team_b[0].owner_id} 
+                        displayName={teamBProfile.display_name}
+                        variant="ghost"
+                        className="font-semibold"
+                      />
+                    ) : <p className="font-semibold">New Owner</p>}
                     <p className="text-sm text-muted-foreground">New Owner</p>
                   </div>
                 </div>
