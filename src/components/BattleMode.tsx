@@ -216,18 +216,37 @@ const BattleMode: React.FC<{ showChallenges?: boolean }> = ({ showChallenges = t
   const handleBattleComplete = async (winner: Spider, loser: Spider, battleId: string) => {
     if (!activeBattle) return;
 
-    // Resolve battle and transfer ownership
-    const winnerId = winner.id === activeBattle.spider1.id ? activeBattle.spider1.owner_id : activeBattle.spider2.owner_id;
-    const loserId = loser.id === activeBattle.spider1.id ? activeBattle.spider1.owner_id : activeBattle.spider2.owner_id;
+    try {
+      // Resolve battle and transfer ownership
+      const winnerId = winner.id === activeBattle.spider1.id ? activeBattle.spider1.owner_id : activeBattle.spider2.owner_id;
+      const loserId = loser.id === activeBattle.spider1.id ? activeBattle.spider1.owner_id : activeBattle.spider2.owner_id;
 
-    const { error } = await supabase.rpc('resolve_battle_challenge', {
-      challenge_id: activeBattle.challengeId,
-      winner_user_id: winnerId,
-      loser_user_id: loserId,
-      battle_id_param: battleId
-    });
+      console.log('Resolving battle challenge:', {
+        challenge_id: activeBattle.challengeId,
+        winner_user_id: winnerId,
+        loser_user_id: loserId,
+        battle_id_param: battleId
+      });
 
-    if (!error) {
+      const { data, error } = await supabase.rpc('resolve_battle_challenge', {
+        challenge_id: activeBattle.challengeId,
+        winner_user_id: winnerId,
+        loser_user_id: loserId,
+        battle_id_param: battleId
+      });
+
+      if (error) {
+        console.error('Error resolving battle:', error);
+        toast({
+          title: "Error",
+          description: `Failed to complete battle: ${error.message}`,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      console.log('Battle resolved successfully:', data);
+
       toast({
         title: "Battle Complete!",
         description: `${winner.nickname} has claimed victory and ownership of ${loser.nickname}!`,
@@ -237,16 +256,19 @@ const BattleMode: React.FC<{ showChallenges?: boolean }> = ({ showChallenges = t
       if (user && winnerId === user.id) {
         checkAndAwardBadges(user.id);
       }
-    }
 
-    // Check for new badges for the winner
-    if (user && winnerId === user.id) {
-      checkAndAwardBadges(user.id);
+    } catch (err) {
+      console.error('Unexpected error in battle completion:', err);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred while completing the battle",
+        variant: "destructive"
+      });
+    } finally {
+      setActiveBattle(null);
+      fetchChallenges();
+      fetchUserSpiders();
     }
-
-    setActiveBattle(null);
-    fetchChallenges();
-    fetchUserSpiders();
   };
 
   useEffect(() => {

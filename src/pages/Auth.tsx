@@ -93,7 +93,14 @@ const Auth = () => {
         
         <div className="space-y-4">
           <Button className="w-full" onClick={handleGoogle}>Continue with Google</Button>
-          <div className="text-center text-sm text-muted-foreground">or use email</div>
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-muted"></div>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">or sign in with email</span>
+            </div>
+          </div>
           <form onSubmit={handleEmail} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -103,13 +110,26 @@ const Auth = () => {
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
             </div>
-            <Button type="submit" className="w-full">{mode === "signin" ? "Sign In" : "Create Account"}</Button>
+            <Button type="submit" className="w-full" disabled={!email || !password}>
+              {mode === "signin" ? "Sign In with Email" : "Create Account with Email"}
+            </Button>
           </form>
-          <div className="text-sm text-center">
-            {mode === "signin" ? (
-              <button className="underline" onClick={() => setMode("signup")}>No account? Create one</button>
-            ) : (
-              <button className="underline" onClick={() => setMode("signin")}>Have an account? Sign in</button>
+          <div className="text-sm text-center space-y-2">
+            <div>
+              {mode === "signin" ? (
+                <button className="underline hover:text-primary transition-colors" onClick={() => setMode("signup")}>
+                  Don't have an account? Create one
+                </button>
+              ) : (
+                <button className="underline hover:text-primary transition-colors" onClick={() => setMode("signin")}>
+                  Already have an account? Sign in
+                </button>
+              )}
+            </div>
+            {mode === "signup" && (
+              <p className="text-xs text-muted-foreground">
+                By creating an account, you agree to our terms of service and privacy policy.
+              </p>
             )}
           </div>
         </div>

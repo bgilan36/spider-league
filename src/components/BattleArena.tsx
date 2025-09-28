@@ -159,10 +159,11 @@ const BattleArena: React.FC<BattleArenaProps> = ({
     if (!winner) return;
 
     try {
-      // Create battle record
+      // Create battle record with MATCHUP type for challenge battles  
       const { data: battleData, error: battleError } = await supabase
         .from('battles')
         .insert({
+          type: 'MATCHUP',
           team_a: [spider1.id],
           team_b: [spider2.id],
           winner: winner.id === spider1.id ? 'A' : 'B',
@@ -177,6 +178,11 @@ const BattleArena: React.FC<BattleArenaProps> = ({
         })
         .select()
         .single();
+
+      if (battleError) {
+        console.error('Error creating battle record:', battleError);
+        throw battleError;
+      }
 
       if (battleData) {
         setBattleId(battleData.id);
