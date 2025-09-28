@@ -13,6 +13,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import PowerScoreArc from "@/components/PowerScoreArc";
 import BattleButton from "@/components/BattleButton";
 import BattleDetailsModal from "@/components/BattleDetailsModal";
+import SpiderDetailsModal from "@/components/SpiderDetailsModal";
 import ClickableUsername from "@/components/ClickableUsername";
 
 interface Spider {
@@ -46,6 +47,8 @@ const SpiderCollection = () => {
   const [loading, setLoading] = useState(true);
   const [selectedBattle, setSelectedBattle] = useState<any>(null);
   const [showBattleModal, setShowBattleModal] = useState(false);
+  const [selectedSpider, setSelectedSpider] = useState<Spider | null>(null);
+  const [showSpiderModal, setShowSpiderModal] = useState(false);
 
   const rarityColors = {
     COMMON: "bg-gray-500",
@@ -148,6 +151,11 @@ const SpiderCollection = () => {
     }
   };
 
+  const handleSpiderClick = (spider: Spider) => {
+    setSelectedSpider(spider);
+    setShowSpiderModal(true);
+  };
+
   const getSortedSpiders = () => {
     if (!spiders.length) return [];
     
@@ -171,10 +179,10 @@ const SpiderCollection = () => {
   };
 
   const SpiderCard = ({ spider, showOwner = false }: { spider: Spider; showOwner?: boolean }) => (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleSpiderClick(spider)}>
       <div className="aspect-square relative">
         <img 
-          src={spider.image_url} 
+          src={spider.image_url}
           alt={spider.nickname}
           className="w-full h-full object-cover"
         />
@@ -354,6 +362,15 @@ const SpiderCollection = () => {
           battle={selectedBattle}
         />
       )}
+
+      <SpiderDetailsModal
+        spider={selectedSpider}
+        isOpen={showSpiderModal}
+        onClose={() => {
+          setShowSpiderModal(false);
+          setSelectedSpider(null);
+        }}
+      />
     </div>
   );
 };

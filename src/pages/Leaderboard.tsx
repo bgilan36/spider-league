@@ -620,7 +620,16 @@ const Leaderboard = () => {
                       {user.top_spider && (
                         <div className="flex items-center gap-2 mb-1">
                           <p className="text-sm text-muted-foreground">Top Spider:</p>
-                          <p className="text-sm font-medium">{user.top_spider.nickname}</p>
+                          <button 
+                            onClick={() => handleSpiderClick({
+                              ...user.top_spider!,
+                              hit_points: 50, damage: 50, speed: 50, defense: 50, venom: 50, webcraft: 50,
+                              is_approved: true, owner_id: user.user_id, created_at: new Date().toISOString()
+                            })}
+                            className="text-sm font-medium hover:text-primary transition-colors cursor-pointer underline decoration-dotted underline-offset-2"
+                          >
+                            {user.top_spider.nickname}
+                          </button>
                           <Badge 
                             variant="secondary" 
                             className={`${rarityColors[user.top_spider.rarity]} text-white text-xs`}
@@ -697,9 +706,16 @@ const Leaderboard = () => {
                         )}
                       </div>
                       {user.top_spider && (
-                        <p className="text-xs text-muted-foreground truncate">
+                        <button 
+                          onClick={() => handleSpiderClick({
+                            ...user.top_spider!,
+                            hit_points: 50, damage: 50, speed: 50, defense: 50, venom: 50, webcraft: 50,
+                            is_approved: true, owner_id: user.user_id, created_at: new Date().toISOString()
+                          })}
+                          className="text-xs text-muted-foreground truncate hover:text-primary transition-colors cursor-pointer underline decoration-dotted underline-offset-2"
+                        >
                           Top: {user.top_spider.nickname} ({user.top_spider.power_score})
-                        </p>
+                        </button>
                       )}
                     </div>
                   </div>

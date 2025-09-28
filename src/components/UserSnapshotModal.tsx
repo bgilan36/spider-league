@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, User } from 'lucide-react';
 import { BadgeIcon } from '@/components/BadgeIcon';
+import SpiderDetailsModal from '@/components/SpiderDetailsModal';
 import { supabase } from '@/integrations/supabase/client';
 import PowerScoreArc from '@/components/PowerScoreArc';
 
@@ -25,7 +26,16 @@ interface Spider {
   species: string;
   image_url: string;
   power_score: number;
-  rarity: string;
+  rarity: "COMMON" | "RARE" | "EPIC" | "LEGENDARY" | "UNCOMMON";
+  hit_points?: number;
+  damage?: number;
+  speed?: number;
+  defense?: number;
+  venom?: number;
+  webcraft?: number;
+  is_approved?: boolean;
+  owner_id?: string;
+  created_at?: string;
 }
 
 interface UserBadge {
@@ -55,6 +65,8 @@ const UserSnapshotModal: React.FC<UserSnapshotModalProps> = ({
   const [spiders, setSpiders] = useState<Spider[]>([]);
   const [badges, setBadges] = useState<UserBadge[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedSpider, setSelectedSpider] = useState<any>(null);
+  const [isSpiderModalOpen, setIsSpiderModalOpen] = useState(false);
 
   const rarityColors = {
     COMMON: "bg-gray-500",
@@ -121,6 +133,29 @@ const UserSnapshotModal: React.FC<UserSnapshotModalProps> = ({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSpiderClick = (spider: Spider) => {
+    // Create a compatible spider object for the modal
+    const modalSpider = {
+      id: spider.id,
+      nickname: spider.nickname,
+      species: spider.species,
+      image_url: spider.image_url,
+      power_score: spider.power_score,
+      rarity: spider.rarity,
+      hit_points: 50, // Default values since these aren't stored in profile spider list
+      damage: 50,
+      speed: 50,
+      defense: 50,
+      venom: 50,
+      webcraft: 50,
+      is_approved: true,
+      owner_id: userId,
+      created_at: new Date().toISOString()
+    };
+    setSelectedSpider(modalSpider as any);
+    setIsSpiderModalOpen(true);
   };
 
   const totalPowerScore = spiders.reduce((sum, spider) => sum + spider.power_score, 0);
@@ -243,7 +278,8 @@ const UserSnapshotModal: React.FC<UserSnapshotModalProps> = ({
                     {spiders.map((spider) => (
                       <div
                         key={spider.id}
-                        className="group relative p-3 border rounded-lg hover:shadow-md transition-shadow"
+                        className="group relative p-3 border rounded-lg hover:shadow-md transition-shadow cursor-pointer"
+                        onClick={() => handleSpiderClick(spider)}
                       >
                         <div className="aspect-square relative mb-3 rounded-md overflow-hidden">
                           <img 
@@ -287,6 +323,12 @@ const UserSnapshotModal: React.FC<UserSnapshotModalProps> = ({
           </div>
         )}
       </DialogContent>
+
+      <SpiderDetailsModal
+        spider={selectedSpider}
+        isOpen={isSpiderModalOpen}
+        onClose={() => setIsSpiderModalOpen(false)}
+      />
     </Dialog>
   );
 };

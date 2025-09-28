@@ -1020,11 +1020,18 @@ const Index = () => {
                                  {user.spider_count} Spider{user.spider_count !== 1 ? 's' : ''}
                                </Badge>
                              </div>
-                            {user.top_spider && (
-                              <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                                Top: {user.top_spider.nickname} ({user.top_spider.power_score})
-                              </p>
-                            )}
+                             {user.top_spider && (
+                               <button 
+                                 onClick={() => handleSpiderClick({
+                                   ...user.top_spider!,
+                                   hit_points: 50, damage: 50, speed: 50, defense: 50, venom: 50, webcraft: 50,
+                                   is_approved: true, owner_id: user.user_id, created_at: new Date().toISOString()
+                                 })}
+                                 className="text-xs sm:text-sm text-muted-foreground truncate hover:text-primary transition-colors cursor-pointer underline decoration-dotted underline-offset-2"
+                               >
+                                 Top: {user.top_spider.nickname} ({user.top_spider.power_score})
+                               </button>
+                             )}
                             <p className="text-xs text-muted-foreground">Collection Power Score</p>
                           </div>
                           
