@@ -51,7 +51,7 @@ const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
 
   const getBattleTypeIcon = (type: string) => {
     switch (type) {
-      case 'CHALLENGE':
+      case 'MATCHUP':
         return '⚔️';
       case 'SANDBOX':
         return '🏟️';
@@ -78,7 +78,7 @@ const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">{getBattleTypeIcon(battle.type)}</span>
-                    <Badge variant={battle.type === 'CHALLENGE' ? 'destructive' : 'secondary'}>
+                    <Badge variant={battle.type === 'MATCHUP' ? 'destructive' : 'secondary'}>
                       {battle.type}
                     </Badge>
                   </div>
@@ -155,7 +155,7 @@ const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
           </div>
 
           {/* Ownership Transfer (only for Challenge battles with a winner) */}
-          {battle.type === 'CHALLENGE' && !isDraw && (
+          {battle.type === 'MATCHUP' && !isDraw && (
             <Card className="bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800">
               <CardContent className="p-4">
                 <div className="flex items-center justify-center gap-4 text-center">
@@ -222,7 +222,7 @@ const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
                     : `${winner?.nickname} emerged victorious against ${loser?.nickname} after ${rounds.length} rounds of fierce combat.`
                   }
                 </p>
-                {battle.type === 'CHALLENGE' && !isDraw && (
+                {battle.type === 'MATCHUP' && !isDraw && (
                   <p className="text-yellow-700 dark:text-yellow-300 font-medium">
                     Ownership of {loser?.nickname} has been transferred to the victor.
                   </p>
@@ -238,7 +238,7 @@ const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
               text={
                 isDraw 
                   ? `${battle.team_a[0].nickname} and ${battle.team_b[0].nickname} just fought to an epic draw in Spider League! ${rounds.length} rounds of pure arachnid combat! 🕷️⚔️ Join the battle and test your spiders!`
-                  : `${winner?.nickname} just CRUSHED ${loser?.nickname} in an epic Spider League battle! ${rounds.length} rounds of intense combat! 🕷️⚔️${battle.type === 'CHALLENGE' ? ' Ownership transferred!' : ''} Join the battle!`
+                  : `${winner?.nickname} just CRUSHED ${loser?.nickname} in an epic Spider League battle! ${rounds.length} rounds of intense combat! 🕷️⚔️${battle.type === 'MATCHUP' ? ' Ownership transferred!' : ''} Join the battle!`
               }
               hashtags={["SpiderLeague", "WebWarriors", "EpicBattle", isDraw ? "Draw" : "Victory"]}
               variant="default"

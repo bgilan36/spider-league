@@ -159,6 +159,8 @@ const BattleArena: React.FC<BattleArenaProps> = ({
     if (!winner) return;
 
     try {
+      const loser = winner.id === spider1.id ? spider2 : spider1;
+      
       // Create battle record with MATCHUP type for challenge battles  
       const { data: battleData, error: battleError } = await supabase
         .from('battles')
@@ -186,6 +188,25 @@ const BattleArena: React.FC<BattleArenaProps> = ({
 
       if (battleData) {
         setBattleId(battleData.id);
+        
+        // Transfer ownership of the losing spider to the winner's owner
+        console.log('Transferring ownership:', {
+          losingSpider: loser.nickname,
+          fromOwner: loser.owner_id,
+          toOwner: winner.owner_id
+        });
+        
+        const { error: transferError } = await supabase
+          .from('spiders')
+          .update({ owner_id: winner.owner_id })
+          .eq('id', loser.id);
+          
+        if (transferError) {
+          console.error('Error transferring spider ownership:', transferError);
+          throw transferError;
+        }
+        
+        console.log(`Successfully transferred ${loser.nickname} to ${winner.owner_id}`);
         setShowRecapModal(true);
       }
     } catch (error) {
