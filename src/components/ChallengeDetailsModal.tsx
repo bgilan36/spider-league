@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Timer, Sword, Trophy, Shield, Zap, Clock, Heart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import PowerScoreArc from './PowerScoreArc';
+import ClickableUsername from './ClickableUsername';
 
 interface Spider {
   id: string;
@@ -186,9 +187,15 @@ const ChallengeDetailsModal: React.FC<ChallengeDetailsModalProps> = ({
                   <div>
                     <h4 className="text-xl font-bold">{challenge.challenger_spider?.nickname}</h4>
                     <p className="text-muted-foreground">{challenge.challenger_spider?.species}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Challenged by: {challenge.challenger_profile?.display_name || 'Unknown'}
-                    </p>
+                     <p className="text-sm text-muted-foreground">
+                       Challenged by: <ClickableUsername 
+                         userId={challenge.challenger_id}
+                         displayName={challenge.challenger_profile?.display_name}
+                         variant="link"
+                         size="sm"
+                         className="text-sm p-0 h-auto"
+                       />
+                     </p>
                   </div>
                   
                   {challenge.challenger_spider && (

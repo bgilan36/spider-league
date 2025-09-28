@@ -13,6 +13,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import PowerScoreArc from "@/components/PowerScoreArc";
 import BattleButton from "@/components/BattleButton";
 import BattleDetailsModal from "@/components/BattleDetailsModal";
+import ClickableUsername from "@/components/ClickableUsername";
 
 interface Spider {
   id: string;
@@ -218,8 +219,14 @@ const SpiderCollection = () => {
               onClick={() => handleViewBattleDetails(spider.battle_won_from!.battle_id)}
               className="w-full flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-primary transition-colors p-2 rounded-md hover:bg-muted/50"
             >
-              <Swords className="h-3 w-3" />
-              Won from {spider.battle_won_from.defeated_user_display_name || 'Player'} in battle
+               <Swords className="h-3 w-3" />
+               Won from <ClickableUsername 
+                 userId={spider.battle_won_from.defeated_user}
+                 displayName={spider.battle_won_from.defeated_user_display_name}
+                 variant="link"
+                 size="sm"
+                 className="text-xs p-0 h-auto"
+               /> in battle
             </button>
           </div>
         )}

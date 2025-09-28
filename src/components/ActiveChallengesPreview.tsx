@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Sword, Timer, AlertCircle, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ChallengeDetailsModal from './ChallengeDetailsModal';
+import ClickableUsername from './ClickableUsername';
 
 interface Spider {
   id: string;
@@ -202,8 +203,14 @@ const ActiveChallengesPreview: React.FC = () => {
                       {challenge.challenger_spider?.species}
                     </p>
                     <p className="text-xs text-muted-foreground truncate">
-                      By: {challenge.challenger_profile?.display_name || 'Unknown'}
-                    </p>
+                       By: <ClickableUsername 
+                         userId={challenge.challenger_id}
+                         displayName={challenge.challenger_profile?.display_name}
+                         variant="link"
+                         size="sm"
+                         className="text-xs p-0 h-auto"
+                       />
+                     </p>
                     {challenge.challenge_message && (
                       <p className="text-xs italic text-muted-foreground truncate mt-1">
                         "{challenge.challenge_message}"

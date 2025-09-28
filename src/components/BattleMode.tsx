@@ -11,6 +11,7 @@ import { Sword, Timer, Trophy, AlertCircle, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useBadgeSystem } from "@/hooks/useBadgeSystem";
 import BattleArena from './BattleArena';
+import ClickableUsername from './ClickableUsername';
 
 interface Spider {
   id: string;
@@ -470,9 +471,15 @@ const ChallengeCard: React.FC<{
             />
             <div className="min-w-0 flex-1">
               <p className="font-medium text-sm sm:text-base truncate">{challenge.challenger_spider?.species}</p>
-              <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                By: {challenge.challenger_profile?.display_name || 'Unknown'}
-              </p>
+                     <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                 By: <ClickableUsername 
+                   userId={challenge.challenger_id}
+                   displayName={challenge.challenger_profile?.display_name}
+                   variant="link"
+                   size="sm"
+                   className="text-xs p-0 h-auto"
+                 />
+               </p>
               <p className="text-xs sm:text-sm font-bold">Power: {challenge.challenger_spider?.power_score}</p>
             </div>
           </div>
