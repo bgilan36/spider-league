@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, User } from 'lucide-react';
+import { Loader2, User, Calendar } from 'lucide-react';
 import { BadgeIcon } from '@/components/BadgeIcon';
 import SpiderDetailsModal from '@/components/SpiderDetailsModal';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,6 +18,7 @@ interface UserProfile {
   rating_elo: number | null;
   season_wins: number | null;
   season_losses: number | null;
+  created_at: string;
 }
 
 interface Spider {
@@ -89,7 +90,7 @@ const UserSnapshotModal: React.FC<UserSnapshotModalProps> = ({
       // Fetch user profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, display_name, avatar_url, bio, rating_elo, season_wins, season_losses, created_at')
         .eq('id', userId)
         .single();
 
@@ -163,6 +164,13 @@ const UserSnapshotModal: React.FC<UserSnapshotModalProps> = ({
     ? (profile.season_wins / (profile.season_wins + profile.season_losses) * 100).toFixed(1)
     : '0';
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long'
+    });
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -194,6 +202,10 @@ const UserSnapshotModal: React.FC<UserSnapshotModalProps> = ({
                     <h2 className="text-2xl font-bold mb-2">
                       {profile.display_name || 'Anonymous Player'}
                     </h2>
+                    <p className="text-muted-foreground flex items-center gap-2 mb-2">
+                      <Calendar className="h-4 w-4" />
+                      Joined {formatDate(profile.created_at)}
+                    </p>
                     {profile.bio && (
                       <p className="text-muted-foreground mb-3">{profile.bio}</p>
                     )}
