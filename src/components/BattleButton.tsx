@@ -57,8 +57,8 @@ const BattleButton: React.FC<BattleButtonProps> = ({
   }
   
   // Determine button text and action
-  const buttonText = "Challenge";
-  const actionDescription = isOwnSpider 
+  const buttonText = "Create Challenge";
+  const actionDescription = isOwnSpider
     ? "Offer this spider for battle challenges" 
     : `Challenge ${targetSpider.nickname} to battle`;
 
