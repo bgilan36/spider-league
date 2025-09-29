@@ -98,7 +98,7 @@ const BattleMode: React.FC<{ showChallenges?: boolean }> = ({ showChallenges = t
     setChallenges(challengesWithData);
   };
 
-  // Fetch user's eligible spiders (all approved spiders)
+  // Fetch user's eligible spiders (excluding those with active challenges)
   const fetchUserSpiders = async () => {
     if (!user) return;
 
@@ -113,7 +113,19 @@ const BattleMode: React.FC<{ showChallenges?: boolean }> = ({ showChallenges = t
       return;
     }
 
-    setUserSpiders(data || []);
+    // Get all open challenges for this user's spiders
+    const { data: openChallenges } = await supabase
+      .from('battle_challenges')
+      .select('challenger_spider_id')
+      .eq('challenger_id', user.id)
+      .eq('status', 'OPEN')
+      .gt('expires_at', new Date().toISOString());
+
+    const spidersWithChallenges = new Set(openChallenges?.map(c => c.challenger_spider_id) || []);
+    
+    // Filter out spiders that already have active challenges
+    const eligibleSpiders = (data || []).filter(spider => !spidersWithChallenges.has(spider.id));
+    setUserSpiders(eligibleSpiders);
   };
 
   // Create battle challenge

@@ -44,6 +44,7 @@ const BattleButton: React.FC<BattleButtonProps> = ({
   const [showDialog, setShowDialog] = useState(false);
   const [userSpiders, setUserSpiders] = useState<Spider[]>([]);
   const [loading, setLoading] = useState(false);
+  const [hasActiveChallenge, setHasActiveChallenge] = useState(false);
 
   // Check if user can interact with this spider (own or others')
   const canInteract = user && targetSpider.is_approved;
@@ -62,7 +63,20 @@ const BattleButton: React.FC<BattleButtonProps> = ({
     ? "Offer this spider for battle challenges" 
     : `Challenge ${targetSpider.nickname} to battle`;
 
-  // Fetch user's eligible spiders for battle (all approved spiders)
+  // Check if spider already has an active challenge
+  const checkActiveChallenge = async (spiderId: string) => {
+    const { data } = await supabase
+      .from('battle_challenges')
+      .select('id')
+      .eq('challenger_spider_id', spiderId)
+      .eq('status', 'OPEN')
+      .gt('expires_at', new Date().toISOString())
+      .maybeSingle();
+    
+    return !!data;
+  };
+
+  // Fetch user's eligible spiders for battle (excluding those with active challenges)
   const fetchEligibleSpiders = async () => {
     if (!user) return;
 
@@ -73,7 +87,19 @@ const BattleButton: React.FC<BattleButtonProps> = ({
       .eq('is_approved', true);
 
     if (data && !error) {
-      setUserSpiders(data);
+      // Get all open challenges for this user's spiders
+      const { data: openChallenges } = await supabase
+        .from('battle_challenges')
+        .select('challenger_spider_id')
+        .eq('challenger_id', user.id)
+        .eq('status', 'OPEN')
+        .gt('expires_at', new Date().toISOString());
+
+      const spidersWithChallenges = new Set(openChallenges?.map(c => c.challenger_spider_id) || []);
+      
+      // Filter out spiders that already have active challenges
+      const eligibleSpiders = data.filter(spider => !spidersWithChallenges.has(spider.id));
+      setUserSpiders(eligibleSpiders);
     }
   };
   // Create direct challenge with the current spider (for collection context)
@@ -81,6 +107,18 @@ const BattleButton: React.FC<BattleButtonProps> = ({
     if (!targetSpider || !user || !isOwnSpider) return;
 
     setLoading(true);
+
+    // Check if spider already has an active challenge
+    const hasChallenge = await checkActiveChallenge(targetSpider.id);
+    if (hasChallenge) {
+      toast({
+        title: "Challenge Already Exists",
+        description: `${targetSpider.nickname} already has an active challenge`,
+        variant: "destructive"
+      });
+      setLoading(false);
+      return;
+    }
 
     // Create an open challenge with this spider
     const { error } = await supabase
@@ -161,6 +199,13 @@ const BattleButton: React.FC<BattleButtonProps> = ({
     }
   }, [showDialog, user]);
 
+  useEffect(() => {
+    // Check if target spider has active challenge (for own spiders)
+    if (isOwnSpider && targetSpider) {
+      checkActiveChallenge(targetSpider.id).then(setHasActiveChallenge);
+    }
+  }, [isOwnSpider, targetSpider]);
+
   if (!canInteract) {
     return null;
   }
@@ -171,7 +216,7 @@ const BattleButton: React.FC<BattleButtonProps> = ({
         variant={variant}
         size={size}
         className={className}
-        disabled={loading}
+        disabled={loading || (isOwnSpider && hasActiveChallenge)}
         onClick={(e) => {
           e.stopPropagation();
           // For collection context with own spiders, auto-create challenge
@@ -181,9 +226,10 @@ const BattleButton: React.FC<BattleButtonProps> = ({
             setShowDialog(true);
           }
         }}
+        title={hasActiveChallenge && isOwnSpider ? "This spider already has an active challenge" : undefined}
       >
         <Sword className="h-4 w-4" />
-        <span className="hidden sm:inline ml-1">{buttonText}</span>
+        <span className="hidden sm:inline ml-1">{hasActiveChallenge && isOwnSpider ? "Challenge Active" : buttonText}</span>
       </Button>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
