@@ -68,7 +68,6 @@ interface UserProfileModalProps {
   onClose: () => void;
 }
 
-
 const rarityColors = {
   common: 'bg-gray-500',
   rare: 'bg-blue-500', 
@@ -222,18 +221,23 @@ export const UserProfileModal = ({ userId, isOpen, onClose }: UserProfileModalPr
 
       // Fetch poster profiles separately
       const posterIds = [...new Set(data?.map(post => post.poster_user_id) || [])];
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, display_name, avatar_url')
-        .in('id', posterIds);
+      
+      if (posterIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, display_name, avatar_url')
+          .in('id', posterIds);
 
-      // Combine data
-      const postsWithProfiles = data?.map(post => ({
-        ...post,
-        poster_profile: profiles?.find(p => p.id === post.poster_user_id)
-      })) || [];
+        // Combine data
+        const postsWithProfiles = data?.map(post => ({
+          ...post,
+          poster_profile: profiles?.find(p => p.id === post.poster_user_id)
+        })) || [];
 
-      setWallPosts(postsWithProfiles);
+        setWallPosts(postsWithProfiles);
+      } else {
+        setWallPosts([]);
+      }
     } catch (error: any) {
       console.error('Error fetching wall posts:', error);
     }
@@ -542,7 +546,6 @@ export const UserProfileModal = ({ userId, isOpen, onClose }: UserProfileModalPr
               {badges.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {badges.map((userBadge) => {
-                    
                     return (
                       <Card key={userBadge.id} className="transition-colors hover:bg-muted/50">
                         <CardContent className="p-4">
