@@ -206,6 +206,31 @@ const BattleButton: React.FC<BattleButtonProps> = ({
     }
   }, [isOwnSpider, targetSpider]);
 
+  useEffect(() => {
+    // Subscribe to challenge changes for real-time updates
+    if (!isOwnSpider || !targetSpider) return;
+
+    const channel = supabase
+      .channel('challenge-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'battle_challenges',
+          filter: `challenger_spider_id=eq.${targetSpider.id}`
+        },
+        () => {
+          checkActiveChallenge(targetSpider.id).then(setHasActiveChallenge);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isOwnSpider, targetSpider]);
+
   if (!canInteract) {
     return null;
   }
