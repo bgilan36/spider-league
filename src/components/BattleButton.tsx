@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useAuth } from "@/auth/AuthProvider";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Sword } from "lucide-react";
 
@@ -126,14 +126,14 @@ const BattleButton: React.FC<BattleButtonProps> = ({
     }
 
     // Create an open challenge with this spider
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('battle_challenges')
       .insert({
         challenger_id: user.id,
         challenger_spider_id: targetSpider.id,
         challenge_message: `${targetSpider.nickname} seeks a worthy opponent!`
       })
-      .select('id')
+      .select('id, created_at, expires_at, status')
       .single();
 
       if (error) {
@@ -148,6 +148,10 @@ const BattleButton: React.FC<BattleButtonProps> = ({
         title: "Challenge Created!",
         description: `${targetSpider.nickname} is now looking for opponents`,
       });
+      // Notify the homepage preview immediately
+      window.dispatchEvent(new CustomEvent('challenge:created', { detail: { id: data.id, challenger_id: user.id, challenger_spider_id: targetSpider.id } }));
+      // Optimistically mark as active
+      setHasActiveChallenge(true);
     }
     
     setLoading(false);
@@ -167,7 +171,7 @@ const BattleButton: React.FC<BattleButtonProps> = ({
       });
     } else {
       // Challenge another user's spider
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('battle_challenges')
         .insert({
           challenger_id: user.id,
@@ -176,7 +180,7 @@ const BattleButton: React.FC<BattleButtonProps> = ({
           accepter_spider_id: targetSpider.id,
           challenge_message: `${challengerSpider.nickname} challenges ${targetSpider.nickname} to battle!`
         })
-        .select('id')
+        .select('id, created_at, expires_at, status')
         .single();
 
       if (error) {
@@ -191,6 +195,8 @@ const BattleButton: React.FC<BattleButtonProps> = ({
           title: "Challenge Created!",
           description: `${challengerSpider.nickname} has challenged ${targetSpider.nickname}`,
         });
+        // Notify the homepage preview immediately
+        window.dispatchEvent(new CustomEvent('challenge:created', { detail: { id: data.id, challenger_id: user.id, challenger_spider_id: challengerSpider.id } }));
       }
     }
     

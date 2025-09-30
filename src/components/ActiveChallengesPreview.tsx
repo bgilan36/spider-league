@@ -116,6 +116,8 @@ const ActiveChallengesPreview: React.FC = () => {
         title: "Challenge Cancelled",
         description: "Your challenge has been cancelled and you can create a new one now.",
       });
+      // Notify other components immediately
+      window.dispatchEvent(new CustomEvent('challenge:cancelled', { detail: { id: challengeId } }));
     } catch (error) {
       console.error('Error cancelling challenge:', error);
       toast({
@@ -159,6 +161,19 @@ const ActiveChallengesPreview: React.FC = () => {
 
     return () => {
       supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Instant local event listeners to refresh without waiting for realtime
+  useEffect(() => {
+    const refresh = () => fetchRecentChallenges();
+    window.addEventListener('challenge:created', refresh as any);
+    window.addEventListener('challenge:cancelled', refresh as any);
+    window.addEventListener('challenge:accepted', refresh as any);
+    return () => {
+      window.removeEventListener('challenge:created', refresh as any);
+      window.removeEventListener('challenge:cancelled', refresh as any);
+      window.removeEventListener('challenge:accepted', refresh as any);
     };
   }, []);
 
