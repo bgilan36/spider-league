@@ -108,6 +108,9 @@ const ActiveChallengesPreview: React.FC = () => {
 
       if (error) throw error;
 
+      // Immediately remove from local state
+      setChallenges(challenges.filter(c => c.id !== challengeId));
+
       toast({
         title: "Challenge Cancelled",
         description: "Your challenge has been removed",
@@ -246,13 +249,13 @@ const ActiveChallengesPreview: React.FC = () => {
                   <div className="flex flex-col items-end gap-1 flex-shrink-0">
                     {isOwnChallenge && (
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0 border-destructive/50 text-destructive hover:bg-destructive hover:text-destructive-foreground"
                         onClick={(e) => handleCancelChallenge(challenge.id, e)}
                         title="Cancel challenge"
                       >
-                        <X className="h-4 w-4" />
+                        <X className="h-5 w-5" />
                       </Button>
                     )}
                     <Badge variant="outline" className="flex items-center gap-1 text-xs">
