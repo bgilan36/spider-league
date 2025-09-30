@@ -299,6 +299,7 @@ const BattleMode: React.FC<{ showChallenges?: boolean }> = ({ showChallenges = t
         table: 'battle_challenges'
       }, () => {
         fetchChallenges();
+        fetchUserSpiders(); // Refresh eligible spiders when challenges change
       })
       .subscribe();
 
