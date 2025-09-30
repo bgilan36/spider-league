@@ -100,6 +100,9 @@ const ActiveChallengesPreview: React.FC = () => {
   const handleCancelChallenge = async (challengeId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     
+    // Capture info before state changes for instant cross-component updates
+    const cancelled = challenges.find(c => c.id === challengeId);
+    
     try {
       // Use UPDATE due to RLS: users can update their own rows but cannot delete them
       const { error } = await supabase
@@ -116,8 +119,14 @@ const ActiveChallengesPreview: React.FC = () => {
         title: "Challenge Cancelled",
         description: "Your challenge has been cancelled and you can create a new one now.",
       });
-      // Notify other components immediately
-      window.dispatchEvent(new CustomEvent('challenge:cancelled', { detail: { id: challengeId } }));
+      // Notify other components immediately with spider context
+      window.dispatchEvent(new CustomEvent('challenge:cancelled', { 
+        detail: { 
+          id: challengeId,
+          challenger_spider_id: cancelled?.challenger_spider_id,
+          challenger_id: cancelled?.challenger_id
+        } 
+      }));
     } catch (error) {
       console.error('Error cancelling challenge:', error);
       toast({

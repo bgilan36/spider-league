@@ -217,6 +217,28 @@ const BattleButton: React.FC<BattleButtonProps> = ({
     }
   }, [isOwnSpider, targetSpider]);
 
+  // Local instant updates without waiting for realtime latency
+  useEffect(() => {
+    const onCancelled = (e: any) => {
+      const spiderId = e.detail?.challenger_spider_id;
+      if (spiderId === targetSpider.id) {
+        setHasActiveChallenge(false);
+      }
+    };
+    const onCreated = (e: any) => {
+      const spiderId = e.detail?.challenger_spider_id;
+      if (spiderId === targetSpider.id) {
+        setHasActiveChallenge(true);
+      }
+    };
+    window.addEventListener('challenge:cancelled', onCancelled);
+    window.addEventListener('challenge:created', onCreated);
+    return () => {
+      window.removeEventListener('challenge:cancelled', onCancelled);
+      window.removeEventListener('challenge:created', onCreated);
+    };
+  }, [targetSpider.id]);
+
   useEffect(() => {
     // Subscribe to challenge changes for real-time updates
     if (!isOwnSpider || !targetSpider) return;
