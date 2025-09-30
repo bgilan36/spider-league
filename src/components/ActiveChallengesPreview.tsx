@@ -101,19 +101,20 @@ const ActiveChallengesPreview: React.FC = () => {
     e.stopPropagation();
     
     try {
+      // Use UPDATE due to RLS: users can update their own rows but cannot delete them
       const { error } = await supabase
         .from('battle_challenges')
-        .delete()
+        .update({ status: 'CANCELLED' })
         .eq('id', challengeId);
 
       if (error) throw error;
 
       // Immediately remove from local state
-      setChallenges(challenges.filter(c => c.id !== challengeId));
+      setChallenges(prev => prev.filter(c => c.id !== challengeId));
 
       toast({
         title: "Challenge Cancelled",
-        description: "Your challenge has been removed",
+        description: "Your challenge has been cancelled and you can create a new one now.",
       });
     } catch (error) {
       console.error('Error cancelling challenge:', error);
@@ -124,7 +125,6 @@ const ActiveChallengesPreview: React.FC = () => {
       });
     }
   };
-
   useEffect(() => {
     fetchRecentChallenges();
 

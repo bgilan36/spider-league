@@ -211,7 +211,7 @@ const BattleButton: React.FC<BattleButtonProps> = ({
     if (!isOwnSpider || !targetSpider) return;
 
     const channel = supabase
-      .channel('challenge-updates')
+      .channel(`challenge-updates-${targetSpider.id}`)
       .on(
         'postgres_changes',
         {
