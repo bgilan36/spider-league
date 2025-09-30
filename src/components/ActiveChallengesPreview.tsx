@@ -130,12 +130,29 @@ const ActiveChallengesPreview: React.FC = () => {
 
     // Set up real-time subscription for challenges
     const channel = supabase
-      .channel('battle-challenges-preview')
+      .channel('battle-challenges-preview-updates')
       .on('postgres_changes', {
-        event: '*',
+        event: 'INSERT',
         schema: 'public',
         table: 'battle_challenges'
-      }, () => {
+      }, (payload) => {
+        console.log('New challenge created:', payload);
+        fetchRecentChallenges();
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'battle_challenges'
+      }, (payload) => {
+        console.log('Challenge updated:', payload);
+        fetchRecentChallenges();
+      })
+      .on('postgres_changes', {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'battle_challenges'
+      }, (payload) => {
+        console.log('Challenge deleted:', payload);
         fetchRecentChallenges();
       })
       .subscribe();
