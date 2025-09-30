@@ -5,7 +5,7 @@ import { useAuth } from '@/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Sword, Timer, AlertCircle, Eye } from 'lucide-react';
+import { Sword, Timer, AlertCircle, Eye, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ChallengeDetailsModal from './ChallengeDetailsModal';
 import ClickableUsername from './ClickableUsername';
@@ -94,6 +94,31 @@ const ActiveChallengesPreview: React.FC = () => {
       console.error('Error fetching challenges:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCancelChallenge = async (challengeId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    try {
+      const { error } = await supabase
+        .from('battle_challenges')
+        .delete()
+        .eq('id', challengeId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Challenge Cancelled",
+        description: "Your challenge has been removed",
+      });
+    } catch (error) {
+      console.error('Error cancelling challenge:', error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel challenge",
+        variant: "destructive"
+      });
     }
   };
 
@@ -219,6 +244,17 @@ const ActiveChallengesPreview: React.FC = () => {
                   </div>
                   
                   <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                    {isOwnChallenge && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                        onClick={(e) => handleCancelChallenge(challenge.id, e)}
+                        title="Cancel challenge"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
                     <Badge variant="outline" className="flex items-center gap-1 text-xs">
                       <Timer className="w-3 h-3" />
                       {hoursLeft}h left
