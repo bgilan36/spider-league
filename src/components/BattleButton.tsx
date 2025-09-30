@@ -65,13 +65,18 @@ const BattleButton: React.FC<BattleButtonProps> = ({
 
   // Check if spider already has an active challenge
   const checkActiveChallenge = async (spiderId: string) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('battle_challenges')
       .select('id')
       .eq('challenger_spider_id', spiderId)
       .eq('status', 'OPEN')
       .gt('expires_at', new Date().toISOString())
       .maybeSingle();
+    
+    if (error) {
+      console.error('Error checking active challenge:', error);
+      return false;
+    }
     
     return !!data;
   };
@@ -220,8 +225,13 @@ const BattleButton: React.FC<BattleButtonProps> = ({
           table: 'battle_challenges',
           filter: `challenger_spider_id=eq.${targetSpider.id}`
         },
-        () => {
-          checkActiveChallenge(targetSpider.id).then(setHasActiveChallenge);
+        (payload) => {
+          console.log('Challenge update received:', payload);
+          // Immediately refresh the active challenge status
+          checkActiveChallenge(targetSpider.id).then((hasChallenge) => {
+            console.log('Challenge status updated:', hasChallenge);
+            setHasActiveChallenge(hasChallenge);
+          });
         }
       )
       .subscribe();
