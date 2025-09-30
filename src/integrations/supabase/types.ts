@@ -365,6 +365,33 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_wall_posts: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          poster_user_id: string
+          profile_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          poster_user_id: string
+          profile_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          poster_user_id?: string
+          profile_user_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

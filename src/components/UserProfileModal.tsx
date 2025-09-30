@@ -4,10 +4,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, Users, Target } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar, Users, Target, MessageSquare, Trash2, Send } from "lucide-react";
 import { BadgeIcon } from "@/components/BadgeIcon";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/auth/AuthProvider";
+import { z } from "zod";
+import { formatDistanceToNow } from "date-fns";
 
 interface UserProfile {
   id: string;
@@ -37,6 +42,26 @@ interface UserStats {
   battles_total: number;
 }
 
+interface WallPost {
+  id: string;
+  profile_user_id: string;
+  poster_user_id: string;
+  message: string;
+  created_at: string;
+  poster_profile?: {
+    id: string;
+    display_name: string | null;
+    avatar_url: string | null;
+  };
+}
+
+const wallPostSchema = z.object({
+  message: z.string()
+    .trim()
+    .min(1, "Message cannot be empty")
+    .max(500, "Message must be less than 500 characters")
+});
+
 interface UserProfileModalProps {
   userId: string | null;
   isOpen: boolean;
@@ -53,15 +78,58 @@ const rarityColors = {
 
 export const UserProfileModal = ({ userId, isOpen, onClose }: UserProfileModalProps) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [badges, setBadges] = useState<UserBadge[]>([]);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(false);
+  const [wallPosts, setWallPosts] = useState<WallPost[]>([]);
+  const [newPostMessage, setNewPostMessage] = useState("");
+  const [postingMessage, setPostingMessage] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen && userId) {
       fetchUserProfile();
+      fetchWallPosts();
     }
+  }, [isOpen, userId]);
+
+  // Real-time subscription for wall posts
+  useEffect(() => {
+    if (!isOpen || !userId) return;
+
+    const channel = supabase
+      .channel(`wall-posts-${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'profile_wall_posts',
+          filter: `profile_user_id=eq.${userId}`
+        },
+        () => {
+          fetchWallPosts();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'profile_wall_posts',
+          filter: `profile_user_id=eq.${userId}`
+        },
+        () => {
+          fetchWallPosts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [isOpen, userId]);
 
   const fetchUserProfile = async () => {
@@ -137,6 +205,116 @@ export const UserProfileModal = ({ userId, isOpen, onClose }: UserProfileModalPr
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchWallPosts = async () => {
+    if (!userId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('profile_wall_posts')
+        .select('*')
+        .eq('profile_user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Fetch poster profiles separately
+      const posterIds = [...new Set(data?.map(post => post.poster_user_id) || [])];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar_url')
+        .in('id', posterIds);
+
+      // Combine data
+      const postsWithProfiles = data?.map(post => ({
+        ...post,
+        poster_profile: profiles?.find(p => p.id === post.poster_user_id)
+      })) || [];
+
+      setWallPosts(postsWithProfiles);
+    } catch (error: any) {
+      console.error('Error fetching wall posts:', error);
+    }
+  };
+
+  const handlePostMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user || !userId) return;
+    
+    // Prevent posting on own wall
+    if (user.id === userId) {
+      toast({
+        title: "Not Allowed",
+        description: "You cannot post on your own wall",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate message
+    try {
+      wallPostSchema.parse({ message: newPostMessage });
+      setValidationError(null);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        setValidationError(error.errors[0].message);
+        return;
+      }
+    }
+
+    setPostingMessage(true);
+    try {
+      const { error } = await supabase
+        .from('profile_wall_posts')
+        .insert({
+          profile_user_id: userId,
+          poster_user_id: user.id,
+          message: newPostMessage.trim()
+        });
+
+      if (error) throw error;
+
+      setNewPostMessage("");
+      setValidationError(null);
+      toast({
+        title: "Posted!",
+        description: "Your message has been posted to their wall"
+      });
+    } catch (error: any) {
+      console.error('Error posting message:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to post message",
+        variant: "destructive"
+      });
+    } finally {
+      setPostingMessage(false);
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    try {
+      const { error } = await supabase
+        .from('profile_wall_posts')
+        .delete()
+        .eq('id', postId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Deleted",
+        description: "Wall post has been deleted"
+      });
+    } catch (error: any) {
+      console.error('Error deleting post:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete post",
+        variant: "destructive"
+      });
     }
   };
 
@@ -251,6 +429,112 @@ export const UserProfileModal = ({ userId, isOpen, onClose }: UserProfileModalPr
                 </Card>
               </div>
             )}
+
+            {/* Wall Posts Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" />
+                Wall
+              </h3>
+
+              {/* Post Form - Only show if viewing someone else's profile */}
+              {user && userId !== user.id && (
+                <Card>
+                  <CardContent className="p-4">
+                    <form onSubmit={handlePostMessage} className="space-y-3">
+                      <Textarea
+                        placeholder="Write something on their wall..."
+                        value={newPostMessage}
+                        onChange={(e) => {
+                          setNewPostMessage(e.target.value);
+                          setValidationError(null);
+                        }}
+                        className="min-h-[80px] resize-none"
+                        maxLength={500}
+                        disabled={postingMessage}
+                      />
+                      {validationError && (
+                        <p className="text-sm text-destructive">{validationError}</p>
+                      )}
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-muted-foreground">
+                          {newPostMessage.length}/500 characters
+                        </span>
+                        <Button 
+                          type="submit" 
+                          size="sm"
+                          disabled={postingMessage || !newPostMessage.trim()}
+                        >
+                          <Send className="h-4 w-4 mr-2" />
+                          Post
+                        </Button>
+                      </div>
+                    </form>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Wall Posts List */}
+              <div className="space-y-3">
+                {wallPosts.length > 0 ? (
+                  wallPosts.map((post) => {
+                    const canDelete = user && (user.id === post.poster_user_id || user.id === userId);
+                    
+                    return (
+                      <Card key={post.id}>
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3">
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src={post.poster_profile?.avatar_url || undefined} />
+                              <AvatarFallback>
+                                {getInitials(post.poster_profile?.display_name)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between mb-2">
+                                <div>
+                                  <p className="font-medium text-sm">
+                                    {post.poster_profile?.display_name || 'Anonymous User'}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                                  </p>
+                                </div>
+                                {canDelete && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDeletePost(post.id)}
+                                    className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
+                              <p className="text-sm whitespace-pre-wrap break-words">
+                                {post.message}
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })
+                ) : (
+                  <Card>
+                    <CardContent className="p-8 text-center">
+                      <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p className="text-muted-foreground">
+                        {user && userId !== user.id 
+                          ? "No posts yet. Be the first to write on their wall!"
+                          : "No posts on this wall yet"
+                        }
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </div>
 
             {/* Badges */}
             <div className="space-y-4">
