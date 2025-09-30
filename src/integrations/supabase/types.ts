@@ -341,14 +341,36 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_settings: {
+        Row: {
+          created_at: string
+          email_communications_enabled: boolean
+          google_id: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email_communications_enabled?: boolean
+          google_id?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email_communications_enabled?: boolean
+          google_id?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
           bio: string | null
           created_at: string
           display_name: string | null
-          email_communications_enabled: boolean
-          google_id: string | null
           id: string
           rating_elo: number | null
           season_losses: number | null
@@ -361,8 +383,6 @@ export type Database = {
           bio?: string | null
           created_at?: string
           display_name?: string | null
-          email_communications_enabled?: boolean
-          google_id?: string | null
           id: string
           rating_elo?: number | null
           season_losses?: number | null
@@ -375,8 +395,6 @@ export type Database = {
           bio?: string | null
           created_at?: string
           display_name?: string | null
-          email_communications_enabled?: boolean
-          google_id?: string | null
           id?: string
           rating_elo?: number | null
           season_losses?: number | null

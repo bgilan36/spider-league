@@ -36,18 +36,35 @@ export const UserProfileMenu = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      // Fetch profile data
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('display_name, avatar_url, bio, email_communications_enabled')
+        .select('display_name, avatar_url, bio')
         .eq('id', user.id)
         .single();
 
-      if (error && error.code !== 'PGRST116') { // Not found error is ok
-        console.error('Error fetching profile:', error);
+      if (profileError && profileError.code !== 'PGRST116') {
+        console.error('Error fetching profile:', profileError);
         return;
       }
 
-      setProfile(data || { display_name: null, avatar_url: null, bio: null, email_communications_enabled: true });
+      // Fetch settings data
+      const { data: settingsData, error: settingsError } = await supabase
+        .from('profile_settings')
+        .select('email_communications_enabled')
+        .eq('id', user.id)
+        .single();
+
+      if (settingsError && settingsError.code !== 'PGRST116') {
+        console.error('Error fetching settings:', settingsError);
+      }
+
+      setProfile({
+        display_name: profileData?.display_name || null,
+        avatar_url: profileData?.avatar_url || null,
+        bio: profileData?.bio || null,
+        email_communications_enabled: settingsData?.email_communications_enabled ?? true
+      });
     } catch (error) {
       console.error('Error fetching profile:', error);
     }
@@ -58,18 +75,29 @@ export const UserProfileMenu = () => {
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      // Update profile data
+      const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
           id: user.id,
           display_name: profile.display_name,
           avatar_url: profile.avatar_url,
           bio: profile.bio,
+          updated_at: new Date().toISOString()
+        });
+
+      if (profileError) throw profileError;
+
+      // Update settings data
+      const { error: settingsError } = await supabase
+        .from('profile_settings')
+        .upsert({
+          id: user.id,
           email_communications_enabled: profile.email_communications_enabled,
           updated_at: new Date().toISOString()
         });
 
-      if (error) throw error;
+      if (settingsError) throw settingsError;
 
       toast({
         title: "Profile updated",
