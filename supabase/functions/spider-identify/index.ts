@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { HfInference } from "https://esm.sh/@huggingface/inference@2.3.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -488,121 +487,98 @@ serve(async (req) => {
       );
     }
 
-    const token = Deno.env.get("HUGGING_FACE_ACCESS_TOKEN");
-    if (!token) {
-      console.error("Missing HUGGING_FACE_ACCESS_TOKEN secret");
+    const apiKey = Deno.env.get("LOVABLE_API_KEY");
+    if (!apiKey) {
+      console.error("Missing LOVABLE_API_KEY secret");
       return new Response(JSON.stringify({ error: "Server misconfiguration" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-const hf = new HfInference(token);
-    const { mime, bytes } = parseBase64Image(image);
-    
-    // Enhanced ensemble: 3 specialized models
-    const models = [
-      { id: "microsoft/resnet-50", weight: 0.25, name: "ResNet" },
-      { id: "imageomics/bioclip", weight: 0.55, name: "BioCLIP" }, // Higher weight for biological
-      { id: "google/vit-base-patch16-224", weight: 0.20, name: "ViT" }
-    ];
-    
-    const ensembleResults: any[] = [];
-    
-    console.log("Starting multi-model ensemble identification...");
-    
-    for (const model of models) {
-      let attempts = 0;
-      while (attempts < 3) {
-        attempts++;
-        try {
-          console.log(`[${model.name}] Attempt ${attempts}...`);
-const results = await hf.imageClassification({
-            model: model.id,
-            inputs: new Blob([bytes], { type: mime }),
-            parameters: { top_k: 10 }
-          });
-          
-          if (Array.isArray(results) && results.length > 0) {
-            const weightedResults = results.map((r: any) => ({
-              label: r.label,
-              score: (r.score || 0) * model.weight,
-              model: model.name
-            }));
-            ensembleResults.push(...weightedResults);
-            console.log(`[${model.name}] Success: ${results.length} results`);
-          }
-          break;
-        } catch (err: any) {
-          const msg = String(err?.message || err);
-          console.error(`[${model.name}] Attempt ${attempts} failed:`, msg);
-          if (attempts < 3 && /503|rate|timeout|temporar|403/i.test(msg)) {
-            await new Promise(r => setTimeout(r, 1000 * attempts));
-            continue;
-          }
-          console.log(`[${model.name}] Skipping after ${attempts} attempts`);
-          break;
-        }
-      }
-    }
-    
-    if (ensembleResults.length === 0) {
-      throw new Error("All AI models failed. Please try again.");
-    }
+    console.log("Starting spider identification with Lovable AI vision...");
 
-    // Aggregate results with frequency bonus
-    const labelScores = new Map<string, { totalScore: number; count: number; models: Set<string> }>();
-    
-    for (const result of ensembleResults) {
-      const key = result.label.toLowerCase();
-      const current = labelScores.get(key) || { totalScore: 0, count: 0, models: new Set() };
-      current.totalScore += result.score;
-      current.count += 1;
-      current.models.add(result.model);
-      labelScores.set(key, current);
-    }
-
-    // Calculate final scores with multi-model agreement bonus
-    const aggregatedResults = Array.from(labelScores.entries())
-      .map(([label, data]) => {
-        const avgScore = data.totalScore / models.length;
-        const agreementBonus = (data.models.size / models.length) * 0.25; // Up to 25% bonus
-        return { 
-          label, 
-          score: Math.min(1.0, avgScore + agreementBonus),
-          modelCount: data.models.size
-        };
+    // Use Gemini 2.5 Flash vision model for spider identification
+    const visionResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: `Analyze this image and identify the spider species. Provide multiple possible species names in order of likelihood. Focus on US-native spiders. Include scientific names, common names, and family names. List at least 5 possible spider species even if confidence is lower for some. Format your response as a list of species, one per line, starting with the most likely.`
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: image
+                }
+              }
+            ]
+          }
+        ],
+        max_tokens: 1000
       })
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 15);
-
-    console.log("Top aggregated results:", aggregatedResults.slice(0, 5));
-
-    // Strict spider filtering
-    const spiderKeywords = [
-      'spider', 'arachnid', 'tarantula', 'widow', 'recluse', 'wolf', 
-      'jumping', 'orb', 'garden', 'cellar', 'house', 'crab', 'grass',
-      'lycosa', 'salticidae', 'araneae', 'latrodectus', 'loxosceles'
-    ];
-
-    const excludeKeywords = [
-      'guitar', 'instrument', 'music', 'bird', 'mammal', 'reptile', 'fish',
-      'plant', 'flower', 'tree', 'furniture', 'tool', 'vehicle', 'food',
-      'person', 'human', 'face', 'dog', 'cat', 'car', 'harvestman', 'opiliones'
-    ];
-
-    const spiderFiltered = aggregatedResults.filter(result => {
-      const label = result.label.toLowerCase();
-      const hasSpider = spiderKeywords.some(kw => label.includes(kw));
-      const hasExcluded = excludeKeywords.some(kw => label.includes(kw));
-      return hasSpider && !hasExcluded && result.score >= 0.35;
     });
 
-    if (spiderFiltered.length === 0) {
-      throw new Error("No US spider species detected. Please upload a clear image of a spider.");
+    if (!visionResponse.ok) {
+      const errorText = await visionResponse.text();
+      console.error("Lovable AI vision error:", visionResponse.status, errorText);
+      
+      if (visionResponse.status === 429) {
+        throw new Error("Rate limit exceeded. Please try again in a moment.");
+      }
+      if (visionResponse.status === 402) {
+        throw new Error("AI credits exhausted. Please add credits to continue.");
+      }
+      throw new Error("AI vision analysis failed. Please try again.");
     }
+
+    const visionData = await visionResponse.json();
+    const aiResponse = visionData.choices?.[0]?.message?.content || "";
     
-    console.log("Spider-filtered results:", spiderFiltered.slice(0, 5));
+    console.log("AI Vision Response:", aiResponse);
+
+    if (!aiResponse || aiResponse.length < 10) {
+      throw new Error("AI failed to identify the image. Please ensure it shows a spider.");
+    }
+
+    // Parse AI response to extract species names
+    const lines = aiResponse.split('\n').filter((line: string) => line.trim().length > 0);
+    const spiderFiltered: Array<{ label: string; score: number }> = [];
+    
+    // Extract species names from AI response (looking for scientific names, common names)
+    for (let i = 0; i < Math.min(lines.length, 10); i++) {
+      const line = lines[i].toLowerCase();
+      
+      // Skip lines that are clearly not species names
+      if (line.length < 5 || line.includes('image') || line.includes('analysis') || 
+          line.includes('please') || line.includes('however') || line.includes('cannot')) {
+        continue;
+      }
+      
+      // Calculate confidence based on position (earlier = higher confidence)
+      const positionScore = 1.0 - (i * 0.08); // Decreases by 8% per position
+      const baseScore = Math.max(0.4, positionScore);
+      
+      spiderFiltered.push({
+        label: line.replace(/^\d+[\.\)\-]\s*/, '').trim(), // Remove numbering
+        score: baseScore
+      });
+    }
+
+    console.log("Parsed species from AI:", spiderFiltered);
+
+    if (spiderFiltered.length === 0) {
+      throw new Error("No spider species detected. Please upload a clear image of a spider.");
+    }
 
     // Map to database with US-native prioritization
     const candidatesWithDB: Array<{
