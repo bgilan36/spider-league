@@ -6,23 +6,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-function parseBase64Image(base64: string): { mime: string; bytes: Uint8Array } {
+function parseBase64Image(base64: string): Uint8Array {
   const cleaned = base64.includes(",") ? base64.split(",")[1] : base64;
-  const header = base64.includes(",") ? base64.split(",")[0] : "";
-  let mime = "image/jpeg";
-  const m = header.match(/data:(.*?);base64/);
-  if (m && m[1]) mime = m[1];
   const binary = atob(cleaned);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return { mime, bytes };
-}
-
-function preprocessImageForSpiderID(bytes: Uint8Array, mime: string): Blob {
-  const buffer = new ArrayBuffer(bytes.length);
-  const view = new Uint8Array(buffer);
-  view.set(bytes);
-  return new Blob([buffer], { type: mime });
+  return bytes;
 }
 
 function titleCase(str: string) {
@@ -505,8 +494,7 @@ serve(async (req) => {
     }
 
     const hf = new HfInference(token);
-    const { mime, bytes } = parseBase64Image(image);
-    const imageBlob = preprocessImageForSpiderID(bytes, mime);
+    const imageBytes = parseBase64Image(image);
     
     // Enhanced ensemble: 3 specialized models
     const models = [
@@ -527,7 +515,7 @@ serve(async (req) => {
           console.log(`[${model.name}] Attempt ${attempts}...`);
           const results = await hf.imageClassification({
             model: model.id,
-            data: imageBlob,
+            data: new Blob([imageBytes], { type: 'image/jpeg' }),
             parameters: { top_k: 10 }
           });
           
