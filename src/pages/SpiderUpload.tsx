@@ -66,7 +66,21 @@ const SpiderUpload = () => {
   const [identifying, setIdentifying] = useState(false);
   const [spiderStats, setSpiderStats] = useState<any | null>(null);
   const [analysisSource, setAnalysisSource] = useState<'server' | 'local' | null>(null);
-  const [candidates, setCandidates] = useState<{ label: string; score: number; modelCount?: number; models?: string[] }[]>([]);
+  const [candidates, setCandidates] = useState<Array<{
+    species: string;
+    confidence: number;
+    isUSNative: boolean;
+    harmfulToHumans: string;
+    specialAbilities: string[];
+    rank: number;
+  }>>([]);
+  const [identificationQuality, setIdentificationQuality] = useState<string | null>(null);
+  const [safetyInfo, setSafetyInfo] = useState<{
+    isUSNative: boolean;
+    harmfulToHumans: string;
+    dangerLevel: string;
+    specialAbilities: string[];
+  } | null>(null);
 
   const fileToBase64 = (file: File) =>
     new Promise<string>((resolve, reject) => {
@@ -105,6 +119,8 @@ const SpiderUpload = () => {
   const analyzeImage = async (file: File) => {
     setAnalysisSource(null);
     setCandidates([]);
+    setIdentificationQuality(null);
+    setSafetyInfo(null);
     try {
       setIdentifying(true);
       toast({ title: 'Analyzing spider...', description: 'Please wait while we identify your spider.' });
@@ -119,28 +135,51 @@ const SpiderUpload = () => {
       
       if (error) throw error;
       
-      // Auto-populate fields (but allow user to edit)
+      // Handle enhanced response format
       if (data?.species) {
         setSpecies(data.species);
         setAnalysisSource('server');
-        console.log('AI suggested species:', data.species);
+        console.log('AI identified species:', data.species);
       }
       if (data?.nickname) {
         setNickname(data.nickname);
         console.log('AI suggested nickname:', data.nickname);
       }
-      if (data?.stats) {
-        setSpiderStats(data.stats);
-        console.log('AI generated stats:', data.stats);
-      }
-      if (Array.isArray(data?.candidates)) {
-        setCandidates(data.candidates);
+      if (data?.attributes) {
+        setSpiderStats({
+          ...data.attributes,
+          rarity: data.attributes.rarity
+        });
+        console.log('AI generated stats:', data.attributes);
       }
       
-      // Show success message
+      // Store top 3 candidates
+      if (Array.isArray(data?.topCandidates)) {
+        setCandidates(data.topCandidates);
+      }
+      
+      // Store identification quality
+      if (data?.identificationQuality) {
+        setIdentificationQuality(data.identificationQuality);
+      }
+      
+      // Store safety information
+      if (data?.isUSNative !== undefined) {
+        setSafetyInfo({
+          isUSNative: data.isUSNative,
+          harmfulToHumans: data.harmfulToHumans || 'Unknown',
+          dangerLevel: data.dangerLevel || 'unknown',
+          specialAbilities: data.specialAbilities || []
+        });
+      }
+      
+      // Show success message with confidence
       if (data?.species && data?.nickname) {
+        const confidenceText = data.confidence >= 85 ? 'High confidence' : 
+                              data.confidence >= 70 ? 'Good confidence' :
+                              data.confidence >= 50 ? 'Moderate confidence' : 'Low confidence';
         toast({ 
-          title: 'Spider analyzed!', 
+          title: `Spider identified! (${confidenceText})`, 
           description: `Meet ${data.nickname} - ${data.species}!` 
         });
       }
@@ -162,7 +201,17 @@ const SpiderUpload = () => {
           const speciesLocal = titleCase(primaryLabel);
           setSpecies(speciesLocal);
           setAnalysisSource('local');
-          setCandidates(resultObj.results.slice(0, 5));
+          
+          // Map local classifier results to new format
+          const mappedCandidates = resultObj.results.slice(0, 3).map((r: any, idx: number) => ({
+            species: titleCase(r.label),
+            confidence: Math.round((r.score || 0) * 100),
+            isUSNative: false, // Local classifier doesn't know
+            harmfulToHumans: 'Unknown - local identification only',
+            specialAbilities: [],
+            rank: idx + 1
+          }));
+          setCandidates(mappedCandidates);
 
           const nick = generateNickname(speciesLocal);
           setNickname(nick);
@@ -172,7 +221,7 @@ const SpiderUpload = () => {
 
           toast({
             title: 'Spider analyzed!',
-            description: `Meet ${nick} — ${speciesLocal}!`,
+            description: `Meet ${nick} — ${speciesLocal}! (Local backup method)`,
           });
         } else {
           throw new Error('No results from on-device classifier');
@@ -561,29 +610,96 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                 </div>
 
                 {candidates.length > 0 && (
-                  <div className="space-y-2">
-                    <Label>Top AI suggestions</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {candidates.map((c, i) => (
-                        <Button
-                          key={c.label + i}
-                          type="button"
-                          variant="outline"
-                          size="sm"
+                  <div className="space-y-3">
+                    <Label>Top 3 Species Matches</Label>
+                    {identificationQuality && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Badge variant={
+                          identificationQuality === 'very_high' ? 'default' :
+                          identificationQuality === 'high' ? 'secondary' : 'outline'
+                        }>
+                          {identificationQuality === 'very_high' ? 'Very High' :
+                           identificationQuality === 'high' ? 'High' :
+                           identificationQuality === 'medium' ? 'Medium' : 'Low'} Confidence
+                        </Badge>
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      {candidates.slice(0, 3).map((c, i) => (
+                        <div
+                          key={c.species + i}
+                          className="border rounded-lg p-3 hover:bg-accent/50 transition-colors cursor-pointer"
                           onClick={() => {
-                            setSpecies(c.label);
-                            const nick = generateNickname(c.label);
+                            setSpecies(c.species);
+                            const nick = generateNickname(c.species);
                             setNickname(nick);
                             const updated = generateSpiderStats();
                             setSpiderStats(updated);
-                            toast({ title: 'Suggestion applied', description: `${c.label} (${Math.round((c.score || 0) * 100)}% confidence)` });
+                            toast({ 
+                              title: 'Match selected', 
+                              description: `${c.species} - ${c.confidence}% confidence` 
+                            });
                           }}
-                          className="h-7 px-3"
                         >
-                          <span className="mr-2">{c.label}</span>
-                          <Badge variant="secondary">{Math.round((c.score || 0) * 100)}%</Badge>
-                        </Button>
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 space-y-1">
+                              <div className="flex items-center gap-2">
+                                <Badge variant={i === 0 ? 'default' : 'outline'} className="text-xs">
+                                  #{c.rank}
+                                </Badge>
+                                <span className="font-medium">{c.species}</span>
+                                {c.isUSNative && (
+                                  <Badge variant="secondary" className="text-xs">US Native</Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground line-clamp-2">
+                                {c.harmfulToHumans}
+                              </p>
+                              {c.specialAbilities && c.specialAbilities.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {c.specialAbilities.slice(0, 3).map((ability, idx) => (
+                                    <Badge key={idx} variant="outline" className="text-xs">
+                                      {ability}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            <Badge className="shrink-0">{c.confidence}%</Badge>
+                          </div>
+                        </div>
                       ))}
+                    </div>
+                  </div>
+                )}
+                
+                {safetyInfo && (
+                  <div className="border rounded-lg p-4 bg-muted/50 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-semibold">Safety Information</Label>
+                      {safetyInfo.isUSNative && (
+                        <Badge variant="secondary" className="text-xs">US Native Species</Badge>
+                      )}
+                    </div>
+                    <div className="text-sm space-y-1">
+                      <div>
+                        <span className="font-medium">Harmful to Humans: </span>
+                        <span className={
+                          safetyInfo.harmfulToHumans.toLowerCase().startsWith('yes') 
+                            ? 'text-destructive font-medium' 
+                            : 'text-muted-foreground'
+                        }>
+                          {safetyInfo.harmfulToHumans}
+                        </span>
+                      </div>
+                      {safetyInfo.specialAbilities && safetyInfo.specialAbilities.length > 0 && (
+                        <div>
+                          <span className="font-medium">Special Abilities: </span>
+                          <span className="text-muted-foreground">
+                            {safetyInfo.specialAbilities.join(', ')}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

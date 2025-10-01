@@ -36,95 +36,382 @@ function titleCase(str: string) {
     .join(" ");
 }
 
-// Enhanced spider species knowledge base
-const SPIDER_SPECIES_DATABASE = {
-  // Funnel-web spiders (Atracidae)
-  "funnel": { family: "Atracidae", commonNames: ["Sydney funnel-web", "Australian funnel-web"], danger: "extreme" },
-  "atrax": { family: "Atracidae", commonNames: ["Sydney funnel-web"], danger: "extreme" },
-  "hadronyche": { family: "Atracidae", commonNames: ["Blue Mountains funnel-web"], danger: "extreme" },
+// Comprehensive US Spider Species Database
+interface SpiderData {
+  family: string;
+  commonNames: string[];
+  danger: "extreme" | "high" | "moderate" | "low" | "minimal";
+  isUSNative: boolean;
+  size: "small" | "medium" | "large" | "xlarge"; // < 10mm, 10-20mm, 20-40mm, > 40mm
+  speedType: "slow" | "moderate" | "fast" | "very_fast";
+  venomPotency: number; // 0-100
+  webBuilder: boolean;
+  harmfulReason?: string;
+  specialAbilities: string[];
+  baseStats: {
+    hp: number;
+    damage: number;
+    speed: number;
+    defense: number;
+    venom: number;
+    webcraft: number;
+  };
+}
+
+const US_SPIDER_DATABASE: Record<string, SpiderData> = {
+  // DANGEROUS US SPIDERS
+  "black widow": {
+    family: "Theridiidae",
+    commonNames: ["Black widow", "Southern black widow", "Western black widow"],
+    danger: "high",
+    isUSNative: true,
+    size: "small",
+    speedType: "slow",
+    venomPotency: 95,
+    webBuilder: true,
+    harmfulReason: "Neurotoxic venom - can cause severe muscle pain, cramps, nausea. Antivenom available. Bites are rare.",
+    specialAbilities: ["web entrapment", "potent neurotoxin"],
+    baseStats: { hp: 50, damage: 70, speed: 40, defense: 55, venom: 95, webcraft: 75 }
+  },
+  "latrodectus": {
+    family: "Theridiidae",
+    commonNames: ["Widow spider"],
+    danger: "high",
+    isUSNative: true,
+    size: "small",
+    speedType: "slow",
+    venomPotency: 95,
+    webBuilder: true,
+    harmfulReason: "Neurotoxic venom - medical attention recommended for bites",
+    specialAbilities: ["web entrapment", "neurotoxin"],
+    baseStats: { hp: 50, damage: 70, speed: 40, defense: 55, venom: 95, webcraft: 75 }
+  },
+  "brown recluse": {
+    family: "Sicariidae",
+    commonNames: ["Brown recluse", "Fiddle-back spider", "Violin spider"],
+    danger: "high",
+    isUSNative: true,
+    size: "small",
+    speedType: "moderate",
+    venomPotency: 90,
+    webBuilder: false,
+    harmfulReason: "Cytotoxic venom - can cause necrotic lesions. Seek medical care if bitten.",
+    specialAbilities: ["necrotic venom", "camouflage"],
+    baseStats: { hp: 45, damage: 75, speed: 55, defense: 40, venom: 90, webcraft: 30 }
+  },
+  "loxosceles": {
+    family: "Sicariidae",
+    commonNames: ["Recluse spider"],
+    danger: "high",
+    isUSNative: true,
+    size: "small",
+    speedType: "moderate",
+    venomPotency: 90,
+    webBuilder: false,
+    harmfulReason: "Cytotoxic venom causing tissue damage",
+    specialAbilities: ["necrotic venom", "nocturnal hunter"],
+    baseStats: { hp: 45, damage: 75, speed: 55, defense: 40, venom: 90, webcraft: 30 }
+  },
   
-  // Wandering spiders (Ctenidae)  
-  "phoneutria": { family: "Ctenidae", commonNames: ["Brazilian wandering spider", "Banana spider"], danger: "extreme" },
-  "wandering": { family: "Ctenidae", commonNames: ["Brazilian wandering spider"], danger: "extreme" },
+  // COMMON HARMLESS US SPIDERS
+  "wolf spider": {
+    family: "Lycosidae",
+    commonNames: ["Wolf spider"],
+    danger: "minimal",
+    isUSNative: true,
+    size: "medium",
+    speedType: "very_fast",
+    venomPotency: 20,
+    webBuilder: false,
+    harmfulReason: "No - venom is mild, bite rarely worse than bee sting. Not aggressive.",
+    specialAbilities: ["speed burst", "ambush hunter", "carries young"],
+    baseStats: { hp: 70, damage: 60, speed: 90, defense: 65, venom: 25, webcraft: 20 }
+  },
+  "lycosa": {
+    family: "Lycosidae",
+    commonNames: ["Wolf spider"],
+    danger: "minimal",
+    isUSNative: true,
+    size: "medium",
+    speedType: "very_fast",
+    venomPotency: 20,
+    webBuilder: false,
+    harmfulReason: "No - harmless to humans",
+    specialAbilities: ["speed burst", "ground hunter"],
+    baseStats: { hp: 70, damage: 60, speed: 90, defense: 65, venom: 25, webcraft: 20 }
+  },
+  "jumping spider": {
+    family: "Salticidae",
+    commonNames: ["Jumping spider", "Bold jumper"],
+    danger: "minimal",
+    isUSNative: true,
+    size: "small",
+    speedType: "fast",
+    venomPotency: 10,
+    webBuilder: false,
+    harmfulReason: "No - harmless, excellent vision, curious behavior. Too small to bite humans effectively.",
+    specialAbilities: ["leap attack", "excellent vision", "agile"],
+    baseStats: { hp: 40, damage: 45, speed: 85, defense: 50, venom: 15, webcraft: 20 }
+  },
+  "salticidae": {
+    family: "Salticidae",
+    commonNames: ["Jumping spider"],
+    danger: "minimal",
+    isUSNative: true,
+    size: "small",
+    speedType: "fast",
+    venomPotency: 10,
+    webBuilder: false,
+    harmfulReason: "No - completely harmless",
+    specialAbilities: ["jumping", "vision"],
+    baseStats: { hp: 40, damage: 45, speed: 85, defense: 50, venom: 15, webcraft: 20 }
+  },
+  "garden spider": {
+    family: "Araneidae",
+    commonNames: ["Garden spider", "Black and yellow garden spider", "Writing spider"],
+    danger: "minimal",
+    isUSNative: true,
+    size: "large",
+    speedType: "slow",
+    venomPotency: 15,
+    webBuilder: true,
+    harmfulReason: "No - beneficial for pest control, very docile. Venom not medically significant.",
+    specialAbilities: ["orb web mastery", "stabilimentum", "pest control"],
+    baseStats: { hp: 65, damage: 40, speed: 35, defense: 60, venom: 20, webcraft: 95 }
+  },
+  "orb weaver": {
+    family: "Araneidae",
+    commonNames: ["Orb weaver spider"],
+    danger: "minimal",
+    isUSNative: true,
+    size: "medium",
+    speedType: "slow",
+    venomPotency: 15,
+    webBuilder: true,
+    harmfulReason: "No - harmless, beneficial predators",
+    specialAbilities: ["web building", "pest control"],
+    baseStats: { hp: 60, damage: 40, speed: 35, defense: 60, venom: 20, webcraft: 90 }
+  },
+  "argiope": {
+    family: "Araneidae",
+    commonNames: ["Garden spider", "Banded garden spider"],
+    danger: "minimal",
+    isUSNative: true,
+    size: "large",
+    speedType: "slow",
+    venomPotency: 15,
+    webBuilder: true,
+    harmfulReason: "No - beneficial spider",
+    specialAbilities: ["decorative web", "pest control"],
+    baseStats: { hp: 65, damage: 40, speed: 35, defense: 60, venom: 20, webcraft: 95 }
+  },
+  "cellar spider": {
+    family: "Pholcidae",
+    commonNames: ["Cellar spider", "Daddy long-legs spider"],
+    danger: "minimal",
+    isUSNative: true,
+    size: "small",
+    speedType: "slow",
+    venomPotency: 5,
+    webBuilder: true,
+    harmfulReason: "No - myth: fangs too weak to pierce skin. Completely harmless.",
+    specialAbilities: ["vibration defense", "web tangling"],
+    baseStats: { hp: 30, damage: 25, speed: 40, defense: 35, venom: 10, webcraft: 70 }
+  },
+  "pholcus": {
+    family: "Pholcidae",
+    commonNames: ["Cellar spider"],
+    danger: "minimal",
+    isUSNative: true,
+    size: "small",
+    speedType: "slow",
+    venomPotency: 5,
+    webBuilder: true,
+    harmfulReason: "No - harmless",
+    specialAbilities: ["vibration", "web"],
+    baseStats: { hp: 30, damage: 25, speed: 40, defense: 35, venom: 10, webcraft: 70 }
+  },
+  "house spider": {
+    family: "Theridiidae",
+    commonNames: ["Common house spider", "American house spider"],
+    danger: "minimal",
+    isUSNative: true,
+    size: "small",
+    speedType: "moderate",
+    venomPotency: 10,
+    webBuilder: true,
+    harmfulReason: "No - harmless, shy, beneficial for indoor pest control.",
+    specialAbilities: ["cobweb building", "pest control"],
+    baseStats: { hp: 45, damage: 35, speed: 50, defense: 45, venom: 15, webcraft: 65 }
+  },
+  "crab spider": {
+    family: "Thomisidae",
+    commonNames: ["Crab spider", "Flower crab spider"],
+    danger: "minimal",
+    isUSNative: true,
+    size: "small",
+    speedType: "slow",
+    venomPotency: 10,
+    webBuilder: false,
+    harmfulReason: "No - ambush predator, harmless to humans.",
+    specialAbilities: ["camouflage", "ambush", "color changing"],
+    baseStats: { hp: 40, damage: 45, speed: 30, defense: 55, venom: 15, webcraft: 10 }
+  },
+  "grass spider": {
+    family: "Agelenidae",
+    commonNames: ["Grass spider", "Funnel weaver"],
+    danger: "minimal",
+    isUSNative: true,
+    size: "medium",
+    speedType: "fast",
+    venomPotency: 15,
+    webBuilder: true,
+    harmfulReason: "No - shy, fast runners. Not aggressive toward humans.",
+    specialAbilities: ["funnel web", "speed", "vibration sensing"],
+    baseStats: { hp: 55, damage: 50, speed: 80, defense: 50, venom: 20, webcraft: 75 }
+  },
   
-  // Six-eyed sand spider (Sicariidae)
-  "sicarius": { family: "Sicariidae", commonNames: ["Six-eyed sand spider"], danger: "extreme" },
+  // US TARANTULAS
+  "aphonopelma": {
+    family: "Theraphosidae",
+    commonNames: ["Desert tarantula", "Arizona blonde tarantula"],
+    danger: "low",
+    isUSNative: true,
+    size: "xlarge",
+    speedType: "slow",
+    venomPotency: 25,
+    webBuilder: false,
+    harmfulReason: "No - venom mild, defensive. Urticating hairs more problematic than bite.",
+    specialAbilities: ["urticating hairs", "burrow defense", "intimidation"],
+    baseStats: { hp: 95, damage: 70, speed: 40, defense: 85, venom: 30, webcraft: 35 }
+  },
+  "tarantula": {
+    family: "Theraphosidae",
+    commonNames: ["Tarantula"],
+    danger: "low",
+    isUSNative: true,
+    size: "xlarge",
+    speedType: "slow",
+    venomPotency: 25,
+    webBuilder: false,
+    harmfulReason: "No - docile, mild venom",
+    specialAbilities: ["intimidation", "defense hairs"],
+    baseStats: { hp: 95, damage: 70, speed: 40, defense: 85, venom: 30, webcraft: 35 }
+  },
   
-  // Widow spiders (Theridiidae)
-  "latrodectus": { family: "Theridiidae", commonNames: ["Widow spider"], danger: "high" },
-  "redback": { family: "Theridiidae", commonNames: ["Australian redback"], danger: "high" },
-  "black widow": { family: "Theridiidae", commonNames: ["Black widow"], danger: "high" },
-  
-  // Recluse spiders (Sicariidae)
-  "loxosceles": { family: "Sicariidae", commonNames: ["Brown recluse", "Recluse spider"], danger: "high" },
-  "recluse": { family: "Sicariidae", commonNames: ["Brown recluse"], danger: "high" },
-  
-  // Mouse spiders (Actinopodidae)
-  "missulena": { family: "Actinopodidae", commonNames: ["Mouse spider"], danger: "moderate" },
-  
-  // Tarantulas (Theraphosidae)
-  "theraphosa": { family: "Theraphosidae", commonNames: ["Goliath birdeater"], danger: "low" },
-  "aphonopelma": { family: "Theraphosidae", commonNames: ["Desert tarantula"], danger: "low" },
-  "tarantula": { family: "Theraphosidae", commonNames: ["Tarantula"], danger: "low" },
-  
-  // Orb weavers (Araneidae)
-  "nephila": { family: "Araneidae", commonNames: ["Golden orb weaver"], danger: "minimal" },
-  "orb": { family: "Araneidae", commonNames: ["Orb weaver"], danger: "minimal" },
-  "garden": { family: "Araneidae", commonNames: ["Garden spider"], danger: "minimal" },
-  
-  // Wolf spiders (Lycosidae)
-  "lycosa": { family: "Lycosidae", commonNames: ["Wolf spider"], danger: "minimal" },
-  "wolf": { family: "Lycosidae", commonNames: ["Wolf spider"], danger: "minimal" },
-  
-  // Jumping spiders (Salticidae)
-  "salticidae": { family: "Salticidae", commonNames: ["Jumping spider"], danger: "minimal" },
-  "jumping": { family: "Salticidae", commonNames: ["Jumping spider"], danger: "minimal" },
-  
-  // Huntsman spiders (Sparassidae)
-  "heteropoda": { family: "Sparassidae", commonNames: ["Huntsman spider"], danger: "minimal" },
-  "huntsman": { family: "Sparassidae", commonNames: ["Huntsman spider"], danger: "minimal" },
+  // NON-US DANGEROUS (for comparison/invasive)
+  "phoneutria": {
+    family: "Ctenidae",
+    commonNames: ["Brazilian wandering spider"],
+    danger: "extreme",
+    isUSNative: false,
+    size: "large",
+    speedType: "very_fast",
+    venomPotency: 98,
+    webBuilder: false,
+    harmfulReason: "Yes - highly aggressive, potent neurotoxin. Medical emergency if bitten.",
+    specialAbilities: ["aggression", "speed", "potent venom"],
+    baseStats: { hp: 75, damage: 90, speed: 95, defense: 70, venom: 98, webcraft: 25 }
+  },
+  "atrax": {
+    family: "Atracidae",
+    commonNames: ["Sydney funnel-web spider"],
+    danger: "extreme",
+    isUSNative: false,
+    size: "medium",
+    speedType: "fast",
+    venomPotency: 100,
+    webBuilder: true,
+    harmfulReason: "Yes - extremely dangerous venom. Native to Australia only.",
+    specialAbilities: ["funnel web trap", "venom potency"],
+    baseStats: { hp: 80, damage: 85, speed: 85, defense: 80, venom: 100, webcraft: 80 }
+  }
 };
 
-// Enhanced species identification with family and danger classification
-function enhanceSpeciesIdentification(species: string): {
+// Enhanced species identification returning top 3 matches
+function identifySpecies(label: string): Array<{
+  species: string;
+  data: SpiderData;
+  confidence: number;
+  matchKey: string;
+}> {
+  const s = label.toLowerCase();
+  const matches: Array<{ species: string; data: SpiderData; confidence: number; matchKey: string }> = [];
+  
+  // Find all matching spiders in database
+  for (const [key, data] of Object.entries(US_SPIDER_DATABASE)) {
+    if (s.includes(key)) {
+      // Calculate confidence based on keyword match quality
+      const keywordMatchScore = key.length / s.length;
+      const usNativeBonus = data.isUSNative ? 0.15 : 0;
+      const confidence = Math.min(0.98, keywordMatchScore * 0.7 + usNativeBonus + 0.2);
+      
+      matches.push({
+        species: titleCase(label),
+        data,
+        confidence,
+        matchKey: key
+      });
+    }
+  }
+  
+  // Sort by confidence and return top 3
+  return matches
+    .sort((a, b) => b.confidence - a.confidence)
+    .slice(0, 3);
+}
+
+// Get single best match for backwards compatibility
+function getBestSpeciesMatch(label: string): {
   species: string;
   family: string;
   commonNames: string[];
   dangerLevel: string;
+  isUSNative: boolean;
+  harmfulToHumans: string;
+  specialAbilities: string[];
   confidence: number;
+  data: SpiderData;
 } {
-  const s = species.toLowerCase();
-  let bestMatch = null;
-  let highestConfidence = 0;
+  const matches = identifySpecies(label);
   
-  // Find best matching spider in our database
-  for (const [key, data] of Object.entries(SPIDER_SPECIES_DATABASE)) {
-    if (s.includes(key)) {
-      const confidence = key.length / s.length; // Simple confidence based on match length
-      if (confidence > highestConfidence) {
-        highestConfidence = confidence;
-        bestMatch = { key, ...data };
-      }
-    }
-  }
-  
-  if (bestMatch) {
+  if (matches.length > 0) {
+    const best = matches[0];
     return {
-      species: titleCase(species),
-      family: bestMatch.family,
-      commonNames: bestMatch.commonNames,
-      dangerLevel: bestMatch.danger,
-      confidence: Math.min(0.95, highestConfidence * 0.8 + 0.4) // Enhanced confidence scoring
+      species: best.species,
+      family: best.data.family,
+      commonNames: best.data.commonNames,
+      dangerLevel: best.data.danger,
+      isUSNative: best.data.isUSNative,
+      harmfulToHumans: best.data.harmfulReason || "Unknown",
+      specialAbilities: best.data.specialAbilities,
+      confidence: best.confidence,
+      data: best.data
     };
   }
   
   // Fallback for unknown species
   return {
-    species: titleCase(species),
+    species: titleCase(label),
     family: "Unknown",
-    commonNames: [titleCase(species)],
+    commonNames: [titleCase(label)],
     dangerLevel: "unknown",
-    confidence: 0.3
+    isUSNative: false,
+    harmfulToHumans: "Unknown - exercise caution with unidentified spiders",
+    specialAbilities: [],
+    confidence: 0.25,
+    data: {
+      family: "Unknown",
+      commonNames: [titleCase(label)],
+      danger: "minimal",
+      isUSNative: false,
+      size: "medium",
+      speedType: "moderate",
+      venomPotency: 20,
+      webBuilder: false,
+      specialAbilities: [],
+      baseStats: { hp: 50, damage: 50, speed: 50, defense: 50, venom: 50, webcraft: 50 }
+    }
   };
 }
 
@@ -186,106 +473,32 @@ function clampInt(n: unknown, min: number, max: number) {
   return Math.max(min, Math.min(max, v));
 }
 
-// Apply species-specific biases to ensure more realistic attributes (informed by ScienceFocus & SpiderSpotter)
-function applySpeciesBias(species: string, stats: { hit_points: number; damage: number; speed: number; defense: number; venom: number; webcraft: number; }) {
-  const s = (species || "").toLowerCase();
-  let { hit_points, damage, speed, defense, venom, webcraft } = stats;
-
-  const clamp = (n: number) => clampInt(n, 10, 100) as number;
-
-  // Specific high-risk species first
-  if (s.includes("funnel") || s.includes("funnel-web") || s.includes("atrax") || s.includes("hadronyche")) {
-    // Sydney funnel-web and relatives: extremely venomous, fast, robust, web builders
-    venom = 100;
-    damage = Math.max(damage, 85);
-    speed = Math.max(speed, 80);
-    defense = Math.max(defense, 80);
-    hit_points = Math.max(hit_points, 75);
-    webcraft = Math.max(webcraft, 70);
-  } else if ((s.includes("phoneutria") || s.includes("wandering")) || (s.includes("banana") && !s.includes("orb") && !s.includes("nephila"))) {
-    // Brazilian wandering spider (Phoneutria): highly venomous, aggressive, very fast, low web use
-    venom = Math.max(venom, 98);
-    damage = Math.max(damage, 85);
-    speed = Math.max(speed, 90);
-    defense = Math.max(defense, 65);
-    hit_points = Math.max(hit_points, 70);
-    webcraft = Math.min(webcraft, 40);
-  } else if (s.includes("sicarius") || (s.includes("six") && s.includes("eye") && s.includes("sand"))) {
-    // Six-eyed sand spider (Sicarius): very potent venom, armored ambusher, low web use, slower
-    venom = Math.max(venom, 97);
-    damage = Math.max(damage, 70);
-    speed = Math.min(speed, 55);
-    defense = Math.max(defense, 80);
-    hit_points = Math.max(hit_points, 65);
-    webcraft = Math.min(webcraft, 30);
-  } else if (s.includes("redback") || s.includes("hasselti")) {
-    // Australian redback (Latrodectus hasselti): widow-type
-    venom = Math.max(venom, 97);
-    damage = Math.max(damage, 70);
-    speed = Math.min(speed, 60);
-    webcraft = Math.min(webcraft, 50);
-    hit_points = Math.max(hit_points, 55);
-  } else if (s.includes("missulena") || (s.includes("mouse") && s.includes("spider"))) {
-    // Mouse spiders (Missulena): potent venom, sturdy build
-    venom = Math.max(venom, 92);
-    damage = Math.max(damage, 75);
-    speed = Math.max(speed, 70);
-    defense = Math.max(defense, 70);
-    hit_points = Math.max(hit_points, 65);
-    webcraft = Math.min(webcraft, 45);
-  } else if (s.includes("widow") || s.includes("latrodectus")) {
-    venom = Math.max(venom, 95);
-    damage = Math.max(damage, 70);
-    speed = Math.min(speed, 60);
-    webcraft = Math.min(webcraft, 50);
-    hit_points = Math.max(hit_points, 55);
-  } else if (s.includes("recluse") || s.includes("loxosceles")) {
-    venom = Math.max(venom, 90);
-    damage = Math.max(damage, 70);
-    webcraft = Math.min(webcraft, 50);
-  } else if (s.includes("tarantula") || s.includes("theraphosa") || s.includes("aphonopelma")) {
-    hit_points = Math.max(hit_points, 95);
-    defense = Math.max(defense, 80);
-    damage = Math.max(damage, 80);
-    speed = Math.min(speed, 55);
-    venom = Math.min(venom, 60);
-    webcraft = Math.min(webcraft, 60);
-  } else if (
-    s.includes("barn") || s.includes("orb") || s.includes("weaver") || s.includes("garden") || s.includes("nephila") || s.includes("golden orb") ||
-    (s.includes("banana") && (s.includes("orb") || s.includes("nephila")))
-  ) {
-    // Orb-weavers: excellent web builders, weak venom
-    webcraft = Math.max(webcraft, 80);
-    venom = Math.min(venom, 45);
-    damage = Math.min(damage, 65);
-    defense = Math.max(defense, 60);
-    hit_points = Math.max(hit_points, 60);
-  } else if (s.includes("wolf") || s.includes("lycosa")) {
-    speed = Math.max(speed, 85);
-    damage = Math.max(damage, 75);
-    webcraft = Math.min(webcraft, 40);
-    venom = Math.max(venom, 60);
-    hit_points = Math.max(hit_points, 70);
-  } else if (s.includes("jump") || s.includes("salticidae")) {
-    speed = Math.max(speed, 80);
-    damage = Math.max(damage, 65);
-    webcraft = Math.min(webcraft, 35);
-    hit_points = Math.max(hit_points, 55);
-    defense = Math.max(defense, 55);
-  } else if (s.includes("huntsman") || s.includes("heteropoda")) {
-    speed = Math.max(speed, 90);
-    damage = Math.max(damage, 75);
-    hit_points = Math.max(hit_points, 80);
-    webcraft = Math.min(webcraft, 30);
-  }
-
+// Generate biology-based attributes using database
+function generateBiologyBasedStats(spiderData: SpiderData): {
+  hit_points: number;
+  damage: number;
+  speed: number;
+  defense: number;
+  venom: number;
+  webcraft: number;
+} {
+  // Start with base stats from database
+  const base = { ...spiderData.baseStats };
+  
+  // Apply realistic variability (±15% for uniqueness)
+  const addVariance = (value: number) => {
+    const variance = (Math.random() * 30) - 15; // -15% to +15%
+    const adjusted = Math.floor(value + (value * variance / 100));
+    return Math.max(10, Math.min(100, adjusted));
+  };
+  
   return {
-    hit_points: clamp(hit_points),
-    damage: clamp(damage),
-    speed: clamp(speed),
-    defense: clamp(defense),
-    venom: clamp(venom),
-    webcraft: clamp(webcraft),
+    hit_points: addVariance(base.hp),
+    damage: addVariance(base.damage),
+    speed: addVariance(base.speed),
+    defense: addVariance(base.defense),
+    venom: addVariance(base.venom),
+    webcraft: addVariance(base.webcraft)
   };
 }
 
@@ -481,117 +694,112 @@ serve(async (req) => {
       .sort((a: any, b: any) => (b.score ?? 0) - (a.score ?? 0))
       .slice(0, Math.max(1, Math.min(10, Number(topK) || 5)));
 
-    const speciesRaw = sorted[0]?.label || "Unknown";
-    const species = titleCase(speciesRaw);
+    // Get best species match from database
+    const primaryMatch = getBestSpeciesMatch(sorted[0]?.label || "Unknown");
+    const species = primaryMatch.species;
     const nickname = generateNickname(species);
     
-    // Enhanced species analysis using our knowledge base
-    const speciesAnalysis = enhanceSpeciesIdentification(species);
-    console.log("Enhanced species analysis:", speciesAnalysis);
+    // Get top 3 species candidates
+    const top3Candidates = sorted.slice(0, 3).map((candidate: any, index: number) => {
+      const match = getBestSpeciesMatch(candidate.label);
+      const modelScore = candidate.score || 0;
+      const databaseConfidence = match.confidence;
+      
+      // Combined confidence: weight model score more heavily, boost for US natives
+      const combinedConfidence = Math.min(98, 
+        (modelScore * 0.65) + 
+        (databaseConfidence * 0.30) + 
+        (match.isUSNative ? 0.05 : 0)
+      );
+      
+      return {
+        species: match.species,
+        scientificFamily: match.family,
+        commonNames: match.commonNames,
+        confidence: Math.round(combinedConfidence * 100),
+        isUSNative: match.isUSNative,
+        harmfulToHumans: match.harmfulToHumans,
+        specialAbilities: match.specialAbilities,
+        modelScore: Math.round(modelScore * 100),
+        rank: index + 1
+      };
+    });
+    
+    console.log("Top 3 species candidates:", top3Candidates);
 
-    // Enhanced LLM prompt with family and danger information
-    let aiStats: any = null;
-    try {
-      const prompt = `You are assigning battle attributes for a spider species. The spider belongs to family ${speciesAnalysis.family} with danger level ${speciesAnalysis.dangerLevel}. 
-Return ONLY valid JSON with integer fields between 10 and 100 inclusive: 
-{"hit_points":<int>,"damage":<int>,"speed":<int>,"defense":<int>,"venom":<int>,"webcraft":<int>} 
-Base scores should reflect the real-world traits of "${species}" (Family: ${speciesAnalysis.family}). 
-${speciesAnalysis.dangerLevel === 'extreme' ? 'This is an extremely dangerous spider - venom should be 90+.' : ''}
-${speciesAnalysis.dangerLevel === 'high' ? 'This is a dangerous spider - venom should be 75+.' : ''}
-No commentary.`;
+    // Generate biology-based stats using database
+    const statsCore = generateBiologyBasedStats(primaryMatch.data);
+    
+    // Calculate power score
+    const basePowerScore = Object.values(statsCore).reduce((sum, v) => sum + Number(v), 0);
+    
+    // Add danger-based bonus
+    const dangerBonus = primaryMatch.dangerLevel === 'extreme' ? 30 :
+                        primaryMatch.dangerLevel === 'high' ? 20 :
+                        primaryMatch.dangerLevel === 'moderate' ? 10 :
+                        primaryMatch.dangerLevel === 'low' ? 5 : 0;
+    
+    const power_score = basePowerScore + dangerBonus;
+    
+    // Determine rarity based on power score
+    let rarity: "COMMON" | "RARE" | "EPIC" | "LEGENDARY";
+    if (power_score >= 300) rarity = "LEGENDARY";
+    else if (power_score >= 250) rarity = "EPIC";
+    else if (power_score >= 200) rarity = "RARE";
+    else rarity = "COMMON";
 
-      const gen = await hf.textGeneration({
-        model: "meta-llama/Meta-Llama-3.1-8B-Instruct",
-        inputs: prompt,
-        parameters: { max_new_tokens: 150, temperature: 0.7, return_full_text: false },
-      } as any);
+    const stats = { ...statsCore, power_score, rarity };
 
-      const generated = Array.isArray(gen)
-        ? (gen[0] as any)?.generated_text || ""
-        : (gen as any)?.generated_text || "";
-      const match = generated.match(/\{[\s\S]*\}/);
-      if (match) aiStats = JSON.parse(match[0]);
-    } catch (e) {
-      console.error("LLM stats generation failed:", e);
-    }
-
-// Validate and clamp stats; fallback if needed, then apply species bias
-let baseStats;
-if (aiStats) {
-  baseStats = {
-    hit_points: clampInt(aiStats.hit_points, 10, 100),
-    damage: clampInt(aiStats.damage, 10, 100),
-    speed: clampInt(aiStats.speed, 10, 100),
-    defense: clampInt(aiStats.defense, 10, 100),
-    venom: clampInt(aiStats.venom, 10, 100),
-    webcraft: clampInt(aiStats.webcraft, 10, 100),
-  };
-} else {
-  baseStats = generateFallbackStats();
-}
-
-// Ensure realistic attributes by species
-let statsCore = applySpeciesBias(species, baseStats);
-
-// Add species-based variability (±10% variation while maintaining species characteristics)
-const addVariability = (value: number, min = 10, max = 100) => {
-  const variance = Math.floor(Math.random() * 21 - 10); // -10 to +10
-  const adjusted = Math.floor(value + (value * variance / 100));
-  return Math.max(min, Math.min(max, adjusted));
-};
-
-statsCore = {
-  hit_points: addVariability(statsCore.hit_points),
-  damage: addVariability(statsCore.damage),
-  speed: addVariability(statsCore.speed),
-  defense: addVariability(statsCore.defense),
-  venom: addVariability(statsCore.venom),
-  webcraft: addVariability(statsCore.webcraft)
-};
-
-// Calculate human harm rating based on danger level
-const humanHarmRating = speciesAnalysis.dangerLevel === 'extreme' ? 25 :
-                       speciesAnalysis.dangerLevel === 'high' ? 20 :
-                       speciesAnalysis.dangerLevel === 'moderate' ? 15 :
-                       speciesAnalysis.dangerLevel === 'low' ? 10 :
-                       5; // unknown/minimal danger
-
-// Compute power score including human harm rating
-const basePowerScore = Object.values(statsCore).reduce((sum, v) => sum + Number(v), 0);
-const power_score = basePowerScore + humanHarmRating;
-let rarity: "COMMON" | "RARE" | "EPIC" | "LEGENDARY";
-if (power_score >= 280) rarity = "LEGENDARY";
-else if (power_score >= 240) rarity = "EPIC";
-else if (power_score >= 200) rarity = "RARE";
-else rarity = "COMMON";
-
-const stats = { ...statsCore, power_score, rarity };
-
-    // Calculate overall identification confidence
-    const identificationConfidence = Math.min(0.95, 
-      (sorted[0]?.score || 0) * 0.6 + // Model confidence weight
-      (speciesAnalysis.confidence || 0) * 0.4 + // Species knowledge weight
-      (modelConfidences.length > 1 ? 0.1 : 0) // Multi-model bonus
-    );
-
+    // Enhanced output payload
     const payload = {
-      species,
+      // Primary identification
+      species: top3Candidates[0].species,
+      scientificFamily: top3Candidates[0].scientificFamily,
+      commonNames: top3Candidates[0].commonNames,
       nickname,
-      family: speciesAnalysis.family,
-      commonNames: speciesAnalysis.commonNames,
-      dangerLevel: speciesAnalysis.dangerLevel,
-      confidence: {
-        overall: identificationConfidence,
-        species: speciesAnalysis.confidence,
-        modelCount: modelConfidences.length
+      
+      // Confidence scoring
+      confidence: top3Candidates[0].confidence,
+      identificationQuality: top3Candidates[0].confidence >= 85 ? "very_high" : 
+                            top3Candidates[0].confidence >= 70 ? "high" :
+                            top3Candidates[0].confidence >= 50 ? "medium" : "low",
+      
+      // Top 3 candidates
+      topCandidates: top3Candidates,
+      
+      // Safety information
+      isUSNative: primaryMatch.isUSNative,
+      harmfulToHumans: primaryMatch.harmfulToHumans,
+      dangerLevel: primaryMatch.dangerLevel,
+      
+      // Game attributes
+      attributes: {
+        hit_points: stats.hit_points,
+        damage: stats.damage,
+        speed: stats.speed,
+        defense: stats.defense,
+        venom: stats.venom,
+        webcraft: stats.webcraft,
+        power_score: stats.power_score,
+        rarity: stats.rarity
       },
-      candidates: sorted.map((r: any) => ({ 
-        label: titleCase(r.label), 
-        score: r.score,
-        modelCount: r.modelCount || 1,
-        models: r.models || ['unknown']
-      })),
+      
+      // Special abilities
+      specialAbilities: primaryMatch.specialAbilities,
+      
+      // Debug info
+      debug: {
+        modelResults: sorted.slice(0, 3).map((r: any) => ({
+          label: r.label,
+          score: Math.round((r.score || 0) * 100),
+          modelCount: r.modelCount || 1
+        })),
+        multiModelAgreement: modelConfidences.length > 1
+      },
+      
+      // Legacy fields for compatibility
       stats,
+      family: primaryMatch.family
     };
 
     console.log("Enhanced spider-identify result:", payload);
