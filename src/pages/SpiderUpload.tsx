@@ -522,7 +522,7 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                  <div className="space-y-2">
                    <Label>Spider Image</Label>
                    <div 
-                     className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 sm:p-8 text-center cursor-pointer hover:border-muted-foreground/50 transition-colors"
+                     className={`border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 sm:p-8 text-center cursor-pointer hover:border-muted-foreground/50 transition-colors ${!previewUrl ? 'animate-pulse ring-1 ring-primary/20' : ''}`}
                      onClick={() => fileInputRef.current?.click()}
                    >
                     {previewUrl ? (
