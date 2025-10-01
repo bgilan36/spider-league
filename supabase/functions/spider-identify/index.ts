@@ -18,10 +18,7 @@ function parseBase64Image(base64: string): { mime: string; bytes: Uint8Array } {
   return { mime, bytes };
 }
 
-// Enhanced image preprocessing for better spider identification
 function preprocessImageForSpiderID(bytes: Uint8Array, mime: string): Blob {
-  // Create a proper blob for HuggingFace inference
-  // This preprocessing is inspired by Picture Insect's approach
   const buffer = new ArrayBuffer(bytes.length);
   const view = new Uint8Array(buffer);
   view.set(bytes);
@@ -36,18 +33,21 @@ function titleCase(str: string) {
     .join(" ");
 }
 
-// Comprehensive US Spider Species Database
+// Enhanced US Spider Species Database
 interface SpiderData {
+  scientificName: string;
   family: string;
   commonNames: string[];
   danger: "extreme" | "high" | "moderate" | "low" | "minimal";
   isUSNative: boolean;
-  size: "small" | "medium" | "large" | "xlarge"; // < 10mm, 10-20mm, 20-40mm, > 40mm
+  isCommonInvasive?: boolean;
+  size: { min: number; max: number }; // mm
   speedType: "slow" | "moderate" | "fast" | "very_fast";
   venomPotency: number; // 0-100
   webBuilder: boolean;
   harmfulReason?: string;
   specialAbilities: string[];
+  visualKeywords: string[]; // Critical for matching
   baseStats: {
     hp: number;
     damage: number;
@@ -59,421 +59,399 @@ interface SpiderData {
 }
 
 const US_SPIDER_DATABASE: Record<string, SpiderData> = {
-  // DANGEROUS US SPIDERS
-  "black widow": {
-    family: "Theridiidae",
-    commonNames: ["Black widow", "Southern black widow", "Western black widow"],
-    danger: "high",
+  // ===== DANGEROUS US SPIDERS =====
+  'black_widow': {
+    scientificName: 'Latrodectus mactans',
+    family: 'Theridiidae',
+    commonNames: ['Southern Black Widow', 'Black Widow'],
+    danger: 'high',
     isUSNative: true,
-    size: "small",
-    speedType: "slow",
+    size: { min: 8, max: 13 },
+    speedType: 'moderate',
     venomPotency: 95,
     webBuilder: true,
-    harmfulReason: "Neurotoxic venom - can cause severe muscle pain, cramps, nausea. Antivenom available. Bites are rare.",
-    specialAbilities: ["web entrapment", "potent neurotoxin"],
-    baseStats: { hp: 50, damage: 70, speed: 40, defense: 55, venom: 95, webcraft: 75 }
-  },
-  "latrodectus": {
-    family: "Theridiidae",
-    commonNames: ["Widow spider"],
-    danger: "high",
-    isUSNative: true,
-    size: "small",
-    speedType: "slow",
-    venomPotency: 95,
-    webBuilder: true,
-    harmfulReason: "Neurotoxic venom - medical attention recommended for bites",
-    specialAbilities: ["web entrapment", "neurotoxin"],
-    baseStats: { hp: 50, damage: 70, speed: 40, defense: 55, venom: 95, webcraft: 75 }
-  },
-  "brown recluse": {
-    family: "Sicariidae",
-    commonNames: ["Brown recluse", "Fiddle-back spider", "Violin spider"],
-    danger: "high",
-    isUSNative: true,
-    size: "small",
-    speedType: "moderate",
-    venomPotency: 90,
-    webBuilder: false,
-    harmfulReason: "Cytotoxic venom - can cause necrotic lesions. Seek medical care if bitten.",
-    specialAbilities: ["necrotic venom", "camouflage"],
-    baseStats: { hp: 45, damage: 75, speed: 55, defense: 40, venom: 90, webcraft: 30 }
-  },
-  "loxosceles": {
-    family: "Sicariidae",
-    commonNames: ["Recluse spider"],
-    danger: "high",
-    isUSNative: true,
-    size: "small",
-    speedType: "moderate",
-    venomPotency: 90,
-    webBuilder: false,
-    harmfulReason: "Cytotoxic venom causing tissue damage",
-    specialAbilities: ["necrotic venom", "nocturnal hunter"],
-    baseStats: { hp: 45, damage: 75, speed: 55, defense: 40, venom: 90, webcraft: 30 }
+    harmfulReason: 'Neurotoxic venom - can cause severe muscle pain and cramps. Medical attention recommended.',
+    specialAbilities: ['web entrapment', 'neurotoxic venom', 'hourglass marking'],
+    visualKeywords: ['black', 'widow', 'red hourglass', 'shiny', 'round abdomen', 'cobweb', 'glossy'],
+    baseStats: { hp: 70, damage: 85, speed: 50, defense: 60, venom: 95, webcraft: 75 }
   },
   
-  // COMMON HARMLESS US SPIDERS
-  "wolf spider": {
-    family: "Lycosidae",
-    commonNames: ["Wolf spider"],
-    danger: "minimal",
+  'western_black_widow': {
+    scientificName: 'Latrodectus hesperus',
+    family: 'Theridiidae',
+    commonNames: ['Western Black Widow'],
+    danger: 'high',
     isUSNative: true,
-    size: "medium",
-    speedType: "very_fast",
-    venomPotency: 20,
-    webBuilder: false,
-    harmfulReason: "No - venom is mild, bite rarely worse than bee sting. Not aggressive.",
-    specialAbilities: ["speed burst", "ambush hunter", "carries young"],
-    baseStats: { hp: 70, damage: 60, speed: 90, defense: 65, venom: 25, webcraft: 20 }
+    size: { min: 8, max: 13 },
+    speedType: 'moderate',
+    venomPotency: 95,
+    webBuilder: true,
+    harmfulReason: 'Neurotoxic venom - similar to Southern black widow',
+    specialAbilities: ['web entrapment', 'neurotoxic venom'],
+    visualKeywords: ['black', 'widow', 'red', 'hourglass', 'western', 'shiny'],
+    baseStats: { hp: 70, damage: 85, speed: 50, defense: 60, venom: 95, webcraft: 75 }
   },
-  "lycosa": {
-    family: "Lycosidae",
-    commonNames: ["Wolf spider"],
-    danger: "minimal",
+
+  'brown_recluse': {
+    scientificName: 'Loxosceles reclusa',
+    family: 'Sicariidae',
+    commonNames: ['Brown Recluse', 'Fiddle-back Spider', 'Violin Spider'],
+    danger: 'high',
     isUSNative: true,
-    size: "medium",
-    speedType: "very_fast",
-    venomPotency: 20,
+    size: { min: 6, max: 20 },
+    speedType: 'moderate',
+    venomPotency: 90,
     webBuilder: false,
-    harmfulReason: "No - harmless to humans",
-    specialAbilities: ["speed burst", "ground hunter"],
-    baseStats: { hp: 70, damage: 60, speed: 90, defense: 65, venom: 25, webcraft: 20 }
+    harmfulReason: 'Cytotoxic venom - can cause necrotic skin lesions. Seek medical care if bitten.',
+    specialAbilities: ['necrotic venom', 'stealth hunter', 'violin marking'],
+    visualKeywords: ['brown', 'recluse', 'violin', 'fiddle', 'six eyes', 'tan', 'beige'],
+    baseStats: { hp: 60, damage: 75, speed: 55, defense: 50, venom: 90, webcraft: 45 }
   },
-  "jumping spider": {
-    family: "Salticidae",
-    commonNames: ["Jumping spider", "Bold jumper"],
-    danger: "minimal",
+
+  // ===== COMMON HARMLESS US SPIDERS =====
+  'wolf_spider': {
+    scientificName: 'Lycosidae family',
+    family: 'Lycosidae',
+    commonNames: ['Wolf Spider'],
+    danger: 'minimal',
     isUSNative: true,
-    size: "small",
-    speedType: "fast",
+    size: { min: 10, max: 35 },
+    speedType: 'very_fast',
+    venomPotency: 30,
+    webBuilder: false,
+    harmfulReason: 'Harmless - venom is mild, rarely worse than bee sting',
+    specialAbilities: ['speed burst', 'ground hunter', 'carries young on back'],
+    visualKeywords: ['wolf', 'hairy', 'brown', 'striped', 'large', 'ground', 'fast', 'robust'],
+    baseStats: { hp: 80, damage: 70, speed: 90, defense: 65, venom: 30, webcraft: 20 }
+  },
+
+  'jumping_spider': {
+    scientificName: 'Salticidae family',
+    family: 'Salticidae',
+    commonNames: ['Jumping Spider', 'Bold Jumper'],
+    danger: 'minimal',
+    isUSNative: true,
+    size: { min: 1, max: 22 },
+    speedType: 'fast',
     venomPotency: 10,
     webBuilder: false,
-    harmfulReason: "No - harmless, excellent vision, curious behavior. Too small to bite humans effectively.",
-    specialAbilities: ["leap attack", "excellent vision", "agile"],
-    baseStats: { hp: 40, damage: 45, speed: 85, defense: 50, venom: 15, webcraft: 20 }
+    harmfulReason: 'Harmless - too small to bite effectively',
+    specialAbilities: ['jumping attack', 'excellent vision', 'stalking behavior'],
+    visualKeywords: ['jumping', 'compact', 'large eyes', 'colorful', 'fuzzy', 'small', 'cute'],
+    baseStats: { hp: 50, damage: 55, speed: 85, defense: 60, venom: 10, webcraft: 25 }
   },
-  "salticidae": {
-    family: "Salticidae",
-    commonNames: ["Jumping spider"],
-    danger: "minimal",
+
+  'garden_spider': {
+    scientificName: 'Argiope aurantia',
+    family: 'Araneidae',
+    commonNames: ['Black and Yellow Garden Spider', 'Writing Spider', 'Corn Spider'],
+    danger: 'minimal',
     isUSNative: true,
-    size: "small",
-    speedType: "fast",
-    venomPotency: 10,
-    webBuilder: false,
-    harmfulReason: "No - completely harmless",
-    specialAbilities: ["jumping", "vision"],
-    baseStats: { hp: 40, damage: 45, speed: 85, defense: 50, venom: 15, webcraft: 20 }
-  },
-  "garden spider": {
-    family: "Araneidae",
-    commonNames: ["Garden spider", "Black and yellow garden spider", "Writing spider"],
-    danger: "minimal",
-    isUSNative: true,
-    size: "large",
-    speedType: "slow",
+    size: { min: 19, max: 28 },
+    speedType: 'slow',
     venomPotency: 15,
     webBuilder: true,
-    harmfulReason: "No - beneficial for pest control, very docile. Venom not medically significant.",
-    specialAbilities: ["orb web mastery", "stabilimentum", "pest control"],
-    baseStats: { hp: 65, damage: 40, speed: 35, defense: 60, venom: 20, webcraft: 95 }
+    harmfulReason: 'Harmless - beneficial for pest control, very docile',
+    specialAbilities: ['orb web mastery', 'stabilimentum', 'pest control'],
+    visualKeywords: ['garden', 'yellow', 'black', 'striped', 'orb', 'large abdomen', 'zig-zag web'],
+    baseStats: { hp: 65, damage: 45, speed: 40, defense: 70, venom: 15, webcraft: 95 }
   },
-  "orb weaver": {
-    family: "Araneidae",
-    commonNames: ["Orb weaver spider"],
-    danger: "minimal",
+
+  'orb_weaver': {
+    scientificName: 'Araneidae family',
+    family: 'Araneidae',
+    commonNames: ['Orb Weaver Spider'],
+    danger: 'minimal',
     isUSNative: true,
-    size: "medium",
-    speedType: "slow",
+    size: { min: 6, max: 20 },
+    speedType: 'slow',
     venomPotency: 15,
     webBuilder: true,
-    harmfulReason: "No - harmless, beneficial predators",
-    specialAbilities: ["web building", "pest control"],
+    harmfulReason: 'Harmless - beneficial garden spider',
+    specialAbilities: ['circular web', 'pest control'],
+    visualKeywords: ['orb', 'weaver', 'circular web', 'garden', 'colorful', 'round'],
     baseStats: { hp: 60, damage: 40, speed: 35, defense: 60, venom: 20, webcraft: 90 }
   },
-  "argiope": {
-    family: "Araneidae",
-    commonNames: ["Garden spider", "Banded garden spider"],
-    danger: "minimal",
+
+  'cellar_spider': {
+    scientificName: 'Pholcidae family',
+    family: 'Pholcidae',
+    commonNames: ['Cellar Spider', 'Daddy Long-legs Spider'],
+    danger: 'minimal',
     isUSNative: true,
-    size: "large",
-    speedType: "slow",
-    venomPotency: 15,
-    webBuilder: true,
-    harmfulReason: "No - beneficial spider",
-    specialAbilities: ["decorative web", "pest control"],
-    baseStats: { hp: 65, damage: 40, speed: 35, defense: 60, venom: 20, webcraft: 95 }
-  },
-  "cellar spider": {
-    family: "Pholcidae",
-    commonNames: ["Cellar spider", "Daddy long-legs spider"],
-    danger: "minimal",
-    isUSNative: true,
-    size: "small",
-    speedType: "slow",
+    size: { min: 2, max: 10 },
+    speedType: 'moderate',
     venomPotency: 5,
     webBuilder: true,
-    harmfulReason: "No - myth: fangs too weak to pierce skin. Completely harmless.",
-    specialAbilities: ["vibration defense", "web tangling"],
-    baseStats: { hp: 30, damage: 25, speed: 40, defense: 35, venom: 10, webcraft: 70 }
+    harmfulReason: 'Harmless - completely safe, beneficial indoor predator',
+    specialAbilities: ['web vibration defense', 'prey wrapping'],
+    visualKeywords: ['cellar', 'daddy long legs', 'thin legs', 'small body', 'tangled web'],
+    baseStats: { hp: 35, damage: 30, speed: 60, defense: 40, venom: 5, webcraft: 70 }
   },
-  "pholcus": {
-    family: "Pholcidae",
-    commonNames: ["Cellar spider"],
-    danger: "minimal",
+
+  'house_spider': {
+    scientificName: 'Parasteatoda tepidariorum',
+    family: 'Theridiidae',
+    commonNames: ['Common House Spider', 'American House Spider'],
+    danger: 'minimal',
     isUSNative: true,
-    size: "small",
-    speedType: "slow",
-    venomPotency: 5,
-    webBuilder: true,
-    harmfulReason: "No - harmless",
-    specialAbilities: ["vibration", "web"],
-    baseStats: { hp: 30, damage: 25, speed: 40, defense: 35, venom: 10, webcraft: 70 }
-  },
-  "house spider": {
-    family: "Theridiidae",
-    commonNames: ["Common house spider", "American house spider"],
-    danger: "minimal",
-    isUSNative: true,
-    size: "small",
-    speedType: "moderate",
+    size: { min: 4, max: 8 },
+    speedType: 'moderate',
     venomPotency: 10,
     webBuilder: true,
-    harmfulReason: "No - harmless, shy, beneficial for indoor pest control.",
-    specialAbilities: ["cobweb building", "pest control"],
-    baseStats: { hp: 45, damage: 35, speed: 50, defense: 45, venom: 15, webcraft: 65 }
+    harmfulReason: 'Harmless - shy, beneficial for indoor pest control',
+    specialAbilities: ['cobweb construction', 'indoor adaptation'],
+    visualKeywords: ['house', 'brown', 'small', 'cobweb', 'indoor', 'common'],
+    baseStats: { hp: 45, damage: 35, speed: 50, defense: 50, venom: 10, webcraft: 65 }
   },
-  "crab spider": {
-    family: "Thomisidae",
-    commonNames: ["Crab spider", "Flower crab spider"],
-    danger: "minimal",
+
+  'crab_spider': {
+    scientificName: 'Thomisidae family',
+    family: 'Thomisidae',
+    commonNames: ['Crab Spider', 'Flower Crab Spider'],
+    danger: 'minimal',
     isUSNative: true,
-    size: "small",
-    speedType: "slow",
-    venomPotency: 10,
-    webBuilder: false,
-    harmfulReason: "No - ambush predator, harmless to humans.",
-    specialAbilities: ["camouflage", "ambush", "color changing"],
-    baseStats: { hp: 40, damage: 45, speed: 30, defense: 55, venom: 15, webcraft: 10 }
-  },
-  "grass spider": {
-    family: "Agelenidae",
-    commonNames: ["Grass spider", "Funnel weaver"],
-    danger: "minimal",
-    isUSNative: true,
-    size: "medium",
-    speedType: "fast",
+    size: { min: 3, max: 11 },
+    speedType: 'slow',
     venomPotency: 15,
+    webBuilder: false,
+    harmfulReason: 'Harmless - ambush predator on flowers',
+    specialAbilities: ['camouflage master', 'ambush predator', 'color changing'],
+    visualKeywords: ['crab', 'sideways', 'flower', 'white', 'yellow', 'flat', 'ambush'],
+    baseStats: { hp: 50, damage: 60, speed: 35, defense: 75, venom: 15, webcraft: 10 }
+  },
+
+  'grass_spider': {
+    scientificName: 'Agelenopsis',
+    family: 'Agelenidae',
+    commonNames: ['Grass Spider', 'Funnel Weaver'],
+    danger: 'minimal',
+    isUSNative: true,
+    size: { min: 10, max: 20 },
+    speedType: 'very_fast',
+    venomPotency: 20,
     webBuilder: true,
-    harmfulReason: "No - shy, fast runners. Not aggressive toward humans.",
-    specialAbilities: ["funnel web", "speed", "vibration sensing"],
-    baseStats: { hp: 55, damage: 50, speed: 80, defense: 50, venom: 20, webcraft: 75 }
+    harmfulReason: 'Harmless - shy, fast runners',
+    specialAbilities: ['funnel web retreat', 'sprint speed'],
+    visualKeywords: ['grass', 'funnel', 'brown', 'striped', 'fast', 'sheet web', 'outdoor'],
+    baseStats: { hp: 60, damage: 55, speed: 85, defense: 55, venom: 20, webcraft: 75 }
   },
-  
-  // US TARANTULAS
-  "aphonopelma": {
-    family: "Theraphosidae",
-    commonNames: ["Desert tarantula", "Arizona blonde tarantula"],
-    danger: "low",
+
+  // ===== US TARANTULAS =====
+  'desert_tarantula': {
+    scientificName: 'Aphonopelma chalcodes',
+    family: 'Theraphosidae',
+    commonNames: ['Desert Blonde Tarantula', 'Arizona Blonde'],
+    danger: 'low',
     isUSNative: true,
-    size: "xlarge",
-    speedType: "slow",
+    size: { min: 50, max: 70 },
+    speedType: 'slow',
     venomPotency: 25,
     webBuilder: false,
-    harmfulReason: "No - venom mild, defensive. Urticating hairs more problematic than bite.",
-    specialAbilities: ["urticating hairs", "burrow defense", "intimidation"],
-    baseStats: { hp: 95, damage: 70, speed: 40, defense: 85, venom: 30, webcraft: 35 }
+    harmfulReason: 'Mild venom - urticating hairs can irritate skin',
+    specialAbilities: ['urticating hairs', 'powerful bite', 'intimidation'],
+    visualKeywords: ['tarantula', 'desert', 'blonde', 'large', 'hairy', 'thick legs', 'brown'],
+    baseStats: { hp: 95, damage: 80, speed: 40, defense: 85, venom: 25, webcraft: 30 }
   },
-  "tarantula": {
-    family: "Theraphosidae",
-    commonNames: ["Tarantula"],
-    danger: "low",
+
+  'texas_tarantula': {
+    scientificName: 'Aphonopelma hentzi',
+    family: 'Theraphosidae',
+    commonNames: ['Texas Brown Tarantula', 'Oklahoma Brown'],
+    danger: 'low',
     isUSNative: true,
-    size: "xlarge",
-    speedType: "slow",
+    size: { min: 50, max: 70 },
+    speedType: 'slow',
     venomPotency: 25,
     webBuilder: false,
-    harmfulReason: "No - docile, mild venom",
-    specialAbilities: ["intimidation", "defense hairs"],
-    baseStats: { hp: 95, damage: 70, speed: 40, defense: 85, venom: 30, webcraft: 35 }
+    harmfulReason: 'Mild venom - defensive but not aggressive',
+    specialAbilities: ['urticating hairs', 'burrowing', 'docile'],
+    visualKeywords: ['tarantula', 'brown', 'texas', 'large', 'hairy', 'burrow', 'oklahoma'],
+    baseStats: { hp: 95, damage: 80, speed: 40, defense: 85, venom: 25, webcraft: 30 }
   },
-  
-  // NON-US DANGEROUS (for comparison/invasive)
-  "phoneutria": {
-    family: "Ctenidae",
-    commonNames: ["Brazilian wandering spider"],
-    danger: "extreme",
+
+  // ===== NON-US DANGEROUS (Reference only - should rank lower) =====
+  'sydney_funnel_web': {
+    scientificName: 'Atrax robustus',
+    family: 'Atracidae',
+    commonNames: ['Sydney Funnel-web Spider'],
+    danger: 'extreme',
     isUSNative: false,
-    size: "large",
-    speedType: "very_fast",
-    venomPotency: 98,
-    webBuilder: false,
-    harmfulReason: "Yes - highly aggressive, potent neurotoxin. Medical emergency if bitten.",
-    specialAbilities: ["aggression", "speed", "potent venom"],
-    baseStats: { hp: 75, damage: 90, speed: 95, defense: 70, venom: 98, webcraft: 25 }
-  },
-  "atrax": {
-    family: "Atracidae",
-    commonNames: ["Sydney funnel-web spider"],
-    danger: "extreme",
-    isUSNative: false,
-    size: "medium",
-    speedType: "fast",
+    isCommonInvasive: false,
+    size: { min: 10, max: 50 },
+    speedType: 'fast',
     venomPotency: 100,
     webBuilder: true,
-    harmfulReason: "Yes - extremely dangerous venom. Native to Australia only.",
-    specialAbilities: ["funnel web trap", "venom potency"],
-    baseStats: { hp: 80, damage: 85, speed: 85, defense: 80, venom: 100, webcraft: 80 }
+    harmfulReason: 'EXTREMELY DANGEROUS - Not found in US (Australia only)',
+    specialAbilities: ['deadly venom', 'aggressive behavior'],
+    visualKeywords: ['funnel', 'web', 'sydney', 'australia', 'black', 'shiny'],
+    baseStats: { hp: 85, damage: 95, speed: 75, defense: 80, venom: 100, webcraft: 70 }
+  },
+
+  'brazilian_wandering': {
+    scientificName: 'Phoneutria',
+    family: 'Ctenidae',
+    commonNames: ['Brazilian Wandering Spider', 'Banana Spider'],
+    danger: 'extreme',
+    isUSNative: false,
+    isCommonInvasive: false,
+    size: { min: 15, max: 50 },
+    speedType: 'very_fast',
+    venomPotency: 98,
+    webBuilder: false,
+    harmfulReason: 'HIGHLY VENOMOUS - Not found in US (South America)',
+    specialAbilities: ['potent neurotoxin', 'aggressive defense'],
+    visualKeywords: ['wandering', 'banana', 'brazilian', 'aggressive', 'large'],
+    baseStats: { hp: 75, damage: 90, speed: 95, defense: 70, venom: 98, webcraft: 20 }
   }
 };
 
-// Enhanced species identification returning top 3 matches
-function identifySpecies(label: string): Array<{
-  species: string;
-  data: SpiderData;
-  confidence: number;
-  matchKey: string;
-}> {
-  const s = label.toLowerCase();
-  const matches: Array<{ species: string; data: SpiderData; confidence: number; matchKey: string }> = [];
+// Enhanced species identification with strict US filtering
+function identifySpecies(label: string): Array<{ key: string; data: SpiderData; confidence: number }> {
+  const normalizedLabel = label.toLowerCase();
+  const matches: Array<{ key: string; data: SpiderData; confidence: number; score: number }> = [];
   
-  // Find all matching spiders in database
   for (const [key, data] of Object.entries(US_SPIDER_DATABASE)) {
-    if (s.includes(key)) {
-      // Calculate confidence based on keyword match quality
-      const keywordMatchScore = key.length / s.length;
-      const usNativeBonus = data.isUSNative ? 0.15 : 0;
-      const confidence = Math.min(0.98, keywordMatchScore * 0.7 + usNativeBonus + 0.2);
-      
-      matches.push({
-        species: titleCase(label),
-        data,
-        confidence,
-        matchKey: key
+    // STRICT: Skip non-US spiders unless explicitly common invasive
+    if (!data.isUSNative && !data.isCommonInvasive) {
+      continue;
+    }
+    
+    let confidence = 0;
+    
+    // Check scientific name match (highest weight)
+    const sciLower = data.scientificName.toLowerCase();
+    if (normalizedLabel.includes(sciLower)) {
+      confidence += 50;
+    }
+    
+    // Check each word in scientific name
+    const sciWords = sciLower.split(/\s+/).filter(w => w.length > 3);
+    for (const word of sciWords) {
+      if (normalizedLabel.includes(word)) {
+        confidence += 25;
+      }
+    }
+    
+    // Check common names (high weight)
+    for (const commonName of data.commonNames) {
+      const commonLower = commonName.toLowerCase();
+      if (normalizedLabel.includes(commonLower)) {
+        confidence += 45;
+      }
+      // Partial common name match
+      const commonWords = commonLower.split(/\s+/);
+      for (const word of commonWords) {
+        if (word.length > 3 && normalizedLabel.includes(word)) {
+          confidence += 20;
+        }
+      }
+    }
+    
+    // Check visual keywords (critical for accuracy)
+    let keywordMatches = 0;
+    for (const keyword of data.visualKeywords) {
+      if (normalizedLabel.includes(keyword.toLowerCase())) {
+        keywordMatches++;
+        confidence += 15;
+      }
+    }
+    
+    // Boost if multiple visual keywords match
+    if (keywordMatches >= 3) {
+      confidence += 20;
+    }
+    
+    // Check family (medium weight)
+    if (normalizedLabel.includes(data.family.toLowerCase())) {
+      confidence += 12;
+    }
+    
+    // Word overlap analysis
+    const labelWords = normalizedLabel.split(/\s+/).filter(w => w.length > 3);
+    const nameWords = [
+      ...data.scientificName.toLowerCase().split(/\s+/),
+      ...data.commonNames.flatMap(n => n.toLowerCase().split(/\s+/)),
+      ...data.visualKeywords.map(k => k.toLowerCase())
+    ].filter(w => w.length > 3);
+    
+    let wordMatches = 0;
+    for (const word of labelWords) {
+      if (nameWords.some(nw => nw === word || nw.includes(word) || word.includes(nw))) {
+        wordMatches++;
+      }
+    }
+    confidence += wordMatches * 8;
+    
+    // STRONG bonus for US native species
+    if (data.isUSNative) {
+      confidence *= 1.4;
+    }
+    
+    // Only include if reasonable confidence
+    if (confidence > 15) {
+      matches.push({ 
+        key, 
+        data, 
+        confidence: Math.min(100, Math.round(confidence)), 
+        score: confidence 
       });
     }
   }
   
-  // Sort by confidence and return top 3
-  return matches
-    .sort((a, b) => b.confidence - a.confidence)
-    .slice(0, 3);
+  // Sort by score and return top matches
+  matches.sort((a, b) => b.score - a.score);
+  return matches.slice(0, 5);
 }
 
-// Get single best match for backwards compatibility
-function getBestSpeciesMatch(label: string): {
-  species: string;
+// Get best match with minimum confidence threshold
+function getBestSpeciesMatch(label: string): { 
+  key: string; 
+  data: SpiderData; 
+  confidence: number;
+  scientificName: string;
+  commonName: string;
   family: string;
-  commonNames: string[];
-  dangerLevel: string;
   isUSNative: boolean;
+  dangerLevel: string;
   harmfulToHumans: string;
   specialAbilities: string[];
-  confidence: number;
-  data: SpiderData;
-} {
+} | null {
   const matches = identifySpecies(label);
-  
-  if (matches.length > 0) {
-    const best = matches[0];
-    return {
-      species: best.species,
-      family: best.data.family,
-      commonNames: best.data.commonNames,
-      dangerLevel: best.data.danger,
-      isUSNative: best.data.isUSNative,
-      harmfulToHumans: best.data.harmfulReason || "Unknown",
-      specialAbilities: best.data.specialAbilities,
-      confidence: best.confidence,
-      data: best.data
-    };
+  if (matches.length === 0 || matches[0].confidence < 20) {
+    return null;
   }
   
-  // Fallback for unknown species
+  const best = matches[0];
   return {
-    species: titleCase(label),
-    family: "Unknown",
-    commonNames: [titleCase(label)],
-    dangerLevel: "unknown",
-    isUSNative: false,
-    harmfulToHumans: "Unknown - exercise caution with unidentified spiders",
-    specialAbilities: [],
-    confidence: 0.25,
-    data: {
-      family: "Unknown",
-      commonNames: [titleCase(label)],
-      danger: "minimal",
-      isUSNative: false,
-      size: "medium",
-      speedType: "moderate",
-      venomPotency: 20,
-      webBuilder: false,
-      specialAbilities: [],
-      baseStats: { hp: 50, damage: 50, speed: 50, defense: 50, venom: 50, webcraft: 50 }
-    }
+    key: best.key,
+    data: best.data,
+    confidence: best.confidence,
+    scientificName: best.data.scientificName,
+    commonName: best.data.commonNames[0],
+    family: best.data.family,
+    isUSNative: best.data.isUSNative,
+    dangerLevel: best.data.danger,
+    harmfulToHumans: best.data.harmfulReason || 'Unknown',
+    specialAbilities: best.data.specialAbilities
   };
 }
 
 function generateNickname(species: string) {
   const adjectives = [
-    "Shadow",
-    "Crimson",
-    "Iron",
-    "Silk",
-    "Night",
-    "Ember",
-    "Storm",
-    "Ghost",
-    "Venom",
-    "Glimmer",
+    "Shadow", "Crimson", "Iron", "Silk", "Night", "Ember", "Storm", 
+    "Ghost", "Venom", "Glimmer", "Swift", "Steel", "Dark", "Thunder"
   ];
   const nouns = [
-    "Weaver",
-    "Stalker",
-    "Spinner",
-    "Fang",
-    "Crawler",
-    "Prowler",
-    "Skitter",
-    "Bite",
-    "Warden",
-    "Hunter",
+    "Weaver", "Stalker", "Spinner", "Fang", "Crawler", "Prowler", 
+    "Skitter", "Bite", "Warden", "Hunter", "Striker", "Whisper"
   ];
   const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
   const noun = nouns[Math.floor(Math.random() * nouns.length)];
-  const base = `${adj}${noun}`;
-  // Include hint of species for flavor
-  const hint = species.split(" ")[0];
-  return `${base} ${hint}`.trim();
+  return `${adj}${noun}`;
 }
 
-// Fallback stat generator (used if LLM fails)
-function generateFallbackStats() {
-  const baseStats = {
-    hit_points: Math.floor(Math.random() * 50) + 50,
-    damage: Math.floor(Math.random() * 30) + 20,
-    speed: Math.floor(Math.random() * 40) + 30,
-    defense: Math.floor(Math.random() * 35) + 25,
-    venom: Math.floor(Math.random() * 45) + 15,
-    webcraft: Math.floor(Math.random() * 40) + 20,
-  };
-  const power_score = Object.values(baseStats).reduce((sum, stat) => sum + (stat as number), 0);
-  let rarity: "COMMON" | "RARE" | "EPIC" | "LEGENDARY";
-  if (power_score >= 280) rarity = "LEGENDARY";
-  else if (power_score >= 240) rarity = "EPIC";
-  else if (power_score >= 200) rarity = "RARE";
-  else rarity = "COMMON";
-  return { ...baseStats, power_score, rarity };
-}
-
-function clampInt(n: unknown, min: number, max: number) {
-  const v = Math.round(Number(n));
-  if (Number.isNaN(v)) return min;
-  return Math.max(min, Math.min(max, v));
-}
-
-// Generate biology-based attributes using database
+// Generate biology-based attributes
 function generateBiologyBasedStats(spiderData: SpiderData): {
   hit_points: number;
   damage: number;
@@ -482,12 +460,11 @@ function generateBiologyBasedStats(spiderData: SpiderData): {
   venom: number;
   webcraft: number;
 } {
-  // Start with base stats from database
   const base = { ...spiderData.baseStats };
   
-  // Apply realistic variability (±15% for uniqueness)
+  // Add realistic variability (±12% for uniqueness)
   const addVariance = (value: number) => {
-    const variance = (Math.random() * 30) - 15; // -15% to +15%
+    const variance = (Math.random() * 24) - 12; // -12% to +12%
     const adjusted = Math.floor(value + (value * variance / 100));
     return Math.max(10, Math.min(100, adjusted));
   };
@@ -528,289 +505,247 @@ serve(async (req) => {
     }
 
     const hf = new HfInference(token);
-
     const { mime, bytes } = parseBase64Image(image);
-    
-    // Multi-model ensemble approach for enhanced accuracy (inspired by Picture Insect)
     const imageBlob = preprocessImageForSpiderID(bytes, mime);
     
-    // Model 1: General image classification (ResNet-50) - Good baseline
-    const generalModel = "microsoft/resnet-50";
-    
-    // Model 2: BioCLIP - Better for biological species
-    const bioModel = "imageomics/bioclip";
-    
-    // Model 3: Vision Transformer for better feature detection
-    const vitModel = "google/vit-base-patch16-224";
-    
-    let allResults: any[] = [];
-    let modelConfidences: number[] = [];
-    
-    // Try multiple models with confidence scoring (similar to Picture Insect approach)
+    // Enhanced ensemble: 3 specialized models
     const models = [
-      { id: generalModel, weight: 0.3, name: "General" },
-      { id: bioModel, weight: 0.5, name: "Bio" }, // Higher weight for biological classifier
-      { id: vitModel, weight: 0.2, name: "Vision" }
+      { id: "microsoft/resnet-50", weight: 0.25, name: "ResNet" },
+      { id: "imageomics/bioclip", weight: 0.55, name: "BioCLIP" }, // Higher weight for biological
+      { id: "google/vit-base-patch16-224", weight: 0.20, name: "ViT" }
     ];
     
+    const ensembleResults: any[] = [];
+    
+    console.log("Starting multi-model ensemble identification...");
+    
     for (const model of models) {
-      let results: any = [];
       let attempts = 0;
-      
       while (attempts < 3) {
         attempts++;
         try {
-          console.log(`Attempt ${attempts}: Calling HF imageClassification with ${model.name} model ${model.id}`);
-          results = await hf.imageClassification({
+          console.log(`[${model.name}] Attempt ${attempts}...`);
+          const results = await hf.imageClassification({
             model: model.id,
             data: imageBlob,
-            parameters: {
-              top_k: Math.max(1, Math.min(10, Number(topK) || 5))
-            }
+            parameters: { top_k: 10 }
           });
-          console.log(`${model.name} model success:`, results);
           
-          // Weight and add results
-          if (Array.isArray(results)) {
+          if (Array.isArray(results) && results.length > 0) {
             const weightedResults = results.map((r: any) => ({
-              ...r,
+              label: r.label,
               score: (r.score || 0) * model.weight,
               model: model.name
             }));
-            allResults.push(...weightedResults);
-            modelConfidences.push(model.weight);
+            ensembleResults.push(...weightedResults);
+            console.log(`[${model.name}] Success: ${results.length} results`);
           }
           break;
         } catch (err: any) {
           const msg = String(err?.message || err);
-          console.error(`${model.name} model attempt ${attempts} failed:`, msg);
-          const shouldRetry = /503|rate|timeout|temporar|403/i.test(msg);
-          if (attempts < 3 && shouldRetry) {
-            const waitMs = Math.min(8000, 1000 * attempts);
-            console.log(`${model.name} model retry ${attempts} in ${waitMs}ms due to:`, msg);
-            await new Promise((r) => setTimeout(r, waitMs));
+          console.error(`[${model.name}] Attempt ${attempts} failed:`, msg);
+          if (attempts < 3 && /503|rate|timeout|temporar|403/i.test(msg)) {
+            await new Promise(r => setTimeout(r, 1000 * attempts));
             continue;
           }
-          // If this model fails completely, continue with others
-          console.log(`${model.name} model failed completely, continuing with other models`);
+          console.log(`[${model.name}] Skipping after ${attempts} attempts`);
           break;
         }
       }
     }
     
-    // Fallback to single model if ensemble fails
-    if (allResults.length === 0) {
-      console.log("All models failed, falling back to single ResNet model");
-      let attempts = 0;
-      while (attempts < 3) {
-        attempts++;
-        try {
-          console.log(`Fallback attempt ${attempts}: Calling HF imageClassification with model ${generalModel}`);
-          allResults = await hf.imageClassification({
-            model: generalModel,
-            data: imageBlob,
-            parameters: {
-              top_k: Math.max(1, Math.min(10, Number(topK) || 5))
-            }
-          });
-          console.log(`Fallback HF imageClassification success:`, allResults);
-          break;
-        } catch (err: any) {
-          const msg = String(err?.message || err);
-          console.error(`Fallback HF imageClassification attempt ${attempts} failed:`, msg);
-          const shouldRetry = /503|rate|timeout|temporar|403/i.test(msg);
-          if (attempts < 3 && shouldRetry) {
-            const waitMs = Math.min(8000, 1000 * attempts);
-            console.log(`Fallback HF imageClassification retry ${attempts} in ${waitMs}ms due to:`, msg);
-            await new Promise((r) => setTimeout(r, waitMs));
-            continue;
-          }
-          throw err;
-        }
-      }
+    if (ensembleResults.length === 0) {
+      throw new Error("All AI models failed. Please try again.");
     }
 
-    // Aggregate and rank results by combining scores from all models
-    const aggregatedResults = new Map<string, { label: string; totalScore: number; modelCount: number; models: string[] }>();
+    // Aggregate results with frequency bonus
+    const labelScores = new Map<string, { totalScore: number; count: number; models: Set<string> }>();
     
-    for (const result of allResults) {
+    for (const result of ensembleResults) {
       const key = result.label.toLowerCase();
-      if (aggregatedResults.has(key)) {
-        const existing = aggregatedResults.get(key)!;
-        existing.totalScore += result.score || 0;
-        existing.modelCount += 1;
-        existing.models.push(result.model || 'unknown');
-      } else {
-        aggregatedResults.set(key, {
-          label: result.label,
-          totalScore: result.score || 0,
-          modelCount: 1,
-          models: [result.model || 'unknown']
-        });
-      }
+      const current = labelScores.get(key) || { totalScore: 0, count: 0, models: new Set() };
+      current.totalScore += result.score;
+      current.count += 1;
+      current.models.add(result.model);
+      labelScores.set(key, current);
     }
-    
-    // Calculate final scores with confidence boost for multi-model agreement
-    const finalResults = Array.from(aggregatedResults.values()).map(result => ({
-      label: result.label,
-      score: (result.totalScore / result.modelCount) * (1 + (result.modelCount - 1) * 0.1), // Boost for model agreement
-      modelCount: result.modelCount,
-      models: result.models
-    }));
 
-    const flat = Array.isArray(finalResults) ? finalResults : [];
-    
-    // Filter results to only include spider-related classifications
+    // Calculate final scores with multi-model agreement bonus
+    const aggregatedResults = Array.from(labelScores.entries())
+      .map(([label, data]) => {
+        const avgScore = data.totalScore / models.length;
+        const agreementBonus = (data.models.size / models.length) * 0.25; // Up to 25% bonus
+        return { 
+          label, 
+          score: Math.min(1.0, avgScore + agreementBonus),
+          modelCount: data.models.size
+        };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 15);
+
+    console.log("Top aggregated results:", aggregatedResults.slice(0, 5));
+
+    // Strict spider filtering
     const spiderKeywords = [
-      'spider', 'arachnid', 'tarantula', 'widow', 'recluse', 'funnel', 'wolf', 
-      'jumping', 'orb', 'huntsman', 'crab', 'lynx', 'nursery', 'cobweb',
-      'phoneutria', 'latrodectus', 'loxosceles', 'atrax', 'sicarius',
-      'nephila', 'lycosa', 'salticidae', 'theraphosidae', 'araneae'
+      'spider', 'arachnid', 'tarantula', 'widow', 'recluse', 'wolf', 
+      'jumping', 'orb', 'garden', 'cellar', 'house', 'crab', 'grass',
+      'lycosa', 'salticidae', 'araneae', 'latrodectus', 'loxosceles'
     ];
 
     const excludeKeywords = [
-      'guitar', 'instrument', 'music', 'bird', 'mammal', 'reptile', 'fish', 'insect',
-      'plant', 'flower', 'tree', 'furniture', 'tool', 'vehicle', 'food', 'building',
-      'person', 'human', 'face', 'hand', 'dog', 'cat', 'car', 'house', 'acoustic',
-      'harvestman', 'opiliones', 'daddy long legs', 'harvester'
+      'guitar', 'instrument', 'music', 'bird', 'mammal', 'reptile', 'fish',
+      'plant', 'flower', 'tree', 'furniture', 'tool', 'vehicle', 'food',
+      'person', 'human', 'face', 'dog', 'cat', 'car', 'harvestman', 'opiliones'
     ];
 
-    const spiderFiltered = flat.filter((result: any) => {
-      const label = (result.label || '').toLowerCase();
-      const hasSpiderKeyword = spiderKeywords.some(keyword => label.includes(keyword));
-      const hasExcludedTerm = excludeKeywords.some(keyword => label.includes(keyword));
-      const meetsScore = (result.score ?? 0) >= 0.4;
-      return hasSpiderKeyword && !hasExcludedTerm && meetsScore;
+    const spiderFiltered = aggregatedResults.filter(result => {
+      const label = result.label.toLowerCase();
+      const hasSpider = spiderKeywords.some(kw => label.includes(kw));
+      const hasExcluded = excludeKeywords.some(kw => label.includes(kw));
+      return hasSpider && !hasExcluded && result.score >= 0.35;
     });
 
-    // If no spider results found, we only want spider classifications
     if (spiderFiltered.length === 0) {
-      throw new Error("No spider species detected in this image. Please upload an image containing a spider.");
+      throw new Error("No US spider species detected. Please upload a clear image of a spider.");
     }
     
-    const finalSorted = spiderFiltered;
-    
-    const sorted = finalSorted
-      .sort((a: any, b: any) => (b.score ?? 0) - (a.score ?? 0))
-      .slice(0, Math.max(1, Math.min(10, Number(topK) || 5)));
+    console.log("Spider-filtered results:", spiderFiltered.slice(0, 5));
 
-    // Get best species match from database
-    const primaryMatch = getBestSpeciesMatch(sorted[0]?.label || "Unknown");
-    const species = primaryMatch.species;
-    const nickname = generateNickname(species);
+    // Map to database with US-native prioritization
+    const candidatesWithDB: Array<{
+      dbKey: string;
+      dbData: SpiderData;
+      aiLabel: string;
+      aiScore: number;
+      dbConfidence: number;
+      combinedScore: number;
+    }> = [];
+
+    for (const result of spiderFiltered) {
+      const match = getBestSpeciesMatch(result.label);
+      if (match && match.data.isUSNative) { // STRICT US filter
+        const combinedScore = (result.score * 0.6) + (match.confidence / 100 * 0.4);
+        candidatesWithDB.push({
+          dbKey: match.key,
+          dbData: match.data,
+          aiLabel: result.label,
+          aiScore: result.score,
+          dbConfidence: match.confidence,
+          combinedScore
+        });
+      }
+    }
+
+    if (candidatesWithDB.length === 0) {
+      throw new Error("Could not identify any US-native spider species. Please ensure image shows a spider found in the United States.");
+    }
+
+    // Sort and get unique top 3
+    candidatesWithDB.sort((a, b) => b.combinedScore - a.combinedScore);
+    const uniqueCandidates: typeof candidatesWithDB = [];
+    const seenKeys = new Set<string>();
     
-    // Get top 3 species candidates
-    const top3Candidates = sorted.slice(0, 3).map((candidate: any, index: number) => {
-      const match = getBestSpeciesMatch(candidate.label);
-      const modelScore = candidate.score || 0;
-      const databaseConfidence = match.confidence;
-      
-      // Combined confidence: weight model score more heavily, boost for US natives
-      const combinedConfidence = Math.min(98, 
-        (modelScore * 0.65) + 
-        (databaseConfidence * 0.30) + 
-        (match.isUSNative ? 0.05 : 0)
-      );
-      
+    for (const candidate of candidatesWithDB) {
+      if (!seenKeys.has(candidate.dbKey)) {
+        uniqueCandidates.push(candidate);
+        seenKeys.add(candidate.dbKey);
+        if (uniqueCandidates.length >= 3) break;
+      }
+    }
+
+    const topCandidate = uniqueCandidates[0];
+    const species = topCandidate.dbData;
+    
+    console.log(`Top match: ${species.scientificName} (${species.commonNames[0]})`);
+    console.log(`Confidence: ${Math.round(topCandidate.combinedScore * 100)}%`);
+
+    // Generate stats and nickname
+    const statsCore = generateBiologyBasedStats(species);
+    const nickname = generateNickname(species.scientificName);
+    
+    // Calculate power score with danger bonus
+    const basePowerScore = Object.values(statsCore).reduce((sum, v) => sum + Number(v), 0);
+    const dangerBonus = species.danger === 'extreme' ? 35 :
+                        species.danger === 'high' ? 25 :
+                        species.danger === 'moderate' ? 12 :
+                        species.danger === 'low' ? 6 : 0;
+    const power_score = basePowerScore + dangerBonus;
+    
+    // Determine rarity
+    let rarity: "COMMON" | "RARE" | "EPIC" | "LEGENDARY";
+    if (power_score >= 310) rarity = "LEGENDARY";
+    else if (power_score >= 260) rarity = "EPIC";
+    else if (power_score >= 210) rarity = "RARE";
+    else rarity = "COMMON";
+
+    // Format top 3 candidates
+    const topCandidates = uniqueCandidates.map((c, index) => {
+      const confidence = Math.min(98, Math.max(15, Math.round(c.combinedScore * 100)));
       return {
-        species: match.species,
-        scientificFamily: match.family,
-        commonNames: match.commonNames,
-        confidence: Math.round(combinedConfidence * 100),
-        isUSNative: match.isUSNative,
-        harmfulToHumans: match.harmfulToHumans,
-        specialAbilities: match.specialAbilities,
-        modelScore: Math.round(modelScore * 100),
+        species: `${c.dbData.scientificName} (${c.dbData.commonNames[0]})`,
+        commonName: c.dbData.commonNames[0],
+        scientificName: c.dbData.scientificName,
+        scientificFamily: c.dbData.family,
+        commonNames: c.dbData.commonNames,
+        confidence,
+        isUSNative: c.dbData.isUSNative,
+        isCommonInvasive: c.dbData.isCommonInvasive || false,
+        harmfulToHumans: c.dbData.danger !== 'minimal',
+        harmfulReason: c.dbData.harmfulReason,
+        specialAbilities: c.dbData.specialAbilities,
         rank: index + 1
       };
     });
-    
-    console.log("Top 3 species candidates:", top3Candidates);
 
-    // Generate biology-based stats using database
-    const statsCore = generateBiologyBasedStats(primaryMatch.data);
-    
-    // Calculate power score
-    const basePowerScore = Object.values(statsCore).reduce((sum, v) => sum + Number(v), 0);
-    
-    // Add danger-based bonus
-    const dangerBonus = primaryMatch.dangerLevel === 'extreme' ? 30 :
-                        primaryMatch.dangerLevel === 'high' ? 20 :
-                        primaryMatch.dangerLevel === 'moderate' ? 10 :
-                        primaryMatch.dangerLevel === 'low' ? 5 : 0;
-    
-    const power_score = basePowerScore + dangerBonus;
-    
-    // Determine rarity based on power score
-    let rarity: "COMMON" | "RARE" | "EPIC" | "LEGENDARY";
-    if (power_score >= 300) rarity = "LEGENDARY";
-    else if (power_score >= 250) rarity = "EPIC";
-    else if (power_score >= 200) rarity = "RARE";
-    else rarity = "COMMON";
-
-    const stats = { ...statsCore, power_score, rarity };
-
-    // Enhanced output payload
+    // Build enhanced payload
     const payload = {
-      // Primary identification
-      species: top3Candidates[0].species,
-      scientificFamily: top3Candidates[0].scientificFamily,
-      commonNames: top3Candidates[0].commonNames,
+      species: topCandidates[0].species,
+      scientificFamily: topCandidates[0].scientificFamily,
+      commonNames: topCandidates[0].commonNames,
       nickname,
       
-      // Confidence scoring
-      confidence: top3Candidates[0].confidence,
-      identificationQuality: top3Candidates[0].confidence >= 85 ? "very_high" : 
-                            top3Candidates[0].confidence >= 70 ? "high" :
-                            top3Candidates[0].confidence >= 50 ? "medium" : "low",
+      confidence: topCandidates[0].confidence,
+      identificationQuality: topCandidates[0].confidence >= 85 ? "very_high" : 
+                            topCandidates[0].confidence >= 70 ? "high" :
+                            topCandidates[0].confidence >= 50 ? "medium" : "low",
       
-      // Top 3 candidates
-      topCandidates: top3Candidates,
+      topCandidates,
       
-      // Safety information
-      isUSNative: primaryMatch.isUSNative,
-      harmfulToHumans: primaryMatch.harmfulToHumans,
-      dangerLevel: primaryMatch.dangerLevel,
+      isUSNative: species.isUSNative,
+      harmfulToHumans: species.harmfulReason || 'Harmless',
+      dangerLevel: species.danger,
       
-      // Game attributes
       attributes: {
-        hit_points: stats.hit_points,
-        damage: stats.damage,
-        speed: stats.speed,
-        defense: stats.defense,
-        venom: stats.venom,
-        webcraft: stats.webcraft,
-        power_score: stats.power_score,
-        rarity: stats.rarity
+        hit_points: statsCore.hit_points,
+        damage: statsCore.damage,
+        speed: statsCore.speed,
+        defense: statsCore.defense,
+        venom: statsCore.venom,
+        webcraft: statsCore.webcraft,
+        power_score,
+        rarity
       },
       
-      // Special abilities
-      specialAbilities: primaryMatch.specialAbilities,
+      specialAbilities: species.specialAbilities,
       
-      // Debug info
-      debug: {
-        modelResults: sorted.slice(0, 3).map((r: any) => ({
-          label: r.label,
-          score: Math.round((r.score || 0) * 100),
-          modelCount: r.modelCount || 1
-        })),
-        multiModelAgreement: modelConfidences.length > 1
-      },
-      
-      // Legacy fields for compatibility
-      stats,
-      family: primaryMatch.family
+      // Legacy compatibility
+      stats: { ...statsCore, power_score, rarity },
+      family: species.family
     };
 
-    console.log("Enhanced spider-identify result:", payload);
+    console.log("✓ Spider identification complete");
+    console.log(`✓ Species: ${payload.species}`);
+    console.log(`✓ Confidence: ${payload.confidence}%`);
+    console.log(`✓ US Native: ${payload.isUSNative}`);
 
     return new Response(JSON.stringify(payload), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Error in spider-identify:", error);
+    console.error("❌ Error in spider-identify:", error);
     return new Response(
-      JSON.stringify({ error: "Unexpected error", details: String(error) }),
+      JSON.stringify({ error: String(error) }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
