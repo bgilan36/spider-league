@@ -154,15 +154,15 @@ serve(async (req) => {
     let winnerUser: string;
 
     if (state.p1_hp > state.p2_hp) {
-      winner = "TEAM_A";
+      winner = "A";
       winnerUser = user1;
     } else if (state.p2_hp > state.p1_hp) {
-      winner = "TEAM_B";
+      winner = "B";
       winnerUser = user2;
     } else {
       // Tie - highest power score wins
-      winner = spider1.power_score >= spider2.power_score ? "TEAM_A" : "TEAM_B";
-      winnerUser = winner === "TEAM_A" ? user1 : user2;
+      winner = spider1.power_score >= spider2.power_score ? "A" : "B";
+      winnerUser = winner === "A" ? user1 : user2;
     }
 
     const loserUser = winnerUser === user1 ? user2 : user1;
