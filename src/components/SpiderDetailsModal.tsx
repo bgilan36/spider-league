@@ -12,8 +12,9 @@ import PowerScoreArc from "@/components/PowerScoreArc";
 import BattleButton from "@/components/BattleButton";
 import ShareButton from "@/components/ShareButton";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
+import BattleDetailsModal from "@/components/BattleDetailsModal";
 
 interface Spider {
   id: string;
@@ -46,6 +47,18 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
 }) => {
   const [battles, setBattles] = React.useState<any[]>([]);
   const [loadingBattles, setLoadingBattles] = React.useState(false);
+  const [selectedBattle, setSelectedBattle] = React.useState<any | null>(null);
+  const [isBattleModalOpen, setIsBattleModalOpen] = React.useState(false);
+
+  const handleBattleClick = (battle: any) => {
+    setSelectedBattle(battle);
+    setIsBattleModalOpen(true);
+  };
+
+  const handleCloseBattleModal = () => {
+    setIsBattleModalOpen(false);
+    setSelectedBattle(null);
+  };
 
   React.useEffect(() => {
     if (isOpen && spider) {
@@ -211,9 +224,10 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
                 return (
                   <div
                     key={battle.id}
-                    className="flex items-center justify-between p-3 rounded-lg border bg-card"
+                    onClick={() => handleBattleClick(battle)}
+                    className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent cursor-pointer transition-colors"
                   >
-                    <div className="flex items-center gap-3 flex-1">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
                       <img
                         src={opponentSpider?.image_url}
                         alt={opponentSpider?.nickname}
@@ -228,9 +242,12 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
                         </p>
                       </div>
                     </div>
-                    <Badge variant={wasWinner ? "default" : "destructive"}>
-                      {wasWinner ? "Won" : "Lost"}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={wasWinner ? "default" : "destructive"}>
+                        {wasWinner ? "Won" : "Lost"}
+                      </Badge>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </div>
                   </div>
                 );
               })}
@@ -238,6 +255,12 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
           )}
         </div>
       </DialogContent>
+
+      <BattleDetailsModal
+        isOpen={isBattleModalOpen}
+        onClose={handleCloseBattleModal}
+        battle={selectedBattle}
+      />
     </Dialog>
   );
 };
