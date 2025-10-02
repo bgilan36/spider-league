@@ -47,7 +47,10 @@ serve(async (req) => {
 
     let turnCount = 0;
     let currentTurnUser = user1;
-    const maxTurns = 50; // Safety limit
+    const maxTurns = 30; // Reduced for faster battles
+
+    // Dice roll function (1-20)
+    const rollDice = () => Math.floor(Math.random() * 20) + 1;
 
     // Run battle simulation
     while (state.p1_hp > 0 && state.p2_hp > 0 && turnCount < maxTurns) {
@@ -58,26 +61,40 @@ serve(async (req) => {
       const attackerHp = isP1Turn ? state.p1_hp : state.p2_hp;
       const defenderHp = isP1Turn ? state.p2_hp : state.p1_hp;
 
-      // Choose action (80% attack, 15% special, 5% defend)
+      // Roll dice for both attacker and defender
+      const attackerDice = rollDice();
+      const defenderDice = rollDice();
+      
+      // Choose action (85% attack, 15% special)
       const rand = Math.random();
       let actionType: string;
       let damage = 0;
+      let isCritical = false;
 
-      if (rand < 0.8) {
+      if (rand < 0.85) {
         actionType = "attack";
-        damage = Math.max(
-          1,
-          attacker.damage + Math.floor(Math.random() * 10) - Math.floor(defender.defense / 10)
-        );
-      } else if (rand < 0.95) {
-        actionType = "special";
-        damage = Math.max(
-          2,
-          attacker.venom + Math.floor(Math.random() * 15) - Math.floor(defender.defense / 8)
-        );
+        // Base damage calculation with dice modifier
+        const baseDamage = attacker.damage + (attackerDice - 10); // Dice adds -9 to +10
+        const defense = Math.floor(defender.defense / 10) + (defenderDice > 15 ? 3 : 0); // High defender roll adds defense
+        damage = Math.max(1, baseDamage - defense);
+        
+        // Critical hit on natural 20
+        if (attackerDice === 20) {
+          damage = Math.floor(damage * 1.5);
+          isCritical = true;
+        }
       } else {
-        actionType = "defend";
-        damage = 0;
+        actionType = "special";
+        // Special attacks are more powerful but less consistent
+        const baseDamage = attacker.venom + (attackerDice - 8); // Higher variance
+        const defense = Math.floor(defender.defense / 8) + (defenderDice > 16 ? 2 : 0);
+        damage = Math.max(2, baseDamage - defense);
+        
+        // Critical on 19-20 for special
+        if (attackerDice >= 19) {
+          damage = Math.floor(damage * 1.75);
+          isCritical = true;
+        }
       }
 
       const newDefenderHp = Math.max(0, defenderHp - damage);
@@ -111,6 +128,9 @@ serve(async (req) => {
           defender_name: defender.nickname,
           special_move: specialMoveDescription,
           old_defender_hp: defenderHp,
+          attacker_dice: attackerDice,
+          defender_dice: defenderDice,
+          is_critical: isCritical,
         },
       };
 
@@ -122,8 +142,8 @@ serve(async (req) => {
         ...turnResult,
       });
 
-      // Add delay between turns (aim for ~20 seconds total, so ~400ms per turn for 50 turns max)
-      await new Promise(resolve => setTimeout(resolve, 400));
+      // Reduced delay for faster battles (aim for ~15 seconds total with max 30 turns)
+      await new Promise(resolve => setTimeout(resolve, 200));
 
       // Switch turn
       currentTurnUser = currentTurnUser === user1 ? user2 : user1;

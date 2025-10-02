@@ -274,7 +274,6 @@ const TurnBasedBattle = () => {
                     const result = turn.result_payload as any;
                     const isAttack = turn.action_type === 'attack';
                     const isSpecial = turn.action_type === 'special';
-                    const isDefend = turn.action_type === 'defend';
                     
                     return (
                       <motion.div
@@ -283,16 +282,25 @@ const TurnBasedBattle = () => {
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 20 }}
                         transition={{ delay: index * 0.02 }}
-                        className="text-sm p-4 bg-muted/50 rounded-lg border border-border"
+                        className={`text-sm p-4 bg-muted/50 rounded-lg border ${
+                          result?.is_critical ? 'border-yellow-500 bg-yellow-500/10' : 'border-border'
+                        }`}
                       >
                         <div className="flex items-center justify-between mb-2">
                           <span className="font-bold text-primary">Turn {turn.turn_index}</span>
-                          <Badge 
-                            variant={isSpecial ? "default" : "outline"} 
-                            className="text-xs"
-                          >
-                            {turn.action_type.toUpperCase()}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            {result?.is_critical && (
+                              <Badge variant="default" className="text-xs bg-yellow-500">
+                                CRITICAL!
+                              </Badge>
+                            )}
+                            <Badge 
+                              variant={isSpecial ? "default" : "outline"} 
+                              className="text-xs"
+                            >
+                              {turn.action_type.toUpperCase()}
+                            </Badge>
+                          </div>
                         </div>
                         
                         {result && (
@@ -301,22 +309,27 @@ const TurnBasedBattle = () => {
                               {result.attacker_name} 
                               {isAttack && ' attacks '}
                               {isSpecial && ` uses ${result.special_move || 'Special Attack'} on `}
-                              {isDefend && ' defends'}
-                              {!isDefend && result.defender_name}!
+                              {result.defender_name}!
                             </div>
                             
-                            {!isDefend && result.damage > 0 && (
+                            {/* Dice rolls */}
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                🎲 Attack: <span className={`font-bold ${result.attacker_dice === 20 ? 'text-yellow-500' : result.attacker_dice >= 15 ? 'text-green-500' : ''}`}>{result.attacker_dice}</span>
+                              </span>
+                              <span className="flex items-center gap-1">
+                                🎲 Defense: <span className={`font-bold ${result.defender_dice >= 18 ? 'text-blue-500' : ''}`}>{result.defender_dice}</span>
+                              </span>
+                            </div>
+                            
+                            {result.damage > 0 && (
                               <div className="text-muted-foreground flex items-center gap-2">
-                                <span className="text-destructive">💥 {result.damage} damage dealt</span>
+                                <span className={`${result.is_critical ? 'text-yellow-500 font-bold' : 'text-destructive'}`}>
+                                  💥 {result.damage} damage dealt{result.is_critical ? ' (CRITICAL!)' : ''}
+                                </span>
                                 <span className="text-xs">
                                   ({result.old_defender_hp} → {result.new_defender_hp} HP)
                                 </span>
-                              </div>
-                            )}
-                            
-                            {isDefend && (
-                              <div className="text-muted-foreground">
-                                🛡️ Preparing defensive stance...
                               </div>
                             )}
                             
