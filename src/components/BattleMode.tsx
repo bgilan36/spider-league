@@ -189,40 +189,71 @@ const BattleMode: React.FC<{ showChallenges?: boolean }> = ({ showChallenges = t
 
   // Accept battle challenge
   const acceptChallenge = async (challenge: BattleChallenge, accepterSpider: Spider) => {
-    if (!user) return;
+    if (!user || !challenge.challenger_spider) return;
 
     setLoading(true);
     
-    // Update challenge to accepted
-    const { error: updateError } = await supabase
-      .from('battle_challenges')
-      .update({
-        status: 'ACCEPTED',
-        accepter_id: user.id,
-        accepter_spider_id: accepterSpider.id
-      })
-      .eq('id', challenge.id);
+    try {
+      // Update challenge to accepted
+      const { error: updateError } = await supabase
+        .from('battle_challenges')
+        .update({
+          status: 'ACCEPTED',
+          accepter_id: user.id,
+          accepter_spider_id: accepterSpider.id
+        })
+        .eq('id', challenge.id);
 
-    if (updateError) {
+      if (updateError) throw updateError;
+
+      // Create turn-based battle
+      const battleInsert = {
+        team_a: {
+          userId: challenge.challenger_id,
+          spider: challenge.challenger_spider
+        },
+        team_b: {
+          userId: user.id,
+          spider: accepterSpider
+        },
+        current_turn_user_id: challenge.challenger_id,
+        p1_current_hp: challenge.challenger_spider.hit_points,
+        p2_current_hp: accepterSpider.hit_points,
+        is_active: true,
+        rng_seed: Math.random().toString(36).substring(7)
+      };
+
+      const { data: battleData, error: battleError } = await supabase
+        .from('battles')
+        .insert(battleInsert as any)
+        .select()
+        .single();
+
+      if (battleError) throw battleError;
+
+      // Update challenge with battle_id
+      await supabase
+        .from('battle_challenges')
+        .update({ battle_id: battleData.id })
+        .eq('id', challenge.id);
+
+      toast({
+        title: "Challenge Accepted!",
+        description: "Entering turn-based battle...",
+      });
+
+      // Navigate to turn-based battle
+      window.location.href = `/battle/${battleData.id}`;
+    } catch (error: any) {
+      console.error('Error accepting challenge:', error);
       toast({
         title: "Error",
-        description: "Failed to accept challenge",
+        description: error.message || "Failed to accept challenge",
         variant: "destructive"
       });
+    } finally {
       setLoading(false);
-      return;
     }
-
-    // Start battle
-    setActiveBattle({
-      challengeId: challenge.id,
-      spider1: challenge.challenger_spider,
-      spider2: accepterSpider,
-      challenger: challenge.challenger_profile?.display_name || 'Unknown',
-      accepter: user.email?.split('@')[0] || 'Unknown'
-    });
-    
-    setLoading(false);
   };
 
   // Handle battle completion

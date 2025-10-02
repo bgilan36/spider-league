@@ -14,6 +14,7 @@ import Leaderboard from "./pages/Leaderboard";
 import Roadmap from "./pages/Roadmap";
 import BattleHistory from "./pages/BattleHistory";
 import BattleMode from "./pages/BattleMode";
+import TurnBasedBattle from "./pages/TurnBasedBattle";
 import AboutUs from "./pages/AboutUs";
 import Shop from "./pages/Shop";
 import UserCollection from "./pages/UserCollection";
@@ -42,6 +43,7 @@ const App = () => (
                 <Route path="/leaderboard" element={<Leaderboard />} />
                 <Route path="/battle-history" element={<BattleHistory />} />
                 <Route path="/battle-mode" element={<BattleMode />} />
+                <Route path="/battle/:battleId" element={<TurnBasedBattle />} />
                 <Route path="/roadmap" element={<Roadmap />} />
                 <Route path="/collection/:userId" element={<UserCollection />} />
                 <Route path="/shop" element={<Shop />} />

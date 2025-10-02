@@ -88,7 +88,7 @@ const ChallengeDetailsModal: React.FC<ChallengeDetailsModalProps> = ({
 
   // Accept challenge
   const acceptChallenge = async () => {
-    if (!user || !challenge || !selectedSpider) return;
+    if (!user || !challenge || !selectedSpider || !challenge.challenger_spider) return;
 
     setLoading(true);
     
@@ -103,30 +103,53 @@ const ChallengeDetailsModal: React.FC<ChallengeDetailsModalProps> = ({
         })
         .eq('id', challenge.id);
 
-      if (updateError) {
-        console.error('Error accepting challenge:', updateError);
-        toast({
-          title: "Error",
-          description: "Failed to accept challenge. Please try again.",
-          variant: "destructive"
-        });
-        return;
-      }
+      if (updateError) throw updateError;
 
-      // Start battle immediately
-      onChallengeAccepted?.(challenge, selectedSpider);
-      
+      // Create turn-based battle
+      const battleInsert = {
+        team_a: {
+          userId: challenge.challenger_id,
+          spider: challenge.challenger_spider
+        },
+        team_b: {
+          userId: user.id,
+          spider: selectedSpider
+        },
+        current_turn_user_id: challenge.challenger_id,
+        p1_current_hp: challenge.challenger_spider.hit_points,
+        p2_current_hp: selectedSpider.hit_points,
+        is_active: true,
+        rng_seed: Math.random().toString(36).substring(7)
+      };
+
+      const { data: battleData, error: battleError } = await supabase
+        .from('battles')
+        .insert(battleInsert as any)
+        .select()
+        .single();
+
+      if (battleError) throw battleError;
+
+      // Update challenge with battle_id
+      await supabase
+        .from('battle_challenges')
+        .update({ battle_id: battleData.id })
+        .eq('id', challenge.id);
+
       toast({
         title: "Challenge Accepted!",
-        description: `Battle starting now! ${selectedSpider.nickname} vs ${challenge.challenger_spider?.nickname}!`
+        description: `Battle starting! ${selectedSpider.nickname} vs ${challenge.challenger_spider?.nickname}!`
       });
 
       onClose();
-    } catch (error) {
+      
+      // Navigate to turn-based battle
+      window.location.href = `/battle/${battleData.id}`;
+    } catch (error: any) {
       console.error('Error accepting challenge:', error);
       toast({
         title: "Error",
-        description: "An unexpected error occurred while accepting the challenge",
+        description: error.message || "Failed to accept challenge",
         variant: "destructive"
       });
     } finally {
