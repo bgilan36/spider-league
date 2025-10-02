@@ -9,6 +9,8 @@ import { BadgeIcon } from '@/components/BadgeIcon';
 import SpiderDetailsModal from '@/components/SpiderDetailsModal';
 import { supabase } from '@/integrations/supabase/client';
 import PowerScoreArc from '@/components/PowerScoreArc';
+import ProfileWall from '@/components/ProfileWall';
+import { useNavigate } from 'react-router-dom';
 
 interface UserProfile {
   id: string;
@@ -62,6 +64,7 @@ const UserSnapshotModal: React.FC<UserSnapshotModalProps> = ({
   onClose,
   userId
 }) => {
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [spiders, setSpiders] = useState<Spider[]>([]);
   const [badges, setBadges] = useState<UserBadge[]>([]);
@@ -319,10 +322,25 @@ const UserSnapshotModal: React.FC<UserSnapshotModalProps> = ({
               </CardContent>
             </Card>
 
-            {/* Close Button */}
-            <div className="flex justify-center">
-              <Button onClick={onClose} variant="outline" size="lg">
-                Close Profile
+            {/* Profile Wall Section */}
+            <ProfileWall 
+              profileUserId={userId}
+              profileDisplayName={profile.display_name || 'Anonymous Player'}
+            />
+
+            {/* Action Buttons */}
+            <div className="flex justify-center gap-3">
+              <Button 
+                onClick={() => {
+                  onClose();
+                  navigate(`/collection/${userId}`);
+                }}
+                variant="default"
+              >
+                View Full Profile
+              </Button>
+              <Button onClick={onClose} variant="outline">
+                Close
               </Button>
             </div>
           </div>
