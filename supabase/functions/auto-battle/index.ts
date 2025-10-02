@@ -47,7 +47,7 @@ serve(async (req) => {
 
     let turnCount = 0;
     let currentTurnUser = user1;
-    const maxTurns = 30; // Reduced for faster battles
+    const maxTurns = 10; // Max 10 turns for faster battles
 
     // Dice roll function (1-20)
     const rollDice = () => Math.floor(Math.random() * 20) + 1;
@@ -73,26 +73,26 @@ serve(async (req) => {
 
       if (rand < 0.85) {
         actionType = "attack";
-        // Base damage calculation with dice modifier
-        const baseDamage = attacker.damage + (attackerDice - 10); // Dice adds -9 to +10
-        const defense = Math.floor(defender.defense / 10) + (defenderDice > 15 ? 3 : 0); // High defender roll adds defense
-        damage = Math.max(1, baseDamage - defense);
+        // Increased base damage for faster battles
+        const baseDamage = Math.floor(attacker.damage * 1.5) + (attackerDice - 10);
+        const defense = Math.floor(defender.defense / 15) + (defenderDice > 16 ? 2 : 0);
+        damage = Math.max(5, baseDamage - defense); // Minimum 5 damage
         
         // Critical hit on natural 20
         if (attackerDice === 20) {
-          damage = Math.floor(damage * 1.5);
+          damage = Math.floor(damage * 2);
           isCritical = true;
         }
       } else {
         actionType = "special";
-        // Special attacks are more powerful but less consistent
-        const baseDamage = attacker.venom + (attackerDice - 8); // Higher variance
-        const defense = Math.floor(defender.defense / 8) + (defenderDice > 16 ? 2 : 0);
-        damage = Math.max(2, baseDamage - defense);
+        // Special attacks deal heavy damage
+        const baseDamage = Math.floor(attacker.venom * 1.8) + (attackerDice - 8);
+        const defense = Math.floor(defender.defense / 12) + (defenderDice > 17 ? 2 : 0);
+        damage = Math.max(8, baseDamage - defense); // Minimum 8 damage
         
         // Critical on 19-20 for special
         if (attackerDice >= 19) {
-          damage = Math.floor(damage * 1.75);
+          damage = Math.floor(damage * 2.5);
           isCritical = true;
         }
       }
@@ -142,8 +142,8 @@ serve(async (req) => {
         ...turnResult,
       });
 
-      // Reduced delay for faster battles (aim for ~15 seconds total with max 30 turns)
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // Quick delay for real-time display (1.5 second per turn)
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
       // Switch turn
       currentTurnUser = currentTurnUser === user1 ? user2 : user1;
