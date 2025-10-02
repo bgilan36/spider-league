@@ -75,6 +75,15 @@ const OnlineUsersBar: React.FC = () => {
                 Online:
               </span>
               <span className="text-sm text-muted-foreground">No other players online</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleInvite}
+                className="h-8 gap-2 text-xs ml-auto"
+              >
+                <UserPlus className="h-4 w-4" />
+                Invite
+              </Button>
             </div>
           </div>
         </div>
