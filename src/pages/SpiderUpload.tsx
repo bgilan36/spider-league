@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
 import { classifyImage } from "@/hooks/useImageClassifier";
 import { useBadgeSystem } from "@/hooks/useBadgeSystem";
+import heic2any from "heic2any";
 
 const titleCase = (str: string) =>
   str
@@ -50,6 +51,21 @@ const generateNickname = (species: string) => {
   const hint = species.split(" ")[0];
   return `${adj}${noun} ${hint}`.trim();
 };
+
+async function ensureJpeg(file: File): Promise<File> {
+  const type = (file.type || "").toLowerCase();
+  const name = file.name || "";
+  const isHeic = type.includes("heic") || type.includes("heif") || /\.(heic|heif)$/i.test(name);
+  if (!isHeic) return file;
+  try {
+    const converted = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 });
+    const blob = Array.isArray(converted) ? (converted[0] as Blob) : (converted as Blob);
+    return new File([blob], name.replace(/\.(heic|heif)$/i, ".jpg"), { type: "image/jpeg" });
+  } catch (e) {
+    console.warn("HEIC to JPEG conversion failed, using original file", e);
+    return file;
+  }
+}
 
 const SpiderUpload = () => {
   const { user, session } = useAuth();
@@ -126,11 +142,8 @@ const SpiderUpload = () => {
       toast({ title: 'Analyzing spider...', description: 'Please wait while we identify your spider.' });
       
       const base64 = await compressImageToBase64(file, 1024, 0.85);
-      const { data, error } = await supabase.functions.invoke('spider-identify', {
-        body: { image: base64, topK: 8 },
-        headers: {
-          Authorization: `Bearer ${session?.access_token}`,
-        },
+const { data, error } = await supabase.functions.invoke('spider-identify', {
+        body: { image: base64, topK: 8 }
       });
       
       if (error) throw error;
@@ -240,16 +253,17 @@ const SpiderUpload = () => {
   };
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.type.startsWith('image/')) {
-        setSelectedFile(file);
-        setPreviewUrl(URL.createObjectURL(file));
-        await analyzeImage(file);
-      } else {
-        toast({ title: "Invalid file", description: "Please select an image file.", variant: "destructive" });
-      }
+  const file = event.target.files?.[0];
+  if (file) {
+    if (file.type.startsWith('image/') || /\.(heic|heif)$/i.test(file.name)) {
+      const converted = await ensureJpeg(file);
+      setSelectedFile(converted);
+      setPreviewUrl(URL.createObjectURL(converted));
+      await analyzeImage(converted);
+    } else {
+      toast({ title: "Invalid file", description: "Please select an image file.", variant: "destructive" });
     }
+  }
   };
 
 const applySpeciesBias = (speciesName: string, stats: { hit_points: number; damage: number; speed: number; defense: number; venom: number; webcraft: number; }) => {
