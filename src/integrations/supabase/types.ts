@@ -121,34 +121,90 @@ export type Database = {
           },
         ]
       }
+      battle_turns: {
+        Row: {
+          action_payload: Json
+          action_type: string
+          actor_user_id: string
+          battle_id: string
+          created_at: string
+          id: string
+          result_payload: Json
+          turn_index: number
+        }
+        Insert: {
+          action_payload?: Json
+          action_type: string
+          actor_user_id: string
+          battle_id: string
+          created_at?: string
+          id?: string
+          result_payload?: Json
+          turn_index: number
+        }
+        Update: {
+          action_payload?: Json
+          action_type?: string
+          actor_user_id?: string
+          battle_id?: string
+          created_at?: string
+          id?: string
+          result_payload?: Json
+          turn_index?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "battle_turns_battle_id_fkey"
+            columns: ["battle_id"]
+            isOneToOne: false
+            referencedRelation: "battles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       battles: {
         Row: {
           battle_log: Json | null
           created_at: string | null
+          current_turn_user_id: string | null
           id: string
+          is_active: boolean | null
+          p1_current_hp: number | null
+          p2_current_hp: number | null
           rng_seed: string
           team_a: Json
           team_b: Json
+          turn_count: number | null
           type: Database["public"]["Enums"]["battle_type"]
           winner: Database["public"]["Enums"]["battle_winner"] | null
         }
         Insert: {
           battle_log?: Json | null
           created_at?: string | null
+          current_turn_user_id?: string | null
           id?: string
+          is_active?: boolean | null
+          p1_current_hp?: number | null
+          p2_current_hp?: number | null
           rng_seed: string
           team_a: Json
           team_b: Json
+          turn_count?: number | null
           type?: Database["public"]["Enums"]["battle_type"]
           winner?: Database["public"]["Enums"]["battle_winner"] | null
         }
         Update: {
           battle_log?: Json | null
           created_at?: string | null
+          current_turn_user_id?: string | null
           id?: string
+          is_active?: boolean | null
+          p1_current_hp?: number | null
+          p2_current_hp?: number | null
           rng_seed?: string
           team_a?: Json
           team_b?: Json
+          turn_count?: number | null
           type?: Database["public"]["Enums"]["battle_type"]
           winner?: Database["public"]["Enums"]["battle_winner"] | null
         }
@@ -858,6 +914,14 @@ export type Database = {
       increment_weekly_upload: {
         Args: { spider_id_param: string; user_id_param: string }
         Returns: undefined
+      }
+      process_battle_turn: {
+        Args: {
+          p_action_payload: Json
+          p_action_type: string
+          p_battle_id: string
+        }
+        Returns: Json
       }
       resolve_battle_challenge: {
         Args: {
