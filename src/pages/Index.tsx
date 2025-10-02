@@ -643,7 +643,9 @@ const Index = () => {
           ) : userSpiders.length === 0 ? (
             <Card className="border-2 border-dashed">
               <CardContent className="pt-6 text-center py-16">
-                <Upload className="h-20 w-20 text-primary mx-auto mb-6 opacity-80" />
+                <Link to="/upload" className="inline-block cursor-pointer hover:scale-110 transition-transform duration-200">
+                  <Upload className="h-20 w-20 text-primary mx-auto mb-6 opacity-80" />
+                </Link>
                 <h3 className="text-2xl font-bold mb-3">No Eligible Spider This Week</h3>
                 <p className="text-muted-foreground mb-8 text-lg max-w-md mx-auto">
                   Upload your first spider this week to make it eligible for battles and rankings!

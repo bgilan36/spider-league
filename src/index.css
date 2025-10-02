@@ -272,11 +272,11 @@ All colors MUST be HSL.
   /* Pulse glow effect */
   @keyframes pulse-glow {
     0%, 100% { box-shadow: var(--shadow-glow); }
-    50% { box-shadow: var(--shadow-glow), 0 0 30px hsl(var(--primary-glow) / 0.4); }
+    50% { box-shadow: var(--shadow-glow), 0 0 20px hsl(var(--primary-glow) / 0.2); }
   }
 
   .pulse-glow {
-    animation: pulse-glow 3s ease-in-out infinite;
+    animation: pulse-glow 4s ease-in-out infinite;
   }
 
   /* Modern scrollbar */
