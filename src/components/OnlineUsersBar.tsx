@@ -20,23 +20,29 @@ const OnlineUsersBar: React.FC = () => {
   const otherUsers = onlineUsers.filter(u => u.user_id !== user?.id);
 
   const handleInvite = async () => {
-    const url = window.location.origin;
+    const url = 'https://spiderleague.app';
+    const message = 'Come battle with me on Spider League';
+    const fullMessage = `${message} ${url}`;
+    
     try {
       if (navigator.share) {
         await navigator.share({
           title: 'Spider League',
-          text: 'Join me on Spider League - Share spiders you find in the wild for friendly battles!',
-          url: url,
+          text: fullMessage,
         });
       } else {
-        await navigator.clipboard.writeText(url);
-        toast({
-          title: "Link copied!",
-          description: "Share this link to invite friends to Spider League",
-        });
+        // Fallback to SMS link
+        window.open(`sms:?body=${encodeURIComponent(fullMessage)}`, '_blank');
       }
     } catch (error) {
-      console.error('Error sharing:', error);
+      // If sharing is cancelled or fails, copy to clipboard
+      if (error instanceof Error && error.name !== 'AbortError') {
+        await navigator.clipboard.writeText(fullMessage);
+        toast({
+          title: "Message copied!",
+          description: "Paste this message to invite your friend",
+        });
+      }
     }
   };
 
