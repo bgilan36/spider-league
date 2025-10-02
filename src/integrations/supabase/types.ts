@@ -453,6 +453,35 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_wall_likes: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_wall_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "profile_wall_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_wall_posts: {
         Row: {
           created_at: string
@@ -460,6 +489,7 @@ export type Database = {
           message: string
           poster_user_id: string
           profile_user_id: string
+          spider_id: string | null
           updated_at: string
         }
         Insert: {
@@ -468,6 +498,7 @@ export type Database = {
           message: string
           poster_user_id: string
           profile_user_id: string
+          spider_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -476,9 +507,53 @@ export type Database = {
           message?: string
           poster_user_id?: string
           profile_user_id?: string
+          spider_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profile_wall_posts_spider_id_fkey"
+            columns: ["spider_id"]
+            isOneToOne: false
+            referencedRelation: "spiders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profile_wall_replies: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          post_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          post_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          post_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_wall_replies_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "profile_wall_posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
