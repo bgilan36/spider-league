@@ -270,30 +270,66 @@ const TurnBasedBattle = () => {
                 </div>
               ) : (
                 <AnimatePresence>
-                  {turns.slice().reverse().map((turn, index) => (
-                    <motion.div
-                      key={turn.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      transition={{ delay: index * 0.02 }}
-                      className="text-sm p-3 bg-muted/50 rounded-lg border border-border"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-primary">Turn {turn.turn_index}</span>
-                        <Badge variant="outline" className="text-xs">
-                          {turn.action_type.toUpperCase()}
-                        </Badge>
-                      </div>
-                      {turn.result_payload && (
-                        <div className="mt-1 text-muted-foreground">
-                          {typeof turn.result_payload === 'object' && (turn.result_payload as any).damage && (
-                            <span>💥 Damage: {(turn.result_payload as any).damage} | HP: {(turn.result_payload as any).new_defender_hp}</span>
-                          )}
+                  {turns.slice().reverse().map((turn, index) => {
+                    const result = turn.result_payload as any;
+                    const isAttack = turn.action_type === 'attack';
+                    const isSpecial = turn.action_type === 'special';
+                    const isDefend = turn.action_type === 'defend';
+                    
+                    return (
+                      <motion.div
+                        key={turn.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={{ delay: index * 0.02 }}
+                        className="text-sm p-4 bg-muted/50 rounded-lg border border-border"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-bold text-primary">Turn {turn.turn_index}</span>
+                          <Badge 
+                            variant={isSpecial ? "default" : "outline"} 
+                            className="text-xs"
+                          >
+                            {turn.action_type.toUpperCase()}
+                          </Badge>
                         </div>
-                      )}
-                    </motion.div>
-                  ))}
+                        
+                        {result && (
+                          <div className="space-y-1">
+                            <div className="font-medium">
+                              {result.attacker_name} 
+                              {isAttack && ' attacks '}
+                              {isSpecial && ` uses ${result.special_move || 'Special Attack'} on `}
+                              {isDefend && ' defends'}
+                              {!isDefend && result.defender_name}!
+                            </div>
+                            
+                            {!isDefend && result.damage > 0 && (
+                              <div className="text-muted-foreground flex items-center gap-2">
+                                <span className="text-destructive">💥 {result.damage} damage dealt</span>
+                                <span className="text-xs">
+                                  ({result.old_defender_hp} → {result.new_defender_hp} HP)
+                                </span>
+                              </div>
+                            )}
+                            
+                            {isDefend && (
+                              <div className="text-muted-foreground">
+                                🛡️ Preparing defensive stance...
+                              </div>
+                            )}
+                            
+                            {result.new_defender_hp === 0 && (
+                              <div className="text-yellow-500 font-bold mt-1">
+                                ⚰️ {result.defender_name} has been defeated!
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </motion.div>
+                    );
+                  })}
                 </AnimatePresence>
               )}
             </div>

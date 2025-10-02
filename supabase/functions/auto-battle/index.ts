@@ -89,6 +89,13 @@ serve(async (req) => {
         state.p1_hp = newDefenderHp;
       }
 
+      // Determine special move description
+      let specialMoveDescription = "";
+      if (actionType === "special" && attacker.special_attacks && Array.isArray(attacker.special_attacks) && attacker.special_attacks.length > 0) {
+        const randomSpecial = attacker.special_attacks[Math.floor(Math.random() * attacker.special_attacks.length)];
+        specialMoveDescription = randomSpecial.name || "Venom Strike";
+      }
+
       // Record turn
       const turnResult = {
         turn_index: turnCount,
@@ -100,6 +107,10 @@ serve(async (req) => {
           damage: damage,
           new_defender_hp: newDefenderHp,
           attacker_hp: attackerHp,
+          attacker_name: attacker.nickname,
+          defender_name: defender.nickname,
+          special_move: specialMoveDescription,
+          old_defender_hp: defenderHp,
         },
       };
 
@@ -110,6 +121,9 @@ serve(async (req) => {
         battle_id: battleId,
         ...turnResult,
       });
+
+      // Add delay between turns (aim for ~20 seconds total, so ~400ms per turn for 50 turns max)
+      await new Promise(resolve => setTimeout(resolve, 400));
 
       // Switch turn
       currentTurnUser = currentTurnUser === user1 ? user2 : user1;
