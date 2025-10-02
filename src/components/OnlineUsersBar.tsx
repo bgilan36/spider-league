@@ -6,14 +6,39 @@ import { usePresence } from '@/hooks/usePresence';
 import { useAuth } from '@/auth/AuthProvider';
 import UserSnapshotModal from '@/components/UserSnapshotModal';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { UserPlus } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const OnlineUsersBar: React.FC = () => {
   const { onlineUsers, loading } = usePresence();
   const { user } = useAuth();
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   // Filter out current user from the list
   const otherUsers = onlineUsers.filter(u => u.user_id !== user?.id);
+
+  const handleInvite = async () => {
+    const url = window.location.origin;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Spider League',
+          text: 'Join me on Spider League - Share spiders you find in the wild for friendly battles!',
+          url: url,
+        });
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast({
+          title: "Link copied!",
+          description: "Share this link to invite friends to Spider League",
+        });
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+    }
+  };
 
   if (!user) return null;
 
@@ -67,6 +92,15 @@ const OnlineUsersBar: React.FC = () => {
                 <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
                 Online: <span className="text-primary font-bold">{otherUsers.length}</span>
               </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleInvite}
+                className="h-8 gap-2 text-xs"
+              >
+                <UserPlus className="h-4 w-4" />
+                Invite
+              </Button>
               <ScrollArea className="w-full whitespace-nowrap">
                 <div className="flex gap-2">
                   {otherUsers.map((onlineUser) => (
