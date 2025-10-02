@@ -12,7 +12,7 @@ const SpiderLogoLoader = () => {
             <img 
               src={spiderLogo} 
               alt="Spider League"
-              className="w-16 h-16 animate-pulse"
+              className="h-16 w-auto max-w-full object-contain animate-pulse"
             />
           </div>
           {/* Inner pulsing glow */}
