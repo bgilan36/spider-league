@@ -34,11 +34,11 @@ const App = () => (
     <HelmetProvider>
       <AuthProvider>
         <TooltipProvider>
-          <NotificationListener />
           <InstallPrompt />
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <NotificationListener />
             <BattleNotification />
             <Layout>
               <Routes>
