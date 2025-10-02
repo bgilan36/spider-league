@@ -7,43 +7,65 @@ import { useAuth } from '@/auth/AuthProvider';
 import UserSnapshotModal from '@/components/UserSnapshotModal';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Check, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 
 const OnlineUsersBar: React.FC = () => {
   const { onlineUsers, loading } = usePresence();
   const { user } = useAuth();
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const { toast } = useToast();
 
   // Filter out current user from the list
   const otherUsers = onlineUsers.filter(u => u.user_id !== user?.id);
 
-  const handleInvite = async () => {
-    const url = 'https://spiderleague.app';
-    const message = 'Come battle with me on Spider League';
-    const fullMessage = `${message} ${url}`;
-    
+  const url = 'https://spiderleague.app';
+  const message = 'Come battle with me on Spider League';
+  const fullMessage = `${message} ${url}`;
+
+  const handleNativeShare = async () => {
     try {
-      if (navigator.share) {
-        await navigator.share({
-          title: 'Spider League',
-          text: fullMessage,
-        });
-      } else {
-        // Fallback to SMS link
-        window.open(`sms:?body=${encodeURIComponent(fullMessage)}`, '_blank');
-      }
+      await navigator.share({
+        title: 'Spider League',
+        text: fullMessage,
+      });
     } catch (error) {
-      // If sharing is cancelled or fails, copy to clipboard
-      if (error instanceof Error && error.name !== 'AbortError') {
-        await navigator.clipboard.writeText(fullMessage);
-        toast({
-          title: "Message copied!",
-          description: "Paste this message to invite your friend",
-        });
-      }
+      console.error('Error sharing:', error);
     }
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(fullMessage);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast({
+        title: "Message copied!",
+        description: "Paste this message to invite your friend",
+      });
+    } catch (error) {
+      console.error('Error copying:', error);
+    }
+  };
+
+  const shareUrls = {
+    twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(fullMessage)}`,
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(message)}`,
+    whatsapp: `https://wa.me/?text=${encodeURIComponent(fullMessage)}`,
+    telegram: `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(message)}`,
+    sms: `sms:?body=${encodeURIComponent(fullMessage)}`,
+  };
+
+  const openShareUrl = (shareUrl: string) => {
+    window.open(shareUrl, '_blank', 'noopener,noreferrer');
   };
 
   if (!user) return null;
@@ -81,15 +103,58 @@ const OnlineUsersBar: React.FC = () => {
                 Online:
               </span>
               <span className="text-sm text-muted-foreground">No other players online</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleInvite}
-                className="h-8 gap-2 text-xs ml-auto"
-              >
-                <UserPlus className="h-4 w-4" />
-                Invite
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 gap-2 text-xs ml-auto"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    Invite
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48">
+                  {navigator.share && (
+                    <>
+                      <DropdownMenuItem onClick={handleNativeShare}>
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Share via device
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  <DropdownMenuItem onClick={() => openShareUrl(shareUrls.sms)}>
+                    <span className="mr-2">💬</span>
+                    Share via SMS
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => openShareUrl(shareUrls.whatsapp)}>
+                    <span className="mr-2">💚</span>
+                    Share on WhatsApp
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => openShareUrl(shareUrls.telegram)}>
+                    <span className="mr-2">✈️</span>
+                    Share on Telegram
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => openShareUrl(shareUrls.twitter)}>
+                    <span className="mr-2">🐦</span>
+                    Share on Twitter
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => openShareUrl(shareUrls.facebook)}>
+                    <span className="mr-2">👍</span>
+                    Share on Facebook
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleCopyLink}>
+                    {copied ? (
+                      <Check className="mr-2 h-4 w-4 text-green-500" />
+                    ) : (
+                      <Copy className="mr-2 h-4 w-4" />
+                    )}
+                    {copied ? 'Copied!' : 'Copy message'}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
@@ -107,15 +172,58 @@ const OnlineUsersBar: React.FC = () => {
                 <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
                 Online: <span className="text-primary font-bold">{otherUsers.length}</span>
               </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleInvite}
-                className="h-8 gap-2 text-xs"
-              >
-                <UserPlus className="h-4 w-4" />
-                Invite
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 gap-2 text-xs"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    Invite
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48">
+                  {navigator.share && (
+                    <>
+                      <DropdownMenuItem onClick={handleNativeShare}>
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Share via device
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  <DropdownMenuItem onClick={() => openShareUrl(shareUrls.sms)}>
+                    <span className="mr-2">💬</span>
+                    Share via SMS
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => openShareUrl(shareUrls.whatsapp)}>
+                    <span className="mr-2">💚</span>
+                    Share on WhatsApp
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => openShareUrl(shareUrls.telegram)}>
+                    <span className="mr-2">✈️</span>
+                    Share on Telegram
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => openShareUrl(shareUrls.twitter)}>
+                    <span className="mr-2">🐦</span>
+                    Share on Twitter
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => openShareUrl(shareUrls.facebook)}>
+                    <span className="mr-2">👍</span>
+                    Share on Facebook
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleCopyLink}>
+                    {copied ? (
+                      <Check className="mr-2 h-4 w-4 text-green-500" />
+                    ) : (
+                      <Copy className="mr-2 h-4 w-4" />
+                    )}
+                    {copied ? 'Copied!' : 'Copy message'}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <ScrollArea className="w-full whitespace-nowrap">
                 <div className="flex gap-2">
                   {otherUsers.map((onlineUser) => (
