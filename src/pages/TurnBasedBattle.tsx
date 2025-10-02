@@ -1,17 +1,21 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Sword, Shield, Zap, SkipForward, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { useTurnBasedBattle } from '@/hooks/useTurnBasedBattle';
 import { useAuth } from '@/auth/AuthProvider';
 import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const TurnBasedBattle = () => {
   const { battleId } = useParams<{ battleId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [actionFeedback, setActionFeedback] = useState<string | null>(null);
   const {
     battle,
     turns,
@@ -43,10 +47,20 @@ const TurnBasedBattle = () => {
 
   const handleAction = async (actionType: 'attack' | 'defend' | 'special' | 'pass') => {
     try {
+      const actionEmojis = {
+        attack: '⚔️',
+        defend: '🛡️',
+        special: '💥',
+        pass: '⏭️'
+      };
+      
+      setActionFeedback(`${actionEmojis[actionType]} ${actionType.toUpperCase()}`);
+      setTimeout(() => setActionFeedback(null), 2000);
+      
       await submitTurn(actionType);
       toast.success(`${actionType.charAt(0).toUpperCase() + actionType.slice(1)} performed!`);
     } catch (error) {
-      // Error already handled in hook
+      setActionFeedback(null);
     }
   };
 
@@ -114,49 +128,91 @@ const TurnBasedBattle = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        {battleEnded && (
-          <Card className="mb-6 border-primary">
-            <CardContent className="p-6 text-center">
-              <h2 className="text-3xl font-bold mb-2">
-                {iWon ? '🏆 Victory!' : '💀 Defeat'}
-              </h2>
-              <p className="text-muted-foreground">
-                {iWon ? `${mySpider.nickname} has won the battle!` : `${opponentSpider.nickname} has won the battle!`}
-              </p>
-              <p className="text-sm text-muted-foreground mt-2">Redirecting to Battle Mode...</p>
-            </CardContent>
-          </Card>
-        )}
+        <AnimatePresence>
+          {battleEnded && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <Card className={`mb-6 ${iWon ? 'border-yellow-500 bg-yellow-500/10' : 'border-destructive bg-destructive/10'}`}>
+                <CardContent className="p-8 text-center">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", duration: 0.5 }}
+                  >
+                    <div className="text-6xl mb-4">{iWon ? '🏆' : '💀'}</div>
+                    <h2 className="text-4xl font-bold mb-2 gradient-text">
+                      {iWon ? 'Victory!' : 'Defeat'}
+                    </h2>
+                  </motion.div>
+                  <p className="text-lg mb-2">
+                    {iWon ? `${mySpider.nickname} has won the battle!` : `${opponentSpider.nickname} has won the battle!`}
+                  </p>
+                  {iWon && (
+                    <Badge variant="outline" className="mt-2">
+                      <Trophy className="w-3 h-3 mr-1" />
+                      Spider Claimed
+                    </Badge>
+                  )}
+                  <p className="text-sm text-muted-foreground mt-4">Redirecting to Battle Mode...</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="grid md:grid-cols-2 gap-6 mb-6">
           {/* My Spider */}
-          <Card className={isMyTurn && !battleEnded ? 'border-primary' : ''}>
-            <CardContent className="p-6">
-              <div className="text-center mb-4">
-                <h3 className="text-xl font-bold">{mySpider.nickname}</h3>
-                <p className="text-sm text-muted-foreground">{mySpider.species}</p>
-                {isMyTurn && !battleEnded && (
-                  <p className="text-sm text-primary font-medium mt-1">Your Turn!</p>
-                )}
-              </div>
+          <motion.div
+            animate={isMyTurn && !battleEnded ? { scale: [1, 1.02, 1] } : {}}
+            transition={{ duration: 1, repeat: Infinity }}
+          >
+            <Card className={isMyTurn && !battleEnded ? 'border-primary shadow-lg' : ''}>
+              <CardContent className="p-6">
+                <div className="text-center mb-4">
+                  <h3 className="text-xl font-bold">{mySpider.nickname}</h3>
+                  <p className="text-sm text-muted-foreground">{mySpider.species}</p>
+                  {isMyTurn && !battleEnded && (
+                    <Badge variant="default" className="mt-2">
+                      <Zap className="w-3 h-3 mr-1" />
+                      Your Turn!
+                    </Badge>
+                  )}
+                </div>
               
-              <img 
-                src={mySpider.image_url} 
-                alt={mySpider.nickname}
-                className="w-full h-48 object-cover rounded-lg mb-4"
-              />
+              <div className="relative">
+                <img 
+                  src={mySpider.image_url} 
+                  alt={mySpider.nickname}
+                  className="w-full h-48 object-cover rounded-lg mb-4"
+                />
+                <AnimatePresence>
+                  {actionFeedback && isMyTurn && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 20 }}
+                      className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg"
+                    >
+                      <div className="text-4xl font-bold text-white">
+                        {actionFeedback}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
               
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm">HP</span>
+                  <span className="text-sm font-medium">HP</span>
                   <span className="font-bold">{myHp} / {mySpider.hit_points}</span>
                 </div>
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-green-500 transition-all"
-                    style={{ width: `${((myHp || 0) / mySpider.hit_points) * 100}%` }}
-                  />
-                </div>
+                <Progress 
+                  value={((myHp || 0) / mySpider.hit_points) * 100}
+                  className="h-3"
+                />
                 
                 <div className="grid grid-cols-3 gap-2 mt-4 text-xs">
                   <div>
@@ -173,19 +229,27 @@ const TurnBasedBattle = () => {
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
 
           {/* Opponent Spider */}
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center mb-4">
-                <h3 className="text-xl font-bold">{opponentSpider.nickname}</h3>
-                <p className="text-sm text-muted-foreground">{opponentSpider.species}</p>
-                {!isMyTurn && !battleEnded && (
-                  <p className="text-sm text-muted-foreground mt-1">Opponent's Turn</p>
-                )}
-              </div>
+          <motion.div
+            animate={!isMyTurn && !battleEnded ? { scale: [1, 1.02, 1] } : {}}
+            transition={{ duration: 1, repeat: Infinity }}
+          >
+            <Card className={!isMyTurn && !battleEnded ? 'border-orange-500 shadow-lg' : ''}>
+              <CardContent className="p-6">
+                <div className="text-center mb-4">
+                  <h3 className="text-xl font-bold">{opponentSpider.nickname}</h3>
+                  <p className="text-sm text-muted-foreground">{opponentSpider.species}</p>
+                  {!isMyTurn && !battleEnded && (
+                    <Badge variant="secondary" className="mt-2">
+                      <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                      Opponent's Turn
+                    </Badge>
+                  )}
+                </div>
               
               <img 
                 src={opponentSpider.image_url} 
@@ -195,15 +259,13 @@ const TurnBasedBattle = () => {
               
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm">HP</span>
+                  <span className="text-sm font-medium">HP</span>
                   <span className="font-bold">{opponentHp} / {opponentSpider.hit_points}</span>
                 </div>
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-red-500 transition-all"
-                    style={{ width: `${((opponentHp || 0) / opponentSpider.hit_points) * 100}%` }}
-                  />
-                </div>
+                <Progress 
+                  value={((opponentHp || 0) / opponentSpider.hit_points) * 100}
+                  className="h-3"
+                />
                 
                 <div className="grid grid-cols-3 gap-2 mt-4 text-xs">
                   <div>
@@ -220,50 +282,70 @@ const TurnBasedBattle = () => {
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
 
         {/* Action Buttons */}
         {!battleEnded && (
-          <Card>
-            <CardContent className="p-6">
-              <h3 className="text-lg font-bold mb-4">Battle Actions</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <Button
-                  onClick={() => handleAction('attack')}
-                  disabled={!isMyTurn || submitting}
-                  className="h-20"
-                >
-                  ⚔️ Attack
-                </Button>
-                <Button
-                  onClick={() => handleAction('defend')}
-                  disabled={!isMyTurn || submitting}
-                  variant="secondary"
-                  className="h-20"
-                >
-                  🛡️ Defend
-                </Button>
-                <Button
-                  onClick={() => handleAction('special')}
-                  disabled={!isMyTurn || submitting}
-                  variant="outline"
-                  className="h-20"
-                >
-                  💥 Special
-                </Button>
-                <Button
-                  onClick={() => handleAction('pass')}
-                  disabled={!isMyTurn || submitting}
-                  variant="ghost"
-                  className="h-20"
-                >
-                  ⏭️ Pass
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <Card className={isMyTurn ? 'border-primary' : ''}>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold">Battle Actions</h3>
+                  {!isMyTurn && (
+                    <Badge variant="outline">
+                      <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                      Waiting...
+                    </Badge>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <Button
+                    onClick={() => handleAction('attack')}
+                    disabled={!isMyTurn || submitting}
+                    className="h-24 flex flex-col gap-2"
+                    variant={isMyTurn ? "default" : "secondary"}
+                  >
+                    <Sword className="w-6 h-6" />
+                    <span className="font-bold">Attack</span>
+                  </Button>
+                  <Button
+                    onClick={() => handleAction('defend')}
+                    disabled={!isMyTurn || submitting}
+                    variant="secondary"
+                    className="h-24 flex flex-col gap-2"
+                  >
+                    <Shield className="w-6 h-6" />
+                    <span className="font-bold">Defend</span>
+                  </Button>
+                  <Button
+                    onClick={() => handleAction('special')}
+                    disabled={!isMyTurn || submitting}
+                    variant="outline"
+                    className="h-24 flex flex-col gap-2"
+                  >
+                    <Zap className="w-6 h-6" />
+                    <span className="font-bold">Special</span>
+                  </Button>
+                  <Button
+                    onClick={() => handleAction('pass')}
+                    disabled={!isMyTurn || submitting}
+                    variant="ghost"
+                    className="h-24 flex flex-col gap-2"
+                  >
+                    <SkipForward className="w-6 h-6" />
+                    <span className="font-bold">Pass</span>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         )}
 
         {/* Battle Log */}
@@ -276,14 +358,32 @@ const TurnBasedBattle = () => {
                   No turns yet. Battle begins now!
                 </p>
               ) : (
-                turns.map((turn, index) => (
-                  <div key={turn.id} className="text-sm p-2 bg-muted/50 rounded">
-                    <span className="font-medium">Turn {turn.turn_index}:</span>{' '}
-                    <span className="text-muted-foreground">
-                      {turn.action_type} - {JSON.stringify(turn.result_payload)}
-                    </span>
-                  </div>
-                ))
+                <AnimatePresence>
+                  {turns.slice().reverse().map((turn, index) => (
+                    <motion.div
+                      key={turn.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="text-sm p-3 bg-muted/50 rounded-lg border border-border"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-primary">Turn {turn.turn_index}</span>
+                        <Badge variant="outline" className="text-xs">
+                          {turn.action_type.toUpperCase()}
+                        </Badge>
+                      </div>
+                      {turn.result_payload && (
+                        <div className="mt-1 text-muted-foreground">
+                          {typeof turn.result_payload === 'object' && (turn.result_payload as any).damage && (
+                            <span>💥 Damage: {(turn.result_payload as any).damage}</span>
+                          )}
+                        </div>
+                      )}
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
               )}
             </div>
           </CardContent>
