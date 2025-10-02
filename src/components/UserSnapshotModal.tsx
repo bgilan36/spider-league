@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, User, Calendar } from 'lucide-react';
+import { Loader2, User, Calendar, Zap } from 'lucide-react';
 import { BadgeIcon } from '@/components/BadgeIcon';
 import SpiderDetailsModal from '@/components/SpiderDetailsModal';
 import { supabase } from '@/integrations/supabase/client';
 import PowerScoreArc from '@/components/PowerScoreArc';
 import ProfileWall from '@/components/ProfileWall';
+import { useAuth } from '@/auth/AuthProvider';
+import { toast } from 'sonner';
+import { useState as useReactState, useEffect } from 'react';
 
 interface UserProfile {
   id: string;
@@ -63,12 +65,16 @@ const UserSnapshotModal: React.FC<UserSnapshotModalProps> = ({
   onClose,
   userId
 }) => {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [spiders, setSpiders] = useState<Spider[]>([]);
-  const [badges, setBadges] = useState<UserBadge[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedSpider, setSelectedSpider] = useState<any>(null);
-  const [isSpiderModalOpen, setIsSpiderModalOpen] = useState(false);
+  const { user } = useAuth();
+  const [profile, setProfile] = useReactState<UserProfile | null>(null);
+  const [spiders, setSpiders] = useReactState<Spider[]>([]);
+  const [badges, setBadges] = useReactState<UserBadge[]>([]);
+  const [loading, setLoading] = useReactState(true);
+  const [selectedSpider, setSelectedSpider] = useReactState<any>(null);
+  const [isSpiderModalOpen, setIsSpiderModalOpen] = useReactState(false);
+  const [hasBitUser, setHasBitUser] = useReactState(false);
+  const [biting, setBiting] = useReactState(false);
+  const [biteCount, setBiteCount] = useReactState(0);
 
   const handleViewFullProfile = () => {
     onClose();
@@ -87,8 +93,78 @@ const UserSnapshotModal: React.FC<UserSnapshotModalProps> = ({
   useEffect(() => {
     if (isOpen && userId) {
       fetchUserData();
+      if (user) {
+        checkBiteStatus();
+      }
     }
-  }, [isOpen, userId]);
+  }, [isOpen, userId, user]);
+
+  const checkBiteStatus = async () => {
+    if (!user) return;
+
+    try {
+      // Check if current user has bitten this user
+      const { data: biteData } = await supabase
+        .from('pokes')
+        .select('id')
+        .eq('poker_user_id', user.id)
+        .eq('poked_user_id', userId)
+        .maybeSingle();
+
+      setHasBitUser(!!biteData);
+
+      // Get total bite count
+      const { count } = await supabase
+        .from('pokes')
+        .select('*', { count: 'exact', head: true })
+        .eq('poked_user_id', userId);
+
+      setBiteCount(count || 0);
+    } catch (error) {
+      console.error('Error checking bite status:', error);
+    }
+  };
+
+  const handleBite = async () => {
+    if (!user || user.id === userId) return;
+
+    setBiting(true);
+    try {
+      if (hasBitUser) {
+        // Remove bite
+        const { error } = await supabase
+          .from('pokes')
+          .delete()
+          .eq('poker_user_id', user.id)
+          .eq('poked_user_id', userId);
+
+        if (error) throw error;
+
+        toast.success('Bite removed! 🦷');
+        setHasBitUser(false);
+        setBiteCount(prev => Math.max(0, prev - 1));
+      } else {
+        // Add bite
+        const { error } = await supabase
+          .from('pokes')
+          .insert({
+            poker_user_id: user.id,
+            poked_user_id: userId
+          });
+
+        if (error) throw error;
+
+        toast.success(`You bit ${profile?.display_name || 'this player'}! 🦷`);
+        setHasBitUser(true);
+        setBiteCount(prev => prev + 1);
+      }
+    } catch (error: any) {
+      console.error('Error toggling bite:', error);
+      toast.error(error.message || 'Failed to bite player');
+    } finally {
+      setBiting(false);
+    }
+  };
 
   const fetchUserData = async () => {
     setLoading(true);
@@ -215,6 +291,27 @@ const UserSnapshotModal: React.FC<UserSnapshotModalProps> = ({
                     </p>
                     {profile.bio && (
                       <p className="text-muted-foreground mb-3">{profile.bio}</p>
+                    )}
+                    
+                    {/* Bite Button - Only show if viewing someone else's profile */}
+                    {user && userId !== user.id && (
+                      <div className="flex items-center gap-3 mb-3">
+                        <Button
+                          variant={hasBitUser ? "destructive" : "outline"}
+                          size="sm"
+                          onClick={handleBite}
+                          disabled={biting}
+                          className="flex items-center gap-2"
+                        >
+                          <Zap className="h-4 w-4" />
+                          {hasBitUser ? "Unbite" : "Bite 🦷"}
+                        </Button>
+                        {biteCount > 0 && (
+                          <span className="text-sm text-muted-foreground">
+                            🦷 {biteCount} bite{biteCount !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </div>
                     )}
                     
                     {/* Stats */}
