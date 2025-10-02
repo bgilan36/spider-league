@@ -11,6 +11,9 @@ import { Progress } from "@/components/ui/progress";
 import PowerScoreArc from "@/components/PowerScoreArc";
 import BattleButton from "@/components/BattleButton";
 import ShareButton from "@/components/ShareButton";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
+import { format } from "date-fns";
 
 interface Spider {
   id: string;
@@ -41,6 +44,38 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
   isOpen,
   onClose,
 }) => {
+  const [battles, setBattles] = React.useState<any[]>([]);
+  const [loadingBattles, setLoadingBattles] = React.useState(false);
+
+  React.useEffect(() => {
+    if (isOpen && spider) {
+      fetchBattleHistory();
+    }
+  }, [isOpen, spider?.id]);
+
+  const fetchBattleHistory = async () => {
+    if (!spider) return;
+    
+    setLoadingBattles(true);
+    try {
+      const { data, error } = await supabase
+        .from('battles')
+        .select('*')
+        .or(`team_a->>spider->id.eq.${spider.id},team_b->>spider->id.eq.${spider.id}`)
+        .eq('is_active', false)
+        .not('winner', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      setBattles(data || []);
+    } catch (error) {
+      console.error('Error fetching battle history:', error);
+    } finally {
+      setLoadingBattles(false);
+    }
+  };
+
   if (!spider) return null;
 
   const rarityColors = {
@@ -142,6 +177,54 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Battle History Section */}
+        <div className="mt-6 border-t pt-6">
+          <h3 className="text-lg font-semibold mb-4">Battle History</h3>
+          {loadingBattles ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : battles.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No battle history yet
+            </p>
+          ) : (
+            <div className="space-y-3 max-h-[300px] overflow-y-auto">
+              {battles.map((battle) => {
+                const isTeamA = battle.team_a?.spider?.id === spider.id;
+                const wasWinner = (isTeamA && battle.winner === 'A') || (!isTeamA && battle.winner === 'B');
+                const opponentSpider = isTeamA ? battle.team_b?.spider : battle.team_a?.spider;
+
+                return (
+                  <div
+                    key={battle.id}
+                    className="flex items-center justify-between p-3 rounded-lg border bg-card"
+                  >
+                    <div className="flex items-center gap-3 flex-1">
+                      <img
+                        src={opponentSpider?.image_url}
+                        alt={opponentSpider?.nickname}
+                        className="w-10 h-10 rounded object-cover"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          vs {opponentSpider?.nickname}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(battle.created_at), 'MMM d, yyyy')}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant={wasWinner ? "default" : "destructive"}>
+                      {wasWinner ? "Won" : "Lost"}
+                    </Badge>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
