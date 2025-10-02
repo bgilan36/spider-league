@@ -20,6 +20,9 @@ import Shop from "./pages/Shop";
 import UserCollection from "./pages/UserCollection";
 import { AuthProvider } from "@/auth/AuthProvider";
 import Layout from "@/components/Layout";
+import NotificationListener from "@/components/NotificationListener";
+import { InstallPrompt } from "@/components/InstallPrompt";
+import BattleNotification from "@/components/BattleNotification";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +34,9 @@ const App = () => (
     <HelmetProvider>
       <AuthProvider>
         <TooltipProvider>
+          <NotificationListener />
+          <BattleNotification />
+          <InstallPrompt />
           <Toaster />
           <Sonner />
           <BrowserRouter>

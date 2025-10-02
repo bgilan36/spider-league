@@ -84,7 +84,10 @@ export const useTurnBasedBattle = (battleId: string | null) => {
         p_action_payload: actionPayload
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('RPC error:', error);
+        throw new Error(error.message || 'Failed to process turn');
+      }
 
       console.log('Turn processed:', data);
       

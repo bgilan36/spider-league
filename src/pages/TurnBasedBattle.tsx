@@ -36,16 +36,29 @@ const TurnBasedBattle = () => {
     }
   }, [battleId, navigate]);
 
+  // Show notification when it becomes your turn
+  useEffect(() => {
+    if (isMyTurn && !loading && battle?.is_active) {
+      toast.info("It's your turn!", {
+        description: "Choose your action wisely",
+      });
+    }
+  }, [isMyTurn, loading, battle?.is_active]);
+
   useEffect(() => {
     // Battle ended, redirect after a delay
     if (battle && !battle.is_active) {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         navigate('/battle-mode');
       }, 5000);
+      
+      return () => clearTimeout(timer);
     }
   }, [battle, navigate]);
 
   const handleAction = async (actionType: 'attack' | 'defend' | 'special' | 'pass') => {
+    if (submitting) return;
+    
     try {
       const actionEmojis = {
         attack: '⚔️',
@@ -58,9 +71,22 @@ const TurnBasedBattle = () => {
       setTimeout(() => setActionFeedback(null), 2000);
       
       await submitTurn(actionType);
-      toast.success(`${actionType.charAt(0).toUpperCase() + actionType.slice(1)} performed!`);
-    } catch (error) {
+      
+      const actionNames = {
+        attack: 'Attack',
+        defend: 'Defend',
+        special: 'Special Attack',
+        pass: 'Pass'
+      };
+      
+      toast.success(`${actionNames[actionType]} performed!`, {
+        description: "Waiting for opponent's turn..."
+      });
+    } catch (error: any) {
       setActionFeedback(null);
+      toast.error('Action failed', {
+        description: error.message || 'Failed to perform action. Please try again.'
+      });
     }
   };
 
