@@ -205,51 +205,29 @@ const Index = () => {
     try {
       setBattlesLoading(true);
       
-      // Fetch recent battles from all players
+      // Fetch recent completed battles from all players
       const { data: battles, error } = await supabase
         .from('battles')
         .select('*')
+        .eq('is_active', false)
+        .not('winner', 'is', null)
         .order('created_at', { ascending: false })
         .limit(5);
 
       if (error) throw error;
 
-      // Fetch spider details for each battle
-      const battlesWithSpiders = await Promise.all(
-        (battles || []).map(async (battle) => {
-          // Ensure team_a and team_b are arrays of strings (spider IDs)
-          const teamAIds = Array.isArray(battle.team_a) ? battle.team_a.filter(id => typeof id === 'string') : [];
-          const teamBIds = Array.isArray(battle.team_b) ? battle.team_b.filter(id => typeof id === 'string') : [];
-          const spiderIds = [...teamAIds, ...teamBIds];
-          
-          if (spiderIds.length === 0) return battle;
-
-          const { data: spiders, error: spiderError } = await supabase
-            .from('spiders')
-            .select('id, nickname, species, image_url, power_score, owner_id')
-            .in('id', spiderIds);
-
-          if (spiderError) {
-            console.error('Error fetching spider details:', spiderError);
-            return battle;
-          }
-
-          // Map spiders to teams
-          const teamA = teamAIds.map(id => 
-            spiders?.find(spider => spider.id === id)
-          ).filter(Boolean);
-          
-          const teamB = teamBIds.map(id => 
-            spiders?.find(spider => spider.id === id)
-          ).filter(Boolean);
-
-          return {
-            ...battle,
-            team_a: teamA,
-            team_b: teamB
-          };
-        })
-      );
+      // Parse team_a and team_b which are JSONB objects with structure:
+      // { userId: string, spider: { ...spider object } }
+      const battlesWithSpiders = (battles || []).map((battle) => {
+        const teamA = battle.team_a as any;
+        const teamB = battle.team_b as any;
+        
+        return {
+          ...battle,
+          team_a: teamA?.spider ? [teamA.spider] : [],
+          team_b: teamB?.spider ? [teamB.spider] : []
+        };
+      });
 
       setRecentBattles(battlesWithSpiders);
     } catch (error) {
