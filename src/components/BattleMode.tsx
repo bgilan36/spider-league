@@ -208,6 +208,7 @@ const BattleMode: React.FC<{ showChallenges?: boolean }> = ({ showChallenges = t
 
       // Create turn-based battle
       const battleInsert = {
+        challenge_id: challenge.id,
         team_a: {
           userId: challenge.challenger_id,
           spider: challenge.challenger_spider

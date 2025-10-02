@@ -165,6 +165,7 @@ export type Database = {
       battles: {
         Row: {
           battle_log: Json | null
+          challenge_id: string | null
           created_at: string | null
           current_turn_user_id: string | null
           id: string
@@ -180,6 +181,7 @@ export type Database = {
         }
         Insert: {
           battle_log?: Json | null
+          challenge_id?: string | null
           created_at?: string | null
           current_turn_user_id?: string | null
           id?: string
@@ -195,6 +197,7 @@ export type Database = {
         }
         Update: {
           battle_log?: Json | null
+          challenge_id?: string | null
           created_at?: string | null
           current_turn_user_id?: string | null
           id?: string
@@ -208,7 +211,15 @@ export type Database = {
           type?: Database["public"]["Enums"]["battle_type"]
           winner?: Database["public"]["Enums"]["battle_winner"] | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "battles_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "battle_challenges"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       comments: {
         Row: {
