@@ -9,6 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { useTurnBasedBattle } from '@/hooks/useTurnBasedBattle';
 import { useAuth } from '@/auth/AuthProvider';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const TurnBasedBattle = () => {
@@ -24,6 +25,7 @@ const TurnBasedBattle = () => {
     mySpider,
     opponentSpider,
   } = useTurnBasedBattle(battleId || null);
+  const [started, setStarted] = useState(false);
 
   useEffect(() => {
     if (!battleId) {
@@ -42,6 +44,25 @@ const TurnBasedBattle = () => {
       return () => clearTimeout(timer);
     }
   }, [battle, navigate]);
+
+  // Kick off auto-battle if it hasn't started (fallback)
+  useEffect(() => {
+    if (!battleId || started) return;
+    if (!battle) return;
+    if (!battle.is_active) return;
+    if ((battle.turn_count ?? 0) > 0 || turns.length > 0) return;
+
+    setStarted(true);
+    supabase.functions
+      .invoke('auto-battle', { body: { battleId } })
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('Failed to start auto-battle:', error);
+          toast.error('Failed to start battle, retrying...');
+          setStarted(false);
+        }
+      });
+  }, [battleId, battle, turns.length, started]);
 
   if (loading) {
     return (
