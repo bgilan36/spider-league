@@ -25,6 +25,7 @@ import BattleDetailsModal from "@/components/BattleDetailsModal";
 import { BattleRecapAlert } from "@/components/BattleRecapAlert";
 import ClickableUsername from "@/components/ClickableUsername";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import NotificationsDropdown from "@/components/NotificationsDropdown";
 
 interface Spider {
   id: string;
@@ -577,6 +578,7 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+              <NotificationsDropdown />
               <Button variant="glass" size="icon" asChild className="h-10 w-10 sm:h-12 sm:w-12">
                 <Link to="/roadmap">
                   <Lightbulb className="h-4 w-4 sm:h-5 sm:w-5" />
