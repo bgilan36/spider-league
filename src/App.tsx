@@ -35,11 +35,11 @@ const App = () => (
       <AuthProvider>
         <TooltipProvider>
           <NotificationListener />
-          <BattleNotification />
           <InstallPrompt />
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <BattleNotification />
             <Layout>
               <Routes>
                 <Route path="/" element={<Index />} />
