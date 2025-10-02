@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,7 @@ interface BattleStats {
 const BattleHistory = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [battles, setBattles] = useState<Battle[]>([]);
   const [stats, setStats] = useState<BattleStats>({
     totalBattles: 0,
@@ -51,6 +52,19 @@ const BattleHistory = () => {
       fetchBattleData();
     }
   }, [user]);
+
+  useEffect(() => {
+    const battleId = searchParams.get('battleId');
+    if (battleId && battles.length > 0) {
+      const battle = battles.find(b => b.id === battleId);
+      if (battle) {
+        setSelectedBattle(battle);
+        setIsBattleDetailsOpen(true);
+        // Clear the query param after opening
+        setSearchParams({});
+      }
+    }
+  }, [searchParams, battles]);
 
   const fetchBattleData = async () => {
     if (!user) return;

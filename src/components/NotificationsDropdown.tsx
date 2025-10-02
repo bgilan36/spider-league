@@ -11,6 +11,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/auth/AuthProvider';
 import { formatDistanceToNow } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 import ClickableUsername from './ClickableUsername';
 
 interface Notification {
@@ -22,10 +23,12 @@ interface Notification {
   from_user_name?: string;
   read: boolean;
   challenge_id?: string;
+  battle_id?: string;
 }
 
 const NotificationsDropdown = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
@@ -223,6 +226,7 @@ const NotificationsDropdown = () => {
                 ? `Your spider won against ${opponentSpider}!`
                 : `Your spider lost to ${opponentSpider}`,
               created_at: battle.created_at,
+              battle_id: battle.id,
               read: false
             });
           }
@@ -301,6 +305,28 @@ const NotificationsDropdown = () => {
     }
   };
 
+  const handleNotificationClick = (notification: Notification) => {
+    setIsOpen(false);
+    
+    switch (notification.type) {
+      case 'battle_win':
+      case 'battle_loss':
+        if (notification.battle_id) {
+          navigate(`/battle-history?battleId=${notification.battle_id}`);
+        }
+        break;
+      case 'wall_post':
+      case 'bite':
+        if (notification.from_user_id) {
+          navigate(`/collection/${notification.from_user_id}`);
+        }
+        break;
+      case 'challenge':
+        navigate('/battle-mode');
+        break;
+    }
+  };
+
   return (
     <DropdownMenu open={isOpen} onOpenChange={handleOpenChange}>
       <DropdownMenuTrigger asChild>
@@ -336,6 +362,7 @@ const NotificationsDropdown = () => {
                 <div
                   key={notification.id}
                   className="p-4 hover:bg-primary/5 transition-colors cursor-pointer"
+                  onClick={() => handleNotificationClick(notification)}
                 >
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 mt-1">
