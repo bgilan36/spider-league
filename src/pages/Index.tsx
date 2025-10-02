@@ -24,6 +24,7 @@ import ActiveChallengesPreview from "@/components/ActiveChallengesPreview";
 import BattleDetailsModal from "@/components/BattleDetailsModal";
 import { BattleRecapAlert } from "@/components/BattleRecapAlert";
 import ClickableUsername from "@/components/ClickableUsername";
+import { InstallPrompt } from "@/components/InstallPrompt";
 
 interface Spider {
   id: string;
@@ -1090,6 +1091,8 @@ const Index = () => {
           </div>
         </div>
       </footer>
+
+      <InstallPrompt />
     </div>
   );
 };
