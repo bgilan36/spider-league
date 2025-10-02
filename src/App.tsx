@@ -18,6 +18,7 @@ import AboutUs from "./pages/AboutUs";
 import Shop from "./pages/Shop";
 import UserCollection from "./pages/UserCollection";
 import { AuthProvider } from "@/auth/AuthProvider";
+import Layout from "@/components/Layout";
 
 const queryClient = new QueryClient();
 
@@ -32,20 +33,22 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/upload" element={<SpiderUpload />} />
-              <Route path="/collection" element={<SpiderCollection />} />
-              <Route path="/leaderboard" element={<Leaderboard />} />
-              <Route path="/battle-history" element={<BattleHistory />} />
-              <Route path="/battle-mode" element={<BattleMode />} />
-              <Route path="/roadmap" element={<Roadmap />} />
-              <Route path="/collection/:userId" element={<UserCollection />} />
-              <Route path="/shop" element={<Shop />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <Layout>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/upload" element={<SpiderUpload />} />
+                <Route path="/collection" element={<SpiderCollection />} />
+                <Route path="/leaderboard" element={<Leaderboard />} />
+                <Route path="/battle-history" element={<BattleHistory />} />
+                <Route path="/battle-mode" element={<BattleMode />} />
+                <Route path="/roadmap" element={<Roadmap />} />
+                <Route path="/collection/:userId" element={<UserCollection />} />
+                <Route path="/shop" element={<Shop />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Layout>
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>

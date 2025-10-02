@@ -650,6 +650,27 @@ export type Database = {
           },
         ]
       }
+      user_presence: {
+        Row: {
+          created_at: string
+          id: string
+          last_seen: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_seen?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_seen?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       weekly_rankings: {
         Row: {
           created_at: string
@@ -794,6 +815,10 @@ export type Database = {
       can_user_upload_this_week: {
         Args: { user_id_param: string }
         Returns: boolean
+      }
+      cleanup_stale_presence: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       get_current_pt_week_end: {
         Args: Record<PropertyKey, never>
