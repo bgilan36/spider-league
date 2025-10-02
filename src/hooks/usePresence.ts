@@ -27,6 +27,8 @@ export const usePresence = () => {
         .upsert({
           user_id: user.id,
           last_seen: new Date().toISOString(),
+        }, {
+          onConflict: 'user_id'
         });
 
       if (error) throw error;
