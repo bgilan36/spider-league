@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, MessageSquare, Zap, Trophy, Skull } from 'lucide-react';
+import { Bell, MessageSquare, Zap, Trophy, Skull, Swords, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -15,12 +15,13 @@ import ClickableUsername from './ClickableUsername';
 
 interface Notification {
   id: string;
-  type: 'wall_post' | 'bite' | 'battle_win' | 'battle_loss';
+  type: 'wall_post' | 'bite' | 'battle_win' | 'battle_loss' | 'challenge';
   message: string;
   created_at: string;
   from_user_id?: string;
   from_user_name?: string;
   read: boolean;
+  challenge_id?: string;
 }
 
 const NotificationsDropdown = () => {
@@ -97,10 +98,28 @@ const NotificationsDropdown = () => {
       )
       .subscribe();
 
+    // Subscribe to challenges
+    const challengesChannel = supabase
+      .channel('challenge-notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'battle_challenges',
+          filter: `status=eq.OPEN`
+        },
+        () => {
+          fetchNotifications();
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(wallPostsChannel);
       supabase.removeChannel(bitesChannel);
       supabase.removeChannel(battlesChannel);
+      supabase.removeChannel(challengesChannel);
     };
   };
 
@@ -210,6 +229,39 @@ const NotificationsDropdown = () => {
         });
       }
 
+      // Fetch recent challenges (last 24 hours) - challenges directed at this user
+      const { data: challenges } = await supabase
+        .from('battle_challenges')
+        .select('id, challenger_id, created_at, challenge_message, challenger_spider_id')
+        .eq('status', 'OPEN')
+        .gte('created_at', oneDayAgo)
+        .neq('challenger_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (challenges) {
+        const challengerIds = [...new Set(challenges.map(c => c.challenger_id))];
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, display_name')
+          .in('id', challengerIds);
+
+        const profileMap = new Map(profiles?.map(p => [p.id, p.display_name]) || []);
+
+        challenges.forEach(challenge => {
+          notifications.push({
+            id: `challenge-${challenge.id}`,
+            type: 'challenge',
+            message: challenge.challenge_message || 'challenged you to a battle!',
+            created_at: challenge.created_at,
+            from_user_id: challenge.challenger_id,
+            from_user_name: profileMap.get(challenge.challenger_id) || 'Someone',
+            challenge_id: challenge.id,
+            read: false
+          });
+        });
+      }
+
       // Sort by created_at
       notifications.sort((a, b) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -232,6 +284,8 @@ const NotificationsDropdown = () => {
         return <Trophy className="h-4 w-4 text-yellow-500" />;
       case 'battle_loss':
         return <Skull className="h-4 w-4 text-red-500" />;
+      case 'challenge':
+        return <Swords className="h-4 w-4 text-purple-500" />;
       default:
         return <Bell className="h-4 w-4" />;
     }
@@ -254,12 +308,22 @@ const NotificationsDropdown = () => {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80">
+      <DropdownMenuContent align="end" className="w-80 bg-card/95 backdrop-blur-sm border-border/50">
         <div className="flex items-center justify-between p-4 border-b">
           <h3 className="font-semibold">Notifications</h3>
-          {unreadCount > 0 && (
-            <Badge variant="secondary">{unreadCount} new</Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <Badge variant="secondary">{unreadCount} new</Badge>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => setIsOpen(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
         
         <ScrollArea className="h-96">
