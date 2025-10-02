@@ -26,6 +26,7 @@ import { BattleRecapAlert } from "@/components/BattleRecapAlert";
 import ClickableUsername from "@/components/ClickableUsername";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import NotificationsDropdown from "@/components/NotificationsDropdown";
+import OnlineUsersBar from "@/components/OnlineUsersBar";
 
 interface Spider {
   id: string;
@@ -592,6 +593,9 @@ const Index = () => {
       </header>
 
       <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-8">
+        {/* Online Users Bar */}
+        <OnlineUsersBar />
+        
         {/* My Spider Squad Section */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">

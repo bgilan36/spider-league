@@ -10,7 +10,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <>
       <NotificationListener />
-      <OnlineUsersBar />
       {children}
     </>
   );
