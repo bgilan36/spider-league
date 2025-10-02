@@ -19,14 +19,19 @@ const OnlineUsersBar: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 mb-6">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-muted-foreground">Online:</span>
-            <div className="flex gap-2">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-10 w-10 rounded-full" />
-              ))}
+      <div className="w-full mb-6">
+        <div className="container mx-auto px-4">
+          <div className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-2xl p-4 shadow-sm border border-primary/10">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                Online:
+              </span>
+              <div className="flex gap-2">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-10 w-10 rounded-full" />
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -36,11 +41,16 @@ const OnlineUsersBar: React.FC = () => {
 
   if (otherUsers.length === 0) {
     return (
-      <div className="w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 mb-6">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-muted-foreground">Online:</span>
-            <span className="text-sm text-muted-foreground/70">No other players online</span>
+      <div className="w-full mb-6">
+        <div className="container mx-auto px-4">
+          <div className="bg-gradient-to-r from-muted/30 via-muted/50 to-muted/30 rounded-2xl p-4 shadow-sm border border-border/50">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-muted-foreground/50" />
+                Online:
+              </span>
+              <span className="text-sm text-muted-foreground">No other players online</span>
+            </div>
           </div>
         </div>
       </div>
@@ -49,44 +59,47 @@ const OnlineUsersBar: React.FC = () => {
 
   return (
     <>
-      <div className="w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 mb-6">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-muted-foreground">
-              Online: <span className="text-primary">{otherUsers.length}</span>
-            </span>
-            <ScrollArea className="w-full whitespace-nowrap">
-              <div className="flex gap-2">
-                {otherUsers.map((onlineUser) => (
-                  <TooltipProvider key={onlineUser.user_id}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={() => setSelectedUserId(onlineUser.user_id)}
-                          className="relative group flex-shrink-0 transition-transform hover:scale-110"
-                        >
-                          <Avatar className="h-10 w-10 border-2 border-primary/20 group-hover:border-primary/60 transition-colors">
-                            <AvatarImage 
-                              src={onlineUser.avatar_url || undefined} 
-                              alt={onlineUser.display_name || 'User'} 
-                            />
-                            <AvatarFallback className="bg-primary/10 text-primary">
-                              {(onlineUser.display_name || 'U').charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-background" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="font-medium">{onlineUser.display_name || 'Unknown Player'}</p>
-                        <p className="text-xs text-muted-foreground">Click to view profile</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                ))}
-              </div>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
+      <div className="w-full mb-6">
+        <div className="container mx-auto px-4">
+          <div className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-2xl p-4 shadow-sm border border-primary/10 hover:shadow-md transition-shadow duration-300">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                Online: <span className="text-primary font-bold">{otherUsers.length}</span>
+              </span>
+              <ScrollArea className="w-full whitespace-nowrap">
+                <div className="flex gap-2">
+                  {otherUsers.map((onlineUser) => (
+                    <TooltipProvider key={onlineUser.user_id}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={() => setSelectedUserId(onlineUser.user_id)}
+                            className="relative group flex-shrink-0 transition-all duration-200 hover:scale-110"
+                          >
+                            <Avatar className="h-10 w-10 ring-2 ring-primary/20 group-hover:ring-primary/60 transition-all duration-200">
+                              <AvatarImage 
+                                src={onlineUser.avatar_url || undefined} 
+                                alt={onlineUser.display_name || 'User'} 
+                              />
+                              <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                                {(onlineUser.display_name || 'U').charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-green-500 border-2 border-background ring-1 ring-green-400/50" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-card/95 backdrop-blur-sm">
+                          <p className="font-medium">{onlineUser.display_name || 'Unknown Player'}</p>
+                          <p className="text-xs text-muted-foreground">Click to view profile</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ))}
+                </div>
+                <ScrollBar orientation="horizontal" />
+              </ScrollArea>
+            </div>
           </div>
         </div>
       </div>
