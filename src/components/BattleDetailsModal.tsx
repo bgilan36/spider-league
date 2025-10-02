@@ -79,11 +79,30 @@ const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
 
   if (!battle) return null;
 
+  // Check if battle has valid team data
+  if (!battle.team_a?.[0] || !battle.team_b?.[0]) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center">Battle Data Unavailable</DialogTitle>
+          </DialogHeader>
+          <div className="text-center py-8">
+            <p className="text-muted-foreground mb-4">
+              This battle's data is incomplete or not yet available.
+            </p>
+            <Button onClick={onClose}>Close</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   const { winner, loser, isDraw } = getWinnerLoser();
 
   // Get user profiles for team owners
-  const teamAProfile = battle.team_a?.[0]?.owner_id ? userProfiles[battle.team_a[0].owner_id] : null;
-  const teamBProfile = battle.team_b?.[0]?.owner_id ? userProfiles[battle.team_b[0].owner_id] : null;
+  const teamAProfile = battle.team_a[0].owner_id ? userProfiles[battle.team_a[0].owner_id] : null;
+  const teamBProfile = battle.team_b[0].owner_id ? userProfiles[battle.team_b[0].owner_id] : null;
 
   // Mock battle rounds data (in a real app, this would come from battle_log)
   const rounds = [
