@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, MessageSquare, Swords, Zap, Trophy, Skull } from 'lucide-react';
+import { Bell, MessageSquare, Zap, Trophy, Skull } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,

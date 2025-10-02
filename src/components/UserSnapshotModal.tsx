@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, User, Calendar, Zap } from 'lucide-react';
+import { Loader2, User, Calendar, Zap } from 'lucide-react'; // Bite functionality uses Zap icon
 import { BadgeIcon } from '@/components/BadgeIcon';
 import SpiderDetailsModal from '@/components/SpiderDetailsModal';
 import { supabase } from '@/integrations/supabase/client';
