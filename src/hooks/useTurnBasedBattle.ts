@@ -182,6 +182,19 @@ export const useTurnBasedBattle = (battleId: string | null) => {
     };
   }, [battleId, fetchBattle, fetchTurns]);
 
+  // Realtime fallback: poll while battle is active to ensure fast updates
+  useEffect(() => {
+    if (!battleId) return;
+    if (battle?.is_active === false) return;
+
+    const interval = setInterval(() => {
+      fetchTurns();
+      fetchBattle();
+    }, 1200);
+
+    return () => clearInterval(interval);
+  }, [battleId, battle?.is_active, fetchTurns, fetchBattle]);
+
   return {
     battle,
     turns,
