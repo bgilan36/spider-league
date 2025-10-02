@@ -107,6 +107,58 @@ const BattleButton: React.FC<BattleButtonProps> = ({
       setUserSpiders(eligibleSpiders);
     }
   };
+  // Cancel active challenge
+  const handleCancelChallenge = async () => {
+    if (!targetSpider || !user || !isOwnSpider) return;
+
+    setLoading(true);
+
+    // Find and delete the active challenge
+    const { data: activeChallenge } = await supabase
+      .from('battle_challenges')
+      .select('id')
+      .eq('challenger_spider_id', targetSpider.id)
+      .eq('challenger_id', user.id)
+      .eq('status', 'OPEN')
+      .gt('expires_at', new Date().toISOString())
+      .maybeSingle();
+
+    if (!activeChallenge) {
+      toast({
+        title: "No Active Challenge",
+        description: `${targetSpider.nickname} doesn't have an active challenge`,
+        variant: "destructive"
+      });
+      setLoading(false);
+      return;
+    }
+
+    const { error } = await supabase
+      .from('battle_challenges')
+      .delete()
+      .eq('id', activeChallenge.id);
+
+    if (error) {
+      console.error('Failed to cancel challenge:', error);
+      toast({
+        title: "Error",
+        description: `Failed to cancel challenge: ${error.message}`,
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Challenge Cancelled",
+        description: `${targetSpider.nickname}'s challenge has been cancelled`,
+      });
+      // Notify the homepage preview immediately
+      window.dispatchEvent(new CustomEvent('challenge:cancelled', { detail: { challenger_spider_id: targetSpider.id } }));
+      // Optimistically mark as inactive
+      setHasActiveChallenge(false);
+    }
+    
+    setLoading(false);
+  };
+
   // Create direct challenge with the current spider (for collection context)
   const handleDirectChallenge = async () => {
     if (!targetSpider || !user || !isOwnSpider) return;
@@ -276,23 +328,28 @@ const BattleButton: React.FC<BattleButtonProps> = ({
   return (
     <>
       <Button
-        variant={variant}
+        variant={hasActiveChallenge && isOwnSpider ? "destructive" : variant}
         size={size}
         className={className}
-        disabled={loading || (isOwnSpider && hasActiveChallenge)}
+        disabled={loading}
         onClick={(e) => {
           e.stopPropagation();
-          // For collection context with own spiders, auto-create challenge
+          // For collection context with own spiders
           if (context === "collection" && isOwnSpider) {
-            handleDirectChallenge();
+            // Cancel if there's an active challenge, otherwise create one
+            if (hasActiveChallenge) {
+              handleCancelChallenge();
+            } else {
+              handleDirectChallenge();
+            }
           } else {
             setShowDialog(true);
           }
         }}
-        title={hasActiveChallenge && isOwnSpider ? "This spider already has an active challenge" : undefined}
+        title={hasActiveChallenge && isOwnSpider ? "Cancel this spider's active challenge" : undefined}
       >
         <Sword className="h-4 w-4" />
-        <span className="hidden sm:inline ml-1">{hasActiveChallenge && isOwnSpider ? "Challenge Active" : buttonText}</span>
+        <span className="hidden sm:inline ml-1">{hasActiveChallenge && isOwnSpider ? "Cancel Challenge" : buttonText}</span>
       </Button>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
