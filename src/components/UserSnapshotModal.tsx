@@ -10,7 +10,6 @@ import SpiderDetailsModal from '@/components/SpiderDetailsModal';
 import { supabase } from '@/integrations/supabase/client';
 import PowerScoreArc from '@/components/PowerScoreArc';
 import ProfileWall from '@/components/ProfileWall';
-import { useNavigate } from 'react-router-dom';
 
 interface UserProfile {
   id: string;
@@ -64,13 +63,18 @@ const UserSnapshotModal: React.FC<UserSnapshotModalProps> = ({
   onClose,
   userId
 }) => {
-  const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [spiders, setSpiders] = useState<Spider[]>([]);
   const [badges, setBadges] = useState<UserBadge[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSpider, setSelectedSpider] = useState<any>(null);
   const [isSpiderModalOpen, setIsSpiderModalOpen] = useState(false);
+
+  const handleViewFullProfile = () => {
+    onClose();
+    // Use window.location for navigation to avoid Router context issues
+    window.location.href = `/collection/${userId}`;
+  };
 
   const rarityColors = {
     COMMON: "bg-gray-500",
@@ -331,10 +335,7 @@ const UserSnapshotModal: React.FC<UserSnapshotModalProps> = ({
             {/* Action Buttons */}
             <div className="flex justify-center gap-3">
               <Button 
-                onClick={() => {
-                  onClose();
-                  navigate(`/collection/${userId}`);
-                }}
+                onClick={handleViewFullProfile}
                 variant="default"
               >
                 View Full Profile
