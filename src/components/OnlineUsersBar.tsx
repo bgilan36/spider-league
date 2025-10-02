@@ -19,7 +19,7 @@ const OnlineUsersBar: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 mb-6">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium text-muted-foreground">Online:</span>
@@ -36,7 +36,7 @@ const OnlineUsersBar: React.FC = () => {
 
   if (otherUsers.length === 0) {
     return (
-      <div className="w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 mb-6">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium text-muted-foreground">Online:</span>
@@ -49,7 +49,7 @@ const OnlineUsersBar: React.FC = () => {
 
   return (
     <>
-      <div className="w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 mb-6">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium text-muted-foreground">
