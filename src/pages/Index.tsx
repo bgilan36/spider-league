@@ -70,6 +70,7 @@ const Index = () => {
   const [battlesLoading, setBattlesLoading] = useState(true);
   const [selectedBattle, setSelectedBattle] = useState<any>(null);
   const [isBattleDetailsOpen, setIsBattleDetailsOpen] = useState(false);
+  const [weeklyUploadCount, setWeeklyUploadCount] = useState(0);
 
   const rarityColors = {
     COMMON: "bg-gray-500",
@@ -161,12 +162,16 @@ const Index = () => {
       
       const { data: weeklyUpload, error: weeklyError } = await supabase
         .from('weekly_uploads')
-        .select('first_spider_id, second_spider_id, third_spider_id')
+        .select('first_spider_id, second_spider_id, third_spider_id, upload_count')
         .eq('user_id', user.id)
         .eq('week_start', weekStart.toISOString().split('T')[0])
         .maybeSingle();
 
       if (weeklyError) throw weeklyError;
+
+      // Set the weekly upload count
+      const uploadCount = weeklyUpload?.upload_count || 0;
+      setWeeklyUploadCount(uploadCount);
 
       // Collect all eligible spider IDs
       const spiderIds = [
@@ -680,6 +685,31 @@ const Index = () => {
           ) : (
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Upload CTA Card - shown when user can upload more spiders */}
+                {weeklyUploadCount < 3 && (
+                  <Card className="border-2 border-dashed border-primary/50 bg-gradient-to-br from-primary/5 to-primary/10 hover:border-primary hover:shadow-xl transition-all duration-300">
+                    <CardContent className="p-6 flex flex-col items-center justify-center h-full min-h-[400px] text-center">
+                      <Link to="/upload" className="inline-block cursor-pointer hover:scale-110 transition-transform duration-200 mb-4">
+                        <Upload className="h-16 w-16 text-primary mx-auto opacity-90" />
+                      </Link>
+                      <h4 className="font-bold text-xl mb-2">
+                        {weeklyUploadCount === 0 ? 'Upload Your First Spider' : 
+                         weeklyUploadCount === 1 ? 'Upload 2 More Spiders' :
+                         'Upload 1 More Spider'}
+                      </h4>
+                      <p className="text-muted-foreground mb-4 text-sm">
+                        {3 - weeklyUploadCount} {3 - weeklyUploadCount === 1 ? 'upload' : 'uploads'} remaining this week
+                      </p>
+                      <Button asChild className="gradient-button pulse-glow w-full" size="lg">
+                        <Link to="/upload" className="flex items-center gap-2">
+                          <Plus className="h-5 w-5" />
+                          Upload Spider Now
+                        </Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+                
                 {userSpiders.map((spider) => (
                   <Card key={spider.id} className="hover:shadow-lg transition-shadow">
                     <CardContent className="p-6">
