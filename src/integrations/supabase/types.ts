@@ -47,6 +47,36 @@ export type Database = {
         }
         Relationships: []
       }
+      battle_audit_log: {
+        Row: {
+          action: string
+          battle_id: string
+          id: string
+          modified_at: string
+          modified_by: string | null
+          new_values: Json | null
+          old_values: Json | null
+        }
+        Insert: {
+          action: string
+          battle_id: string
+          id?: string
+          modified_at?: string
+          modified_by?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+        }
+        Update: {
+          action?: string
+          battle_id?: string
+          id?: string
+          modified_at?: string
+          modified_by?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+        }
+        Relationships: []
+      }
       battle_challenges: {
         Row: {
           accepter_id: string | null
@@ -831,6 +861,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       weekly_rankings: {
         Row: {
           created_at: string
@@ -1015,6 +1066,13 @@ export type Database = {
           week_spider_count: number
         }[]
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       increment_weekly_upload: {
         Args: { spider_id_param: string; user_id_param: string }
         Returns: undefined
@@ -1050,6 +1108,7 @@ export type Database = {
       }
     }
     Enums: {
+      app_role: "admin" | "moderator" | "user"
       battle_type: "SANDBOX" | "MATCHUP"
       battle_winner: "A" | "B" | "TIE"
       matchup_result: "A_WIN" | "B_WIN" | "TIE" | "NO_CONTEST"
@@ -1181,6 +1240,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "moderator", "user"],
       battle_type: ["SANDBOX", "MATCHUP"],
       battle_winner: ["A", "B", "TIE"],
       matchup_result: ["A_WIN", "B_WIN", "TIE", "NO_CONTEST"],
