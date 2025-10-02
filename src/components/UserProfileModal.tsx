@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -78,6 +79,7 @@ const rarityColors = {
 export const UserProfileModal = ({ userId, isOpen, onClose }: UserProfileModalProps) => {
   const { toast } = useToast();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [badges, setBadges] = useState<UserBadge[]>([]);
   const [stats, setStats] = useState<UserStats | null>(null);
@@ -463,24 +465,43 @@ export const UserProfileModal = ({ userId, isOpen, onClose }: UserProfileModalPr
                     </p>
                   </div>
                   
-                  {/* Poke Button - Only show if viewing someone else's profile */}
-                  {user && userId !== user.id && (
-                    <div className="flex flex-col items-center gap-2">
+                  {/* Action Buttons */}
+                  {userId && (
+                    <div className="flex items-center gap-2">
+                      {/* Poke Button - Only show if viewing someone else's profile */}
+                      {user && userId !== user.id && (
+                        <div className="flex flex-col items-center gap-2">
+                          <Button
+                            variant={hasPokedUser ? "secondary" : "outline"}
+                            size="sm"
+                            onClick={handlePoke}
+                            disabled={pokingUser}
+                            className="flex items-center gap-2"
+                          >
+                            <Hand className="h-4 w-4" />
+                            {hasPokedUser ? "Unpoke" : "Poke"}
+                          </Button>
+                          {pokeCount > 0 && (
+                            <p className="text-xs text-muted-foreground">
+                              {pokeCount} poke{pokeCount !== 1 ? 's' : ''}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* View Full Profile Button */}
                       <Button
-                        variant={hasPokedUser ? "secondary" : "outline"}
+                        variant="default"
                         size="sm"
-                        onClick={handlePoke}
-                        disabled={pokingUser}
+                        onClick={() => {
+                          onClose();
+                          navigate(`/collection/${userId}`);
+                        }}
                         className="flex items-center gap-2"
                       >
-                        <Hand className="h-4 w-4" />
-                        {hasPokedUser ? "Unpoke" : "Poke"}
+                        <Users className="h-4 w-4" />
+                        View Full Profile
                       </Button>
-                      {pokeCount > 0 && (
-                        <p className="text-xs text-muted-foreground">
-                          {pokeCount} poke{pokeCount !== 1 ? 's' : ''}
-                        </p>
-                      )}
                     </div>
                   )}
                 </div>

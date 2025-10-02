@@ -10,6 +10,7 @@ import { ArrowLeft, Users } from 'lucide-react';
 import PowerScoreArc from '@/components/PowerScoreArc';
 import BattleButton from '@/components/BattleButton';
 import { Skeleton } from '@/components/ui/skeleton';
+import ProfileWall from '@/components/ProfileWall';
 
 interface Spider {
   id: string;
@@ -141,7 +142,8 @@ const UserCollection: React.FC = () => {
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {spiders.map((spider) => (
               <Card key={spider.id} className="overflow-hidden">
                 <div className="relative">
@@ -214,8 +216,17 @@ const UserCollection: React.FC = () => {
                   />
                 </CardContent>
               </Card>
-            ))}
-          </div>
+              ))}
+            </div>
+
+            {/* Profile Wall Section */}
+            <div className="mt-8 max-w-4xl mx-auto">
+              <ProfileWall 
+                profileUserId={userId!} 
+                profileDisplayName={userProfile?.display_name || 'User'} 
+              />
+            </div>
+          </>
         )}
       </main>
     </div>
