@@ -316,8 +316,8 @@ const NotificationsDropdown = () => {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80 bg-card/95 backdrop-blur-sm border-border/50">
-        <div className="flex items-center justify-between p-4 border-b">
+      <DropdownMenuContent align="end" className="w-80 bg-card/98 backdrop-blur-md shadow-xl border-0 rounded-2xl ring-1 ring-primary/10">
+        <div className="flex items-center justify-between p-4 border-b border-primary/10 bg-gradient-to-r from-primary/5 to-transparent">
           <h3 className="font-semibold">Notifications</h3>
           {unreadCount > 0 && (
             <Badge variant="secondary">{unreadCount} new</Badge>
@@ -330,12 +330,12 @@ const NotificationsDropdown = () => {
               <Bell className="h-12 w-12 mx-auto mb-2 opacity-50" />
               <p>No notifications yet</p>
             </div>
-          ) : (
-            <div className="divide-y">
+           ) : (
+            <div className="divide-y divide-border/30">
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className="p-4 hover:bg-muted/50 transition-colors"
+                  className="p-4 hover:bg-primary/5 transition-colors cursor-pointer"
                 >
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 mt-1">
