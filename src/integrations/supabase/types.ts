@@ -305,6 +305,27 @@ export type Database = {
           },
         ]
       }
+      pokes: {
+        Row: {
+          created_at: string
+          id: string
+          poked_user_id: string
+          poker_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          poked_user_id: string
+          poker_user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          poked_user_id?: string
+          poker_user_id?: string
+        }
+        Relationships: []
+      }
       posts: {
         Row: {
           comments_count: number

@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, Users, Target, MessageSquare, Trash2, Send } from "lucide-react";
+import { Calendar, Users, Target, MessageSquare, Trash2, Send, Hand } from "lucide-react";
 import { BadgeIcon } from "@/components/BadgeIcon";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -86,11 +86,15 @@ export const UserProfileModal = ({ userId, isOpen, onClose }: UserProfileModalPr
   const [newPostMessage, setNewPostMessage] = useState("");
   const [postingMessage, setPostingMessage] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [pokeCount, setPokeCount] = useState(0);
+  const [hasPokedUser, setHasPokedUser] = useState(false);
+  const [pokingUser, setPokingUser] = useState(false);
 
   useEffect(() => {
     if (isOpen && userId) {
       fetchUserProfile();
       fetchWallPosts();
+      fetchPokes();
     }
   }, [isOpen, userId]);
 
@@ -243,6 +247,87 @@ export const UserProfileModal = ({ userId, isOpen, onClose }: UserProfileModalPr
     }
   };
 
+  const fetchPokes = async () => {
+    if (!userId) return;
+
+    try {
+      // Get total poke count for this user
+      const { count, error: countError } = await supabase
+        .from('pokes')
+        .select('*', { count: 'exact', head: true })
+        .eq('poked_user_id', userId);
+
+      if (countError) throw countError;
+      setPokeCount(count || 0);
+
+      // Check if current user has poked this user
+      if (user) {
+        const { data, error } = await supabase
+          .from('pokes')
+          .select('id')
+          .eq('poker_user_id', user.id)
+          .eq('poked_user_id', userId)
+          .maybeSingle();
+
+        if (error) throw error;
+        setHasPokedUser(!!data);
+      }
+    } catch (error: any) {
+      console.error('Error fetching pokes:', error);
+    }
+  };
+
+  const handlePoke = async () => {
+    if (!user || !userId || user.id === userId) return;
+
+    setPokingUser(true);
+    try {
+      if (hasPokedUser) {
+        // Remove poke
+        const { error } = await supabase
+          .from('pokes')
+          .delete()
+          .eq('poker_user_id', user.id)
+          .eq('poked_user_id', userId);
+
+        if (error) throw error;
+
+        setHasPokedUser(false);
+        setPokeCount(prev => Math.max(0, prev - 1));
+        toast({
+          title: "Poke removed",
+          description: "You unpoked this user"
+        });
+      } else {
+        // Add poke
+        const { error } = await supabase
+          .from('pokes')
+          .insert({
+            poker_user_id: user.id,
+            poked_user_id: userId
+          });
+
+        if (error) throw error;
+
+        setHasPokedUser(true);
+        setPokeCount(prev => prev + 1);
+        toast({
+          title: "Poked!",
+          description: "You poked this user"
+        });
+      }
+    } catch (error: any) {
+      console.error('Error poking user:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to poke user",
+        variant: "destructive"
+      });
+    } finally {
+      setPokingUser(false);
+    }
+  };
+
   const handlePostMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -367,14 +452,37 @@ export const UserProfileModal = ({ userId, isOpen, onClose }: UserProfileModalPr
               </Avatar>
               
               <div className="flex-1 space-y-3">
-                <div>
-                  <h2 className="text-2xl font-bold">
-                    {profile.display_name || 'Anonymous User'}
-                  </h2>
-                  <p className="text-muted-foreground flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    Joined {formatDate(profile.created_at)}
-                  </p>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-bold">
+                      {profile.display_name || 'Anonymous User'}
+                    </h2>
+                    <p className="text-muted-foreground flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      Joined {formatDate(profile.created_at)}
+                    </p>
+                  </div>
+                  
+                  {/* Poke Button - Only show if viewing someone else's profile */}
+                  {user && userId !== user.id && (
+                    <div className="flex flex-col items-center gap-2">
+                      <Button
+                        variant={hasPokedUser ? "secondary" : "outline"}
+                        size="sm"
+                        onClick={handlePoke}
+                        disabled={pokingUser}
+                        className="flex items-center gap-2"
+                      >
+                        <Hand className="h-4 w-4" />
+                        {hasPokedUser ? "Unpoke" : "Poke"}
+                      </Button>
+                      {pokeCount > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          {pokeCount} poke{pokeCount !== 1 ? 's' : ''}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
                 
                 {profile.bio && (
