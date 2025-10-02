@@ -47,7 +47,7 @@ serve(async (req) => {
 
     let turnCount = 0;
     let currentTurnUser = user1;
-    const maxTurns = 10; // Max 10 turns for faster battles
+    const maxTurns = 8; // Max 8 turns to ensure faster battles
 
     // Dice roll function (1-20)
     const rollDice = () => Math.floor(Math.random() * 20) + 1;
@@ -73,26 +73,26 @@ serve(async (req) => {
 
       if (rand < 0.85) {
         actionType = "attack";
-        // Increased base damage for faster battles
-        const baseDamage = Math.floor(attacker.damage * 1.5) + (attackerDice - 10);
-        const defense = Math.floor(defender.defense / 15) + (defenderDice > 16 ? 2 : 0);
-        damage = Math.max(5, baseDamage - defense); // Minimum 5 damage
+        // High base damage to ensure 3-8 turn battles
+        const baseDamage = Math.floor(attacker.damage * 2) + (attackerDice - 10);
+        const defense = Math.floor(defender.defense / 18) + (defenderDice > 17 ? 2 : 0);
+        damage = Math.max(8, baseDamage - defense); // Minimum 8 damage
         
         // Critical hit on natural 20
         if (attackerDice === 20) {
-          damage = Math.floor(damage * 2);
+          damage = Math.floor(damage * 2.2);
           isCritical = true;
         }
       } else {
         actionType = "special";
-        // Special attacks deal heavy damage
-        const baseDamage = Math.floor(attacker.venom * 1.8) + (attackerDice - 8);
-        const defense = Math.floor(defender.defense / 12) + (defenderDice > 17 ? 2 : 0);
-        damage = Math.max(8, baseDamage - defense); // Minimum 8 damage
+        // Special attacks deal massive damage
+        const baseDamage = Math.floor(attacker.venom * 2.2) + (attackerDice - 8);
+        const defense = Math.floor(defender.defense / 15) + (defenderDice > 18 ? 2 : 0);
+        damage = Math.max(12, baseDamage - defense); // Minimum 12 damage
         
         // Critical on 19-20 for special
         if (attackerDice >= 19) {
-          damage = Math.floor(damage * 2.5);
+          damage = Math.floor(damage * 2.8);
           isCritical = true;
         }
       }
