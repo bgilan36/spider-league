@@ -146,19 +146,43 @@ const Index = () => {
 
   const fetchUserSpiders = async () => {
     if (!user) return;
+    setSpidersLoading(true);
     
     try {
-      const { data, error } = await supabase
-        .from('spiders')
-        .select('id, nickname, species, image_url, rarity, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved, created_at, owner_id')
-        .eq('owner_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(3);
+      // Get the current week's eligible spider (first spider uploaded this week)
+      const now = new Date();
+      const dayOfWeek = now.getDay();
+      const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      const weekStart = new Date(now);
+      weekStart.setDate(now.getDate() + diff);
+      weekStart.setHours(0, 0, 0, 0);
+      
+      const { data: weeklyUpload, error: weeklyError } = await supabase
+        .from('weekly_uploads')
+        .select('first_spider_id')
+        .eq('user_id', user.id)
+        .eq('week_start', weekStart.toISOString().split('T')[0])
+        .maybeSingle();
 
-      if (error) throw error;
-      setUserSpiders(data || []);
+      if (weeklyError) throw weeklyError;
+
+      if (weeklyUpload?.first_spider_id) {
+        // Fetch the eligible spider
+        const { data, error } = await supabase
+          .from('spiders')
+          .select('id, nickname, species, image_url, rarity, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved, created_at, owner_id')
+          .eq('id', weeklyUpload.first_spider_id)
+          .single();
+
+        if (error) throw error;
+        setUserSpiders(data ? [data] : []);
+      } else {
+        // No eligible spider for this week
+        setUserSpiders([]);
+      }
     } catch (error) {
       console.error('Error fetching spiders:', error);
+      setUserSpiders([]);
     } finally {
       setSpidersLoading(false);
     }
@@ -601,36 +625,14 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
             <div>
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
-                <h2 className="text-xl sm:text-2xl font-bold">My Spider Squad</h2>
+                <h2 className="text-xl sm:text-2xl font-bold">This Week's Eligible Spider</h2>
                 {userGlobalRank && (
                   <Badge variant="secondary" className="text-sm w-fit">
                     Global Rank #{userGlobalRank}
                   </Badge>
                 )}
               </div>
-            </div>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-              <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
-                <Link to="/collection" className="flex items-center justify-center gap-2">
-                  <Trophy className="h-4 w-4" />
-                  <span className="hidden sm:inline">Full Collection</span>
-                  <span className="sm:hidden">Collection</span>
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
-                <Link to="/battle-history" className="flex items-center justify-center gap-2">
-                  <Sword className="h-4 w-4" />
-                  <span className="hidden sm:inline">Battle History</span>
-                  <span className="sm:hidden">History</span>
-                </Link>
-              </Button>
-              <Button asChild className="gradient-button relative z-10 w-full sm:w-auto" size="sm">
-                <Link to="/upload" className="flex items-center justify-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Upload Spider</span>
-                  <span className="sm:hidden">Upload</span>
-                </Link>
-              </Button>
+              <p className="text-sm text-muted-foreground">Your first spider uploaded this week</p>
             </div>
           </div>
 
@@ -639,65 +641,91 @@ const Index = () => {
               <Loader2 className="h-6 w-6 animate-spin" />
             </div>
           ) : userSpiders.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6 text-center py-12">
-                <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No spiders yet</h3>
-                <p className="text-muted-foreground mb-6">Upload your first spider to start building your collection</p>
-                <Button asChild className="gradient-button relative z-10 pulse-glow">
-                  <Link to="/upload" className="flex items-center gap-2">
-                    <Plus className="h-4 w-4" />
-                    Upload Your First Spider
-                  </Link>
-                </Button>
+            <Card className="border-2 border-dashed">
+              <CardContent className="pt-6 text-center py-16">
+                <Upload className="h-20 w-20 text-primary mx-auto mb-6 opacity-80" />
+                <h3 className="text-2xl font-bold mb-3">No Eligible Spider This Week</h3>
+                <p className="text-muted-foreground mb-8 text-lg max-w-md mx-auto">
+                  Upload your first spider this week to make it eligible for battles and rankings!
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Button asChild className="gradient-button relative z-10 pulse-glow" size="lg">
+                    <Link to="/upload" className="flex items-center gap-2">
+                      <Plus className="h-5 w-5" />
+                      Upload Spider Now
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" size="lg">
+                    <Link to="/collection" className="flex items-center gap-2">
+                      <Trophy className="h-5 w-5" />
+                      View Full Collection
+                    </Link>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {userSpiders.map((spider) => (
-                <div 
-                  key={spider.id} 
-                  className="spider-card-mini relative group"
-                >
-                  <div 
-                    className="cursor-pointer hover:scale-105 transition-transform"
-                    onClick={() => handleSpiderClick(spider)}
-                  >
-                    <div className="aspect-square relative mb-3 rounded-md overflow-hidden">
-                      <img 
-                        src={spider.image_url} 
-                        alt={spider.nickname}
-                        className="w-full h-full object-cover"
-                      />
-                      <Badge 
-                        className={`absolute top-1 right-1 text-xs ${rarityColors[spider.rarity]} text-white`}
+            <div className="space-y-4">
+              <Card className="max-w-md mx-auto">
+                <CardContent className="p-6">
+                  {userSpiders.map((spider) => (
+                    <div key={spider.id} className="space-y-4">
+                      <div 
+                        className="cursor-pointer hover:scale-105 transition-transform"
+                        onClick={() => handleSpiderClick(spider)}
                       >
-                        {spider.rarity}
-                      </Badge>
-                    </div>
-                    <div className="text-center">
-                      <h4 className="font-medium text-sm mb-1 truncate">{spider.nickname}</h4>
-                      <p className="text-xs text-muted-foreground mb-2 truncate">{spider.species}</p>
-                      <div className="flex justify-center">
-                        <PowerScoreArc score={spider.power_score} size="small" />
+                        <div className="aspect-square relative mb-4 rounded-lg overflow-hidden">
+                          <img 
+                            src={spider.image_url} 
+                            alt={spider.nickname}
+                            className="w-full h-full object-cover"
+                          />
+                          <Badge 
+                            className={`absolute top-2 right-2 ${rarityColors[spider.rarity]} text-white`}
+                          >
+                            {spider.rarity}
+                          </Badge>
+                        </div>
+                        <div className="text-center space-y-3">
+                          <div>
+                            <h4 className="font-bold text-xl mb-1">{spider.nickname}</h4>
+                            <p className="text-muted-foreground">{spider.species}</p>
+                          </div>
+                          <div className="flex justify-center">
+                            <PowerScoreArc score={spider.power_score} size="medium" />
+                          </div>
+                        </div>
                       </div>
+                      
+                      {/* Battle Button */}
+                      {spider.is_approved && (
+                        <BattleButton 
+                          targetSpider={spider} 
+                          size="default" 
+                          variant="default"
+                          context="collection"
+                          className="w-full"
+                        />
+                      )}
                     </div>
-                  </div>
-                  
-                  {/* Battle Button - only show for approved spiders */}
-                  {spider.is_approved && (
-                    <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <BattleButton 
-                        targetSpider={spider} 
-                        size="sm" 
-                        variant="default"
-                        context="collection"
-                        className="shadow-lg"
-                      />
-                    </div>
-                  )}
-                </div>
-              ))}
+                  ))}
+                </CardContent>
+              </Card>
+              
+              <div className="flex justify-center gap-3">
+                <Button asChild variant="outline">
+                  <Link to="/collection" className="flex items-center gap-2">
+                    <Trophy className="h-4 w-4" />
+                    View Full Collection
+                  </Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link to="/battle-history" className="flex items-center gap-2">
+                    <Sword className="h-4 w-4" />
+                    Battle History
+                  </Link>
+                </Button>
+              </div>
             </div>
           )}
         </div>
