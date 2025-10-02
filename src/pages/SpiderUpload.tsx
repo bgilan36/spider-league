@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -97,6 +97,36 @@ const SpiderUpload = () => {
     dangerLevel: string;
     specialAbilities: string[];
   } | null>(null);
+  const [weeklyUploadCount, setWeeklyUploadCount] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchWeeklyUploadCount = async () => {
+      if (!user) return;
+      
+      try {
+        const now = new Date();
+        const dayOfWeek = now.getDay();
+        const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() + diff);
+        weekStart.setHours(0, 0, 0, 0);
+        
+        const { data, error } = await supabase
+          .from('weekly_uploads')
+          .select('upload_count')
+          .eq('user_id', user.id)
+          .eq('week_start', weekStart.toISOString().split('T')[0])
+          .maybeSingle();
+        
+        if (error) throw error;
+        setWeeklyUploadCount(data?.upload_count || 0);
+      } catch (error) {
+        console.error('Error fetching weekly upload count:', error);
+      }
+    };
+    
+    fetchWeeklyUploadCount();
+  }, [user]);
 
   const fileToBase64 = (file: File) =>
     new Promise<string>((resolve, reject) => {
@@ -422,7 +452,7 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
       if (!canUpload) {
         toast({ 
           title: "Weekly limit reached", 
-          description: "You can only upload one ranked spider per week. Week resets on Sunday at 12am PT.", 
+          description: "You can only upload 3 eligible spiders per week. Week resets on Sunday at 12am PT.", 
           variant: "destructive" 
         });
         return;
@@ -472,6 +502,9 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
       if (trackError) {
         console.error("Error tracking weekly upload:", trackError);
         // Don't fail the upload, just log the error
+      } else {
+        // Update local count after successful tracking
+        setWeeklyUploadCount(prev => prev + 1);
       }
 
       toast({ title: "Spider uploaded!", description: "Your spider is ready for battle!" });
@@ -518,6 +551,11 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
             </div>
             <h1 className="text-3xl font-bold mb-2">Upload Your Spider</h1>
             <p className="text-muted-foreground">Upload a photo and we'll generate battle stats for your spider</p>
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <Badge variant={weeklyUploadCount >= 3 ? "destructive" : "secondary"} className="text-sm">
+                {weeklyUploadCount}/3 Spiders Uploaded This Week
+              </Badge>
+            </div>
           </div>
 
           <Card>

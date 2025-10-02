@@ -932,6 +932,8 @@ export type Database = {
           created_at: string
           first_spider_id: string | null
           id: string
+          second_spider_id: string | null
+          third_spider_id: string | null
           updated_at: string
           upload_count: number
           user_id: string
@@ -941,6 +943,8 @@ export type Database = {
           created_at?: string
           first_spider_id?: string | null
           id?: string
+          second_spider_id?: string | null
+          third_spider_id?: string | null
           updated_at?: string
           upload_count?: number
           user_id: string
@@ -950,12 +954,29 @@ export type Database = {
           created_at?: string
           first_spider_id?: string | null
           id?: string
+          second_spider_id?: string | null
+          third_spider_id?: string | null
           updated_at?: string
           upload_count?: number
           user_id?: string
           week_start?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "weekly_uploads_second_spider_id_fkey"
+            columns: ["second_spider_id"]
+            isOneToOne: false
+            referencedRelation: "spiders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_uploads_third_spider_id_fkey"
+            columns: ["third_spider_id"]
+            isOneToOne: false
+            referencedRelation: "spiders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       weeks: {
         Row: {

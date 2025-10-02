@@ -149,7 +149,7 @@ const Index = () => {
     setSpidersLoading(true);
     
     try {
-      // Get the current week's eligible spider (first spider uploaded this week)
+      // Get the current week's eligible spiders (up to 3 spiders uploaded this week)
       const now = new Date();
       const dayOfWeek = now.getDay();
       const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
@@ -159,25 +159,31 @@ const Index = () => {
       
       const { data: weeklyUpload, error: weeklyError } = await supabase
         .from('weekly_uploads')
-        .select('first_spider_id')
+        .select('first_spider_id, second_spider_id, third_spider_id')
         .eq('user_id', user.id)
         .eq('week_start', weekStart.toISOString().split('T')[0])
         .maybeSingle();
 
       if (weeklyError) throw weeklyError;
 
-      if (weeklyUpload?.first_spider_id) {
-        // Fetch the eligible spider
+      // Collect all eligible spider IDs
+      const spiderIds = [
+        weeklyUpload?.first_spider_id,
+        weeklyUpload?.second_spider_id,
+        weeklyUpload?.third_spider_id
+      ].filter(Boolean);
+
+      if (spiderIds.length > 0) {
+        // Fetch all eligible spiders
         const { data, error } = await supabase
           .from('spiders')
           .select('id, nickname, species, image_url, rarity, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved, created_at, owner_id')
-          .eq('id', weeklyUpload.first_spider_id)
-          .single();
+          .in('id', spiderIds);
 
         if (error) throw error;
-        setUserSpiders(data ? [data] : []);
+        setUserSpiders(data || []);
       } else {
-        // No eligible spider for this week
+        // No eligible spiders for this week
         setUserSpiders([]);
       }
     } catch (error) {
@@ -625,14 +631,17 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
             <div>
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
-                <h2 className="text-xl sm:text-2xl font-bold">This Week's Eligible Spider</h2>
+                <h2 className="text-xl sm:text-2xl font-bold">This Week's Eligible Spiders</h2>
                 {userGlobalRank && (
                   <Badge variant="secondary" className="text-sm w-fit">
                     Global Rank #{userGlobalRank}
                   </Badge>
                 )}
+                <Badge variant="outline" className="text-sm w-fit">
+                  {userSpiders.length}/3 Uploaded
+                </Badge>
               </div>
-              <p className="text-sm text-muted-foreground">Your first spider uploaded this week</p>
+              <p className="text-sm text-muted-foreground">You can upload up to 3 eligible spiders each week</p>
             </div>
           </div>
 
@@ -646,9 +655,9 @@ const Index = () => {
                 <Link to="/upload" className="inline-block cursor-pointer hover:scale-110 transition-transform duration-200">
                   <Upload className="h-20 w-20 text-primary mx-auto mb-6 opacity-80" />
                 </Link>
-                <h3 className="text-2xl font-bold mb-3">No Eligible Spider This Week</h3>
+                <h3 className="text-2xl font-bold mb-3">No Eligible Spiders This Week</h3>
                 <p className="text-muted-foreground mb-8 text-lg max-w-md mx-auto">
-                  Upload your first spider this week to make it eligible for battles and rankings!
+                  Upload up to 3 spiders this week to make them eligible for battles and rankings!
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Button asChild className="gradient-button relative z-10 pulse-glow" size="lg">
@@ -668,10 +677,10 @@ const Index = () => {
             </Card>
           ) : (
             <div className="space-y-4">
-              <Card className="max-w-md mx-auto">
-                <CardContent className="p-6">
-                  {userSpiders.map((spider) => (
-                    <div key={spider.id} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {userSpiders.map((spider) => (
+                  <Card key={spider.id} className="hover:shadow-lg transition-shadow">
+                    <CardContent className="p-6">
                       <div 
                         className="cursor-pointer hover:scale-105 transition-transform"
                         onClick={() => handleSpiderClick(spider)}
@@ -709,10 +718,10 @@ const Index = () => {
                           className="w-full"
                         />
                       )}
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
               
               <div className="flex justify-center gap-3">
                 <Button asChild variant="outline">
