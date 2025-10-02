@@ -5,41 +5,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { 
   MessageSquare, 
   Trash2, 
   Loader2, 
   Heart, 
-  Reply, 
-  Image as ImageIcon,
-  X 
+  Reply
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import ClickableUsername from './ClickableUsername';
 import { z } from 'zod';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ProfileWallProps {
   profileUserId: string;
   profileDisplayName: string;
-}
-
-interface Spider {
-  id: string;
-  nickname: string;
-  species: string;
-  image_url: string;
-  power_score: number;
-  rarity: string;
 }
 
 interface WallPost {
@@ -48,15 +28,15 @@ interface WallPost {
   poster_user_id: string;
   message: string;
   created_at: string;
-  spider_id?: string;
   poster_profile?: {
     display_name: string;
     avatar_url: string | null;
   };
-  spider?: Spider;
   likes_count?: number;
   replies_count?: number;
+  spider_reactions_count?: number;
   user_has_liked?: boolean;
+  user_has_spider_reacted?: boolean;
 }
 
 interface WallReply {
@@ -86,9 +66,6 @@ const ProfileWall = ({ profileUserId, profileDisplayName }: ProfileWallProps) =>
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ message?: string }>({});
-  const [selectedSpiderId, setSelectedSpiderId] = useState<string | null>(null);
-  const [userSpiders, setUserSpiders] = useState<Spider[]>([]);
-  const [showSpiderSelect, setShowSpiderSelect] = useState(false);
   const [replyingToPost, setReplyingToPost] = useState<string | null>(null);
   const [replyMessage, setReplyMessage] = useState('');
   const [replies, setReplies] = useState<{ [key: string]: WallReply[] }>({});
@@ -96,29 +73,11 @@ const ProfileWall = ({ profileUserId, profileDisplayName }: ProfileWallProps) =>
 
   const isOwnProfile = user?.id === profileUserId;
 
-  const fetchUserSpiders = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('spiders')
-        .select('id, nickname, species, image_url, power_score, rarity')
-        .eq('owner_id', user.id)
-        .eq('is_approved', true)
-        .order('power_score', { ascending: false });
-
-      if (error) throw error;
-      setUserSpiders(data || []);
-    } catch (error: any) {
-      console.error('Error fetching spiders:', error);
-    }
-  };
-
   const fetchPosts = async () => {
     try {
       const { data, error } = await supabase
         .from('profile_wall_posts')
-        .select('id, profile_user_id, poster_user_id, message, created_at, spider_id')
+        .select('id, profile_user_id, poster_user_id, message, created_at')
         .eq('profile_user_id', profileUserId)
         .order('created_at', { ascending: false });
 
@@ -136,18 +95,6 @@ const ProfileWall = ({ profileUserId, profileDisplayName }: ProfileWallProps) =>
           profiles?.map(p => [p.id, { display_name: p.display_name || 'Unknown', avatar_url: p.avatar_url }]) || []
         );
 
-        // Fetch spider data for posts with spiders
-        const spiderIds = data.filter(p => p.spider_id).map(p => p.spider_id!);
-        let spidersMap = new Map();
-        if (spiderIds.length > 0) {
-          const { data: spiders } = await supabase
-            .from('spiders')
-            .select('id, nickname, species, image_url, power_score, rarity')
-            .in('id', spiderIds);
-
-          spidersMap = new Map(spiders?.map(s => [s.id, s]) || []);
-        }
-
         // Fetch like counts
         const postIds = data.map(p => p.id);
         const { data: likesData } = await supabase
@@ -161,6 +108,21 @@ const ProfileWall = ({ profileUserId, profileDisplayName }: ProfileWallProps) =>
           likesCountMap.set(like.post_id, (likesCountMap.get(like.post_id) || 0) + 1);
           if (user && like.user_id === user.id) {
             userLikesMap.set(like.post_id, true);
+          }
+        });
+
+        // Fetch spider reactions
+        const { data: spiderReactionsData } = await supabase
+          .from('profile_wall_spider_reactions')
+          .select('post_id, user_id')
+          .in('post_id', postIds);
+
+        const spiderReactionsCountMap = new Map<string, number>();
+        const userSpiderReactionsMap = new Map<string, boolean>();
+        spiderReactionsData?.forEach(reaction => {
+          spiderReactionsCountMap.set(reaction.post_id, (spiderReactionsCountMap.get(reaction.post_id) || 0) + 1);
+          if (user && reaction.user_id === user.id) {
+            userSpiderReactionsMap.set(reaction.post_id, true);
           }
         });
 
@@ -178,10 +140,11 @@ const ProfileWall = ({ profileUserId, profileDisplayName }: ProfileWallProps) =>
         const postsWithData = data.map(post => ({
           ...post,
           poster_profile: profilesMap.get(post.poster_user_id) || { display_name: 'Unknown', avatar_url: null },
-          spider: post.spider_id ? spidersMap.get(post.spider_id) : undefined,
           likes_count: likesCountMap.get(post.id) || 0,
+          spider_reactions_count: spiderReactionsCountMap.get(post.id) || 0,
           replies_count: repliesCountMap.get(post.id) || 0,
-          user_has_liked: userLikesMap.get(post.id) || false
+          user_has_liked: userLikesMap.get(post.id) || false,
+          user_has_spider_reacted: userSpiderReactionsMap.get(post.id) || false
         }));
 
         setPosts(postsWithData);
@@ -267,6 +230,44 @@ const ProfileWall = ({ profileUserId, profileDisplayName }: ProfileWallProps) =>
     }
   };
 
+  const handleSpiderReaction = async (postId: string) => {
+    if (!user) {
+      toast.error('You must be logged in to react');
+      return;
+    }
+
+    try {
+      const post = posts.find(p => p.id === postId);
+      if (!post) return;
+
+      if (post.user_has_spider_reacted) {
+        // Remove reaction
+        const { error } = await supabase
+          .from('profile_wall_spider_reactions')
+          .delete()
+          .eq('post_id', postId)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+      } else {
+        // Add reaction
+        const { error } = await supabase
+          .from('profile_wall_spider_reactions')
+          .insert({
+            post_id: postId,
+            user_id: user.id
+          });
+
+        if (error) throw error;
+      }
+
+      fetchPosts();
+    } catch (error: any) {
+      console.error('Error toggling spider reaction:', error);
+      toast.error('Failed to update reaction');
+    }
+  };
+
   const handlePostMessage = async () => {
     if (!user) {
       toast.error('You must be logged in to post');
@@ -293,16 +294,13 @@ const ProfileWall = ({ profileUserId, profileDisplayName }: ProfileWallProps) =>
         .insert({
           profile_user_id: profileUserId,
           poster_user_id: user.id,
-          message: validation.data.message,
-          spider_id: selectedSpiderId
+          message: validation.data.message
         });
 
       if (error) throw error;
 
       toast.success('Message posted!');
       setNewMessage('');
-      setSelectedSpiderId(null);
-      setShowSpiderSelect(false);
       fetchPosts();
     } catch (error: any) {
       console.error('Error posting message:', error);
@@ -369,9 +367,6 @@ const ProfileWall = ({ profileUserId, profileDisplayName }: ProfileWallProps) =>
 
   useEffect(() => {
     fetchPosts();
-    if (user) {
-      fetchUserSpiders();
-    }
 
     const channel = supabase
       .channel(`wall-posts-${profileUserId}`)
@@ -420,73 +415,10 @@ const ProfileWall = ({ profileUserId, profileDisplayName }: ProfileWallProps) =>
               <p className="text-sm text-destructive">{errors.message}</p>
             )}
             
-            {/* Spider attachment */}
-            {selectedSpiderId && (
-              <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
-                <ImageIcon className="w-4 h-4 text-primary" />
-                <span className="text-sm flex-1">
-                  Spider attached: {userSpiders.find(s => s.id === selectedSpiderId)?.nickname}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                  onClick={() => setSelectedSpiderId(null)}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </div>
-            )}
-            
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">
-                  {newMessage.length}/1000
-                </span>
-                
-                {/* Spider select button */}
-                <Dialog open={showSpiderSelect} onOpenChange={setShowSpiderSelect}>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fetchUserSpiders()}
-                    >
-                      <ImageIcon className="w-4 h-4 mr-2" />
-                      Attach Spider
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Select a Spider</DialogTitle>
-                    </DialogHeader>
-                    <ScrollArea className="h-96">
-                      <div className="grid grid-cols-2 gap-3 p-4">
-                        {userSpiders.map(spider => (
-                          <div
-                            key={spider.id}
-                            onClick={() => {
-                              setSelectedSpiderId(spider.id);
-                              setShowSpiderSelect(false);
-                            }}
-                            className={`cursor-pointer p-2 rounded-lg border-2 transition-all hover:border-primary ${
-                              selectedSpiderId === spider.id ? 'border-primary bg-primary/10' : 'border-transparent'
-                            }`}
-                          >
-                            <img
-                              src={spider.image_url}
-                              alt={spider.nickname}
-                              className="w-full aspect-square object-cover rounded-md mb-2"
-                            />
-                            <p className="text-sm font-medium truncate">{spider.nickname}</p>
-                            <p className="text-xs text-muted-foreground truncate">{spider.species}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </ScrollArea>
-                  </DialogContent>
-                </Dialog>
-              </div>
+              <span className="text-xs text-muted-foreground">
+                {newMessage.length}/1000
+              </span>
               
               <Button
                 onClick={handlePostMessage}
@@ -567,24 +499,6 @@ const ProfileWall = ({ profileUserId, profileDisplayName }: ProfileWallProps) =>
                         {post.message}
                       </p>
 
-                      {/* Attached Spider */}
-                      {post.spider && (
-                        <div className="mt-2 p-2 bg-muted/50 rounded-lg border border-border/50 flex items-center gap-3">
-                          <img
-                            src={post.spider.image_url}
-                            alt={post.spider.nickname}
-                            className="w-16 h-16 object-cover rounded-md"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{post.spider.nickname}</p>
-                            <p className="text-xs text-muted-foreground truncate">{post.spider.species}</p>
-                            <Badge variant="outline" className="text-xs mt-1">
-                              Power: {post.spider.power_score}
-                            </Badge>
-                          </div>
-                        </div>
-                      )}
-
                       {/* Actions */}
                       <div className="flex items-center gap-4 mt-3">
                         <Button
@@ -595,6 +509,19 @@ const ProfileWall = ({ profileUserId, profileDisplayName }: ProfileWallProps) =>
                         >
                           <Heart className={`h-4 w-4 ${post.user_has_liked ? 'fill-red-500 text-red-500' : ''}`} />
                           <span className="text-xs">{post.likes_count || 0}</span>
+                        </Button>
+
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 gap-2"
+                          onClick={() => handleSpiderReaction(post.id)}
+                          title="React with spider emoji"
+                        >
+                          <span className={`text-lg ${post.user_has_spider_reacted ? 'scale-125' : ''} transition-transform`}>
+                            🕷️
+                          </span>
+                          <span className="text-xs">{post.spider_reactions_count || 0}</span>
                         </Button>
                         
                         <Button
