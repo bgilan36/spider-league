@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, MessageSquare, Zap, Trophy, Skull, Swords, X } from 'lucide-react';
+import { Bell, MessageSquare, Zap, Trophy, Skull, Swords } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -319,19 +319,9 @@ const NotificationsDropdown = () => {
       <DropdownMenuContent align="end" className="w-80 bg-card/95 backdrop-blur-sm border-border/50">
         <div className="flex items-center justify-between p-4 border-b">
           <h3 className="font-semibold">Notifications</h3>
-          <div className="flex items-center gap-2">
-            {unreadCount > 0 && (
-              <Badge variant="secondary">{unreadCount} new</Badge>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={() => setIsOpen(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          {unreadCount > 0 && (
+            <Badge variant="secondary">{unreadCount} new</Badge>
+          )}
         </div>
         
         <ScrollArea className="h-96">
