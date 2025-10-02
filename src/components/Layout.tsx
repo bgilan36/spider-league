@@ -1,5 +1,6 @@
 import React from 'react';
 import OnlineUsersBar from '@/components/OnlineUsersBar';
+import NotificationListener from '@/components/NotificationListener';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -8,6 +9,7 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <>
+      <NotificationListener />
       <OnlineUsersBar />
       {children}
     </>
