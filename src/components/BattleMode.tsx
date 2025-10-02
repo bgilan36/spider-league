@@ -207,7 +207,7 @@ const BattleMode: React.FC<{ showChallenges?: boolean }> = ({ showChallenges = t
 
       if (updateError) throw updateError;
 
-      // Create turn-based battle
+      // Create automated battle
       const battleInsert = {
         challenge_id: challenge.id,
         team_a: {
@@ -241,10 +241,22 @@ const BattleMode: React.FC<{ showChallenges?: boolean }> = ({ showChallenges = t
 
       toast({
         title: "Challenge Accepted!",
-        description: "Entering turn-based battle...",
+        description: "Running automated battle...",
       });
 
-      // Navigate to turn-based battle
+      // Trigger automated battle
+      const { data: battleResult, error: autoBattleError } = await supabase.functions.invoke('auto-battle', {
+        body: { battleId: battleData.id }
+      });
+
+      if (autoBattleError) throw autoBattleError;
+
+      toast({
+        title: "Battle Complete!",
+        description: "Viewing results...",
+      });
+
+      // Navigate to battle results
       window.location.href = `/battle/${battleData.id}`;
     } catch (error: any) {
       console.error('Error accepting challenge:', error);
