@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useBadgeSystem } from "@/hooks/useBadgeSystem";
 import BattleArena from './BattleArena';
 import ClickableUsername from './ClickableUsername';
+import BattleStats from './BattleStats';
 
 interface Spider {
   id: string;
@@ -354,6 +355,9 @@ const BattleMode: React.FC<{ showChallenges?: boolean }> = ({ showChallenges = t
 
   return (
     <div className="space-y-6">
+      {/* Battle Statistics */}
+      {user && <BattleStats userId={user.id} />}
+      
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold gradient-text">Battle Mode</h2>

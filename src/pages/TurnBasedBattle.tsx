@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { ArrowLeft, Loader2, Sword, Shield, Zap, SkipForward, Trophy } from 'lucide-react';
+import { ArrowLeft, Loader2, Sword, Shield, Zap, SkipForward, Trophy, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,12 +10,14 @@ import { useTurnBasedBattle } from '@/hooks/useTurnBasedBattle';
 import { useAuth } from '@/auth/AuthProvider';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import BattleTutorialModal from '@/components/BattleTutorialModal';
 
 const TurnBasedBattle = () => {
   const { battleId } = useParams<{ battleId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
+  const [showTutorial, setShowTutorial] = useState(false);
   const {
     battle,
     turns,
@@ -148,6 +150,16 @@ const TurnBasedBattle = () => {
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Exit
               </Link>
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowTutorial(true)}
+              className="flex items-center gap-2"
+            >
+              <HelpCircle className="h-4 w-4" />
+              <span className="hidden sm:inline">Guide</span>
             </Button>
           </div>
         </div>
@@ -415,6 +427,11 @@ const TurnBasedBattle = () => {
           </CardContent>
         </Card>
       </main>
+      
+      <BattleTutorialModal 
+        isOpen={showTutorial} 
+        onClose={() => setShowTutorial(false)} 
+      />
     </div>
   );
 };
