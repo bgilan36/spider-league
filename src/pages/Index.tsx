@@ -150,11 +150,13 @@ const Index = () => {
     
     try {
       // Get the current week's eligible spiders (up to 3 spiders uploaded this week)
-      const now = new Date();
-      const dayOfWeek = now.getDay();
-      const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-      const weekStart = new Date(now);
-      weekStart.setDate(now.getDate() + diff);
+      // Convert current time to PT (Pacific Time)
+      const ptNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+      const dayOfWeek = ptNow.getDay(); // 0 = Sunday
+      
+      // Calculate Sunday of current week in PT (week starts on Sunday)
+      const weekStart = new Date(ptNow);
+      weekStart.setDate(ptNow.getDate() - dayOfWeek);
       weekStart.setHours(0, 0, 0, 0);
       
       const { data: weeklyUpload, error: weeklyError } = await supabase
