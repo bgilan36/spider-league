@@ -58,17 +58,26 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
     
     setLoadingBattles(true);
     try {
+      // Fetch all completed battles and filter client-side due to JSONB nesting
       const { data, error } = await supabase
         .from('battles')
         .select('*')
-        .or(`team_a->>spider->id.eq.${spider.id},team_b->>spider->id.eq.${spider.id}`)
         .eq('is_active', false)
         .not('winner', 'is', null)
-        .order('created_at', { ascending: false })
-        .limit(10);
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setBattles(data || []);
+      
+      // Filter battles where this spider participated
+      const spiderBattles = (data || []).filter((battle) => {
+        const teamA = battle.team_a as any;
+        const teamB = battle.team_b as any;
+        const teamASpiderId = teamA?.spider?.id;
+        const teamBSpiderId = teamB?.spider?.id;
+        return teamASpiderId === spider.id || teamBSpiderId === spider.id;
+      }).slice(0, 10);
+      
+      setBattles(spiderBattles);
     } catch (error) {
       console.error('Error fetching battle history:', error);
     } finally {
@@ -193,9 +202,11 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
           ) : (
             <div className="space-y-3 max-h-[300px] overflow-y-auto">
               {battles.map((battle) => {
-                const isTeamA = battle.team_a?.spider?.id === spider.id;
+                const teamA = battle.team_a as any;
+                const teamB = battle.team_b as any;
+                const isTeamA = teamA?.spider?.id === spider.id;
                 const wasWinner = (isTeamA && battle.winner === 'A') || (!isTeamA && battle.winner === 'B');
-                const opponentSpider = isTeamA ? battle.team_b?.spider : battle.team_a?.spider;
+                const opponentSpider = isTeamA ? teamB?.spider : teamA?.spider;
 
                 return (
                   <div
