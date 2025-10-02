@@ -18,7 +18,7 @@ export const HowItWorksModal = () => {
           <HelpCircle className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl sm:max-w-2xl w-[95vw] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl">Spider League Rules & Guide</DialogTitle>
           <DialogDescription>
