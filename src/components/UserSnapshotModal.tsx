@@ -256,7 +256,7 @@ const UserSnapshotModal: React.FC<UserSnapshotModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto sm:max-w-4xl w-[95vw]">
         <DialogHeader>
           <DialogTitle className="text-center text-2xl font-bold gradient-text">
             <User className="w-6 h-6 inline-block mr-2" />

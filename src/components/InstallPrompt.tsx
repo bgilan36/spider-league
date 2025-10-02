@@ -62,6 +62,10 @@ export const InstallPrompt = () => {
 
   if (!showPrompt) return null;
 
+  // Hide on mobile devices
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  if (isMobile) return null;
+
   return (
     <Card className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:max-w-md z-50 p-4 shadow-lg border-primary/20 bg-card/95 backdrop-blur-sm">
       <div className="flex items-start gap-3">
