@@ -26,6 +26,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     console.log("AuthProvider: Setting up auth listener");
     
+    // Clear OAuth in progress flag if we're returning from OAuth
+    const isOAuthCallback = window.location.hash.includes('access_token') || 
+                             window.location.search.includes('code=');
+    if (isOAuthCallback) {
+      sessionStorage.removeItem('oauth_in_progress');
+    }
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -33,13 +40,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        setSigningIn(false); // Always clear signingIn when auth state changes
       }
     );
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      // Skip rememberMe checks if this is an OAuth callback (URL has auth tokens)
+      const isOAuthCallback = window.location.hash.includes('access_token') || 
+                               window.location.search.includes('code=');
+      
       // Check if user should remain logged in
-      if (session) {
+      if (session && !isOAuthCallback) {
         const rememberMeTimestamp = localStorage.getItem('rememberMe');
         const tempSession = sessionStorage.getItem('tempSession');
         
@@ -48,7 +60,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           console.log("AuthProvider: Session expired (browser was closed without Remember Me)");
           localStorage.removeItem('rememberMe');
           sessionStorage.removeItem('tempSession');
-          supabase.auth.signOut().then(() => {
+          // Use async/await properly to ensure state is set after sign out completes
+          supabase.auth.signOut().finally(() => {
             setSession(null);
             setUser(null);
             setLoading(false);
@@ -66,7 +79,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             console.log("AuthProvider: Session expired (30 days passed)");
             localStorage.removeItem('rememberMe');
             sessionStorage.removeItem('tempSession');
-            supabase.auth.signOut().then(() => {
+            supabase.auth.signOut().finally(() => {
               setSession(null);
               setUser(null);
               setLoading(false);
@@ -133,17 +146,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const url = data?.url;
     if (url) {
       try {
+        // Store a flag to indicate OAuth flow is in progress
+        sessionStorage.setItem('oauth_in_progress', 'true');
         if (window.top && window.top !== window.self) {
           // Break out of iframe to avoid X-Frame-Options block from Google
           window.top.location.href = url;
         } else {
           window.location.href = url;
         }
+        // Don't set signingIn to false here since we're redirecting
       } catch {
         // Fallback to opening a new tab
         window.open(url, '_blank', 'noopener,noreferrer');
+        sessionStorage.removeItem('oauth_in_progress');
         setSigningIn(false);
       }
+    } else {
+      setSigningIn(false);
     }
     return { error: null };
   };
