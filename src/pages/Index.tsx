@@ -689,7 +689,11 @@ const Index = () => {
             </div>
             <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
               <Link to="/collection" className="flex items-center gap-2">
-                <Trophy className="h-4 w-4" />
+                <img 
+                  src="/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png" 
+                  alt="Spider" 
+                  className="h-4 w-4 object-contain" 
+                />
                 View Full Collection
               </Link>
             </Button>
