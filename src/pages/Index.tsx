@@ -624,7 +624,11 @@ const Index = () => {
               <NotificationsDropdown />
               <Button variant="glass" size="icon" asChild className="h-10 w-10 sm:h-12 sm:w-12" title="My Spider Collection">
                 <Link to="/collection">
-                  <Bug className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <img 
+                    src="/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png" 
+                    alt="Spider" 
+                    className="h-5 w-5 sm:h-6 sm:w-6 object-contain" 
+                  />
                 </Link>
               </Button>
               <Button variant="glass" size="icon" asChild className="h-10 w-10 sm:h-12 sm:w-12">
