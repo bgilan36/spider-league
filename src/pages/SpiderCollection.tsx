@@ -37,12 +37,18 @@ interface Spider {
     defeated_user: string;
     defeated_user_display_name?: string;
   };
+  lost_to?: {
+    battle_id: string;
+    new_owner_id: string;
+    new_owner_display_name?: string;
+  };
 }
 
 const SpiderCollection = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [spiders, setSpiders] = useState<Spider[]>([]);
+  const [fallenHeroes, setFallenHeroes] = useState<Spider[]>([]);
   const [sortBy, setSortBy] = useState<"newest" | "power_score" | "recent">("newest");
   const [loading, setLoading] = useState(true);
   const [selectedBattle, setSelectedBattle] = useState<any>(null);
@@ -150,6 +156,68 @@ const SpiderCollection = () => {
       });
 
       setSpiders(spidersWithAttribution);
+
+      // Fetch fallen heroes (spiders lost in battles)
+      const { data: lostBattles, error: lostError } = await supabase
+        .from('battle_challenges')
+        .select(`
+          loser_spider_id,
+          battle_id,
+          winner_id,
+          challenger_id,
+          accepter_id
+        `)
+        .eq('status', 'COMPLETED')
+        .not('loser_spider_id', 'is', null);
+
+      if (lostError) throw lostError;
+
+      // Filter for battles where current user lost their spider
+      const userLostBattles = lostBattles?.filter(battle => {
+        const isUserChallenger = battle.challenger_id === user.id;
+        const isUserAccepter = battle.accepter_id === user.id;
+        const didUserLose = battle.winner_id !== user.id;
+        return (isUserChallenger || isUserAccepter) && didUserLose;
+      }) || [];
+
+      // Get spider IDs that were lost
+      const lostSpiderIds = userLostBattles.map(battle => battle.loser_spider_id);
+
+      if (lostSpiderIds.length > 0) {
+        // Fetch the fallen spider details
+        const { data: lostSpiders, error: lostSpidersError } = await supabase
+          .from('spiders')
+          .select('*')
+          .in('id', lostSpiderIds);
+
+        if (lostSpidersError) throw lostSpidersError;
+
+        // Get new owner IDs
+        const newOwnerIds = [...new Set(userLostBattles.map(b => b.winner_id))];
+        const { data: newOwnerProfiles } = await supabase
+          .from('profiles')
+          .select('id, display_name')
+          .in('id', newOwnerIds);
+
+        // Combine lost spider data with new owner info
+        const fallenHeroesWithInfo = (lostSpiders || []).map(spider => {
+          const battleInfo = userLostBattles.find(b => b.loser_spider_id === spider.id);
+          if (battleInfo) {
+            const newOwnerProfile = newOwnerProfiles?.find(p => p.id === battleInfo.winner_id);
+            return {
+              ...spider,
+              lost_to: {
+                battle_id: battleInfo.battle_id,
+                new_owner_id: battleInfo.winner_id,
+                new_owner_display_name: newOwnerProfile?.display_name
+              }
+            };
+          }
+          return spider;
+        });
+
+        setFallenHeroes(fallenHeroesWithInfo);
+      }
     } catch (error: any) {
       toast({ title: "Error", description: "Failed to load spiders.", variant: "destructive" });
     } finally {
@@ -205,13 +273,13 @@ const SpiderCollection = () => {
     }
   };
 
-  const SpiderCard = ({ spider, showOwner = false }: { spider: Spider; showOwner?: boolean }) => (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleSpiderClick(spider)}>
+  const SpiderCard = ({ spider, isFallenHero = false }: { spider: Spider; isFallenHero?: boolean }) => (
+    <Card className={`overflow-hidden hover:shadow-lg transition-shadow cursor-pointer ${isFallenHero ? 'opacity-75 border-red-900/20' : ''}`} onClick={() => handleSpiderClick(spider)}>
       <div className="aspect-square relative">
         <img 
           src={spider.image_url}
           alt={spider.nickname}
-          className="w-full h-full object-cover"
+          className={`w-full h-full object-cover ${isFallenHero ? 'grayscale' : ''}`}
         />
         <Badge 
           className={`absolute top-2 right-2 ${rarityColors[spider.rarity]} text-white`}
@@ -248,10 +316,13 @@ const SpiderCollection = () => {
           </div>
         ))}
         
-        {spider.battle_won_from && (
+        {spider.battle_won_from && !isFallenHero && (
           <div className="pt-3 border-t">
             <button
-              onClick={() => handleViewBattleDetails(spider.battle_won_from!.battle_id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleViewBattleDetails(spider.battle_won_from!.battle_id);
+              }}
               className="w-full flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-primary transition-colors p-2 rounded-md hover:bg-muted/50"
             >
                <Swords className="h-3 w-3" />
@@ -265,16 +336,39 @@ const SpiderCollection = () => {
             </button>
           </div>
         )}
+
+        {spider.lost_to && isFallenHero && (
+          <div className="pt-3 border-t">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleViewBattleDetails(spider.lost_to!.battle_id);
+              }}
+              className="w-full flex items-center justify-center gap-2 text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors p-2 rounded-md hover:bg-muted/50"
+            >
+               <Swords className="h-3 w-3" />
+               Lost to <ClickableUsername 
+                 userId={spider.lost_to.new_owner_id}
+                 displayName={spider.lost_to.new_owner_display_name}
+                 variant="link"
+                 size="sm"
+                 className="text-xs p-0 h-auto text-red-600 dark:text-red-400"
+               /> in battle
+            </button>
+          </div>
+        )}
         
-        <div className="pt-4 border-t flex justify-center">
-          <BattleButton 
-            targetSpider={{...spider, owner_id: spider.owner_id || user?.id}} 
-            size="sm" 
-            variant="outline"
-            context="collection"
-            className="w-full"
-          />
-        </div>
+        {!isFallenHero && (
+          <div className="pt-4 border-t flex justify-center">
+            <BattleButton 
+              targetSpider={{...spider, owner_id: spider.owner_id || user?.id}} 
+              size="sm" 
+              variant="outline"
+              context="collection"
+              className="w-full"
+            />
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -319,7 +413,10 @@ const SpiderCollection = () => {
             />
             <div className="min-w-0">
               <h1 className="text-xl sm:text-3xl font-bold mb-1 sm:mb-2 truncate">My Spider Collection</h1>
-              <p className="text-muted-foreground text-sm sm:text-base">View and manage your fighters ({spiders.length} total)</p>
+              <p className="text-muted-foreground text-sm sm:text-base">
+                Current fighters: {spiders.length}
+                {fallenHeroes.length > 0 && ` • Fallen heroes: ${fallenHeroes.length}`}
+              </p>
             </div>
           </div>
           <Button asChild size="sm" className="w-full sm:w-auto">
@@ -348,7 +445,7 @@ const SpiderCollection = () => {
           </Select>
         </div>
 
-        {spiders.length === 0 ? (
+        {spiders.length === 0 && fallenHeroes.length === 0 ? (
           <Card>
             <CardContent className="pt-6 text-center">
               <p className="text-muted-foreground mb-4">You haven't uploaded any spiders yet.</p>
@@ -362,17 +459,38 @@ const SpiderCollection = () => {
           </Card>
         ) : (
           <>
-            {sortBy === "recent" && getSortedSpiders().length === 0 ? (
-              <Card>
-                <CardContent className="pt-6 text-center">
-                  <p className="text-muted-foreground">No spiders uploaded in the past week.</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                {getSortedSpiders().map((spider) => (
-                  <SpiderCard key={spider.id} spider={spider} />
-                ))}
+            {/* Current Collection Section */}
+            {spiders.length > 0 && (
+              <div className="mb-12">
+                <h2 className="text-2xl font-bold mb-6">Current Collection</h2>
+                {sortBy === "recent" && getSortedSpiders().length === 0 ? (
+                  <Card>
+                    <CardContent className="pt-6 text-center">
+                      <p className="text-muted-foreground">No spiders uploaded in the past week.</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                    {getSortedSpiders().map((spider) => (
+                      <SpiderCard key={spider.id} spider={spider} isFallenHero={false} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Fallen Heroes Section */}
+            {fallenHeroes.length > 0 && (
+              <div>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold mb-2">Fallen Heroes</h2>
+                  <p className="text-muted-foreground text-sm">Spiders that were defeated and transferred to other trainers</p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                  {fallenHeroes.map((spider) => (
+                    <SpiderCard key={spider.id} spider={spider} isFallenHero={true} />
+                  ))}
+                </div>
               </div>
             )}
           </>
