@@ -61,6 +61,8 @@ const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
     }
   };
 
+  if (!battle) return null;
+
   // Normalize battle data structure - handle both object and array formats
   const teamASpider = battle.team_a?.spider || battle.team_a?.[0];
   const teamBSpider = battle.team_b?.spider || battle.team_b?.[0];
@@ -87,7 +89,11 @@ const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
     };
   };
 
-  if (!battle) return null;
+  const { winner, loser, isDraw } = getWinnerLoser();
+
+  // Get user profiles for team owners
+  const teamAProfile = teamAUserId ? userProfiles[teamAUserId] : null;
+  const teamBProfile = teamBUserId ? userProfiles[teamBUserId] : null;
 
   // Check if battle has valid team data
   if (!teamASpider || !teamBSpider) {
@@ -107,12 +113,6 @@ const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
       </Dialog>
     );
   }
-
-  const { winner, loser, isDraw } = getWinnerLoser();
-
-  // Get user profiles for team owners
-  const teamAProfile = teamAUserId ? userProfiles[teamAUserId] : null;
-  const teamBProfile = teamBUserId ? userProfiles[teamBUserId] : null;
 
   // Mock battle rounds data (in a real app, this would come from battle_log)
   const rounds = [
