@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/auth/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
-import { Upload, Trophy, Users, Loader2, Lightbulb, Plus, Sword } from "lucide-react";
+import { Upload, Trophy, Users, Loader2, Lightbulb, Plus, Sword, Bug } from "lucide-react";
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { HowItWorksModal } from "@/components/HowItWorksModal";
@@ -624,7 +624,7 @@ const Index = () => {
               <NotificationsDropdown />
               <Button variant="glass" size="icon" asChild className="h-10 w-10 sm:h-12 sm:w-12" title="My Spider Collection">
                 <Link to="/collection">
-                  <Trophy className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <Bug className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Link>
               </Button>
               <Button variant="glass" size="icon" asChild className="h-10 w-10 sm:h-12 sm:w-12">
