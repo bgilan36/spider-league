@@ -5,7 +5,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Sword, Trophy, X } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import BattleDetailsModal from './BattleDetailsModal';
 
 interface BattleResult {
   id: string;
@@ -30,6 +30,8 @@ export const BattleRecapAlert = () => {
   const { user } = useAuth();
   const [battleRecaps, setBattleRecaps] = useState<BattleResult[]>([]);
   const [dismissedBattles, setDismissedBattles] = useState<Set<string>>(new Set());
+  const [selectedBattle, setSelectedBattle] = useState<any>(null);
+  const [showBattleModal, setShowBattleModal] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -101,71 +103,94 @@ export const BattleRecapAlert = () => {
     setBattleRecaps(prev => prev.filter(battle => battle.id !== battleId));
   };
 
-  const viewBattleDetails = (battleId: string) => {
-    toast({
-      title: "Battle Details",
-      description: "Battle details feature coming soon!"
-    });
+  const viewBattleDetails = async (battleId: string) => {
+    try {
+      const { data: battle, error } = await supabase
+        .from('battles')
+        .select('*')
+        .eq('id', battleId)
+        .single();
+
+      if (error) throw error;
+      
+      setSelectedBattle(battle);
+      setShowBattleModal(true);
+    } catch (error) {
+      console.error('Error loading battle details:', error);
+    }
   };
 
   if (battleRecaps.length === 0) return null;
 
   return (
-    <div className="space-y-3 mb-6">
-      {battleRecaps.map((battle) => {
-        const isWinner = battle.winner_id === battle.challenger_id;
-        const winnerSpider = isWinner ? battle.challenger_spider : battle.accepter_spider;
-        const loserSpider = isWinner ? battle.accepter_spider : battle.challenger_spider;
+    <>
+      <div className="space-y-3 mb-6">
+        {battleRecaps.map((battle) => {
+          const isWinner = battle.winner_id === battle.challenger_id;
+          const winnerSpider = isWinner ? battle.challenger_spider : battle.accepter_spider;
+          const loserSpider = isWinner ? battle.accepter_spider : battle.challenger_spider;
 
-        return (
-          <Alert key={battle.id} className={`border-l-4 ${isWinner ? 'border-l-green-500 bg-green-50 dark:bg-green-950/20' : 'border-l-red-500 bg-red-50 dark:bg-red-950/20'}`}>
-            <div className="flex items-center gap-2">
-              {isWinner ? (
-                <Trophy className="h-4 w-4 text-green-600" />
-              ) : (
-                <Sword className="h-4 w-4 text-red-600" />
-              )}
-              <AlertDescription className="flex-1">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="text-sm">
-                      <strong>{isWinner ? 'Victory!' : 'Defeat'}</strong> Your challenge was completed.
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant={isWinner ? 'default' : 'secondary'} className="text-xs">
-                          {winnerSpider?.nickname} defeated {loserSpider?.nickname}
-                        </Badge>
-                        {isWinner && (
-                          <span className="text-xs text-muted-foreground">
-                            You claimed {loserSpider?.nickname}!
-                          </span>
-                        )}
+          return (
+            <Alert key={battle.id} className={`border-l-4 ${isWinner ? 'border-l-green-500 bg-green-50 dark:bg-green-950/20' : 'border-l-red-500 bg-red-50 dark:bg-red-950/20'}`}>
+              <div className="flex items-center gap-2">
+                {isWinner ? (
+                  <Trophy className="h-4 w-4 text-green-600" />
+                ) : (
+                  <Sword className="h-4 w-4 text-red-600" />
+                )}
+                <AlertDescription className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="text-sm">
+                        <strong>{isWinner ? 'Victory!' : 'Defeat'}</strong> Your challenge was completed.
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant={isWinner ? 'default' : 'secondary'} className="text-xs">
+                            {winnerSpider?.nickname} defeated {loserSpider?.nickname}
+                          </Badge>
+                          {isWinner && (
+                            <span className="text-xs text-muted-foreground">
+                              You claimed {loserSpider?.nickname}!
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => viewBattleDetails(battle.battle_id)}
+                        className="text-xs"
+                      >
+                        View Details
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => dismissRecap(battle.id)}
+                        className="text-xs p-1"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => viewBattleDetails(battle.battle_id)}
-                      className="text-xs"
-                    >
-                      View Details
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => dismissRecap(battle.id)}
-                      className="text-xs p-1"
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-              </AlertDescription>
-            </div>
-          </Alert>
-        );
-      })}
-    </div>
+                </AlertDescription>
+              </div>
+            </Alert>
+          );
+        })}
+      </div>
+
+      {selectedBattle && (
+        <BattleDetailsModal
+          isOpen={showBattleModal}
+          onClose={() => {
+            setShowBattleModal(false);
+            setSelectedBattle(null);
+          }}
+          battle={selectedBattle}
+        />
+      )}
+    </>
   );
 };
