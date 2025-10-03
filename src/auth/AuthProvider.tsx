@@ -148,13 +148,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         // Store a flag to indicate OAuth flow is in progress
         sessionStorage.setItem('oauth_in_progress', 'true');
-        if (window.top && window.top !== window.self) {
-          // Break out of iframe to avoid X-Frame-Options block from Google
-          window.top.location.href = url;
-        } else {
-          window.location.href = url;
-        }
-        // Don't set signingIn to false here since we're redirecting
+        // Navigate within the current window (Lovable preview friendly)
+        window.location.href = url;
       } catch {
         // Fallback to opening a new tab
         window.open(url, '_blank', 'noopener,noreferrer');
