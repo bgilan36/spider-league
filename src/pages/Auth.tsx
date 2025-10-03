@@ -18,7 +18,7 @@ const Auth = () => {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const redirectUrl = `${window.location.origin}/`;
 
   useEffect(() => {
@@ -29,6 +29,9 @@ const Auth = () => {
 
   const handleGoogle = async () => {
     try {
+      // Store remember preference before OAuth redirect
+      localStorage.setItem('rememberMe', 'true');
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -63,6 +66,16 @@ const Auth = () => {
       if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        
+        // Set a flag in storage based on remember me preference
+        if (rememberMe) {
+          localStorage.setItem('rememberMe', 'true');
+        } else {
+          // Use sessionStorage to track this session
+          sessionStorage.setItem('tempSession', 'true');
+          localStorage.removeItem('rememberMe');
+        }
+        
         toast({ title: "Signed in", description: "Welcome back!" });
       } else {
         const { error } = await supabase.auth.signUp({

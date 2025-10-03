@@ -38,6 +38,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      // Check if user should remain logged in
+      if (session) {
+        const rememberMe = localStorage.getItem('rememberMe');
+        const tempSession = sessionStorage.getItem('tempSession');
+        
+        // If neither flag exists, the user didn't choose to stay logged in and browser was closed
+        if (!rememberMe && !tempSession) {
+          console.log("AuthProvider: Session expired (browser was closed without Remember Me)");
+          supabase.auth.signOut();
+          setSession(null);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+      }
+      
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -161,6 +177,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   const signOut = async () => {
+    // Clear remember me flags
+    localStorage.removeItem('rememberMe');
+    sessionStorage.removeItem('tempSession');
     await supabase.auth.signOut();
   };
 
