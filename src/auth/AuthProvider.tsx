@@ -40,17 +40,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       // Check if user should remain logged in
       if (session) {
-        const rememberMe = localStorage.getItem('rememberMe');
+        const rememberMeTimestamp = localStorage.getItem('rememberMe');
         const tempSession = sessionStorage.getItem('tempSession');
         
         // If neither flag exists, the user didn't choose to stay logged in and browser was closed
-        if (!rememberMe && !tempSession) {
+        if (!rememberMeTimestamp && !tempSession) {
           console.log("AuthProvider: Session expired (browser was closed without Remember Me)");
           supabase.auth.signOut();
           setSession(null);
           setUser(null);
           setLoading(false);
           return;
+        }
+        
+        // If rememberMe exists, check if 30 days have passed
+        if (rememberMeTimestamp && !tempSession) {
+          const loginTime = parseInt(rememberMeTimestamp, 10);
+          const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
+          const now = Date.now();
+          
+          if (now - loginTime > thirtyDaysInMs) {
+            console.log("AuthProvider: Session expired (30 days passed)");
+            localStorage.removeItem('rememberMe');
+            supabase.auth.signOut();
+            setSession(null);
+            setUser(null);
+            setLoading(false);
+            return;
+          }
         }
       }
       
@@ -177,7 +194,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   const signOut = async () => {
-    // Clear remember me flags
+    // Clear remember me flags and timestamp
     localStorage.removeItem('rememberMe');
     sessionStorage.removeItem('tempSession');
     await supabase.auth.signOut();

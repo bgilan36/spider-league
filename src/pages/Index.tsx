@@ -415,7 +415,8 @@ const Index = () => {
         // Set remember me preference on successful sign in
         if (!isSignUp) {
           if (rememberMe) {
-            localStorage.setItem('rememberMe', 'true');
+            // Store timestamp for 30-day expiration check
+            localStorage.setItem('rememberMe', Date.now().toString());
           } else {
             sessionStorage.setItem('tempSession', 'true');
             localStorage.removeItem('rememberMe');
@@ -480,8 +481,8 @@ const Index = () => {
                   className="w-full"
                   onClick={async () => {
                     setLoading(true);
-                    // Store remember preference (default to true for Google auth)
-                    localStorage.setItem('rememberMe', 'true');
+                    // Store remember preference with timestamp (default to true for Google auth)
+                    localStorage.setItem('rememberMe', Date.now().toString());
                     const { error } = await signInWithGoogle();
                     if (error) {
                       toast({ title: "Google sign-in failed", description: error.message, variant: "destructive" });
