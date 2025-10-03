@@ -50,11 +50,11 @@ const Auth = () => {
           window.top.location.href = url;
           return;
         } catch {
-          // ignore and fallback to new tab
+          // ignore and fallback to current window
         }
       }
-      // Fallback: open in a new tab to avoid iframe X-Frame-Options issues
-      window.open(url, "_blank", "noopener,noreferrer");
+      // Fallback: navigate in the same window
+      window.location.href = url;
     } catch (err: any) {
       toast({ title: "Google sign-in failed", description: err.message, variant: "destructive" });
     }
