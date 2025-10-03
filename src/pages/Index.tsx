@@ -664,6 +664,12 @@ const Index = () => {
               </div>
               <p className="text-sm text-muted-foreground">You can upload up to 3 eligible spiders each week</p>
             </div>
+            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
+              <Link to="/collection" className="flex items-center gap-2">
+                <Trophy className="h-4 w-4" />
+                View Full Collection
+              </Link>
+            </Button>
           </div>
 
           {spidersLoading ? (
