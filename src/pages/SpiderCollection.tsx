@@ -69,6 +69,33 @@ const SpiderCollection = () => {
 
   useEffect(() => {
     fetchSpiders();
+
+    // Set up real-time subscription for spider ownership changes
+    const channel = supabase
+      .channel('spider-ownership-changes')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'spiders',
+        filter: `owner_id=eq.${user?.id}`
+      }, () => {
+        console.log('Spider ownership changed, refreshing collection...');
+        fetchSpiders();
+      })
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'spiders',
+        filter: `owner_id=eq.${user?.id}`
+      }, () => {
+        console.log('New spider added, refreshing collection...');
+        fetchSpiders();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const fetchSpiders = async () => {
