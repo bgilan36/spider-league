@@ -1,4 +1,4 @@
-import spiderLogo from "@/assets/spider-league-logo.png";
+const spiderLogo = "/lovable-uploads/72396214-19a6-4e47-b07c-6dd315d94727.png";
 
 const SpiderLogoLoader = () => {
   return (
