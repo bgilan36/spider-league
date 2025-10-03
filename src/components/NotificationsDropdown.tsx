@@ -299,8 +299,8 @@ const NotificationsDropdown = () => {
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
-    if (!open) {
-      // Clear unread count when closing
+    if (open) {
+      // Clear unread count when opening
       setUnreadCount(0);
     }
   };
