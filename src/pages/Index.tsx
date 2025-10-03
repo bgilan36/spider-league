@@ -1147,6 +1147,24 @@ const Index = () => {
         </div>
       </footer>
 
+      {/* Spider Facts Ticker */}
+      <div className="relative overflow-hidden bg-primary/10 border-t py-3">
+        <div className="flex animate-scroll whitespace-nowrap">
+          {[...Array(2)].map((_, index) => (
+            <div key={index} className="flex items-center">
+              <span className="text-sm text-muted-foreground mx-8">🕷️ Spiders have been around for over 380 million years</span>
+              <span className="text-sm text-muted-foreground mx-8">🕸️ Spider silk is stronger than steel of the same thickness</span>
+              <span className="text-sm text-muted-foreground mx-8">🕷️ Most spiders have 8 eyes but some have 6, 4, 2, or even 0</span>
+              <span className="text-sm text-muted-foreground mx-8">🕸️ Spiders can't fly but some species can "balloon" using their silk</span>
+              <span className="text-sm text-muted-foreground mx-8">🕷️ The Goliath birdeater is the world's largest spider, reaching 12 inches</span>
+              <span className="text-sm text-muted-foreground mx-8">🕸️ A spider's fangs are actually chelicerae - modified appendages</span>
+              <span className="text-sm text-muted-foreground mx-8">🕷️ Jumping spiders can leap up to 50 times their body length</span>
+              <span className="text-sm text-muted-foreground mx-8">🕸️ Some spiders can survive for months without food</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <InstallPrompt />
     </div>
   );
