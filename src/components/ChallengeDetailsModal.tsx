@@ -62,27 +62,49 @@ const ChallengeDetailsModal: React.FC<ChallengeDetailsModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [showAcceptDialog, setShowAcceptDialog] = useState(false);
 
-  // Fetch user's eligible spiders
+  // Fetch user's eligible spiders (only the 3 spiders from current week)
   const fetchUserSpiders = async () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('spiders')
-        .select('*')
-        .eq('owner_id', user.id)
-        .eq('is_approved', true)
-        .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
-        .order('created_at', { ascending: false });
+      // Get the current week's eligible spiders from weekly_uploads table
+      const ptNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+      const dayOfWeek = ptNow.getDay();
+      
+      const weekStart = new Date(ptNow);
+      weekStart.setDate(ptNow.getDate() - dayOfWeek);
+      weekStart.setHours(0, 0, 0, 0);
+      
+      const { data: weeklyUpload, error: weeklyError } = await supabase
+        .from('weekly_uploads')
+        .select('first_spider_id, second_spider_id, third_spider_id')
+        .eq('user_id', user.id)
+        .eq('week_start', weekStart.toISOString().split('T')[0])
+        .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching user spiders:', error);
-        return;
+      if (weeklyError) throw weeklyError;
+
+      // Collect all eligible spider IDs
+      const spiderIds = [
+        weeklyUpload?.first_spider_id,
+        weeklyUpload?.second_spider_id,
+        weeklyUpload?.third_spider_id
+      ].filter(Boolean);
+
+      if (spiderIds.length > 0) {
+        const { data, error } = await supabase
+          .from('spiders')
+          .select('*')
+          .in('id', spiderIds);
+
+        if (error) throw error;
+        setUserSpiders(data || []);
+      } else {
+        setUserSpiders([]);
       }
-
-      setUserSpiders(data || []);
     } catch (error) {
       console.error('Error fetching spiders:', error);
+      setUserSpiders([]);
     }
   };
 
