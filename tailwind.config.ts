@@ -147,7 +147,7 @@ export default {
 				'float': 'float 6s ease-in-out infinite',
 				'pulse-glow': 'pulse-glow 3s ease-in-out infinite',
 				'shimmer': 'shimmer 2s linear infinite',
-				'scroll': 'scroll 40s linear infinite'
+				'scroll': 'scroll 13s linear infinite'
 			},
 			spacing: {
 				'safe': 'env(safe-area-inset-bottom)',
