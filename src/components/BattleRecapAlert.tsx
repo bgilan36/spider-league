@@ -42,8 +42,6 @@ export const BattleRecapAlert = () => {
           id,
           challenger_id,
           accepter_id,
-          challenger_spider_id,
-          accepter_spider_id,
           winner_id,
           battle_id,
           created_at
@@ -55,18 +53,30 @@ export const BattleRecapAlert = () => {
         .limit(3);
 
       if (!error && data) {
-        // Fetch spider details separately to avoid relationship ambiguity
+        // Fetch battle details to get spider names (battles contain spider data in team_a/team_b)
         const battleRecapsWithSpiders = await Promise.all(
-          data.map(async (battle) => {
-            const [challengerSpider, accepterSpider] = await Promise.all([
-              supabase.from('spiders').select('nickname, species, image_url').eq('id', battle.challenger_spider_id).maybeSingle(),
-              supabase.from('spiders').select('nickname, species, image_url').eq('id', battle.accepter_spider_id).maybeSingle()
-            ]);
+          data.map(async (challenge) => {
+            const { data: battleData, error: battleError } = await supabase
+              .from('battles')
+              .select('team_a, team_b')
+              .eq('id', challenge.battle_id)
+              .maybeSingle();
+            
+            if (battleError) {
+              console.error('Error fetching battle data:', battleError);
+            }
+            
+            // Extract spider data from battle teams (team_a and team_b are JSONB with spider data)
+            const teamA = battleData?.team_a as any;
+            const teamB = battleData?.team_b as any;
+            
+            const challengerSpider = teamA?.spider || { nickname: 'Unknown', species: 'Unknown', image_url: '' };
+            const accepterSpider = teamB?.spider || { nickname: 'Unknown', species: 'Unknown', image_url: '' };
             
             return {
-              ...battle,
-              challenger_spider: challengerSpider.data || { nickname: 'Unknown', species: 'Unknown', image_url: '' },
-              accepter_spider: accepterSpider.data || { nickname: 'Unknown', species: 'Unknown', image_url: '' }
+              ...challenge,
+              challenger_spider: challengerSpider,
+              accepter_spider: accepterSpider
             };
           })
         );
