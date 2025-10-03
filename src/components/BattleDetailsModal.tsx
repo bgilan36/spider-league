@@ -34,9 +34,13 @@ const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
   }, [battle, isOpen]);
 
   const fetchUserProfiles = async () => {
-    if (!battle.team_a?.[0]?.owner_id || !battle.team_b?.[0]?.owner_id) return;
+    // Handle both object structure (team_a.userId) and array structure (team_a[0].owner_id)
+    const teamAUserId = battle.team_a?.userId || battle.team_a?.[0]?.owner_id;
+    const teamBUserId = battle.team_b?.userId || battle.team_b?.[0]?.owner_id;
+    
+    if (!teamAUserId || !teamBUserId) return;
 
-    const userIds = [battle.team_a[0].owner_id, battle.team_b[0].owner_id];
+    const userIds = [teamAUserId, teamBUserId];
     
     try {
       const { data: profiles, error } = await supabase
@@ -57,6 +61,12 @@ const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
     }
   };
 
+  // Normalize battle data structure - handle both object and array formats
+  const teamASpider = battle.team_a?.spider || battle.team_a?.[0];
+  const teamBSpider = battle.team_b?.spider || battle.team_b?.[0];
+  const teamAUserId = battle.team_a?.userId || battle.team_a?.[0]?.owner_id;
+  const teamBUserId = battle.team_b?.userId || battle.team_b?.[0]?.owner_id;
+
   // Helper function to get winner and loser
   const getWinnerLoser = () => {
     if (battle.winner === "TIE") {
@@ -67,8 +77,8 @@ const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
       };
     }
 
-    const winnerTeam = battle.winner === "A" ? battle.team_a[0] : battle.team_b[0];
-    const loserTeam = battle.winner === "A" ? battle.team_b[0] : battle.team_a[0];
+    const winnerTeam = battle.winner === "A" ? teamASpider : teamBSpider;
+    const loserTeam = battle.winner === "A" ? teamBSpider : teamASpider;
     
     return {
       winner: winnerTeam,
@@ -80,7 +90,7 @@ const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
   if (!battle) return null;
 
   // Check if battle has valid team data
-  if (!battle.team_a?.[0] || !battle.team_b?.[0]) {
+  if (!teamASpider || !teamBSpider) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-md">
@@ -101,14 +111,14 @@ const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
   const { winner, loser, isDraw } = getWinnerLoser();
 
   // Get user profiles for team owners
-  const teamAProfile = battle.team_a[0].owner_id ? userProfiles[battle.team_a[0].owner_id] : null;
-  const teamBProfile = battle.team_b[0].owner_id ? userProfiles[battle.team_b[0].owner_id] : null;
+  const teamAProfile = teamAUserId ? userProfiles[teamAUserId] : null;
+  const teamBProfile = teamBUserId ? userProfiles[teamBUserId] : null;
 
   // Mock battle rounds data (in a real app, this would come from battle_log)
   const rounds = [
-    { round: 1, attacker: battle.team_a[0].nickname, defender: battle.team_b[0].nickname, damage: 15, description: `${battle.team_a[0].nickname} strikes with venom attack!` },
-    { round: 2, attacker: battle.team_b[0].nickname, defender: battle.team_a[0].nickname, damage: 12, description: `${battle.team_b[0].nickname} counters with web trap!` },
-    { round: 3, attacker: battle.team_a[0].nickname, defender: battle.team_b[0].nickname, damage: 18, description: `${battle.team_a[0].nickname} delivers critical bite!` },
+    { round: 1, attacker: teamASpider.nickname, defender: teamBSpider.nickname, damage: 15, description: `${teamASpider.nickname} strikes with venom attack!` },
+    { round: 2, attacker: teamBSpider.nickname, defender: teamASpider.nickname, damage: 12, description: `${teamBSpider.nickname} counters with web trap!` },
+    { round: 3, attacker: teamASpider.nickname, defender: teamBSpider.nickname, damage: 18, description: `${teamASpider.nickname} delivers critical bite!` },
   ];
 
   const getBattleTypeIcon = (type: string) => {
@@ -177,17 +187,17 @@ const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
                   {battle.winner === "A" ? "WINNER" : battle.winner === "TIE" ? "DRAW" : "DEFEATED"}
                 </Badge>
                 <img
-                  src={battle.team_a[0].image_url}
-                  alt={battle.team_a[0].nickname}
+                  src={teamASpider.image_url}
+                  alt={teamASpider.nickname}
                   className={`w-20 h-20 mx-auto rounded object-cover ${battle.winner === "B" ? "grayscale" : ""}`}
                 />
                 <div>
-                  <h3 className="font-bold text-lg">{battle.team_a[0].nickname}</h3>
-                  <p className="text-sm text-muted-foreground">{battle.team_a[0].species}</p>
+                  <h3 className="font-bold text-lg">{teamASpider.nickname}</h3>
+                  <p className="text-sm text-muted-foreground">{teamASpider.species}</p>
                   <div className="text-xs text-muted-foreground mt-1">
                     Owner: {teamAProfile ? (
                       <ClickableUsername 
-                        userId={battle.team_a[0].owner_id} 
+                        userId={teamAUserId} 
                         displayName={teamAProfile.display_name}
                         className="text-foreground"
                       />
@@ -213,17 +223,17 @@ const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
                   {battle.winner === "B" ? "WINNER" : battle.winner === "TIE" ? "DRAW" : "DEFEATED"}
                 </Badge>
                 <img
-                  src={battle.team_b[0].image_url}
-                  alt={battle.team_b[0].nickname}
+                  src={teamBSpider.image_url}
+                  alt={teamBSpider.nickname}
                   className={`w-20 h-20 mx-auto rounded object-cover ${battle.winner === "A" ? "grayscale" : ""}`}
                 />
                 <div>
-                  <h3 className="font-bold text-lg">{battle.team_b[0].nickname}</h3>
-                  <p className="text-sm text-muted-foreground">{battle.team_b[0].species}</p>
+                  <h3 className="font-bold text-lg">{teamBSpider.nickname}</h3>
+                  <p className="text-sm text-muted-foreground">{teamBSpider.species}</p>
                   <div className="text-xs text-muted-foreground mt-1">
                     Owner: {teamBProfile ? (
                       <ClickableUsername 
-                        userId={battle.team_b[0].owner_id} 
+                        userId={teamBUserId} 
                         displayName={teamBProfile.display_name}
                         className="text-foreground"
                       />
@@ -241,16 +251,16 @@ const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
                 <div className="flex items-center justify-center gap-4 text-center">
                   <div className="space-y-1">
                     <Users className="w-6 h-6 mx-auto text-muted-foreground" />
-                    {teamBProfile && winner?.id === battle.team_a[0].id ? (
+                    {teamBProfile && winner?.id === teamASpider.id ? (
                       <ClickableUsername 
-                        userId={battle.team_b[0].owner_id} 
+                        userId={teamBUserId} 
                         displayName={teamBProfile.display_name}
                         variant="ghost"
                         className="font-semibold"
                       />
-                    ) : teamAProfile && winner?.id === battle.team_b[0].id ? (
+                    ) : teamAProfile && winner?.id === teamBSpider.id ? (
                       <ClickableUsername 
-                        userId={battle.team_a[0].owner_id} 
+                        userId={teamAUserId} 
                         displayName={teamAProfile.display_name}
                         variant="ghost"
                         className="font-semibold"
@@ -266,16 +276,16 @@ const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
                   
                   <div className="space-y-1">
                     <Crown className="w-6 h-6 mx-auto text-yellow-500" />
-                    {teamAProfile && winner?.id === battle.team_a[0].id ? (
+                    {teamAProfile && winner?.id === teamASpider.id ? (
                       <ClickableUsername 
-                        userId={battle.team_a[0].owner_id} 
+                        userId={teamAUserId} 
                         displayName={teamAProfile.display_name}
                         variant="ghost"
                         className="font-semibold"
                       />
-                    ) : teamBProfile && winner?.id === battle.team_b[0].id ? (
+                    ) : teamBProfile && winner?.id === teamBSpider.id ? (
                       <ClickableUsername 
-                        userId={battle.team_b[0].owner_id} 
+                        userId={teamBUserId} 
                         displayName={teamBProfile.display_name}
                         variant="ghost"
                         className="font-semibold"
@@ -326,7 +336,7 @@ const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
               <div className="text-sm text-muted-foreground text-center space-y-1">
                 <p>
                   {isDraw 
-                    ? `${battle.team_a[0].nickname} and ${battle.team_b[0].nickname} fought to a stalemate in an intense ${rounds.length}-round battle.`
+                    ? `${teamASpider.nickname} and ${teamBSpider.nickname} fought to a stalemate in an intense ${rounds.length}-round battle.`
                     : `${winner?.nickname} emerged victorious against ${loser?.nickname} after ${rounds.length} rounds of fierce combat.`
                   }
                 </p>
@@ -345,7 +355,7 @@ const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
               title={`🕷️ Epic Spider Battle${isDraw ? " Draw" : " Victory"}!`}
               text={
                 isDraw 
-                  ? `${battle.team_a[0].nickname} and ${battle.team_b[0].nickname} just fought to an epic draw in Spider League! ${rounds.length} rounds of pure arachnid combat! 🕷️⚔️ Join the battle and test your spiders!`
+                  ? `${teamASpider.nickname} and ${teamBSpider.nickname} just fought to an epic draw in Spider League! ${rounds.length} rounds of pure arachnid combat! 🕷️⚔️ Join the battle and test your spiders!`
                   : `${winner?.nickname} just CRUSHED ${loser?.nickname} in an epic Spider League battle! ${rounds.length} rounds of intense combat! 🕷️⚔️${battle.type === 'MATCHUP' ? ' Ownership transferred!' : ''} Join the battle!`
               }
               hashtags={["SpiderLeague", "WebWarriors", "EpicBattle", isDraw ? "Draw" : "Victory"]}
