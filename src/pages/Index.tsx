@@ -1,5 +1,5 @@
 import { Helmet } from "react-helmet-async";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/auth/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
 import { Upload, Trophy, Users, Loader2, Lightbulb, Plus, Sword, Bug } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import { HowItWorksModal } from "@/components/HowItWorksModal";
 import { UserProfileMenu } from "@/components/UserProfileMenu";
@@ -50,6 +50,7 @@ interface Spider {
 const Index = () => {
   const { user, signOut, signIn, signUp, signInWithGoogle, signInAsDemo, loading: authLoading } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -73,6 +74,7 @@ const Index = () => {
   const [selectedBattle, setSelectedBattle] = useState<any>(null);
   const [isBattleDetailsOpen, setIsBattleDetailsOpen] = useState(false);
   const [weeklyUploadCount, setWeeklyUploadCount] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const rarityColors = {
     COMMON: "bg-gray-500",
@@ -388,6 +390,27 @@ const Index = () => {
   const handleBattleClick = (battle: any) => {
     setSelectedBattle(battle);
     setIsBattleDetailsOpen(true);
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Store file in sessionStorage as base64 for navigation
+      const reader = new FileReader();
+      reader.onload = () => {
+        sessionStorage.setItem('pendingUploadFile', JSON.stringify({
+          data: reader.result,
+          name: file.name,
+          type: file.type
+        }));
+        navigate('/upload');
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -707,11 +730,11 @@ const Index = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {/* Upload CTA Card - shown when user can upload more spiders */}
                 {weeklyUploadCount < 3 && (
-                  <Card className="border-2 border-dashed border-primary/50 bg-gradient-to-br from-primary/5 to-primary/10 hover:border-primary hover:shadow-xl transition-all duration-300">
+                  <Card className="border-2 border-dashed border-primary/50 bg-gradient-to-br from-primary/5 to-primary/10 hover:border-primary hover:shadow-xl transition-all duration-300 cursor-pointer" onClick={handleUploadClick}>
                     <CardContent className="p-6 flex flex-col items-center justify-center h-full min-h-[400px] text-center">
-                      <Link to="/upload" className="inline-block cursor-pointer hover:scale-110 transition-transform duration-200 mb-4">
+                      <div className="inline-block cursor-pointer hover:scale-110 transition-transform duration-200 mb-4">
                         <Upload className="h-16 w-16 text-primary mx-auto opacity-90" />
-                      </Link>
+                      </div>
                       <h4 className="font-bold text-xl mb-2">
                         {weeklyUploadCount === 0 ? 'Upload Your First Spider' : 
                          weeklyUploadCount === 1 ? 'Upload 2 More Spiders' :
@@ -720,11 +743,9 @@ const Index = () => {
                       <p className="text-muted-foreground mb-4 text-sm">
                         {3 - weeklyUploadCount} {3 - weeklyUploadCount === 1 ? 'upload' : 'uploads'} remaining this week
                       </p>
-                      <Button asChild className="gradient-button pulse-glow w-full" size="lg">
-                        <Link to="/upload" className="flex items-center gap-2">
-                          <Plus className="h-5 w-5" />
-                          Upload Spider Now
-                        </Link>
+                      <Button className="gradient-button pulse-glow w-full" size="lg" onClick={(e) => { e.stopPropagation(); handleUploadClick(); }}>
+                        <Plus className="h-5 w-5" />
+                        Upload Spider Now
                       </Button>
                     </CardContent>
                   </Card>
@@ -1208,6 +1229,15 @@ const Index = () => {
       </div>
 
       <InstallPrompt />
+      
+      {/* Hidden file input for quick upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,.heic,.heif"
+        className="hidden"
+        onChange={handleFileSelect}
+      />
     </div>
   );
 };

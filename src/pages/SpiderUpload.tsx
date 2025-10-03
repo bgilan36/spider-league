@@ -128,6 +128,31 @@ const SpiderUpload = () => {
     fetchWeeklyUploadCount();
   }, [user]);
 
+  // Check for pending file upload from Index page
+  useEffect(() => {
+    const pendingFile = sessionStorage.getItem('pendingUploadFile');
+    if (pendingFile) {
+      try {
+        const fileData = JSON.parse(pendingFile);
+        // Convert base64 back to File object
+        fetch(fileData.data)
+          .then(res => res.blob())
+          .then(async (blob) => {
+            const file = new File([blob], fileData.name, { type: fileData.type });
+            const converted = await ensureJpeg(file);
+            setSelectedFile(converted);
+            setPreviewUrl(URL.createObjectURL(converted));
+            await analyzeImage(converted);
+            // Clear the pending file
+            sessionStorage.removeItem('pendingUploadFile');
+          });
+      } catch (error) {
+        console.error('Error loading pending file:', error);
+        sessionStorage.removeItem('pendingUploadFile');
+      }
+    }
+  }, []);
+
   const fileToBase64 = (file: File) =>
     new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
