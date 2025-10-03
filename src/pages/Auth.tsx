@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
+import spiderLogo from "@/assets/spider-league-logo.png";
 
 const Auth = () => {
   const { user, loading } = useAuth();
@@ -83,7 +84,14 @@ const Auth = () => {
         <link rel="canonical" href={`${window.location.origin}/auth`} />
       </Helmet>
       <main className="mx-auto max-w-md px-6 py-12">
-        <h1 className="text-3xl font-bold mb-6">Sign in to Spider League</h1>
+        <div className="flex flex-col items-center mb-8">
+          <img 
+            src={spiderLogo} 
+            alt="Spider League Logo" 
+            className="h-24 w-auto mb-4"
+          />
+          <h1 className="text-3xl font-bold">Sign in to Spider League</h1>
+        </div>
         
         <div className="mb-8 p-4 rounded-lg bg-muted/50 border">
           <p className="text-sm text-muted-foreground leading-relaxed">
