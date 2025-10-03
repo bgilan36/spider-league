@@ -580,11 +580,11 @@ const Index = () => {
         <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-              <div>
+              <div className="flex-shrink-0">
                 <img 
                   src="/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png" 
                   alt="Spider League Logo" 
-                  className="h-10 sm:h-14 w-auto flex-shrink-0 drop-shadow-lg"
+                  className="h-10 sm:h-14 w-auto object-contain drop-shadow-lg"
                 />
               </div>
               <div className="min-w-0">
