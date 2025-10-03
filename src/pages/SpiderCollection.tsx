@@ -32,6 +32,7 @@ interface Spider {
   is_approved: boolean;
   owner_id?: string;
   created_at: string;
+  is_eligible?: boolean;
   battle_won_from?: {
     battle_id: string;
     defeated_user: string;
@@ -117,6 +118,24 @@ const SpiderCollection = () => {
 
       if (userError) throw userError;
 
+      // Fetch weekly uploads to identify eligible spiders
+      const { data: weeklyUploads, error: weeklyError } = await supabase
+        .from('weekly_uploads')
+        .select('first_spider_id, second_spider_id, third_spider_id')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (weeklyError && weeklyError.code !== 'PGRST116') throw weeklyError;
+
+      // Create a set of eligible spider IDs
+      const eligibleSpiderIds = new Set([
+        weeklyUploads?.first_spider_id,
+        weeklyUploads?.second_spider_id,
+        weeklyUploads?.third_spider_id
+      ].filter(Boolean));
+
       // Fetch battle information for spiders won through battles
       const { data: battleChallenges, error: battleError } = await supabase
         .from('battle_challenges')
@@ -138,13 +157,16 @@ const SpiderCollection = () => {
         .select('id, display_name')
         .in('id', challengerIds);
 
-      // Combine spider data with battle attribution
+      // Combine spider data with battle attribution and eligibility status
       const spidersWithAttribution = (userSpiders || []).map(spider => {
         const battleInfo = battleChallenges?.find(bc => bc.loser_spider_id === spider.id);
+        const isEligible = eligibleSpiderIds.has(spider.id);
+        
         if (battleInfo) {
           const challengerProfile = challengerProfiles?.find(p => p.id === battleInfo.challenger_id);
           return {
             ...spider,
+            is_eligible: isEligible,
             battle_won_from: {
               battle_id: battleInfo.battle_id,
               defeated_user: battleInfo.challenger_id,
@@ -152,7 +174,10 @@ const SpiderCollection = () => {
             }
           };
         }
-        return spider;
+        return {
+          ...spider,
+          is_eligible: isEligible
+        };
       });
 
       setSpiders(spidersWithAttribution);
@@ -286,6 +311,13 @@ const SpiderCollection = () => {
         >
           {spider.rarity}
         </Badge>
+        {spider.is_eligible && !isFallenHero && (
+          <Badge 
+            className="absolute top-2 left-2 bg-green-600 text-white"
+          >
+            Eligible
+          </Badge>
+        )}
       </div>
       <CardHeader className="pb-4">
         <CardTitle className="text-lg">{spider.nickname}</CardTitle>
