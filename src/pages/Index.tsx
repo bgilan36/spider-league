@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/auth/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
@@ -53,6 +54,7 @@ const Index = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const { newBadge, showBadgeNotification, checkAndAwardBadges, dismissBadgeNotification } = useBadgeSystem();
@@ -410,6 +412,16 @@ const Index = () => {
         }
         toast({ title: "Authentication Error", description: message, variant: "destructive" });
       } else {
+        // Set remember me preference on successful sign in
+        if (!isSignUp) {
+          if (rememberMe) {
+            localStorage.setItem('rememberMe', 'true');
+          } else {
+            sessionStorage.setItem('tempSession', 'true');
+            localStorage.removeItem('rememberMe');
+          }
+        }
+        
         if (isSignUp) {
           toast({ title: "Account created!", description: "Please check your email to verify your account." });
         } else {
@@ -468,6 +480,8 @@ const Index = () => {
                   className="w-full"
                   onClick={async () => {
                     setLoading(true);
+                    // Store remember preference (default to true for Google auth)
+                    localStorage.setItem('rememberMe', 'true');
                     const { error } = await signInWithGoogle();
                     if (error) {
                       toast({ title: "Google sign-in failed", description: error.message, variant: "destructive" });
@@ -529,6 +543,18 @@ const Index = () => {
                     required
                   />
                 </div>
+                {!isSignUp && (
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="remember-main" 
+                      checked={rememberMe} 
+                      onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                    />
+                    <Label htmlFor="remember-main" className="text-sm font-normal cursor-pointer">
+                      Keep me logged in for 30 days
+                    </Label>
+                  </div>
+                )}
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? (
                     <>
