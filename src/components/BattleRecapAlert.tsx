@@ -59,8 +59,8 @@ export const BattleRecapAlert = () => {
         const battleRecapsWithSpiders = await Promise.all(
           data.map(async (battle) => {
             const [challengerSpider, accepterSpider] = await Promise.all([
-              supabase.from('spiders').select('nickname, species, image_url').eq('id', battle.challenger_spider_id).single(),
-              supabase.from('spiders').select('nickname, species, image_url').eq('id', battle.accepter_spider_id).single()
+              supabase.from('spiders').select('nickname, species, image_url').eq('id', battle.challenger_spider_id).maybeSingle(),
+              supabase.from('spiders').select('nickname, species, image_url').eq('id', battle.accepter_spider_id).maybeSingle()
             ]);
             
             return {
