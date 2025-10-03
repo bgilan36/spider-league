@@ -46,10 +46,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // If neither flag exists, the user didn't choose to stay logged in and browser was closed
         if (!rememberMeTimestamp && !tempSession) {
           console.log("AuthProvider: Session expired (browser was closed without Remember Me)");
-          supabase.auth.signOut();
-          setSession(null);
-          setUser(null);
-          setLoading(false);
+          localStorage.removeItem('rememberMe');
+          sessionStorage.removeItem('tempSession');
+          supabase.auth.signOut().then(() => {
+            setSession(null);
+            setUser(null);
+            setLoading(false);
+          });
           return;
         }
         
@@ -62,10 +65,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (now - loginTime > thirtyDaysInMs) {
             console.log("AuthProvider: Session expired (30 days passed)");
             localStorage.removeItem('rememberMe');
-            supabase.auth.signOut();
-            setSession(null);
-            setUser(null);
-            setLoading(false);
+            sessionStorage.removeItem('tempSession');
+            supabase.auth.signOut().then(() => {
+              setSession(null);
+              setUser(null);
+              setLoading(false);
+            });
             return;
           }
         }
