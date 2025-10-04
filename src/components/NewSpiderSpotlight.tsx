@@ -45,6 +45,7 @@ const NewSpiderSpotlight = () => {
         .from("spiders")
         .select("*")
         .eq("is_approved", true)
+        .neq("species", "Spider League Starter Spider")
         .order("created_at", { ascending: false })
         .limit(1)
         .single();
