@@ -34,12 +34,13 @@ export const HowItWorksModal = () => {
               Getting Started
             </h3>
             <div className="space-y-2 text-sm">
-              <p>1. <strong>Upload Your Spider:</strong> Take a clear photo of any spider you find</p>
-              <p>2. <strong>Weekly Limit:</strong> Each user can upload only ONE ranked spider per week</p>
-              <p>3. <strong>Week Reset:</strong> New upload window starts every Sunday at 12am PT</p>
-              <p>4. <strong>AI Analysis:</strong> Our system identifies the species and generates battle stats</p>
-              <p>5. <strong>Ranking:</strong> Only your first weekly spider gets ranked on leaderboards</p>
-              <p>6. <strong>Collection:</strong> Your spider joins your fighter roster with unique abilities</p>
+              <p>1. <strong>Starter Spider:</strong> New players automatically receive a starter spider (300 Power Score) ready for battles</p>
+              <p>2. <strong>Upload Your Spider:</strong> Take a clear photo of any spider you find</p>
+              <p>3. <strong>Weekly Limit:</strong> Each user can upload up to THREE spiders per week that are eligible for battles and challenges</p>
+              <p>4. <strong>Week Reset:</strong> New upload window starts every Sunday at 12am PT</p>
+              <p>5. <strong>AI Analysis:</strong> Our system identifies the species and generates battle stats</p>
+              <p>6. <strong>Ranking:</strong> Your spiders get ranked on leaderboards based on Power Score</p>
+              <p>7. <strong>Collection:</strong> Your spiders join your fighter roster with unique abilities</p>
             </div>
           </section>
 
