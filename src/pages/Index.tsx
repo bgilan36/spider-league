@@ -28,6 +28,7 @@ import ClickableUsername from "@/components/ClickableUsername";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import NotificationsDropdown from "@/components/NotificationsDropdown";
 import OnlineUsersBar from "@/components/OnlineUsersBar";
+import NewSpiderSpotlight from "@/components/NewSpiderSpotlight";
 
 interface Spider {
   id: string;
@@ -1173,7 +1174,10 @@ const Index = () => {
 
       </main>
       
-      <SpiderDetailsModal 
+      {/* New Spider Spotlight Section */}
+      {user && <NewSpiderSpotlight />}
+      
+      <SpiderDetailsModal
         spider={selectedSpider}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
