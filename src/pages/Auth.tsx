@@ -83,7 +83,20 @@ const Auth = () => {
           password,
           options: { emailRedirectTo: redirectUrl },
         });
-        if (error) throw error;
+        if (error) {
+          // Check if the error is about email already being registered
+          if (error.message.toLowerCase().includes('already registered') || 
+              error.message.toLowerCase().includes('already been registered') ||
+              error.message.toLowerCase().includes('user already registered')) {
+            toast({ 
+              title: "Account already exists", 
+              description: "This email is already registered. Try signing in with Google or use the email sign-in option.", 
+              variant: "destructive" 
+            });
+            return;
+          }
+          throw error;
+        }
         toast({ title: "Check your inbox", description: "Confirm your email to complete sign up." });
       }
     } catch (err: any) {
