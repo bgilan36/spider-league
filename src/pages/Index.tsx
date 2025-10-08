@@ -700,23 +700,31 @@ const Index = () => {
               <Loader2 className="h-6 w-6 animate-spin" />
             </div>
           ) : userSpiders.length === 0 ? (
-            <Card className="border-2 border-dashed">
+            <Card className="border-2 border-dashed cursor-pointer hover:border-primary/70 transition-all" onClick={() => navigate('/upload')}>
               <CardContent className="pt-6 text-center py-16">
-                <Link to="/upload" className="inline-block cursor-pointer hover:scale-110 transition-transform duration-200">
-                  <Upload className="h-20 w-20 text-primary mx-auto mb-6 opacity-80" />
-                </Link>
+                <Upload className="h-20 w-20 text-primary mx-auto mb-6 opacity-80" />
                 <h3 className="text-2xl font-bold mb-3">No Eligible Spiders This Week</h3>
                 <p className="text-muted-foreground mb-8 text-lg max-w-md mx-auto">
                   Upload up to 3 spiders this week to make them eligible for battles and rankings!
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <Button asChild className="gradient-button relative z-10 pulse-glow" size="lg">
+                  <Button 
+                    asChild 
+                    className="gradient-button relative z-10 pulse-glow" 
+                    size="lg"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <Link to="/upload" className="flex items-center gap-2">
                       <Plus className="h-5 w-5" />
                       Upload Spider Now
                     </Link>
                   </Button>
-                  <Button asChild variant="outline" size="lg">
+                  <Button 
+                    asChild 
+                    variant="outline" 
+                    size="lg"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <Link to="/collection" className="flex items-center gap-2">
                       <Trophy className="h-5 w-5" />
                       View Full Collection
