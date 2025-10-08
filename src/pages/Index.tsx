@@ -655,11 +655,6 @@ const Index = () => {
                   />
                 </Link>
               </Button>
-              <Button variant="glass" size="icon" asChild className="h-10 w-10 sm:h-12 sm:w-12">
-                <Link to="/roadmap">
-                  <Lightbulb className="h-4 w-4 sm:h-5 sm:w-5" />
-                </Link>
-              </Button>
               <HowItWorksModal />
               <UserProfileMenu />
             </div>
