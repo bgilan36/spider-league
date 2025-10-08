@@ -888,17 +888,19 @@ const Index = () => {
                   <Card key={battle.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleBattleClick(battle)}>
                     <CardContent className="flex items-center gap-2 sm:gap-4 p-3 sm:p-4">
                       <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                        {/* Spider A */}
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-md overflow-hidden flex-shrink-0">
-                          <img 
-                            src={spiderA?.image_url} 
-                            alt={spiderA?.nickname}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-medium text-sm truncate">{spiderA?.nickname}</p>
-                          <p className="text-xs text-muted-foreground truncate">{spiderA?.species}</p>
+                        {/* Spider A - Fixed width container */}
+                        <div className="flex items-center gap-2 sm:gap-3 w-32 sm:w-40 flex-shrink-0">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-md overflow-hidden flex-shrink-0">
+                            <img 
+                              src={spiderA?.image_url} 
+                              alt={spiderA?.nickname}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-sm truncate">{spiderA?.nickname}</p>
+                            <p className="text-xs text-muted-foreground truncate">{spiderA?.species}</p>
+                          </div>
                         </div>
                         
                         {/* VS */}
@@ -906,17 +908,19 @@ const Index = () => {
                           <span className="text-xs font-bold text-muted-foreground">VS</span>
                         </div>
                         
-                        {/* Spider B */}
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-md overflow-hidden flex-shrink-0">
-                          <img 
-                            src={spiderB?.image_url} 
-                            alt={spiderB?.nickname}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-medium text-sm truncate">{spiderB?.nickname}</p>
-                          <p className="text-xs text-muted-foreground truncate">{spiderB?.species}</p>
+                        {/* Spider B - Fixed width container */}
+                        <div className="flex items-center gap-2 sm:gap-3 w-32 sm:w-40 flex-shrink-0">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-md overflow-hidden flex-shrink-0">
+                            <img 
+                              src={spiderB?.image_url} 
+                              alt={spiderB?.nickname}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-sm truncate">{spiderB?.nickname}</p>
+                            <p className="text-xs text-muted-foreground truncate">{spiderB?.species}</p>
+                          </div>
                         </div>
                       </div>
                       
