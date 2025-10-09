@@ -700,7 +700,7 @@ const Index = () => {
               <Loader2 className="h-6 w-6 animate-spin" />
             </div>
           ) : userSpiders.length === 0 ? (
-            <Card className="border-2 border-dashed cursor-pointer hover:border-primary/70 transition-all" onClick={() => navigate('/upload')}>
+            <Card className="border-2 border-dashed cursor-pointer hover:border-primary/70 transition-all" onClick={() => fileInputRef.current?.click()}>
               <CardContent className="pt-6 text-center py-16">
                 <Upload className="h-20 w-20 text-primary mx-auto mb-6 opacity-80" />
                 <h3 className="text-2xl font-bold mb-3">No Eligible Spiders This Week</h3>
