@@ -6,16 +6,40 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Upload, MessageSquare, Heart } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 
 interface Profile {
   display_name: string | null;
   avatar_url: string | null;
   bio: string | null;
   email_communications_enabled: boolean;
+}
+
+interface WallPost {
+  id: string;
+  message: string;
+  created_at: string;
+  poster_user_id: string;
+  profiles: {
+    display_name: string | null;
+    avatar_url: string | null;
+  } | null;
+}
+
+interface Bite {
+  id: string;
+  created_at: string;
+  poker_user_id: string;
+  profiles: {
+    display_name: string | null;
+    avatar_url: string | null;
+  } | null;
 }
 
 export const UserProfileMenu = () => {
@@ -25,12 +49,18 @@ export const UserProfileMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [wallPosts, setWallPosts] = useState<WallPost[]>([]);
+  const [bites, setBites] = useState<Bite[]>([]);
+  const [loadingWallPosts, setLoadingWallPosts] = useState(false);
+  const [loadingBites, setLoadingBites] = useState(false);
 
   useEffect(() => {
-    if (user) {
+    if (user && isOpen) {
       fetchProfile();
+      fetchWallPosts();
+      fetchBites();
     }
-  }, [user]);
+  }, [user, isOpen]);
 
   const fetchProfile = async () => {
     if (!user) return;
@@ -116,6 +146,80 @@ export const UserProfileMenu = () => {
     }
   };
 
+  const fetchWallPosts = async () => {
+    if (!user) return;
+    
+    setLoadingWallPosts(true);
+    try {
+      const { data: posts, error } = await supabase
+        .from('profile_wall_posts')
+        .select('id, message, created_at, poster_user_id')
+        .eq('profile_user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+
+      if (posts && posts.length > 0) {
+        const userIds = posts.map(p => p.poster_user_id);
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, display_name, avatar_url')
+          .in('id', userIds);
+
+        const postsWithProfiles = posts.map(post => ({
+          ...post,
+          profiles: profiles?.find(p => p.id === post.poster_user_id) || null
+        }));
+
+        setWallPosts(postsWithProfiles);
+      } else {
+        setWallPosts([]);
+      }
+    } catch (error) {
+      console.error('Error fetching wall posts:', error);
+    } finally {
+      setLoadingWallPosts(false);
+    }
+  };
+
+  const fetchBites = async () => {
+    if (!user) return;
+    
+    setLoadingBites(true);
+    try {
+      const { data: pokesData, error } = await supabase
+        .from('pokes')
+        .select('id, created_at, poker_user_id')
+        .eq('poked_user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+
+      if (pokesData && pokesData.length > 0) {
+        const userIds = pokesData.map(p => p.poker_user_id);
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, display_name, avatar_url')
+          .in('id', userIds);
+
+        const bitesWithProfiles = pokesData.map(poke => ({
+          ...poke,
+          profiles: profiles?.find(p => p.id === poke.poker_user_id) || null
+        }));
+
+        setBites(bitesWithProfiles);
+      } else {
+        setBites([]);
+      }
+    } catch (error) {
+      console.error('Error fetching bites:', error);
+    } finally {
+      setLoadingBites(false);
+    }
+  };
+
   const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!event.target.files || event.target.files.length === 0 || !user) return;
 
@@ -174,102 +278,192 @@ export const UserProfileMenu = () => {
           </Button>
         </DialogTrigger>
         
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh]">
           <DialogHeader>
-            <DialogTitle>Edit Profile</DialogTitle>
+            <DialogTitle>My Profile</DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-6">
-            {/* Avatar Upload */}
-            <div className="flex flex-col items-center gap-4">
-              <Avatar className="h-20 w-20">
-                <AvatarImage src={profile.avatar_url || undefined} alt={displayName} />
-                <AvatarFallback className="text-lg">{initials}</AvatarFallback>
-              </Avatar>
-              
-              <div className="relative">
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={uploadAvatar}
-                  className="hidden"
-                  id="avatar-upload"
-                  disabled={uploading}
-                />
-                <Label htmlFor="avatar-upload" className="cursor-pointer">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
+          <Tabs defaultValue="edit" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="edit">Edit Profile</TabsTrigger>
+              <TabsTrigger value="wall">
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Wall ({wallPosts.length})
+              </TabsTrigger>
+              <TabsTrigger value="bites">
+                <Heart className="h-4 w-4 mr-2" />
+                Bites ({bites.length})
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="edit" className="space-y-6">
+              {/* Avatar Upload */}
+              <div className="flex flex-col items-center gap-4">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src={profile.avatar_url || undefined} alt={displayName} />
+                  <AvatarFallback className="text-lg">{initials}</AvatarFallback>
+                </Avatar>
+                
+                <div className="relative">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={uploadAvatar}
+                    className="hidden"
+                    id="avatar-upload"
                     disabled={uploading}
-                    asChild
-                  >
-                    <span className="flex items-center gap-2">
-                      {uploading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Upload className="h-4 w-4" />
-                      )}
-                      {uploading ? 'Uploading...' : 'Upload Avatar'}
-                    </span>
-                  </Button>
-                </Label>
+                  />
+                  <Label htmlFor="avatar-upload" className="cursor-pointer">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={uploading}
+                      asChild
+                    >
+                      <span className="flex items-center gap-2">
+                        {uploading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Upload className="h-4 w-4" />
+                        )}
+                        {uploading ? 'Uploading...' : 'Upload Avatar'}
+                      </span>
+                    </Button>
+                  </Label>
+                </div>
               </div>
-            </div>
 
-            {/* Display Name */}
-            <div className="space-y-2">
-              <Label htmlFor="display_name">Display Name</Label>
-              <Input
-                id="display_name"
-                value={profile.display_name || ''}
-                onChange={(e) => setProfile(prev => ({ ...prev, display_name: e.target.value }))}
-                placeholder="Enter your display name"
-              />
-            </div>
-
-            {/* Bio */}
-            <div className="space-y-2">
-              <Label htmlFor="bio">Bio</Label>
-              <Textarea
-                id="bio"
-                value={profile.bio || ''}
-                onChange={(e) => setProfile(prev => ({ ...prev, bio: e.target.value }))}
-                placeholder="Tell us about yourself..."
-                rows={3}
-              />
-            </div>
-
-            {/* Email Communications */}
-            <div className="flex items-center justify-between space-x-2">
-              <div className="space-y-1">
-                <Label htmlFor="email-communications" className="text-sm font-medium">
-                  Email Communications
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  Receive updates and notifications via email
-                </p>
+              {/* Display Name */}
+              <div className="space-y-2">
+                <Label htmlFor="display_name">Display Name</Label>
+                <Input
+                  id="display_name"
+                  value={profile.display_name || ''}
+                  onChange={(e) => setProfile(prev => ({ ...prev, display_name: e.target.value }))}
+                  placeholder="Enter your display name"
+                />
               </div>
-              <Switch
-                id="email-communications"
-                checked={profile.email_communications_enabled}
-                onCheckedChange={(checked) => 
-                  setProfile(prev => ({ ...prev, email_communications_enabled: checked }))
-                }
-              />
-            </div>
 
-            {/* Actions */}
-            <div className="flex justify-between gap-3">
-              <Button variant="outline" onClick={() => setIsOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={updateProfile} disabled={loading}>
-                {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                Save Changes
-              </Button>
-            </div>
-          </div>
+              {/* Bio */}
+              <div className="space-y-2">
+                <Label htmlFor="bio">Bio</Label>
+                <Textarea
+                  id="bio"
+                  value={profile.bio || ''}
+                  onChange={(e) => setProfile(prev => ({ ...prev, bio: e.target.value }))}
+                  placeholder="Tell us about yourself..."
+                  rows={3}
+                />
+              </div>
+
+              {/* Email Communications */}
+              <div className="flex items-center justify-between space-x-2">
+                <div className="space-y-1">
+                  <Label htmlFor="email-communications" className="text-sm font-medium">
+                    Email Communications
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Receive updates and notifications via email
+                  </p>
+                </div>
+                <Switch
+                  id="email-communications"
+                  checked={profile.email_communications_enabled}
+                  onCheckedChange={(checked) => 
+                    setProfile(prev => ({ ...prev, email_communications_enabled: checked }))
+                  }
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-between gap-3">
+                <Button variant="outline" onClick={() => setIsOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={updateProfile} disabled={loading}>
+                  {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                  Save Changes
+                </Button>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="wall">
+              <ScrollArea className="h-[400px] pr-4">
+                {loadingWallPosts ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : wallPosts.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>No wall posts yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {wallPosts.map((post) => (
+                      <div key={post.id} className="border rounded-lg p-4 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={post.profiles?.avatar_url || undefined} />
+                            <AvatarFallback>
+                              {post.profiles?.display_name?.[0]?.toUpperCase() || '?'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <p className="font-medium text-sm">
+                              {post.profiles?.display_name || 'Anonymous'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="text-sm">{post.message}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </TabsContent>
+
+            <TabsContent value="bites">
+              <ScrollArea className="h-[400px] pr-4">
+                {loadingBites ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : bites.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Heart className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>No bites received yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {bites.map((bite) => (
+                      <div key={bite.id} className="flex items-center gap-3 border rounded-lg p-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={bite.profiles?.avatar_url || undefined} />
+                          <AvatarFallback>
+                            {bite.profiles?.display_name?.[0]?.toUpperCase() || '?'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">
+                            {bite.profiles?.display_name || 'Anonymous'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(new Date(bite.created_at), { addSuffix: true })}
+                          </p>
+                        </div>
+                        <Heart className="h-5 w-5 text-red-500 fill-red-500" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
 
