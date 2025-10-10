@@ -81,30 +81,62 @@ const BattleButton: React.FC<BattleButtonProps> = ({
     return !!data;
   };
 
-  // Fetch user's eligible spiders for battle (excluding those with active challenges)
+  // Fetch user's eligible spiders for battle (only from current week's uploads)
   const fetchEligibleSpiders = async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from('spiders')
-      .select('*')
-      .eq('owner_id', user.id)
-      .eq('is_approved', true);
-
-    if (data && !error) {
-      // Get all open challenges for this user's spiders
-      const { data: openChallenges } = await supabase
-        .from('battle_challenges')
-        .select('challenger_spider_id')
-        .eq('challenger_id', user.id)
-        .eq('status', 'OPEN')
-        .gt('expires_at', new Date().toISOString());
-
-      const spidersWithChallenges = new Set(openChallenges?.map(c => c.challenger_spider_id) || []);
+    try {
+      // Get the current week's eligible spiders from weekly_uploads table
+      const ptNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+      const dayOfWeek = ptNow.getDay();
       
-      // Filter out spiders that already have active challenges
-      const eligibleSpiders = data.filter(spider => !spidersWithChallenges.has(spider.id));
-      setUserSpiders(eligibleSpiders);
+      const weekStart = new Date(ptNow);
+      weekStart.setDate(ptNow.getDate() - dayOfWeek);
+      weekStart.setHours(0, 0, 0, 0);
+      
+      const { data: weeklyUpload, error: weeklyError } = await supabase
+        .from('weekly_uploads')
+        .select('first_spider_id, second_spider_id, third_spider_id')
+        .eq('user_id', user.id)
+        .eq('week_start', weekStart.toISOString().split('T')[0])
+        .maybeSingle();
+
+      if (weeklyError) throw weeklyError;
+
+      // Collect all eligible spider IDs from this week
+      const spiderIds = [
+        weeklyUpload?.first_spider_id,
+        weeklyUpload?.second_spider_id,
+        weeklyUpload?.third_spider_id
+      ].filter(Boolean);
+
+      if (spiderIds.length > 0) {
+        const { data, error } = await supabase
+          .from('spiders')
+          .select('*')
+          .in('id', spiderIds);
+
+        if (error) throw error;
+
+        // Get all open challenges for this user's spiders
+        const { data: openChallenges } = await supabase
+          .from('battle_challenges')
+          .select('challenger_spider_id')
+          .eq('challenger_id', user.id)
+          .eq('status', 'OPEN')
+          .gt('expires_at', new Date().toISOString());
+
+        const spidersWithChallenges = new Set(openChallenges?.map(c => c.challenger_spider_id) || []);
+        
+        // Filter out spiders that already have active challenges
+        const eligibleSpiders = (data || []).filter(spider => !spidersWithChallenges.has(spider.id));
+        setUserSpiders(eligibleSpiders);
+      } else {
+        setUserSpiders([]);
+      }
+    } catch (error) {
+      console.error('Error fetching eligible spiders:', error);
+      setUserSpiders([]);
     }
   };
   // Cancel active challenge
@@ -405,7 +437,7 @@ const BattleButton: React.FC<BattleButtonProps> = ({
                   <Sword className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="font-medium mb-2">No Eligible Spiders</h3>
                   <p className="text-sm text-muted-foreground">
-                    You need approved spiders to create battle challenges
+                    You need spiders uploaded this week to create battle challenges
                   </p>
                 </div>
             )}
