@@ -29,8 +29,8 @@ const Auth = () => {
 
   const handleGoogle = async () => {
     try {
-      // Store remember preference before OAuth redirect
-      localStorage.setItem('rememberMe', 'true');
+      // Store remember preference with timestamp before OAuth redirect
+      localStorage.setItem('rememberMe', Date.now().toString());
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -69,7 +69,7 @@ const Auth = () => {
         
         // Set a flag in storage based on remember me preference
         if (rememberMe) {
-          localStorage.setItem('rememberMe', 'true');
+          localStorage.setItem('rememberMe', Date.now().toString());
         } else {
           // Use sessionStorage to track this session
           sessionStorage.setItem('tempSession', 'true');
