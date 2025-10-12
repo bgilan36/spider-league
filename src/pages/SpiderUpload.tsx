@@ -104,11 +104,12 @@ const SpiderUpload = () => {
       if (!user) return;
       
       try {
-        const now = new Date();
-        const dayOfWeek = now.getDay();
-        const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-        const weekStart = new Date(now);
-        weekStart.setDate(now.getDate() + diff);
+        // Use Sunday-based week start to match battle eligibility checks
+        const ptNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+        const dayOfWeek = ptNow.getDay();
+        
+        const weekStart = new Date(ptNow);
+        weekStart.setDate(ptNow.getDate() - dayOfWeek);
         weekStart.setHours(0, 0, 0, 0);
         
         const { data, error } = await supabase
