@@ -103,10 +103,37 @@ const BattleMode: React.FC<{ showChallenges?: boolean }> = ({ showChallenges = t
   const fetchUserSpiders = async () => {
     if (!user) return;
 
+    // Get current week's uploads for this user
+    const { data: weeklyData, error: weeklyError } = await supabase
+      .from('weekly_uploads')
+      .select('first_spider_id, second_spider_id, third_spider_id')
+      .eq('user_id', user.id)
+      .order('week_start', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (weeklyError) {
+      console.error('Error fetching weekly uploads:', weeklyError);
+      return;
+    }
+
+    // Collect eligible spider IDs for this week
+    const eligibleSpiderIds = [
+      weeklyData?.first_spider_id,
+      weeklyData?.second_spider_id,
+      weeklyData?.third_spider_id
+    ].filter(Boolean);
+
+    if (eligibleSpiderIds.length === 0) {
+      setUserSpiders([]);
+      return;
+    }
+
+    // Fetch only spiders that are in this week's uploads
     const { data, error } = await supabase
       .from('spiders')
       .select('*')
-      .eq('owner_id', user.id)
+      .in('id', eligibleSpiderIds)
       .eq('is_approved', true);
 
     if (error) {
