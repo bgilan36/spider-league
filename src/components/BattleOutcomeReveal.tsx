@@ -1,0 +1,187 @@
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Trophy, Crown, Sparkles } from 'lucide-react';
+
+interface Spider {
+  id: string;
+  nickname: string;
+  species: string;
+  image_url: string;
+  power_score: number;
+}
+
+interface BattleOutcomeRevealProps {
+  winner: Spider;
+  loser: Spider;
+  winnerOwnerName: string;
+  loserOwnerName: string;
+  onComplete: () => void;
+}
+
+const BattleOutcomeReveal: React.FC<BattleOutcomeRevealProps> = ({
+  winner,
+  loser,
+  winnerOwnerName,
+  loserOwnerName,
+  onComplete,
+}) => {
+  React.useEffect(() => {
+    const timer = setTimeout(onComplete, 6000);
+    return () => clearTimeout(timer);
+  }, [onComplete]);
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
+      {/* Animated background particles */}
+      <div className="absolute inset-0 overflow-hidden">
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-2 h-2 bg-yellow-500/30 rounded-full"
+            initial={{
+              x: Math.random() * window.innerWidth,
+              y: window.innerHeight + 50,
+            }}
+            animate={{
+              y: -50,
+              x: Math.random() * window.innerWidth,
+            }}
+            transition={{
+              duration: Math.random() * 3 + 2,
+              repeat: Infinity,
+              delay: Math.random() * 2,
+            }}
+          />
+        ))}
+      </div>
+
+      <motion.div
+        initial={{ scale: 0, rotate: -180 }}
+        animate={{ scale: 1, rotate: 0 }}
+        transition={{
+          type: 'spring',
+          stiffness: 200,
+          damping: 20,
+          duration: 1,
+        }}
+        className="relative z-10 max-w-3xl w-full"
+      >
+        <Card className="border-4 border-yellow-500 bg-gradient-to-br from-yellow-500/20 via-background to-background shadow-2xl">
+          <CardContent className="p-8 text-center space-y-6">
+            {/* Trophy animation */}
+            <motion.div
+              initial={{ scale: 0, y: 50 }}
+              animate={{ scale: 1, y: 0 }}
+              transition={{ delay: 0.3, type: 'spring' }}
+            >
+              <div className="relative inline-block">
+                <Trophy className="h-24 w-24 text-yellow-500 mx-auto" />
+                <motion.div
+                  className="absolute -inset-4"
+                  animate={{
+                    rotate: 360,
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: 'linear',
+                  }}
+                >
+                  <Sparkles className="h-8 w-8 text-yellow-300 absolute top-0 left-0" />
+                  <Sparkles className="h-6 w-6 text-yellow-400 absolute bottom-0 right-0" />
+                </motion.div>
+              </div>
+            </motion.div>
+
+            {/* Victory text */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              <h2 className="text-6xl font-bold gradient-text mb-2">
+                VICTORY!
+              </h2>
+              <Badge className="text-lg px-4 py-1 bg-yellow-500 hover:bg-yellow-600">
+                <Crown className="h-4 w-4 mr-1" />
+                Battle Complete
+              </Badge>
+            </motion.div>
+
+            {/* Winner card */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.8 }}
+              className="max-w-md mx-auto"
+            >
+              <Card className="ring-4 ring-green-500 bg-green-500/10">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <motion.img
+                      src={winner.image_url}
+                      alt={winner.nickname}
+                      className="w-24 h-24 rounded-full object-cover ring-4 ring-green-500"
+                      initial={{ rotate: -10 }}
+                      animate={{ rotate: 10 }}
+                      transition={{
+                        repeat: Infinity,
+                        repeatType: 'reverse',
+                        duration: 0.5,
+                      }}
+                    />
+                    <div className="flex-1 text-left">
+                      <h3 className="text-2xl font-bold">{winner.nickname}</h3>
+                      <p className="text-sm text-muted-foreground">{winner.species}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Owned by <span className="font-semibold text-foreground">{winnerOwnerName}</span>
+                      </p>
+                      <div className="mt-2">
+                        <Badge variant="outline">Power: {winner.power_score}</Badge>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Prevails text */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.1 }}
+              className="text-2xl font-semibold text-yellow-500"
+            >
+              {winner.nickname} prevails!
+            </motion.div>
+
+            {/* Defeated spider (grayed out) */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.5 }}
+              transition={{ delay: 1.3 }}
+              className="text-sm text-muted-foreground"
+            >
+              <p className="mb-2">Defeated:</p>
+              <div className="flex items-center justify-center gap-2 grayscale opacity-70">
+                <img
+                  src={loser.image_url}
+                  alt={loser.nickname}
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+                <div className="text-left">
+                  <p className="font-semibold">{loser.nickname}</p>
+                  <p className="text-xs">Was owned by {loserOwnerName}</p>
+                </div>
+              </div>
+            </motion.div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </div>
+  );
+};
+
+export default BattleOutcomeReveal;

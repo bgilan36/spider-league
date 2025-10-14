@@ -11,6 +11,8 @@ import { useAuth } from '@/auth/AuthProvider';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
+import BattleOutcomeReveal from '@/components/BattleOutcomeReveal';
+import PresenceGateDialog from '@/components/PresenceGateDialog';
 
 const TurnBasedBattle = () => {
   const { battleId } = useParams<{ battleId: string }>();
@@ -26,28 +28,44 @@ const TurnBasedBattle = () => {
     opponentSpider,
   } = useTurnBasedBattle(battleId || null);
   const [started, setStarted] = useState(false);
+  const [showPresenceGate, setShowPresenceGate] = useState(false);
+  const [showOutcomeReveal, setShowOutcomeReveal] = useState(false);
+  const [hasConfirmedPresence, setHasConfirmedPresence] = useState(false);
 
+  // Check if coming from query param (direct notification link)
   useEffect(() => {
     if (!battleId) {
       toast.error('No battle ID provided');
       navigate('/battle-mode');
+      return;
     }
-  }, [battleId, navigate]);
+
+    // Check if this is a fresh view (not already confirmed)
+    const urlParams = new URLSearchParams(window.location.search);
+    const requirePresence = urlParams.get('requirePresence') === 'true';
+    
+    if (requirePresence && !hasConfirmedPresence) {
+      setShowPresenceGate(true);
+    } else {
+      setHasConfirmedPresence(true);
+    }
+  }, [battleId, navigate, hasConfirmedPresence]);
 
   useEffect(() => {
-    // Battle ended, redirect after a delay
-    if (battle && !battle.is_active) {
-      const timer = setTimeout(() => {
-        navigate('/battle-mode');
-      }, 8000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [battle, navigate]);
+    // Battle ended, show outcome reveal then redirect
+    if (battle && !battle.is_active && !showOutcomeReveal && hasConfirmedPresence) {
+      // Small delay to ensure all turns are visible first
+      const revealTimer = setTimeout(() => {
+        setShowOutcomeReveal(true);
+      }, 2000);
 
-  // Kick off auto-battle if it hasn't started (fallback)
+      return () => clearTimeout(revealTimer);
+    }
+  }, [battle, showOutcomeReveal, hasConfirmedPresence]);
+
+  // Kick off auto-battle if it hasn't started (fallback) - only after presence confirmed
   useEffect(() => {
-    if (!battleId || started) return;
+    if (!battleId || started || !hasConfirmedPresence) return;
     if (!battle) return;
     if (!battle.is_active) return;
     if ((battle.turn_count ?? 0) > 0 || turns.length > 0) return;
@@ -62,7 +80,25 @@ const TurnBasedBattle = () => {
           setStarted(false);
         }
       });
-  }, [battleId, battle, turns.length, started]);
+  }, [battleId, battle, turns.length, started, hasConfirmedPresence]);
+
+  const handlePresenceConfirm = () => {
+    setShowPresenceGate(false);
+    setHasConfirmedPresence(true);
+  };
+
+  const handlePresenceCancel = () => {
+    setShowPresenceGate(false);
+    navigate('/battle-mode');
+  };
+
+  const handleOutcomeComplete = () => {
+    setShowOutcomeReveal(false);
+    // Redirect after outcome reveal
+    setTimeout(() => {
+      navigate('/battle-mode');
+    }, 1000);
+  };
 
   if (loading) {
     return (
@@ -92,12 +128,44 @@ const TurnBasedBattle = () => {
   }
 
   const battleEnded = !battle.is_active;
-  const iWon = battle.winner === 'A' 
+  const iWon = battle.winner === 'TEAM_A' 
     ? (battle.team_a as any)?.userId === user?.id 
-    : (battle.team_b as any)?.userId === user?.id;
+    : battle.winner === 'TEAM_B'
+    ? (battle.team_b as any)?.userId === user?.id
+    : false;
+
+  // Get winner and loser details for outcome reveal
+  const winnerSpider = iWon ? mySpider : opponentSpider;
+  const loserSpider = iWon ? opponentSpider : mySpider;
+  const winnerOwnerName = iWon 
+    ? ((battle.team_a as any)?.userId === user?.id ? 'You' : (battle.team_b as any)?.userName || 'Opponent')
+    : ((battle.team_b as any)?.userId === user?.id ? 'You' : (battle.team_a as any)?.userName || 'Opponent');
+  const loserOwnerName = iWon
+    ? ((battle.team_a as any)?.userId === user?.id ? (battle.team_b as any)?.userName || 'Opponent' : 'You')
+    : ((battle.team_b as any)?.userId === user?.id ? (battle.team_a as any)?.userName || 'Opponent' : 'You');
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Presence Gate Dialog */}
+      {showPresenceGate && (
+        <PresenceGateDialog
+          isOpen={showPresenceGate}
+          onConfirm={handlePresenceConfirm}
+          onCancel={handlePresenceCancel}
+          battleId={battleId || ''}
+        />
+      )}
+
+      {/* Outcome Reveal Animation */}
+      {showOutcomeReveal && winnerSpider && loserSpider && (
+        <BattleOutcomeReveal
+          winner={winnerSpider}
+          loser={loserSpider}
+          winnerOwnerName={winnerOwnerName}
+          loserOwnerName={loserOwnerName}
+          onComplete={handleOutcomeComplete}
+        />
+      )}
       <Helmet>
         <title>Battle Results — Spider League</title>
         <meta name="description" content="View your automated spider battle results" />

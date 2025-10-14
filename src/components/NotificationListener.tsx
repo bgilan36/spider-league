@@ -6,6 +6,8 @@ import { Bell, Swords, MessageSquare, Trophy, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import UserSnapshotModal from '@/components/UserSnapshotModal';
 import ChallengeDetailsModal from '@/components/ChallengeDetailsModal';
+import MissedBattleModal from '@/components/MissedBattleModal';
+import { useNavigate } from 'react-router-dom';
 
 interface BattleChallenge {
   id: string;
@@ -23,8 +25,40 @@ interface BattleChallenge {
 
 const NotificationListener = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedChallenge, setSelectedChallenge] = useState<BattleChallenge | null>(null);
+  const [showMissedBattles, setShowMissedBattles] = useState(false);
+  const [isVisible, setIsVisible] = useState(document.visibilityState === 'visible');
+
+  // Track visibility for presence checks
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      const visible = document.visibilityState === 'visible';
+      setIsVisible(visible);
+
+      // Check for missed battles when user returns
+      if (visible && user) {
+        const checkTimer = setTimeout(() => {
+          const viewedBattles = JSON.parse(
+            localStorage.getItem(`viewed-battles-${user.id}`) || '[]'
+          );
+          
+          // If we have a flag that indicates missed battles, show modal
+          const hasMissedBattles = localStorage.getItem(`has-missed-battles-${user.id}`);
+          if (hasMissedBattles === 'true') {
+            setShowMissedBattles(true);
+            localStorage.removeItem(`has-missed-battles-${user.id}`);
+          }
+        }, 1000);
+
+        return () => clearTimeout(checkTimer);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -264,14 +298,18 @@ const NotificationListener = () => {
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: 'UPDATE',
           schema: 'public',
           table: 'battles',
         },
         async (payload) => {
-          console.log('New battle created:', payload);
+          console.log('Battle updated:', payload);
           
           const battle = payload.new;
+          
+          // Only process completed battles
+          if (battle.is_active) return;
+          
           const teamA = battle.team_a as any;
           const teamB = battle.team_b as any;
           
@@ -284,25 +322,51 @@ const NotificationListener = () => {
                 : false;
 
             if (battle.winner && battle.winner !== 'TIE') {
-              toast.custom((t) => (
-                <div className="bg-card border border-border rounded-lg p-4 shadow-lg flex items-start gap-3">
-                  <div className="flex-shrink-0">
-                    <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
-                      isWinner ? 'bg-green-500/10' : 'bg-red-500/10'
-                    }`}>
-                      <Trophy className={`h-5 w-5 ${isWinner ? 'text-green-500' : 'text-red-500'}`} />
+              // If user is visible and focused, show presence gate for immediate viewing
+              if (isVisible && document.hasFocus()) {
+                toast.custom((t) => (
+                  <div className="bg-card border border-border rounded-lg p-4 shadow-lg flex items-start gap-3 max-w-md">
+                    <div className="flex-shrink-0">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Swords className="h-5 w-5 text-primary animate-pulse" />
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm text-foreground">
+                        A Battle is Ready to Watch
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Your spider just finished an epic battle! Ready to see what happened?
+                      </p>
+                      <div className="flex gap-2 mt-3">
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            navigate(`/battle/${battle.id}?requirePresence=true`);
+                            toast.dismiss(t);
+                          }}
+                        >
+                          Watch Now
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            // Mark as missed for later
+                            localStorage.setItem(`has-missed-battles-${user.id}`, 'true');
+                            toast.dismiss(t);
+                          }}
+                        >
+                          Later
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-sm text-foreground">
-                      {isWinner ? 'Victory!' : 'Defeat'}
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Your battle has concluded
-                    </p>
-                  </div>
-                </div>
-              ), { duration: 8000 });
+                ), { duration: 30000 });
+              } else {
+                // User is not visible, mark as missed
+                localStorage.setItem(`has-missed-battles-${user.id}`, 'true');
+              }
             }
           }
         }
@@ -331,6 +395,15 @@ const NotificationListener = () => {
         challenge={selectedChallenge}
         isOpen={selectedChallenge !== null}
         onClose={() => setSelectedChallenge(null)}
+      />
+
+      <MissedBattleModal
+        isOpen={showMissedBattles}
+        onClose={() => setShowMissedBattles(false)}
+        onWatchBattle={(battleId) => {
+          setShowMissedBattles(false);
+          navigate(`/battle/${battleId}`);
+        }}
       />
     </>
   );
