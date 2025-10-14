@@ -312,7 +312,7 @@ const NotificationsDropdown = () => {
       case 'battle_win':
       case 'battle_loss':
         if (notification.battle_id) {
-          navigate(`/battle-history?battleId=${notification.battle_id}`);
+          navigate(`/battle/${notification.battle_id}`);
         }
         break;
       case 'wall_post':
