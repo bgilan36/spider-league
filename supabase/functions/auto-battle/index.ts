@@ -47,13 +47,14 @@ serve(async (req) => {
 
     let turnCount = 0;
     let currentTurnUser = user1;
-    const maxTurns = 8; // Max 8 turns to ensure faster battles
+    const minTurns = 4; // Minimum 4 turns for excitement
+    const maxTurns = 10; // Max 10 turns to ensure battle doesn't drag
 
     // Dice roll function (1-20)
     const rollDice = () => Math.floor(Math.random() * 20) + 1;
 
     // Run battle simulation
-    while (state.p1_hp > 0 && state.p2_hp > 0 && turnCount < maxTurns) {
+    while ((state.p1_hp > 0 && state.p2_hp > 0 && turnCount < maxTurns) || turnCount < minTurns) {
       turnCount++;
       const isP1Turn = currentTurnUser === user1;
       const attacker = isP1Turn ? spider1 : spider2;
@@ -65,35 +66,52 @@ serve(async (req) => {
       const attackerDice = rollDice();
       const defenderDice = rollDice();
       
-      // Choose action (85% attack, 15% special)
+      // Choose action (75% attack, 25% special for more excitement)
       const rand = Math.random();
       let actionType: string;
       let damage = 0;
       let isCritical = false;
+      let dodged = false;
 
-      if (rand < 0.85) {
+      if (rand < 0.75) {
         actionType = "attack";
-        // High base damage to ensure 3-8 turn battles
-        const baseDamage = Math.floor(attacker.damage * 2) + (attackerDice - 10);
+        // Scale damage based on turn count to ensure minimum turns
+        const turnModifier = turnCount < minTurns ? 0.6 : 1.0;
+        const baseDamage = Math.floor(attacker.damage * 1.8 * turnModifier) + (attackerDice - 10);
         const defense = Math.floor(defender.defense / 18) + (defenderDice > 17 ? 2 : 0);
-        damage = Math.max(8, baseDamage - defense); // Minimum 8 damage
         
-        // Critical hit on natural 20
-        if (attackerDice === 20) {
-          damage = Math.floor(damage * 2.2);
-          isCritical = true;
+        // Dodge on defender rolling 19-20 and attacker not rolling 20
+        if (defenderDice >= 19 && attackerDice < 20) {
+          damage = 0;
+          dodged = true;
+        } else {
+          damage = Math.max(5, baseDamage - defense); // Minimum 5 damage
+          
+          // Critical hit on natural 20
+          if (attackerDice === 20) {
+            damage = Math.floor(damage * 2.5);
+            isCritical = true;
+          }
         }
       } else {
         actionType = "special";
-        // Special attacks deal massive damage
-        const baseDamage = Math.floor(attacker.venom * 2.2) + (attackerDice - 8);
+        // Special attacks - more powerful
+        const turnModifier = turnCount < minTurns ? 0.7 : 1.0;
+        const baseDamage = Math.floor(attacker.venom * 2.0 * turnModifier) + (attackerDice - 8);
         const defense = Math.floor(defender.defense / 15) + (defenderDice > 18 ? 2 : 0);
-        damage = Math.max(12, baseDamage - defense); // Minimum 12 damage
         
-        // Critical on 19-20 for special
-        if (attackerDice >= 19) {
-          damage = Math.floor(damage * 2.8);
-          isCritical = true;
+        // Dodge on defender rolling 20
+        if (defenderDice === 20 && attackerDice < 19) {
+          damage = 0;
+          dodged = true;
+        } else {
+          damage = Math.max(8, baseDamage - defense); // Minimum 8 damage
+          
+          // Critical on 19-20 for special
+          if (attackerDice >= 19) {
+            damage = Math.floor(damage * 3.0);
+            isCritical = true;
+          }
         }
       }
 
@@ -131,6 +149,7 @@ serve(async (req) => {
           attacker_dice: attackerDice,
           defender_dice: defenderDice,
           is_critical: isCritical,
+          dodged: dodged,
         },
       };
 
@@ -142,8 +161,8 @@ serve(async (req) => {
         ...turnResult,
       });
 
-      // Quick delay for real-time display (1.5 second per turn)
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Quick delay for real-time display (2 seconds per turn for suspense)
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Switch turn
       currentTurnUser = currentTurnUser === user1 ? user2 : user1;

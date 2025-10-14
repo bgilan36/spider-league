@@ -358,74 +358,196 @@ const TurnBasedBattle = () => {
                   </p>
                 </div>
               ) : (
-                <AnimatePresence>
+                <AnimatePresence mode="popLayout">
                   {turns.slice().reverse().map((turn, index) => {
                     const result = turn.result_payload as any;
                     const isAttack = turn.action_type === 'attack';
                     const isSpecial = turn.action_type === 'special';
+                    const dodged = result?.dodged || false;
                     
                     return (
                       <motion.div
                         key={turn.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20 }}
-                        transition={{ delay: index * 0.02 }}
-                        className={`text-sm p-4 bg-muted/50 rounded-lg border ${
-                          result?.is_critical ? 'border-yellow-500 bg-yellow-500/10' : 'border-border'
+                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ 
+                          type: "spring",
+                          stiffness: 300,
+                          damping: 25,
+                          delay: index * 0.03 
+                        }}
+                        className={`relative overflow-hidden text-sm p-5 rounded-lg border-2 transition-all ${
+                          result?.is_critical 
+                            ? 'border-yellow-500 bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 shadow-lg shadow-yellow-500/20' 
+                            : dodged
+                            ? 'border-blue-500 bg-gradient-to-br from-blue-500/20 to-blue-600/10 shadow-lg shadow-blue-500/20'
+                            : isSpecial
+                            ? 'border-purple-500 bg-gradient-to-br from-purple-500/15 to-purple-600/5'
+                            : 'border-border bg-muted/30'
                         }`}
                       >
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="font-bold text-primary">Turn {turn.turn_index}</span>
+                        {/* Turn header */}
+                        <div className="flex items-center justify-between mb-3">
+                          <motion.span 
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="font-bold text-lg gradient-text"
+                          >
+                            Turn {turn.turn_index}
+                          </motion.span>
                           <div className="flex items-center gap-2">
                             {result?.is_critical && (
-                              <Badge variant="default" className="text-xs bg-yellow-500">
-                                CRITICAL!
-                              </Badge>
+                              <motion.div
+                                initial={{ scale: 0, rotate: -180 }}
+                                animate={{ scale: 1, rotate: 0 }}
+                                transition={{ type: "spring" }}
+                              >
+                                <Badge variant="default" className="text-xs bg-yellow-500 text-black font-bold shadow-lg">
+                                  ⚡ CRITICAL HIT!
+                                </Badge>
+                              </motion.div>
+                            )}
+                            {dodged && (
+                              <motion.div
+                                initial={{ scale: 0, rotate: 180 }}
+                                animate={{ scale: 1, rotate: 0 }}
+                                transition={{ type: "spring" }}
+                              >
+                                <Badge variant="default" className="text-xs bg-blue-500 font-bold shadow-lg">
+                                  💨 DODGED!
+                                </Badge>
+                              </motion.div>
                             )}
                             <Badge 
                               variant={isSpecial ? "default" : "outline"} 
-                              className="text-xs"
+                              className={`text-xs font-semibold ${isSpecial ? 'bg-purple-500' : ''}`}
                             >
-                              {turn.action_type.toUpperCase()}
+                              {isSpecial ? '✨ SPECIAL' : '⚔️ ATTACK'}
                             </Badge>
                           </div>
                         </div>
                         
                         {result && (
-                          <div className="space-y-1">
-                            <div className="font-medium">
-                              {result.attacker_name} 
-                              {isAttack && ' attacks '}
-                              {isSpecial && ` uses ${result.special_move || 'Special Attack'} on `}
-                              {result.defender_name}!
-                            </div>
-                            
-                            {/* Dice rolls */}
-                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                🎲 Attack: <span className={`font-bold ${result.attacker_dice === 20 ? 'text-yellow-500' : result.attacker_dice >= 15 ? 'text-green-500' : ''}`}>{result.attacker_dice}</span>
-                              </span>
-                              <span className="flex items-center gap-1">
-                                🎲 Defense: <span className={`font-bold ${result.defender_dice >= 18 ? 'text-blue-500' : ''}`}>{result.defender_dice}</span>
-                              </span>
-                            </div>
-                            
-                            {result.damage > 0 && (
-                              <div className="text-muted-foreground flex items-center gap-2">
-                                <span className={`${result.is_critical ? 'text-yellow-500 font-bold' : 'text-destructive'}`}>
-                                  💥 {result.damage} damage dealt{result.is_critical ? ' (CRITICAL!)' : ''}
+                          <div className="space-y-3">
+                            {/* Action description */}
+                            <motion.div 
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: 0.1 }}
+                              className="font-semibold text-base"
+                            >
+                              <span className="text-primary">{result.attacker_name}</span>
+                              {isAttack && ' launches an attack on '}
+                              {isSpecial && (
+                                <span>
+                                  {' uses '}
+                                  <span className="text-purple-400 font-bold">{result.special_move || 'Special Attack'}</span>
+                                  {' on '}
                                 </span>
-                                <span className="text-xs">
-                                  ({result.old_defender_hp} → {result.new_defender_hp} HP)
-                                </span>
+                              )}
+                              <span className="text-destructive">{result.defender_name}</span>!
+                            </motion.div>
+                            
+                            {/* Dice rolls - more prominent */}
+                            <motion.div 
+                              initial={{ opacity: 0, y: 5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.15 }}
+                              className="flex items-center gap-4 p-3 bg-background/50 rounded-md border border-border/50"
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg">🎲</span>
+                                <div className="text-xs">
+                                  <div className="text-muted-foreground">Attack Roll</div>
+                                  <div className={`font-bold text-lg ${
+                                    result.attacker_dice === 20 ? 'text-yellow-500' : 
+                                    result.attacker_dice >= 15 ? 'text-green-500' : 
+                                    'text-foreground'
+                                  }`}>
+                                    {result.attacker_dice}
+                                  </div>
+                                </div>
                               </div>
+                              <div className="h-8 w-px bg-border" />
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg">🛡️</span>
+                                <div className="text-xs">
+                                  <div className="text-muted-foreground">Defense Roll</div>
+                                  <div className={`font-bold text-lg ${
+                                    result.defender_dice >= 19 ? 'text-blue-500' : 
+                                    result.defender_dice >= 15 ? 'text-green-500' : 
+                                    'text-foreground'
+                                  }`}>
+                                    {result.defender_dice}
+                                  </div>
+                                </div>
+                              </div>
+                            </motion.div>
+                            
+                            {/* Damage or dodge */}
+                            {dodged ? (
+                              <motion.div 
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: 0.2 }}
+                                className="text-blue-400 font-bold text-lg flex items-center gap-2 p-3 bg-blue-500/10 rounded-md border border-blue-500/30"
+                              >
+                                <span className="text-2xl">💨</span>
+                                <span>{result.defender_name} narrowly dodges the attack!</span>
+                              </motion.div>
+                            ) : result.damage > 0 && (
+                              <motion.div 
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: 0.2 }}
+                                className="space-y-2"
+                              >
+                                <div className={`font-bold text-lg flex items-center gap-2 p-3 rounded-md border ${
+                                  result.is_critical 
+                                    ? 'bg-yellow-500/10 border-yellow-500/50 text-yellow-300' 
+                                    : 'bg-destructive/10 border-destructive/50 text-destructive'
+                                }`}>
+                                  <span className="text-2xl">💥</span>
+                                  <span>
+                                    {result.damage} damage dealt
+                                    {result.is_critical && ' - DEVASTATING BLOW!'}
+                                  </span>
+                                </div>
+                                
+                                {/* HP change */}
+                                <div className="flex items-center gap-3 text-sm p-2 bg-background/30 rounded">
+                                  <span className="text-muted-foreground">{result.defender_name}'s HP:</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-mono font-bold text-green-400">{result.old_defender_hp}</span>
+                                    <span className="text-muted-foreground">→</span>
+                                    <span className={`font-mono font-bold ${
+                                      result.new_defender_hp === 0 ? 'text-red-500' : 
+                                      result.new_defender_hp < 20 ? 'text-orange-400' : 
+                                      'text-green-400'
+                                    }`}>
+                                      {result.new_defender_hp}
+                                    </span>
+                                  </div>
+                                  <Progress 
+                                    value={(result.new_defender_hp / result.old_defender_hp) * 100}
+                                    className="h-2 flex-1"
+                                  />
+                                </div>
+                              </motion.div>
                             )}
                             
+                            {/* KO message */}
                             {result.new_defender_hp === 0 && (
-                              <div className="text-yellow-500 font-bold mt-1">
-                                ⚰️ {result.defender_name} has been defeated!
-                              </div>
+                              <motion.div 
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: 0.3, type: "spring" }}
+                                className="text-red-500 font-bold text-xl mt-2 p-4 bg-red-500/10 rounded-lg border-2 border-red-500/50 text-center"
+                              >
+                                <span className="text-3xl mr-2">💀</span>
+                                {result.defender_name} has been defeated!
+                              </motion.div>
                             )}
                           </div>
                         )}
