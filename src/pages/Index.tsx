@@ -29,6 +29,7 @@ import { InstallPrompt } from "@/components/InstallPrompt";
 import NotificationsDropdown from "@/components/NotificationsDropdown";
 import OnlineUsersBar from "@/components/OnlineUsersBar";
 import NewSpiderSpotlight from "@/components/NewSpiderSpotlight";
+import { BattleRecapBanner } from "@/components/BattleRecapBanner";
 
 interface Spider {
   id: string;
@@ -665,6 +666,9 @@ const Index = () => {
       <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-8">
         {/* Online Users Bar */}
         <OnlineUsersBar />
+        
+        {/* Battle Recap Banner - Prominently displayed at the top */}
+        <BattleRecapBanner />
         
         {/* My Spider Squad Section */}
         <div className="mb-8">
