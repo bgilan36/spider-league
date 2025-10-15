@@ -234,9 +234,9 @@ const TurnBasedBattle = () => {
                           rotateY: 0,
                           transition: {
                             type: "spring",
-                            stiffness: 260,
-                            damping: 20,
-                            delay: index * 0.08
+                            stiffness: 180,
+                            damping: 22,
+                            delay: index * 0.5
                           }
                         }}
                         whileHover={{ 

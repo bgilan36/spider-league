@@ -48,7 +48,7 @@ serve(async (req) => {
     let turnCount = 0;
     let currentTurnUser = user1;
     const minTurns = 4; // Minimum 4 turns for excitement
-    const maxTurns = 10; // Max 10 turns to ensure battle doesn't drag
+    const maxTurns = 12; // Max 12 turns to ensure battle doesn't drag
 
     // Dice roll function (1-20)
     const rollDice = () => Math.floor(Math.random() * 20) + 1;
@@ -76,7 +76,7 @@ serve(async (req) => {
       if (rand < 0.75) {
         actionType = "attack";
         // Scale damage based on turn count to ensure minimum turns
-        const turnModifier = turnCount < minTurns ? 0.6 : 1.0;
+        const turnModifier = turnCount < minTurns ? 0.5 : 1.0;
         const baseDamage = Math.floor(attacker.damage * 1.8 * turnModifier) + (attackerDice - 10);
         const defense = Math.floor(defender.defense / 18) + (defenderDice > 17 ? 2 : 0);
         
@@ -96,7 +96,7 @@ serve(async (req) => {
       } else {
         actionType = "special";
         // Special attacks - more powerful
-        const turnModifier = turnCount < minTurns ? 0.7 : 1.0;
+        const turnModifier = turnCount < minTurns ? 0.6 : 1.0;
         const baseDamage = Math.floor(attacker.venom * 2.0 * turnModifier) + (attackerDice - 8);
         const defense = Math.floor(defender.defense / 15) + (defenderDice > 18 ? 2 : 0);
         
