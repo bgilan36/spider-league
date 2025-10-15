@@ -360,7 +360,7 @@ const ChallengeDetailsModal: React.FC<ChallengeDetailsModalProps> = ({
           
           <div className="space-y-4">
             <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
-              <p className="text-sm font-medium text-destructive">
+              <p className="text-sm font-medium text-destructive-foreground">
                 ⚠️ Warning: The losing spider will be transferred to the winner!
               </p>
             </div>
