@@ -397,7 +397,7 @@ const ChallengeDetailsModal: React.FC<ChallengeDetailsModalProps> = ({
               <Button
                 onClick={acceptChallenge}
                 disabled={!selectedSpider || loading}
-                className={`flex-1 ${selectedSpider && !loading ? 'animate-pulse' : ''}`}
+                className={`flex-1 ${selectedSpider && !loading ? 'animate-[pulse_3s_ease-in-out_infinite]' : ''}`}
                 variant="destructive"
               >
                 {loading ? 'Accepting...' : 'Accept & Battle'}
