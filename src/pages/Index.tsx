@@ -172,25 +172,63 @@ const Index = () => {
         .from('spiders')
         .select('id, nickname, species, image_url, rarity, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved, created_at, owner_id')
         .eq('owner_id', user.id)
+        .eq('is_approved', true)
         .gte('created_at', weekStartISO)
         .order('created_at', { ascending: true });
 
       if (spidersError) throw spidersError;
 
-      // Also get weekly_uploads to track count
-      const { data: weeklyUpload } = await supabase
-        .from('weekly_uploads')
-        .select('first_spider_id, second_spider_id, third_spider_id, upload_count')
-        .eq('user_id', user.id)
-        .eq('week_start', weekStart.toISOString().split('T')[0])
-        .maybeSingle();
+      // Get spiders with active challenges (regardless of upload date)
+      const { data: activeChallenges, error: challengesError } = await supabase
+        .from('battle_challenges')
+        .select('challenger_spider_id, accepter_spider_id')
+        .or(`challenger_id.eq.${user.id},accepter_id.eq.${user.id}`)
+        .eq('status', 'OPEN')
+        .gt('expires_at', new Date().toISOString());
 
-      // Set the weekly upload count based on actual spiders found this week
+      if (challengesError) throw challengesError;
+
+      // Get unique spider IDs from challenges
+      const challengeSpiderIds = new Set<string>();
+      activeChallenges?.forEach(challenge => {
+        if (challenge.challenger_spider_id) challengeSpiderIds.add(challenge.challenger_spider_id);
+        if (challenge.accepter_spider_id) challengeSpiderIds.add(challenge.accepter_spider_id);
+      });
+
+      // Fetch spiders with active challenges that aren't already in spidersThisWeek
+      let challengeSpiders: Spider[] = [];
+      if (challengeSpiderIds.size > 0) {
+        const { data: spidersWithChallenges, error: spidersWithChallengesError } = await supabase
+          .from('spiders')
+          .select('id, nickname, species, image_url, rarity, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved, created_at, owner_id')
+          .in('id', Array.from(challengeSpiderIds))
+          .eq('owner_id', user.id)
+          .eq('is_approved', true);
+
+        if (!spidersWithChallengesError && spidersWithChallenges) {
+          challengeSpiders = spidersWithChallenges;
+        }
+      }
+
+      // Combine spiders uploaded this week with spiders that have active challenges
+      const spiderMap = new Map<string, Spider>();
+      
+      // Add spiders from this week (up to 3)
+      spidersThisWeek?.slice(0, 3).forEach(spider => {
+        spiderMap.set(spider.id, spider);
+      });
+
+      // Add challenge spiders (these are also eligible)
+      challengeSpiders.forEach(spider => {
+        spiderMap.set(spider.id, spider);
+      });
+
+      // Set the weekly upload count based on actual spiders uploaded this week
       const uploadCount = spidersThisWeek?.length || 0;
       setWeeklyUploadCount(uploadCount);
 
-      // Use the spiders uploaded this week (up to 3)
-      setUserSpiders(spidersThisWeek?.slice(0, 3) || []);
+      // Use all eligible spiders
+      setUserSpiders(Array.from(spiderMap.values()));
     } catch (error) {
       console.error('Error fetching spiders:', error);
       setUserSpiders([]);
