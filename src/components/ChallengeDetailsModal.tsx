@@ -62,7 +62,7 @@ const ChallengeDetailsModal: React.FC<ChallengeDetailsModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [showAcceptDialog, setShowAcceptDialog] = useState(false);
 
-  // Fetch user's eligible spiders for the current PT week (aligns with home page logic)
+  // Fetch user's eligible spiders: uploaded this PT week OR involved in active challenges
   const fetchUserSpiders = async () => {
     if (!user) return;
 
@@ -78,8 +78,8 @@ const ChallengeDetailsModal: React.FC<ChallengeDetailsModalProps> = ({
       const weekEnd = new Date(weekStart);
       weekEnd.setDate(weekStart.getDate() + 7);
 
-      // Fetch user's approved spiders created within the current PT week
-      const { data, error } = await supabase
+      // 1. Fetch spiders uploaded this week
+      const { data: weekSpiders, error: weekError } = await supabase
         .from('spiders')
         .select('*')
         .eq('owner_id', user.id)
@@ -87,8 +87,49 @@ const ChallengeDetailsModal: React.FC<ChallengeDetailsModalProps> = ({
         .gte('created_at', weekStart.toISOString())
         .lt('created_at', weekEnd.toISOString());
 
-      if (error) throw error;
-      setUserSpiders(data || []);
+      if (weekError) throw weekError;
+
+      // 2. Fetch spiders with active challenges created by this user
+      const { data: activeChallenges, error: challengesError } = await supabase
+        .from('battle_challenges')
+        .select('challenger_spider_id')
+        .eq('challenger_id', user.id)
+        .eq('status', 'OPEN')
+        .gt('expires_at', new Date().toISOString());
+
+      if (challengesError) throw challengesError;
+
+      const challengeSpiderIds = new Set(
+        activeChallenges?.map(c => c.challenger_spider_id).filter(Boolean) || []
+      );
+
+      // 3. Fetch spiders involved in challenges (if any)
+      let challengeSpiders: Spider[] = [];
+      if (challengeSpiderIds.size > 0) {
+        const { data: spidersWithChallenges, error: spidersWithChallengesError } = await supabase
+          .from('spiders')
+          .select('*')
+          .in('id', Array.from(challengeSpiderIds))
+          .eq('owner_id', user.id)
+          .eq('is_approved', true);
+
+        if (!spidersWithChallengesError && spidersWithChallenges) {
+          challengeSpiders = spidersWithChallenges;
+        }
+      }
+
+      // Combine and deduplicate
+      const allSpiderIds = new Set<string>();
+      const combinedSpiders: Spider[] = [];
+
+      [...(weekSpiders || []), ...challengeSpiders].forEach(spider => {
+        if (!allSpiderIds.has(spider.id)) {
+          allSpiderIds.add(spider.id);
+          combinedSpiders.push(spider);
+        }
+      });
+
+      setUserSpiders(combinedSpiders);
     } catch (error) {
       console.error('Error fetching spiders:', error);
       setUserSpiders([]);
