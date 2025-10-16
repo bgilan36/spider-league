@@ -48,6 +48,21 @@ export const BattleRecapBanner = () => {
     }
   }, [user]);
 
+  // Auto-mark battles as viewed after displaying them
+  useEffect(() => {
+    if (battleRecaps.length > 0 && !dismissed) {
+      const timer = setTimeout(() => {
+        const mostRecentBattle = battleRecaps.reduce((latest, current) => 
+          new Date(current.created_at) > new Date(latest.created_at) ? current : latest
+        );
+        localStorage.setItem('lastViewedBattles', mostRecentBattle.created_at);
+        setDismissed(true);
+      }, 3000); // Mark as viewed after 3 seconds
+      
+      return () => clearTimeout(timer);
+    }
+  }, [battleRecaps, dismissed]);
+
   const fetchBattleRecaps = async () => {
     if (!user) return;
 
