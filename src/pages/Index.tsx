@@ -166,39 +166,31 @@ const Index = () => {
       weekStart.setDate(ptNow.getDate() - dayOfWeek);
       weekStart.setHours(0, 0, 0, 0);
       
-      const { data: weeklyUpload, error: weeklyError } = await supabase
+      // Query spiders uploaded this week directly
+      const weekStartISO = weekStart.toISOString();
+      const { data: spidersThisWeek, error: spidersError } = await supabase
+        .from('spiders')
+        .select('id, nickname, species, image_url, rarity, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved, created_at, owner_id')
+        .eq('owner_id', user.id)
+        .gte('created_at', weekStartISO)
+        .order('created_at', { ascending: true });
+
+      if (spidersError) throw spidersError;
+
+      // Also get weekly_uploads to track count
+      const { data: weeklyUpload } = await supabase
         .from('weekly_uploads')
         .select('first_spider_id, second_spider_id, third_spider_id, upload_count')
         .eq('user_id', user.id)
         .eq('week_start', weekStart.toISOString().split('T')[0])
         .maybeSingle();
 
-      if (weeklyError) throw weeklyError;
-
-      // Set the weekly upload count
-      const uploadCount = weeklyUpload?.upload_count || 0;
+      // Set the weekly upload count based on actual spiders found this week
+      const uploadCount = spidersThisWeek?.length || 0;
       setWeeklyUploadCount(uploadCount);
 
-      // Collect all eligible spider IDs
-      const spiderIds = [
-        weeklyUpload?.first_spider_id,
-        weeklyUpload?.second_spider_id,
-        weeklyUpload?.third_spider_id
-      ].filter(Boolean);
-
-      if (spiderIds.length > 0) {
-        // Fetch all eligible spiders
-        const { data, error } = await supabase
-          .from('spiders')
-          .select('id, nickname, species, image_url, rarity, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved, created_at, owner_id')
-          .in('id', spiderIds);
-
-        if (error) throw error;
-        setUserSpiders(data || []);
-      } else {
-        // No eligible spiders for this week
-        setUserSpiders([]);
-      }
+      // Use the spiders uploaded this week (up to 3)
+      setUserSpiders(spidersThisWeek?.slice(0, 3) || []);
     } catch (error) {
       console.error('Error fetching spiders:', error);
       setUserSpiders([]);

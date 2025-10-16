@@ -118,29 +118,23 @@ const SpiderCollection = () => {
 
       if (userError) throw userError;
 
-      // Get current week start to fetch this week's eligible spiders
-      const currentWeekStart = new Date();
-      currentWeekStart.setHours(0, 0, 0, 0);
-      const dayOfWeek = currentWeekStart.getDay(); // 0 = Sunday
-      currentWeekStart.setDate(currentWeekStart.getDate() - dayOfWeek);
-      const weekStartStr = currentWeekStart.toISOString().split('T')[0];
+      // Get current week start in Pacific Time (same as Index.tsx)
+      const ptNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+      const dayOfWeek = ptNow.getDay(); // 0 = Sunday
+      
+      // Calculate Sunday of current week in PT (week starts on Sunday)
+      const weekStart = new Date(ptNow);
+      weekStart.setDate(ptNow.getDate() - dayOfWeek);
+      weekStart.setHours(0, 0, 0, 0);
+      const weekStartISO = weekStart.toISOString();
 
-      // Fetch weekly uploads to identify eligible spiders for current week
-      const { data: weeklyUploads, error: weeklyError } = await supabase
-        .from('weekly_uploads')
-        .select('first_spider_id, second_spider_id, third_spider_id')
-        .eq('user_id', user.id)
-        .eq('week_start', weekStartStr)
-        .maybeSingle();
-
-      if (weeklyError && weeklyError.code !== 'PGRST116') throw weeklyError;
-
-      // Create a set of eligible spider IDs
-      const eligibleSpiderIds = new Set([
-        weeklyUploads?.first_spider_id,
-        weeklyUploads?.second_spider_id,
-        weeklyUploads?.third_spider_id
-      ].filter(Boolean));
+      // Identify spiders uploaded this week (first 3 are eligible)
+      const eligibleSpiderIds = new Set(
+        (userSpiders || [])
+          .filter(spider => spider.created_at && new Date(spider.created_at) >= weekStart)
+          .slice(0, 3)
+          .map(spider => spider.id)
+      );
 
       // Fetch battle information for spiders won through battles
       const { data: battleChallenges, error: battleError } = await supabase
