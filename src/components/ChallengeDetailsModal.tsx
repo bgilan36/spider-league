@@ -89,19 +89,23 @@ const ChallengeDetailsModal: React.FC<ChallengeDetailsModalProps> = ({
 
       if (weekError) throw weekError;
 
-      // 2. Fetch spiders with active challenges created by this user
+      // 2. Fetch spiders with active challenges involving this user (challenger or accepter)
       const { data: activeChallenges, error: challengesError } = await supabase
         .from('battle_challenges')
-        .select('challenger_spider_id')
-        .eq('challenger_id', user.id)
+        .select('challenger_spider_id, accepter_spider_id')
+        .or(`challenger_id.eq.${user.id},accepter_id.eq.${user.id}`)
         .eq('status', 'OPEN')
         .gt('expires_at', new Date().toISOString());
 
+
       if (challengesError) throw challengesError;
 
-      const challengeSpiderIds = new Set(
-        activeChallenges?.map(c => c.challenger_spider_id).filter(Boolean) || []
-      );
+      const challengeSpiderIds = new Set<string>();
+      activeChallenges?.forEach((c: any) => {
+        if (c.challenger_spider_id) challengeSpiderIds.add(c.challenger_spider_id);
+        if (c.accepter_spider_id) challengeSpiderIds.add(c.accepter_spider_id);
+      });
+
 
       // 3. Fetch spiders involved in challenges (if any)
       let challengeSpiders: Spider[] = [];
