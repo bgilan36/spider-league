@@ -236,7 +236,7 @@ const TurnBasedBattle = () => {
                             type: "spring",
                             stiffness: 180,
                             damping: 22,
-                            delay: index * 0.5
+                            delay: index * 3.5
                           }
                         }}
                         whileHover={{ 
@@ -284,22 +284,22 @@ const TurnBasedBattle = () => {
                           )}
                           {/* Turn header */}
                           <div className="flex items-center justify-between mb-4 relative z-10">
-                            <motion.span 
-                              initial={{ scale: 0, x: -20 }}
-                              animate={{ 
-                                scale: 1, 
-                                x: 0,
-                                transition: {
-                                  type: "spring",
-                                  stiffness: 300,
-                                  damping: 15,
-                                  delay: index * 0.08 + 0.1
-                                }
-                              }}
-                              className="font-black text-2xl bg-gradient-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-transparent"
-                            >
-                              Turn {turn.turn_index}
-                            </motion.span>
+                              <motion.span 
+                                initial={{ scale: 0, x: -20 }}
+                                animate={{ 
+                                  scale: 1, 
+                                  x: 0,
+                                  transition: {
+                                    type: "spring",
+                                    stiffness: 300,
+                                    damping: 15,
+                                    delay: index * 3.5 + 0.3
+                                  }
+                                }}
+                                className="font-black text-2xl bg-gradient-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-transparent"
+                              >
+                                Turn {turn.turn_index}
+                              </motion.span>
                             <div className="flex items-center gap-2">
                               {isCritical && (
                                 <motion.div
@@ -310,7 +310,7 @@ const TurnBasedBattle = () => {
                                     transition: {
                                       type: "spring",
                                       stiffness: 400,
-                                      delay: index * 0.08 + 0.2
+                                      delay: index * 3.5 + 0.5
                                     }
                                   }}
                                 >
@@ -339,7 +339,7 @@ const TurnBasedBattle = () => {
                                     transition: {
                                       type: "spring",
                                       stiffness: 400,
-                                      delay: index * 0.08 + 0.2
+                                      delay: index * 3.5 + 0.5
                                     }
                                   }}
                                 >
@@ -364,7 +364,7 @@ const TurnBasedBattle = () => {
                                 animate={{ 
                                   scale: 1,
                                   transition: {
-                                    delay: index * 0.08 + 0.15
+                                    delay: index * 3.5 + 0.4
                                   }
                                 }}
                               >
@@ -394,7 +394,7 @@ const TurnBasedBattle = () => {
                                   transition: {
                                     type: "spring",
                                     stiffness: 200,
-                                    delay: index * 0.08 + 0.3
+                                    delay: index * 3.5 + 0.8
                                   }
                                 }}
                                 className="font-bold text-lg leading-relaxed"
@@ -416,7 +416,7 @@ const TurnBasedBattle = () => {
                                   <motion.span
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
-                                    transition={{ delay: index * 0.08 + 0.4 }}
+                                    transition={{ delay: index * 3.5 + 1.0 }}
                                   >
                                     {' '}launches a devastating attack on{' '}
                                   </motion.span>
@@ -425,7 +425,7 @@ const TurnBasedBattle = () => {
                                   <motion.span
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
-                                    transition={{ delay: index * 0.08 + 0.4 }}
+                                    transition={{ delay: index * 3.5 + 1.0 }}
                                   >
                                     {' '}unleashes{' '}
                                     <motion.span 
@@ -464,7 +464,7 @@ const TurnBasedBattle = () => {
                                   y: 0,
                                   transition: {
                                     type: "spring",
-                                    delay: index * 0.08 + 0.5
+                                    delay: index * 3.5 + 1.3
                                   }
                                 }}
                                 className="flex items-center gap-4 p-4 bg-gradient-to-br from-background/70 to-muted/50 rounded-lg border-2 border-primary/30 backdrop-blur-sm shadow-lg"
@@ -475,7 +475,7 @@ const TurnBasedBattle = () => {
                                   animate={{ rotate: [0, 360, 720] }}
                                   transition={{ 
                                     duration: 0.8, 
-                                    delay: index * 0.08 + 0.6,
+                                    delay: index * 3.5 + 1.5,
                                     ease: "easeOut"
                                   }}
                                 >
@@ -502,7 +502,7 @@ const TurnBasedBattle = () => {
                                         scale: 1,
                                         transition: {
                                           type: "spring",
-                                          delay: index * 0.08 + 0.7
+                                          delay: index * 3.5 + 1.8
                                         }
                                       }}
                                     >
@@ -517,7 +517,7 @@ const TurnBasedBattle = () => {
                                   animate={{ rotate: [0, -360, -720] }}
                                   transition={{ 
                                     duration: 0.8, 
-                                    delay: index * 0.08 + 0.6,
+                                    delay: index * 3.5 + 1.5,
                                     ease: "easeOut"
                                   }}
                                 >
@@ -544,7 +544,7 @@ const TurnBasedBattle = () => {
                                         scale: 1,
                                         transition: {
                                           type: "spring",
-                                          delay: index * 0.08 + 0.7
+                                          delay: index * 3.5 + 1.8
                                         }
                                       }}
                                     >
@@ -564,7 +564,7 @@ const TurnBasedBattle = () => {
                                     x: 0,
                                     transition: {
                                       type: "spring",
-                                      delay: index * 0.08 + 0.8
+                                      delay: index * 3.5 + 2.3
                                     }
                                   }}
                                   whileHover={{ scale: 1.02 }}
@@ -591,7 +591,7 @@ const TurnBasedBattle = () => {
                                     y: 0,
                                     transition: {
                                       type: "spring",
-                                      delay: index * 0.08 + 0.8
+                                      delay: index * 3.5 + 2.3
                                     }
                                   }}
                                   className="space-y-3"
@@ -643,7 +643,7 @@ const TurnBasedBattle = () => {
                                       opacity: 1, 
                                       y: 0,
                                       transition: {
-                                        delay: index * 0.08 + 0.9
+                                        delay: index * 3.5 + 2.7
                                       }
                                     }}
                                     className="flex items-center gap-4 text-base p-4 bg-gradient-to-r from-background/60 to-muted/40 rounded-lg backdrop-blur-sm border border-border/50"
@@ -654,7 +654,7 @@ const TurnBasedBattle = () => {
                                         className="font-mono font-black text-xl text-green-400"
                                         initial={{ scale: 1 }}
                                         animate={{ scale: [1, 1.2, 1] }}
-                                        transition={{ delay: index * 0.08 + 1.0, duration: 0.3 }}
+                                        transition={{ delay: index * 3.5 + 2.9, duration: 0.3 }}
                                       >
                                         {result.old_defender_hp}
                                       </motion.span>
@@ -676,7 +676,7 @@ const TurnBasedBattle = () => {
                                           scale: 1,
                                           transition: {
                                             type: "spring",
-                                            delay: index * 0.08 + 1.1
+                                            delay: index * 3.5 + 3.1
                                           }
                                         }}
                                       >
@@ -702,7 +702,7 @@ const TurnBasedBattle = () => {
                                     transition: {
                                       type: "spring",
                                       stiffness: 200,
-                                      delay: index * 0.08 + 1.2
+                                      delay: index * 3.5 + 3.3
                                     }
                                   }}
                                   className="text-red-400 font-black text-2xl mt-3 p-6 bg-gradient-to-br from-red-500/30 to-red-600/10 rounded-xl border-4 border-red-500/70 text-center shadow-2xl"
