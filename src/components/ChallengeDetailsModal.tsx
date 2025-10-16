@@ -62,46 +62,33 @@ const ChallengeDetailsModal: React.FC<ChallengeDetailsModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [showAcceptDialog, setShowAcceptDialog] = useState(false);
 
-  // Fetch user's eligible spiders (only the 3 spiders from current week)
+  // Fetch user's eligible spiders for the current PT week (aligns with home page logic)
   const fetchUserSpiders = async () => {
     if (!user) return;
 
     try {
-      // Get the current week's eligible spiders from weekly_uploads table
+      // Calculate current PT week [Sunday 00:00 PT, next Sunday 00:00 PT)
       const ptNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-      const dayOfWeek = ptNow.getDay();
-      
+      const dayOfWeek = ptNow.getDay(); // 0 = Sunday
+
       const weekStart = new Date(ptNow);
       weekStart.setDate(ptNow.getDate() - dayOfWeek);
       weekStart.setHours(0, 0, 0, 0);
-      
-      const { data: weeklyUpload, error: weeklyError } = await supabase
-        .from('weekly_uploads')
-        .select('first_spider_id, second_spider_id, third_spider_id')
-        .eq('user_id', user.id)
-        .eq('week_start', weekStart.toISOString().split('T')[0])
-        .maybeSingle();
 
-      if (weeklyError) throw weeklyError;
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 7);
 
-      // Collect all eligible spider IDs
-      const spiderIds = [
-        weeklyUpload?.first_spider_id,
-        weeklyUpload?.second_spider_id,
-        weeklyUpload?.third_spider_id
-      ].filter(Boolean);
+      // Fetch user's approved spiders created within the current PT week
+      const { data, error } = await supabase
+        .from('spiders')
+        .select('*')
+        .eq('owner_id', user.id)
+        .eq('is_approved', true)
+        .gte('created_at', weekStart.toISOString())
+        .lt('created_at', weekEnd.toISOString());
 
-      if (spiderIds.length > 0) {
-        const { data, error } = await supabase
-          .from('spiders')
-          .select('*')
-          .in('id', spiderIds);
-
-        if (error) throw error;
-        setUserSpiders(data || []);
-      } else {
-        setUserSpiders([]);
-      }
+      if (error) throw error;
+      setUserSpiders(data || []);
     } catch (error) {
       console.error('Error fetching spiders:', error);
       setUserSpiders([]);
