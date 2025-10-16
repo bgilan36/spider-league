@@ -118,13 +118,19 @@ const SpiderCollection = () => {
 
       if (userError) throw userError;
 
-      // Fetch weekly uploads to identify eligible spiders
+      // Get current week start to fetch this week's eligible spiders
+      const currentWeekStart = new Date();
+      currentWeekStart.setHours(0, 0, 0, 0);
+      const dayOfWeek = currentWeekStart.getDay(); // 0 = Sunday
+      currentWeekStart.setDate(currentWeekStart.getDate() - dayOfWeek);
+      const weekStartStr = currentWeekStart.toISOString().split('T')[0];
+
+      // Fetch weekly uploads to identify eligible spiders for current week
       const { data: weeklyUploads, error: weeklyError } = await supabase
         .from('weekly_uploads')
         .select('first_spider_id, second_spider_id, third_spider_id')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
+        .eq('week_start', weekStartStr)
         .maybeSingle();
 
       if (weeklyError && weeklyError.code !== 'PGRST116') throw weeklyError;
