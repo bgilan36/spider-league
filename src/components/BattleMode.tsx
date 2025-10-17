@@ -297,6 +297,39 @@ const BattleMode: React.FC<{ showChallenges?: boolean }> = ({ showChallenges = t
     }
   };
 
+  // Cancel battle challenge
+  const cancelChallenge = async (challengeId: string) => {
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('battle_challenges')
+        .update({ status: 'CANCELLED' })
+        .eq('id', challengeId)
+        .eq('challenger_id', user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Challenge Cancelled",
+        description: "Your challenge has been withdrawn",
+      });
+
+      fetchChallenges();
+      fetchUserSpiders(); // Refresh to show spider is available again
+    } catch (error: any) {
+      console.error('Error cancelling challenge:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to cancel challenge",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Handle battle completion
   const handleBattleComplete = async (winner: Spider, loser: Spider, battleId: string) => {
     if (!activeBattle) return;
@@ -462,6 +495,7 @@ const BattleMode: React.FC<{ showChallenges?: boolean }> = ({ showChallenges = t
                 challenge={challenge}
                 userSpiders={userSpiders}
                 onAccept={acceptChallenge}
+                onCancel={cancelChallenge}
                 loading={loading}
                 currentUserId={user?.id}
               />
@@ -555,9 +589,10 @@ const ChallengeCard: React.FC<{
   challenge: BattleChallenge;
   userSpiders: Spider[];
   onAccept: (challenge: BattleChallenge, spider: Spider) => void;
+  onCancel?: (challengeId: string) => void;
   loading: boolean;
   currentUserId?: string;
-}> = ({ challenge, userSpiders, onAccept, loading, currentUserId }) => {
+}> = ({ challenge, userSpiders, onAccept, onCancel, loading, currentUserId }) => {
   const [showAcceptDialog, setShowAcceptDialog] = useState(false);
   const [selectedSpider, setSelectedSpider] = useState<Spider | null>(null);
 
@@ -619,10 +654,16 @@ const ChallengeCard: React.FC<{
             </Button>
           )}
           
-          {currentUserId === challenge.challenger_id && (
-            <Badge variant="secondary" className="w-full justify-center text-xs">
-              Your Challenge
-            </Badge>
+          {currentUserId === challenge.challenger_id && onCancel && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => onCancel(challenge.id)}
+              disabled={loading}
+              className="w-full"
+            >
+              {loading ? 'Cancelling...' : 'Cancel Challenge'}
+            </Button>
           )}
         </CardContent>
       </Card>
