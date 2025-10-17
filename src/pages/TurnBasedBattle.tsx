@@ -31,6 +31,7 @@ const TurnBasedBattle = () => {
   const [showPresenceGate, setShowPresenceGate] = useState(false);
   const [showOutcomeReveal, setShowOutcomeReveal] = useState(false);
   const [hasConfirmedPresence, setHasConfirmedPresence] = useState(false);
+  const [revealedTurnsCount, setRevealedTurnsCount] = useState(0);
 
   // Check if coming from query param (direct notification link)
   useEffect(() => {
@@ -51,9 +52,21 @@ const TurnBasedBattle = () => {
     }
   }, [battleId, navigate, hasConfirmedPresence]);
 
+  // Progressive turn reveal system - shows one turn every 3 seconds
+  useEffect(() => {
+    if (turns.length === 0 || revealedTurnsCount >= turns.length) return;
+
+    const timer = setTimeout(() => {
+      setRevealedTurnsCount(prev => prev + 1);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [turns.length, revealedTurnsCount]);
+
   useEffect(() => {
     // Battle ended, show outcome reveal then redirect
-    if (battle && !battle.is_active && !showOutcomeReveal && hasConfirmedPresence) {
+    // Wait until all turns are revealed
+    if (battle && !battle.is_active && !showOutcomeReveal && hasConfirmedPresence && revealedTurnsCount >= turns.length) {
       // Small delay to ensure all turns are visible first
       const revealTimer = setTimeout(() => {
         setShowOutcomeReveal(true);
@@ -61,7 +74,7 @@ const TurnBasedBattle = () => {
 
       return () => clearTimeout(revealTimer);
     }
-  }, [battle, showOutcomeReveal, hasConfirmedPresence]);
+  }, [battle, showOutcomeReveal, hasConfirmedPresence, revealedTurnsCount, turns.length]);
 
   // Kick off auto-battle if it hasn't started (fallback) - only after presence confirmed
   useEffect(() => {
@@ -216,7 +229,7 @@ const TurnBasedBattle = () => {
                 </div>
               ) : (
                 <AnimatePresence mode="popLayout">
-                  {turns.slice().reverse().map((turn, index) => {
+                  {turns.slice(0, revealedTurnsCount).reverse().map((turn, index) => {
                     const result = turn.result_payload as any;
                     const isAttack = turn.action_type === 'attack';
                     const isSpecial = turn.action_type === 'special';
@@ -236,7 +249,7 @@ const TurnBasedBattle = () => {
                             type: "spring",
                             stiffness: 180,
                             damping: 22,
-                            delay: index * 3.5
+                            delay: 0
                           }
                         }}
                         whileHover={{ 
@@ -289,12 +302,12 @@ const TurnBasedBattle = () => {
                                 animate={{ 
                                   scale: 1, 
                                   x: 0,
-                                  transition: {
-                                    type: "spring",
-                                    stiffness: 300,
-                                    damping: 15,
-                                    delay: index * 3.5 + 0.3
-                                  }
+                                   transition: {
+                                     type: "spring",
+                                     stiffness: 300,
+                                     damping: 15,
+                                     delay: 0.3
+                                   }
                                 }}
                                 className="font-black text-2xl bg-gradient-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-transparent"
                               >
@@ -307,11 +320,11 @@ const TurnBasedBattle = () => {
                                   animate={{ 
                                     scale: 1, 
                                     rotate: 0,
-                                    transition: {
-                                      type: "spring",
-                                      stiffness: 400,
-                                      delay: index * 3.5 + 0.5
-                                    }
+                                   transition: {
+                                     type: "spring",
+                                     stiffness: 400,
+                                     delay: 0.5
+                                   }
                                   }}
                                 >
                                   <motion.div
@@ -336,11 +349,11 @@ const TurnBasedBattle = () => {
                                   animate={{ 
                                     scale: 1, 
                                     rotate: 0,
-                                    transition: {
-                                      type: "spring",
-                                      stiffness: 400,
-                                      delay: index * 3.5 + 0.5
-                                    }
+                                   transition: {
+                                     type: "spring",
+                                     stiffness: 400,
+                                     delay: 0.5
+                                   }
                                   }}
                                 >
                                   <motion.div
@@ -359,14 +372,14 @@ const TurnBasedBattle = () => {
                                   </motion.div>
                                 </motion.div>
                               )}
-                              <motion.div
-                                initial={{ scale: 0 }}
-                                animate={{ 
-                                  scale: 1,
-                                  transition: {
-                                    delay: index * 3.5 + 0.4
-                                  }
-                                }}
+                               <motion.div
+                                 initial={{ scale: 0 }}
+                                 animate={{ 
+                                   scale: 1,
+                                   transition: {
+                                     delay: 0.4
+                                   }
+                                 }}
                               >
                                 <Badge 
                                   variant={isSpecial ? "default" : "outline"} 
@@ -387,16 +400,16 @@ const TurnBasedBattle = () => {
                               {/* Action description with cinematic entrance */}
                               <motion.div 
                                 initial={{ opacity: 0, x: -30, scale: 0.9 }}
-                                animate={{ 
-                                  opacity: 1, 
-                                  x: 0, 
-                                  scale: 1,
-                                  transition: {
-                                    type: "spring",
-                                    stiffness: 200,
-                                    delay: index * 3.5 + 0.8
-                                  }
-                                }}
+                                 animate={{ 
+                                   opacity: 1, 
+                                   x: 0, 
+                                   scale: 1,
+                                   transition: {
+                                     type: "spring",
+                                     stiffness: 200,
+                                     delay: 0.8
+                                   }
+                                 }}
                                 className="font-bold text-lg leading-relaxed"
                               >
                                 <motion.span 
@@ -413,20 +426,20 @@ const TurnBasedBattle = () => {
                                   {result.attacker_name}
                                 </motion.span>
                                 {isAttack && (
-                                  <motion.span
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    transition={{ delay: index * 3.5 + 1.0 }}
-                                  >
-                                    {' '}launches a devastating attack on{' '}
-                                  </motion.span>
+                                   <motion.span
+                                     initial={{ opacity: 0 }}
+                                     animate={{ opacity: 1 }}
+                                     transition={{ delay: 1.0 }}
+                                   >
+                                     {' '}launches a devastating attack on{' '}
+                                   </motion.span>
                                 )}
                                 {isSpecial && (
-                                  <motion.span
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    transition={{ delay: index * 3.5 + 1.0 }}
-                                  >
+                                   <motion.span
+                                     initial={{ opacity: 0 }}
+                                     animate={{ opacity: 1 }}
+                                     transition={{ delay: 1.0 }}
+                                   >
                                     {' '}unleashes{' '}
                                     <motion.span 
                                       className="text-purple-400 text-xl font-black"
@@ -458,26 +471,26 @@ const TurnBasedBattle = () => {
                               {/* Dice rolls with cinematic presentation */}
                               <motion.div 
                                 initial={{ opacity: 0, scale: 0.8, y: 10 }}
-                                animate={{ 
-                                  opacity: 1, 
-                                  scale: 1, 
-                                  y: 0,
-                                  transition: {
-                                    type: "spring",
-                                    delay: index * 3.5 + 1.3
-                                  }
-                                }}
+                                 animate={{ 
+                                   opacity: 1, 
+                                   scale: 1, 
+                                   y: 0,
+                                   transition: {
+                                     type: "spring",
+                                     delay: 1.3
+                                   }
+                                 }}
                                 className="flex items-center gap-4 p-4 bg-gradient-to-br from-background/70 to-muted/50 rounded-lg border-2 border-primary/30 backdrop-blur-sm shadow-lg"
                               >
                                 <motion.div 
                                   className="flex items-center gap-2"
                                   initial={{ rotate: 0 }}
-                                  animate={{ rotate: [0, 360, 720] }}
-                                  transition={{ 
-                                    duration: 0.8, 
-                                    delay: index * 3.5 + 1.5,
-                                    ease: "easeOut"
-                                  }}
+                                   animate={{ rotate: [0, 360, 720] }}
+                                   transition={{ 
+                                     duration: 0.8, 
+                                     delay: 1.5,
+                                     ease: "easeOut"
+                                   }}
                                 >
                                   <motion.span 
                                     className="text-3xl"
@@ -498,13 +511,13 @@ const TurnBasedBattle = () => {
                                         'text-foreground'
                                       }`}
                                       initial={{ scale: 0 }}
-                                      animate={{ 
-                                        scale: 1,
-                                        transition: {
-                                          type: "spring",
-                                          delay: index * 3.5 + 1.8
-                                        }
-                                      }}
+                                       animate={{ 
+                                         scale: 1,
+                                         transition: {
+                                           type: "spring",
+                                           delay: 1.8
+                                         }
+                                       }}
                                     >
                                       {result.attacker_dice}
                                     </motion.div>
@@ -514,12 +527,12 @@ const TurnBasedBattle = () => {
                                 <motion.div 
                                   className="flex items-center gap-2"
                                   initial={{ rotate: 0 }}
-                                  animate={{ rotate: [0, -360, -720] }}
-                                  transition={{ 
-                                    duration: 0.8, 
-                                    delay: index * 3.5 + 1.5,
-                                    ease: "easeOut"
-                                  }}
+                                   animate={{ rotate: [0, -360, -720] }}
+                                   transition={{ 
+                                     duration: 0.8, 
+                                     delay: 1.5,
+                                     ease: "easeOut"
+                                   }}
                                 >
                                   <motion.span 
                                     className="text-3xl"
@@ -540,13 +553,13 @@ const TurnBasedBattle = () => {
                                         'text-foreground'
                                       }`}
                                       initial={{ scale: 0 }}
-                                      animate={{ 
-                                        scale: 1,
-                                        transition: {
-                                          type: "spring",
-                                          delay: index * 3.5 + 1.8
-                                        }
-                                      }}
+                                       animate={{ 
+                                         scale: 1,
+                                         transition: {
+                                           type: "spring",
+                                           delay: 1.8
+                                         }
+                                       }}
                                     >
                                       {result.defender_dice}
                                     </motion.div>
@@ -558,15 +571,15 @@ const TurnBasedBattle = () => {
                               {dodged ? (
                                 <motion.div 
                                   initial={{ opacity: 0, scale: 0.8, x: -20 }}
-                                  animate={{ 
-                                    opacity: 1, 
-                                    scale: 1, 
-                                    x: 0,
-                                    transition: {
-                                      type: "spring",
-                                      delay: index * 3.5 + 2.3
-                                    }
-                                  }}
+                                   animate={{ 
+                                     opacity: 1, 
+                                     scale: 1, 
+                                     x: 0,
+                                     transition: {
+                                       type: "spring",
+                                       delay: 2.3
+                                     }
+                                   }}
                                   whileHover={{ scale: 1.02 }}
                                   className="text-blue-400 font-bold text-xl flex items-center gap-3 p-5 bg-gradient-to-r from-blue-500/20 to-cyan-500/10 rounded-lg border-2 border-blue-400/50 shadow-xl"
                                 >
@@ -585,15 +598,15 @@ const TurnBasedBattle = () => {
                               ) : result.damage > 0 && (
                                 <motion.div 
                                   initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                                  animate={{ 
-                                    opacity: 1, 
-                                    scale: 1, 
-                                    y: 0,
-                                    transition: {
-                                      type: "spring",
-                                      delay: index * 3.5 + 2.3
-                                    }
-                                  }}
+                                   animate={{ 
+                                     opacity: 1, 
+                                     scale: 1, 
+                                     y: 0,
+                                     transition: {
+                                       type: "spring",
+                                       delay: 2.3
+                                     }
+                                   }}
                                   className="space-y-3"
                                 >
                                   <motion.div 
@@ -639,23 +652,23 @@ const TurnBasedBattle = () => {
                                   {/* HP change with cinematic display */}
                                   <motion.div 
                                     initial={{ opacity: 0, y: 10 }}
-                                    animate={{ 
-                                      opacity: 1, 
-                                      y: 0,
-                                      transition: {
-                                        delay: index * 3.5 + 2.7
-                                      }
-                                    }}
+                                     animate={{ 
+                                       opacity: 1, 
+                                       y: 0,
+                                       transition: {
+                                         delay: 2.7
+                                       }
+                                     }}
                                     className="flex items-center gap-4 text-base p-4 bg-gradient-to-r from-background/60 to-muted/40 rounded-lg backdrop-blur-sm border border-border/50"
                                   >
                                     <span className="text-muted-foreground font-semibold">{result.defender_name}'s HP:</span>
                                     <div className="flex items-center gap-3">
-                                      <motion.span 
-                                        className="font-mono font-black text-xl text-green-400"
-                                        initial={{ scale: 1 }}
-                                        animate={{ scale: [1, 1.2, 1] }}
-                                        transition={{ delay: index * 3.5 + 2.9, duration: 0.3 }}
-                                      >
+                                       <motion.span 
+                                         className="font-mono font-black text-xl text-green-400"
+                                         initial={{ scale: 1 }}
+                                         animate={{ scale: [1, 1.2, 1] }}
+                                         transition={{ delay: 2.9, duration: 0.3 }}
+                                       >
                                         {result.old_defender_hp}
                                       </motion.span>
                                       <motion.span 
@@ -672,13 +685,13 @@ const TurnBasedBattle = () => {
                                           'text-green-400'
                                         }`}
                                         initial={{ scale: 0 }}
-                                        animate={{ 
-                                          scale: 1,
-                                          transition: {
-                                            type: "spring",
-                                            delay: index * 3.5 + 3.1
-                                          }
-                                        }}
+                                         animate={{ 
+                                           scale: 1,
+                                           transition: {
+                                             type: "spring",
+                                             delay: 3.1
+                                           }
+                                         }}
                                       >
                                         {result.new_defender_hp}
                                       </motion.span>
@@ -695,16 +708,16 @@ const TurnBasedBattle = () => {
                               {result.new_defender_hp === 0 && (
                                 <motion.div 
                                   initial={{ opacity: 0, scale: 0.5, rotate: -10 }}
-                                  animate={{ 
-                                    opacity: 1, 
-                                    scale: 1, 
-                                    rotate: 0,
-                                    transition: {
-                                      type: "spring",
-                                      stiffness: 200,
-                                      delay: index * 3.5 + 3.3
-                                    }
-                                  }}
+                                   animate={{ 
+                                     opacity: 1, 
+                                     scale: 1, 
+                                     rotate: 0,
+                                     transition: {
+                                       type: "spring",
+                                       stiffness: 200,
+                                       delay: 3.3
+                                     }
+                                   }}
                                   className="text-red-400 font-black text-2xl mt-3 p-6 bg-gradient-to-br from-red-500/30 to-red-600/10 rounded-xl border-4 border-red-500/70 text-center shadow-2xl"
                                 >
                                   <motion.span 
