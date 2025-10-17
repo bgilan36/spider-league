@@ -392,6 +392,10 @@ const BattleMode: React.FC<{ showChallenges?: boolean }> = ({ showChallenges = t
     );
   }
 
+  // Separate user's challenges from others' challenges
+  const userChallenges = challenges.filter(c => c.challenger_id === user?.id);
+  const othersChallenges = challenges.filter(c => c.challenger_id !== user?.id);
+
   return (
     <div className="space-y-6">
       {/* Battle Statistics */}
@@ -416,44 +420,69 @@ const BattleMode: React.FC<{ showChallenges?: boolean }> = ({ showChallenges = t
         )}
       </div>
 
-      {/* Active Challenges */}
-      {showChallenges && (
+      {/* Challenges from Other Users */}
+      {showChallenges && othersChallenges.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-              Active Challenges
+              <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+              Challenges from Other Users
             </h3>
+          </div>
+          
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {othersChallenges.map((challenge) => (
+              <ChallengeCard
+                key={challenge.id}
+                challenge={challenge}
+                userSpiders={userSpiders}
+                onAccept={acceptChallenge}
+                loading={loading}
+                currentUserId={user?.id}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Your Active Challenges */}
+      {showChallenges && userChallenges.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
+              <Sword className="w-4 h-4 sm:w-5 sm:h-5" />
+              Your Active Challenges
+            </h3>
+          </div>
+          
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {userChallenges.map((challenge) => (
+              <ChallengeCard
+                key={challenge.id}
+                challenge={challenge}
+                userSpiders={userSpiders}
+                onAccept={acceptChallenge}
+                loading={loading}
+                currentUserId={user?.id}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* No Challenges Message */}
+      {showChallenges && challenges.length === 0 && (
+        <Card>
+          <CardContent className="p-4 sm:p-6 text-center space-y-2">
+            <p className="text-sm sm:text-base text-muted-foreground">No active challenges at the moment</p>
             <Button variant="outline" size="sm" asChild>
               <Link to="/battle-history" className="flex items-center gap-2">
                 <Clock className="h-4 w-4" />
-                <span className="hidden sm:inline">Battle History</span>
-                <span className="sm:hidden">History</span>
+                View Battle History
               </Link>
             </Button>
-          </div>
-          
-          {challenges.length === 0 ? (
-            <Card>
-              <CardContent className="p-4 sm:p-6 text-center">
-                <p className="text-sm sm:text-base text-muted-foreground">No active challenges at the moment</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {challenges.map((challenge) => (
-                <ChallengeCard
-                  key={challenge.id}
-                  challenge={challenge}
-                  userSpiders={userSpiders}
-                  onAccept={acceptChallenge}
-                  loading={loading}
-                  currentUserId={user?.id}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Challenge Creation Dialog */}
