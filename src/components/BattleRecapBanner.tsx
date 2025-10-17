@@ -40,7 +40,24 @@ export const BattleRecapBanner = () => {
   const navigate = useNavigate();
   const [battleRecaps, setBattleRecaps] = useState<BattleRecap[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dismissed, setDismissed] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+
+  // Get viewed battle IDs from localStorage
+  const getViewedBattles = (): Set<string> => {
+    if (!user) return new Set();
+    const viewedKey = `viewed-battles-${user.id}`;
+    const viewed = localStorage.getItem(viewedKey);
+    return viewed ? new Set(JSON.parse(viewed)) : new Set();
+  };
+
+  // Mark battles as viewed in localStorage
+  const markBattlesAsViewed = (battleIds: string[]) => {
+    if (!user) return;
+    const viewedKey = `viewed-battles-${user.id}`;
+    const viewed = getViewedBattles();
+    battleIds.forEach(id => viewed.add(id));
+    localStorage.setItem(viewedKey, JSON.stringify([...viewed]));
+  };
 
   useEffect(() => {
     if (user) {
@@ -48,20 +65,16 @@ export const BattleRecapBanner = () => {
     }
   }, [user]);
 
-  // Auto-mark battles as viewed after displaying them
+  // Show modal after battles are loaded (with a slight delay for smooth loading)
   useEffect(() => {
-    if (battleRecaps.length > 0 && !dismissed) {
+    if (!loading && battleRecaps.length > 0) {
       const timer = setTimeout(() => {
-        const mostRecentBattle = battleRecaps.reduce((latest, current) => 
-          new Date(current.created_at) > new Date(latest.created_at) ? current : latest
-        );
-        localStorage.setItem('lastViewedBattles', mostRecentBattle.created_at);
-        setDismissed(true);
-      }, 3000); // Mark as viewed after 3 seconds
+        setShowModal(true);
+      }, 500); // Load in background for half second before showing
       
       return () => clearTimeout(timer);
     }
-  }, [battleRecaps, dismissed]);
+  }, [loading, battleRecaps]);
 
   const fetchBattleRecaps = async () => {
     if (!user) return;
@@ -69,34 +82,36 @@ export const BattleRecapBanner = () => {
     try {
       setLoading(true);
 
-      // Get the last viewed timestamp from localStorage
-      const lastViewedKey = `last-viewed-battles-${user.id}`;
-      const lastViewed = localStorage.getItem(lastViewedKey);
-      const lastViewedDate = lastViewed ? new Date(lastViewed) : new Date(0);
-
-      // Fetch completed battles where user's spiders participated
+      // Fetch recent completed battles where user's spiders participated
       const { data: battles, error } = await supabase
         .from('battles')
         .select('*')
         .eq('is_active', false)
         .not('winner', 'is', null)
         .or(`team_a->>userId.eq.${user.id},team_b->>userId.eq.${user.id}`)
-        .gt('created_at', lastViewedDate.toISOString())
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(10);
 
       if (error) throw error;
 
       if (battles && battles.length > 0) {
-        const formattedBattles = battles.map((battle) => ({
-          id: battle.id,
-          created_at: battle.created_at,
-          winner: battle.winner,
-          team_a: battle.team_a as any,
-          team_b: battle.team_b as any,
-        }));
+        // Filter out battles that have already been viewed
+        const viewedBattles = getViewedBattles();
+        const unseenBattles = battles.filter(battle => !viewedBattles.has(battle.id));
 
-        setBattleRecaps(formattedBattles);
+        if (unseenBattles.length > 0) {
+          const formattedBattles = unseenBattles.map((battle) => ({
+            id: battle.id,
+            created_at: battle.created_at,
+            winner: battle.winner,
+            team_a: battle.team_a as any,
+            team_b: battle.team_b as any,
+          }));
+
+          setBattleRecaps(formattedBattles);
+        } else {
+          setBattleRecaps([]);
+        }
       } else {
         setBattleRecaps([]);
       }
@@ -109,19 +124,22 @@ export const BattleRecapBanner = () => {
   };
 
   const handleDismiss = () => {
-    if (!user) return;
+    if (!user || battleRecaps.length === 0) return;
 
-    // Mark all current battles as viewed
-    const lastViewedKey = `last-viewed-battles-${user.id}`;
-    localStorage.setItem(lastViewedKey, new Date().toISOString());
-    setDismissed(true);
+    // Mark all displayed battles as viewed
+    const battleIds = battleRecaps.map(b => b.id);
+    markBattlesAsViewed(battleIds);
+    
+    setShowModal(false);
+    setBattleRecaps([]);
   };
 
   const handleWatchBattle = (battleId: string) => {
     navigate(`/battle/${battleId}`);
   };
 
-  if (loading || !user || battleRecaps.length === 0 || dismissed) {
+  // Don't render anything if still loading, no user, no battles, or modal not ready to show
+  if (loading || !user || battleRecaps.length === 0 || !showModal) {
     return null;
   }
 
