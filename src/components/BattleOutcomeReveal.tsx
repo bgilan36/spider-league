@@ -33,26 +33,42 @@ const BattleOutcomeReveal: React.FC<BattleOutcomeRevealProps> = ({
     const shareText = `🕷️ ${winner.nickname} just won an epic battle in Spider League! 🏆\n\nJoin the action and battle your own spiders at https://spiderleague.app/`;
     const shareUrl = 'https://spiderleague.app/';
 
-    if (navigator.share) {
-      try {
+    try {
+      if (navigator.share) {
         await navigator.share({
           title: 'Spider League Battle Victory',
           text: shareText,
           url: shareUrl,
         });
-      } catch (error) {
-        if ((error as Error).name !== 'AbortError') {
-          console.error('Error sharing:', error);
-        }
-      }
-    } else {
-      // Fallback: Copy to clipboard
-      try {
+        toast.success('Battle shared successfully!');
+      } else {
+        // Fallback: Copy to clipboard
         await navigator.clipboard.writeText(shareText);
+        toast.success('Battle result copied to clipboard! Share it with your friends!');
+      }
+    } catch (error) {
+      // User cancelled share or clipboard access denied
+      if ((error as Error).name === 'AbortError') {
+        // User cancelled, don't show error
+        return;
+      }
+      
+      console.error('Share error:', error);
+      
+      // Final fallback: create a temporary textarea to copy
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = shareText;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
         toast.success('Battle result copied to clipboard!');
-      } catch (error) {
-        console.error('Failed to copy:', error);
-        toast.error('Failed to copy to clipboard');
+      } catch (fallbackError) {
+        console.error('Fallback copy failed:', fallbackError);
+        toast.error('Unable to share. Please try again.');
       }
     }
   };
