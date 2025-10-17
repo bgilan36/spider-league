@@ -35,12 +35,40 @@ const BattleOutcomeReveal: React.FC<BattleOutcomeRevealProps> = ({
 
     try {
       if (navigator.share) {
-        await navigator.share({
-          title: 'Spider League Battle Victory',
-          text: shareText,
-          url: shareUrl,
-        });
-        toast.success('Battle shared successfully!');
+        // Try to fetch and include the spider image
+        try {
+          const response = await fetch(winner.image_url);
+          const blob = await response.blob();
+          const file = new File([blob], `${winner.nickname}-victory.jpg`, { type: blob.type });
+
+          // Check if sharing files is supported
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              title: 'Spider League Battle Victory',
+              text: shareText,
+              url: shareUrl,
+              files: [file],
+            });
+            toast.success('Battle shared successfully!');
+          } else {
+            // Share without image if files not supported
+            await navigator.share({
+              title: 'Spider League Battle Victory',
+              text: shareText,
+              url: shareUrl,
+            });
+            toast.success('Battle shared successfully!');
+          }
+        } catch (imageError) {
+          console.warn('Could not fetch image, sharing without it:', imageError);
+          // Fallback to sharing without image
+          await navigator.share({
+            title: 'Spider League Battle Victory',
+            text: shareText,
+            url: shareUrl,
+          });
+          toast.success('Battle shared successfully!');
+        }
       } else {
         // Fallback: Copy to clipboard
         await navigator.clipboard.writeText(shareText);
