@@ -756,7 +756,7 @@ const TurnBasedBattle = () => {
         </Card>
 
         <AnimatePresence>
-          {battleEnded && (
+          {battleEnded && revealedTurnsCount >= turns.length && (
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -793,8 +793,7 @@ const TurnBasedBattle = () => {
             <Card className="mb-6 border-primary bg-primary/5">
               <CardContent className="p-6 text-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
-                <p className="font-medium">Battle running automatically...</p>
-                <p className="text-sm text-muted-foreground mt-1">No manual actions required</p>
+                <p className="font-medium">Spiders are entering the Web Cage</p>
               </CardContent>
             </Card>
           )}
