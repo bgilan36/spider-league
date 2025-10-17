@@ -806,7 +806,7 @@ const TurnBasedBattle = () => {
               <div className="text-center mb-4">
                 <h3 className="text-xl font-bold">{mySpider.nickname}</h3>
                 <p className="text-sm text-muted-foreground">{mySpider.species}</p>
-                {battleEnded && iWon && (
+                {battleEnded && iWon && revealedTurnsCount >= turns.length && (
                   <Badge variant="default" className="mt-2">
                     <Trophy className="w-3 h-3 mr-1" />
                     Winner!
@@ -854,7 +854,7 @@ const TurnBasedBattle = () => {
               <div className="text-center mb-4">
                 <h3 className="text-xl font-bold">{opponentSpider.nickname}</h3>
                 <p className="text-sm text-muted-foreground">{opponentSpider.species}</p>
-                {battleEnded && !iWon && (
+                {battleEnded && !iWon && revealedTurnsCount >= turns.length && (
                   <Badge variant="default" className="mt-2">
                     <Trophy className="w-3 h-3 mr-1" />
                     Winner!
