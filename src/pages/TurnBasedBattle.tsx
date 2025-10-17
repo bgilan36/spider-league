@@ -52,13 +52,13 @@ const TurnBasedBattle = () => {
     }
   }, [battleId, navigate, hasConfirmedPresence]);
 
-  // Progressive turn reveal system - shows one turn every 3 seconds
+  // Progressive turn reveal system - shows one turn every 6 seconds
   useEffect(() => {
     if (turns.length === 0 || revealedTurnsCount >= turns.length) return;
 
     const timer = setTimeout(() => {
       setRevealedTurnsCount(prev => prev + 1);
-    }, 3000);
+    }, 6000);
 
     return () => clearTimeout(timer);
   }, [turns.length, revealedTurnsCount]);
