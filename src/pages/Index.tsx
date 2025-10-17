@@ -712,7 +712,7 @@ const Index = () => {
                   </Badge>
                 )}
                 <Badge variant="outline" className="text-sm w-fit">
-                  {userSpiders.length}/3 Uploaded
+                  {Math.min(weeklyUploadCount, 3)}/3 Uploaded
                 </Badge>
               </div>
               <p className="text-sm text-muted-foreground">You can upload up to 3 eligible spiders each week</p>
