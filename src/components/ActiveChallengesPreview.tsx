@@ -5,7 +5,7 @@ import { useAuth } from '@/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Sword, Timer, AlertCircle, Eye, X } from 'lucide-react';
+import { Sword, Timer, AlertCircle, Eye, X, Trophy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ChallengeDetailsModal from './ChallengeDetailsModal';
 import ClickableUsername from './ClickableUsername';
@@ -199,6 +199,10 @@ const ActiveChallengesPreview: React.FC = () => {
     );
   }
 
+  // Separate challenges into "from others" and "your own"
+  const challengesFromOthers = challenges.filter(c => c.challenger_id !== user?.id);
+  const yourChallenges = challenges.filter(c => c.challenger_id === user?.id);
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
@@ -208,7 +212,9 @@ const ActiveChallengesPreview: React.FC = () => {
             Active Challenges
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground">
-            Latest battle challenges from other players
+            {challengesFromOthers.length > 0 
+              ? `${challengesFromOthers.length} challenge${challengesFromOthers.length > 1 ? 's' : ''} from other players` 
+              : 'No challenges from other players yet'}
           </p>
         </div>
         <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
@@ -237,81 +243,155 @@ const ActiveChallengesPreview: React.FC = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
-          {challenges.map((challenge) => {
-            const timeLeft = new Date(challenge.expires_at).getTime() - Date.now();
-            const hoursLeft = Math.max(0, Math.floor(timeLeft / (1000 * 60 * 60)));
-            const isOwnChallenge = user?.id === challenge.challenger_id;
+        <div className="space-y-6">
+          {/* Challenges from Other Users */}
+          {challengesFromOthers.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Sword className="w-5 h-5 text-primary" />
+                Challenges from Other Users
+              </h3>
+              {challengesFromOthers.map((challenge) => {
+                const timeLeft = new Date(challenge.expires_at).getTime() - Date.now();
+                const hoursLeft = Math.max(0, Math.floor(timeLeft / (1000 * 60 * 60)));
 
-            return (
-              <Card key={challenge.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => {
-                setSelectedChallenge(challenge);
-                setShowChallengeModal(true);
-              }}>
-                <CardContent className="flex items-center gap-2 sm:gap-4 p-3 sm:p-4">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden flex-shrink-0">
-                    <img 
-                      src={challenge.challenger_spider?.image_url} 
-                      alt={challenge.challenger_spider?.nickname}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-semibold text-sm sm:text-base truncate">
-                        {challenge.challenger_spider?.nickname}
-                      </h4>
-                      {isOwnChallenge && (
-                        <Badge variant="secondary" className="text-xs">
-                          Your Challenge
+                return (
+                  <Card key={challenge.id} className="hover:shadow-md transition-shadow cursor-pointer border-primary/20" onClick={() => {
+                    setSelectedChallenge(challenge);
+                    setShowChallengeModal(true);
+                  }}>
+                    <CardContent className="flex items-center gap-2 sm:gap-4 p-3 sm:p-4">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden flex-shrink-0">
+                        <img 
+                          src={challenge.challenger_spider?.image_url} 
+                          alt={challenge.challenger_spider?.nickname}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-semibold text-sm sm:text-base truncate">
+                            {challenge.challenger_spider?.nickname}
+                          </h4>
+                          <Badge variant="default" className="text-xs">
+                            Open Challenge
+                          </Badge>
+                        </div>
+                        <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                          {challenge.challenger_spider?.species}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                           By: <ClickableUsername 
+                             userId={challenge.challenger_id}
+                             displayName={challenge.challenger_profile?.display_name}
+                             variant="link"
+                             size="sm"
+                             className="text-xs p-0 h-auto"
+                           />
+                         </p>
+                        {challenge.challenge_message && (
+                          <p className="text-xs italic text-muted-foreground truncate mt-1">
+                            "{challenge.challenge_message}"
+                          </p>
+                        )}
+                      </div>
+                      
+                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                        <Badge variant="outline" className="flex items-center gap-1 text-xs">
+                          <Timer className="w-3 h-3" />
+                          {hoursLeft}h left
                         </Badge>
-                      )}
-                    </div>
-                    <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                      {challenge.challenger_spider?.species}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate">
-                       By: <ClickableUsername 
-                         userId={challenge.challenger_id}
-                         displayName={challenge.challenger_profile?.display_name}
-                         variant="link"
-                         size="sm"
-                         className="text-xs p-0 h-auto"
-                       />
-                     </p>
-                    {challenge.challenge_message && (
-                      <p className="text-xs italic text-muted-foreground truncate mt-1">
-                        "{challenge.challenge_message}"
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                    {isOwnChallenge && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 w-8 p-0 border-destructive/50 text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                        onClick={(e) => handleCancelChallenge(challenge.id, e)}
-                        title="Cancel challenge"
-                      >
-                        <X className="h-5 w-5" />
-                      </Button>
-                    )}
-                    <Badge variant="outline" className="flex items-center gap-1 text-xs">
-                      <Timer className="w-3 h-3" />
-                      {hoursLeft}h left
-                    </Badge>
-                    <div className="text-right">
-                      <div className="text-sm font-bold">{challenge.challenger_spider?.power_score}</div>
-                      <div className="text-xs text-muted-foreground">Power</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                        <div className="text-right">
+                          <div className="text-sm font-bold">{challenge.challenger_spider?.power_score}</div>
+                          <div className="text-xs text-muted-foreground">Power</div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Your Active Challenges */}
+          {yourChallenges.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-muted-foreground" />
+                Your Active Challenges
+              </h3>
+              {yourChallenges.map((challenge) => {
+                const timeLeft = new Date(challenge.expires_at).getTime() - Date.now();
+                const hoursLeft = Math.max(0, Math.floor(timeLeft / (1000 * 60 * 60)));
+
+                return (
+                  <Card key={challenge.id} className="hover:shadow-md transition-shadow cursor-pointer border-muted" onClick={() => {
+                    setSelectedChallenge(challenge);
+                    setShowChallengeModal(true);
+                  }}>
+                    <CardContent className="flex items-center gap-2 sm:gap-4 p-3 sm:p-4">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden flex-shrink-0">
+                        <img 
+                          src={challenge.challenger_spider?.image_url} 
+                          alt={challenge.challenger_spider?.nickname}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-semibold text-sm sm:text-base truncate">
+                            {challenge.challenger_spider?.nickname}
+                          </h4>
+                          <Badge variant="secondary" className="text-xs">
+                            Your Challenge
+                          </Badge>
+                        </div>
+                        <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                          {challenge.challenger_spider?.species}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                           By: <ClickableUsername 
+                             userId={challenge.challenger_id}
+                             displayName={challenge.challenger_profile?.display_name}
+                             variant="link"
+                             size="sm"
+                             className="text-xs p-0 h-auto"
+                           />
+                         </p>
+                        {challenge.challenge_message && (
+                          <p className="text-xs italic text-muted-foreground truncate mt-1">
+                            "{challenge.challenge_message}"
+                          </p>
+                        )}
+                      </div>
+                      
+                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 w-8 p-0 border-destructive/50 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                          onClick={(e) => handleCancelChallenge(challenge.id, e)}
+                          title="Cancel challenge"
+                        >
+                          <X className="h-5 w-5" />
+                        </Button>
+                        <Badge variant="outline" className="flex items-center gap-1 text-xs">
+                          <Timer className="w-3 h-3" />
+                          {hoursLeft}h left
+                        </Badge>
+                        <div className="text-right">
+                          <div className="text-sm font-bold">{challenge.challenger_spider?.power_score}</div>
+                          <div className="text-xs text-muted-foreground">Power</div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
           
           {challenges.length === 3 && (
             <div className="text-center pt-2">
