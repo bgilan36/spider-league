@@ -107,10 +107,7 @@ const TurnBasedBattle = () => {
 
   const handleOutcomeComplete = () => {
     setShowOutcomeReveal(false);
-    // Redirect after outcome reveal
-    setTimeout(() => {
-      navigate('/battle-mode');
-    }, 1000);
+    navigate('/battle-mode');
   };
 
   if (loading) {

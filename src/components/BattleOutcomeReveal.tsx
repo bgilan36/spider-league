@@ -2,7 +2,9 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Trophy, Crown, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Trophy, Crown, Sparkles, Share2, X } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface Spider {
   id: string;
@@ -27,10 +29,33 @@ const BattleOutcomeReveal: React.FC<BattleOutcomeRevealProps> = ({
   loserOwnerName,
   onComplete,
 }) => {
-  React.useEffect(() => {
-    const timer = setTimeout(onComplete, 6000);
-    return () => clearTimeout(timer);
-  }, [onComplete]);
+  const handleShare = async () => {
+    const shareText = `🕷️ ${winner.nickname} just won an epic battle in Spider League! 🏆\n\nJoin the action and battle your own spiders at https://spiderleague.app/`;
+    const shareUrl = 'https://spiderleague.app/';
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Spider League Battle Victory',
+          text: shareText,
+          url: shareUrl,
+        });
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          console.error('Error sharing:', error);
+        }
+      }
+    } else {
+      // Fallback: Copy to clipboard
+      try {
+        await navigator.clipboard.writeText(shareText);
+        toast.success('Battle result copied to clipboard!');
+      } catch (error) {
+        console.error('Failed to copy:', error);
+        toast.error('Failed to copy to clipboard');
+      }
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
@@ -70,6 +95,15 @@ const BattleOutcomeReveal: React.FC<BattleOutcomeRevealProps> = ({
       >
         <Card className="border-4 border-yellow-500 bg-gradient-to-br from-yellow-500/20 via-background to-background shadow-2xl">
           <CardContent className="p-8 text-center space-y-6">
+            {/* Close button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-4 right-4"
+              onClick={onComplete}
+            >
+              <X className="h-5 w-5" />
+            </Button>
             {/* Trophy animation */}
             <motion.div
               initial={{ scale: 0, y: 50 }}
@@ -176,6 +210,31 @@ const BattleOutcomeReveal: React.FC<BattleOutcomeRevealProps> = ({
                   <p className="text-xs">Was owned by {loserOwnerName}</p>
                 </div>
               </div>
+            </motion.div>
+
+            {/* Action buttons */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.5 }}
+              className="flex gap-3 justify-center pt-4"
+            >
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={handleShare}
+                className="gap-2"
+              >
+                <Share2 className="h-5 w-5" />
+                Share Victory
+              </Button>
+              <Button
+                size="lg"
+                onClick={onComplete}
+                className="gap-2"
+              >
+                Close
+              </Button>
             </motion.div>
           </CardContent>
         </Card>
