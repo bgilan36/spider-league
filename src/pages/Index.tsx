@@ -202,7 +202,8 @@ const Index = () => {
           .from('spiders')
           .select('id, nickname, species, image_url, rarity, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved, created_at, owner_id')
           .in('id', Array.from(challengeSpiderIds))
-          .eq('is_approved', true);
+          .eq('is_approved', true)
+          .eq('owner_id', user.id);
 
         if (!spidersWithChallengesError && spidersWithChallenges) {
           challengeSpiders = spidersWithChallenges;
