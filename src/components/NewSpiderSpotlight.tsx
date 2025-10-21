@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import PowerScoreArc from "@/components/PowerScoreArc";
 import ClickableUsername from "@/components/ClickableUsername";
+import SpiderDetailsModal from "@/components/SpiderDetailsModal";
 import { Sparkles } from "lucide-react";
 
 interface Spider {
@@ -15,6 +16,14 @@ interface Spider {
   power_score: number;
   owner_id: string;
   created_at: string;
+  hit_points: number;
+  damage: number;
+  speed: number;
+  defense: number;
+  venom: number;
+  webcraft: number;
+  special_attacks?: any;
+  is_approved: boolean;
 }
 
 interface Profile {
@@ -26,6 +35,7 @@ const NewSpiderSpotlight = () => {
   const [newestSpider, setNewestSpider] = useState<Spider | null>(null);
   const [ownerProfile, setOwnerProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const rarityColors = {
     COMMON: "bg-gray-500",
@@ -105,7 +115,7 @@ const NewSpiderSpotlight = () => {
           <h2 className="text-xl font-bold">New Spider Spotlight</h2>
         </div>
         
-        <Card className="overflow-hidden hover:shadow-xl transition-all rounded-3xl">
+        <Card className="overflow-hidden hover:shadow-xl transition-all rounded-3xl cursor-pointer" onClick={() => setIsModalOpen(true)}>
           <CardContent className="p-6">
             <div className="flex flex-col items-center space-y-4">
               {/* Circular Spider Image */}
@@ -160,6 +170,14 @@ const NewSpiderSpotlight = () => {
           </CardContent>
         </Card>
       </div>
+
+      {newestSpider && (
+        <SpiderDetailsModal
+          spider={newestSpider}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+        />
+      )}
     </section>
   );
 };
