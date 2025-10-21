@@ -29,7 +29,7 @@ interface ShareButtonProps {
 const ShareButton: React.FC<ShareButtonProps> = ({
   title,
   text,
-  url = window.location.href,
+  url = "https://spiderleague.app",
   hashtags = ["SpiderLeague", "WebWarriors"],
   variant = "outline",
   size = "default"
