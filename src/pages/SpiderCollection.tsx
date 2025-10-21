@@ -390,7 +390,7 @@ const SpiderCollection = () => {
           </div>
         )}
         
-        {!isFallenHero && (
+        {!isFallenHero && spider.is_eligible && (
           <div className="pt-4 border-t flex justify-center">
             <BattleButton 
               targetSpider={{...spider, owner_id: spider.owner_id || user?.id}} 
@@ -491,19 +491,37 @@ const SpiderCollection = () => {
           </Card>
         ) : (
           <>
-            {/* Current Collection Section */}
-            {spiders.length > 0 && (
+            {/* Eligible Spiders Section */}
+            {spiders.filter(s => s.is_eligible).length > 0 && (
               <div className="mb-12">
-                <h2 className="text-2xl font-bold mb-6">Current Collection</h2>
-                {sortBy === "recent" && getSortedSpiders().length === 0 ? (
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold mb-2">Eligible Spiders</h2>
+                  <p className="text-muted-foreground text-sm">These spiders can compete in battles this week</p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                  {getSortedSpiders().filter(s => s.is_eligible).map((spider) => (
+                    <SpiderCard key={spider.id} spider={spider} isFallenHero={false} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Ineligible Spiders Section */}
+            {spiders.filter(s => !s.is_eligible).length > 0 && (
+              <div className="mb-12">
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold mb-2">Ineligible Spiders</h2>
+                  <p className="text-muted-foreground text-sm">These spiders cannot compete this week</p>
+                </div>
+                {sortBy === "recent" && getSortedSpiders().filter(s => !s.is_eligible).length === 0 ? (
                   <Card>
                     <CardContent className="pt-6 text-center">
-                      <p className="text-muted-foreground">No spiders uploaded in the past week.</p>
+                      <p className="text-muted-foreground">No ineligible spiders from the past week.</p>
                     </CardContent>
                   </Card>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                    {getSortedSpiders().map((spider) => (
+                    {getSortedSpiders().filter(s => !s.is_eligible).map((spider) => (
                       <SpiderCard key={spider.id} spider={spider} isFallenHero={false} />
                     ))}
                   </div>
