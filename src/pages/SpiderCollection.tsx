@@ -492,19 +492,33 @@ const SpiderCollection = () => {
         ) : (
           <>
             {/* Eligible Spiders Section */}
-            {spiders.filter(s => s.is_eligible).length > 0 && (
-              <div className="mb-12">
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold mb-2">Eligible Spiders</h2>
-                  <p className="text-muted-foreground text-sm">These spiders can compete in battles this week</p>
-                </div>
+            <div className="mb-12">
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold mb-2">Eligible Spiders</h2>
+                <p className="text-muted-foreground text-sm">These spiders can compete in battles this week</p>
+              </div>
+              {spiders.filter(s => s.is_eligible).length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                   {getSortedSpiders().filter(s => s.is_eligible).map((spider) => (
                     <SpiderCard key={spider.id} spider={spider} isFallenHero={false} />
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <Card>
+                  <CardContent className="pt-6 text-center">
+                    <p className="text-muted-foreground mb-4">
+                      You don't have any eligible spiders this week. Upload a new spider to start battling!
+                    </p>
+                    <Button asChild>
+                      <Link to="/upload">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Upload Spider to Battle
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
 
             {/* Ineligible Spiders Section */}
             {spiders.filter(s => !s.is_eligible).length > 0 && (
