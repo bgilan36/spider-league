@@ -68,9 +68,16 @@ export const BattleRecapBanner = () => {
     if (!loading && battleRecaps.length > 0) {
       const timer = setTimeout(() => {
         setShowModal(true);
+        // Update timestamp after showing modal so next visit only shows new battles
+        setTimeout(() => {
+          updateLastVisitTimestamp();
+        }, 1000); // Update after user has had a chance to see the modal
       }, 500); // Load in background for half second before showing
       
       return () => clearTimeout(timer);
+    } else if (!loading && battleRecaps.length === 0) {
+      // No new battles, update timestamp to current time
+      updateLastVisitTimestamp();
     }
   }, [loading, battleRecaps]);
 
