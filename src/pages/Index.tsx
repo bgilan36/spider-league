@@ -838,13 +838,7 @@ const Index = () => {
                 ))}
               </div>
               
-              <div className="flex justify-center gap-3">
-                <Button asChild variant="outline">
-                  <Link to="/collection" className="flex items-center gap-2">
-                    <Trophy className="h-4 w-4" />
-                    View Full Collection
-                  </Link>
-                </Button>
+              <div className="flex justify-center">
                 <Button asChild variant="outline">
                   <Link to="/battle-history" className="flex items-center gap-2">
                     <Sword className="h-4 w-4" />
