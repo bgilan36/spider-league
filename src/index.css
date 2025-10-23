@@ -153,6 +153,9 @@ All colors MUST be HSL.
     /* Mobile scrolling improvements */
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: none;
+    /* Better mobile text rendering */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   /* Mobile viewport height fix */

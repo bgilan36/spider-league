@@ -14,7 +14,10 @@ export default {
 			center: true,
 			padding: {
 				DEFAULT: '1rem',
-				sm: '2rem',
+				sm: '1.5rem',
+				md: '2rem',
+				lg: '2.5rem',
+				xl: '3rem',
 			},
 			screens: {
 				'2xl': '1400px'
@@ -23,6 +26,16 @@ export default {
 		extend: {
 			fontFamily: {
 				sans: ['Inter', 'system-ui', 'sans-serif'],
+			},
+			minHeight: {
+				'touch': '44px', // Minimum touch target size
+			},
+			minWidth: {
+				'touch': '44px', // Minimum touch target size
+			},
+			fontSize: {
+				'mobile-base': ['16px', { lineHeight: '24px' }], // Prevent zoom on iOS
+				'mobile-sm': ['14px', { lineHeight: '20px' }],
 			},
 			colors: {
 				'primary-glow': 'hsl(var(--primary-glow))',
@@ -151,6 +164,9 @@ export default {
 			},
 			spacing: {
 				'safe': 'env(safe-area-inset-bottom)',
+				'safe-top': 'env(safe-area-inset-top)',
+				'safe-left': 'env(safe-area-inset-left)',
+				'safe-right': 'env(safe-area-inset-right)',
 			}
 		}
 	},

@@ -675,9 +675,9 @@ const Index = () => {
                 </h1>
               </div>
             </div>
-            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
               <NotificationsDropdown />
-              <Button variant="glass" size="icon" asChild className="h-10 w-10 sm:h-12 sm:w-12" title="My Spider Collection">
+              <Button variant="glass" size="icon" asChild className="h-11 w-11 sm:h-12 sm:w-12" title="My Spider Collection">
                 <Link to="/collection">
                   <img 
                     src="/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png" 
@@ -917,8 +917,8 @@ const Index = () => {
                     <CardContent className="flex items-center gap-2 sm:gap-4 p-3 sm:p-4">
                       <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                         {/* Spider A - Fixed width container */}
-                        <div className="flex items-center gap-2 sm:gap-3 w-32 sm:w-40 flex-shrink-0">
-                          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-md overflow-hidden flex-shrink-0">
+                        <div className="flex items-center gap-2 sm:gap-3 w-36 sm:w-40 flex-shrink-0">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden flex-shrink-0">
                             <img 
                               src={spiderA?.image_url} 
                               alt={spiderA?.nickname}
@@ -937,8 +937,8 @@ const Index = () => {
                         </div>
                         
                         {/* Spider B - Fixed width container */}
-                        <div className="flex items-center gap-2 sm:gap-3 w-32 sm:w-40 flex-shrink-0">
-                          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-md overflow-hidden flex-shrink-0">
+                        <div className="flex items-center gap-2 sm:gap-3 w-36 sm:w-40 flex-shrink-0">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden flex-shrink-0">
                             <img 
                               src={spiderB?.image_url} 
                               alt={spiderB?.nickname}
@@ -978,7 +978,7 @@ const Index = () => {
                   <div className="flex bg-muted rounded-lg p-1 w-fit">
                     <button
                       onClick={() => setLeaderboardType('alltime')}
-                      className={`px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-colors ${
+                      className={`px-3 sm:px-4 py-2 text-sm font-medium rounded-md transition-colors min-h-[44px] ${
                         leaderboardType === 'alltime' 
                           ? 'bg-background text-foreground shadow-sm' 
                           : 'text-muted-foreground hover:text-foreground'
@@ -988,7 +988,7 @@ const Index = () => {
                     </button>
                     <button
                       onClick={() => setLeaderboardType('weekly')}
-                      className={`px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-colors ${
+                      className={`px-3 sm:px-4 py-2 text-sm font-medium rounded-md transition-colors min-h-[44px] ${
                         leaderboardType === 'weekly' 
                           ? 'bg-background text-foreground shadow-sm' 
                           : 'text-muted-foreground hover:text-foreground'
@@ -1001,7 +1001,7 @@ const Index = () => {
                   <div className="flex bg-muted rounded-lg p-1 w-fit">
                     <button
                       onClick={() => setLeaderboardView('spiders')}
-                      className={`px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-colors ${
+                      className={`px-3 sm:px-4 py-2 text-sm font-medium rounded-md transition-colors min-h-[44px] ${
                         leaderboardView === 'spiders' 
                           ? 'bg-background text-foreground shadow-sm' 
                           : 'text-muted-foreground hover:text-foreground'
@@ -1011,7 +1011,7 @@ const Index = () => {
                     </button>
                     <button
                       onClick={() => setLeaderboardView('users')}
-                      className={`px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-colors ${
+                      className={`px-3 sm:px-4 py-2 text-sm font-medium rounded-md transition-colors min-h-[44px] ${
                         leaderboardView === 'users' 
                           ? 'bg-background text-foreground shadow-sm' 
                           : 'text-muted-foreground hover:text-foreground'
@@ -1073,9 +1073,9 @@ const Index = () => {
                         </Badge>
                       </div>
                       
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden flex-shrink-0">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-md overflow-hidden flex-shrink-0">
                         <img 
-                          src={spider.image_url} 
+                          src={spider.image_url}
                           alt={spider.nickname}
                           className="w-full h-full object-cover"
                         />
@@ -1153,9 +1153,9 @@ const Index = () => {
                           </Badge>
                         </div>
                         
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
                           {user.avatar_url ? (
-                            <img 
+                            <img
                               src={user.avatar_url} 
                               alt={`${userName} avatar`}
                               className="w-full h-full object-cover"

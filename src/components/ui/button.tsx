@@ -21,10 +21,10 @@ const buttonVariants = cva(
         glass: "relative overflow-hidden bg-gradient-to-br from-white/10 via-white/5 to-transparent backdrop-blur-xl border border-white/20 text-card-foreground hover:bg-gradient-to-br hover:from-white/20 hover:via-white/10 hover:to-transparent hover:scale-[1.02] hover:shadow-[0_8px_32px_rgba(31,38,135,0.37)] before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent before:translate-x-[-200%] hover:before:translate-x-[200%] before:transition-transform before:duration-500",
       },
       size: {
-        default: "h-11 px-6 py-2.5",
-        sm: "h-9 rounded-lg px-4",
-        lg: "h-12 rounded-xl px-8 text-base",
-        icon: "h-11 w-11",
+        default: "h-11 px-6 py-2.5 min-h-[44px]",
+        sm: "h-10 rounded-lg px-4 min-h-[40px]",
+        lg: "h-12 rounded-xl px-8 text-base min-h-[48px]",
+        icon: "h-11 w-11 min-h-[44px] min-w-[44px]",
       },
     },
     defaultVariants: {
