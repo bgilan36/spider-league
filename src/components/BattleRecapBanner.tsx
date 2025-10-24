@@ -68,16 +68,9 @@ export const BattleRecapBanner = () => {
     if (!loading && battleRecaps.length > 0) {
       const timer = setTimeout(() => {
         setShowModal(true);
-        // Update timestamp after showing modal so next visit only shows new battles
-        setTimeout(() => {
-          updateLastVisitTimestamp();
-        }, 1000); // Update after user has had a chance to see the modal
-      }, 500); // Load in background for half second before showing
+      }, 500);
       
       return () => clearTimeout(timer);
-    } else if (!loading && battleRecaps.length === 0) {
-      // No new battles, update timestamp to current time
-      updateLastVisitTimestamp();
     }
   }, [loading, battleRecaps]);
 
@@ -89,6 +82,9 @@ export const BattleRecapBanner = () => {
 
       // Get the last visit timestamp
       const lastVisit = getLastVisitTimestamp();
+      
+      // Save current timestamp BEFORE fetching, so next visit only shows newer battles
+      const currentTimestamp = new Date().toISOString();
 
       // Fetch battles that occurred AFTER the last visit
       const { data: battles, error } = await supabase
@@ -115,6 +111,12 @@ export const BattleRecapBanner = () => {
         setBattleRecaps(formattedBattles);
       } else {
         setBattleRecaps([]);
+      }
+      
+      // Update timestamp immediately after fetch completes
+      if (user) {
+        const lastVisitKey = `last-battle-visit-${user.id}`;
+        localStorage.setItem(lastVisitKey, currentTimestamp);
       }
     } catch (error) {
       console.error('Error fetching battle recaps:', error);
