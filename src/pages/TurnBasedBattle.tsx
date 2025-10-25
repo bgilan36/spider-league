@@ -147,12 +147,15 @@ const TurnBasedBattle = () => {
   // Get winner and loser details for outcome reveal
   const winnerSpider = iWon ? mySpider : opponentSpider;
   const loserSpider = iWon ? opponentSpider : mySpider;
-  const winnerOwnerName = iWon 
-    ? ((battle.team_a as any)?.userId === user?.id ? 'You' : (battle.team_b as any)?.userName || 'Opponent')
-    : ((battle.team_b as any)?.userId === user?.id ? 'You' : (battle.team_a as any)?.userName || 'Opponent');
-  const loserOwnerName = iWon
-    ? ((battle.team_a as any)?.userId === user?.id ? (battle.team_b as any)?.userName || 'Opponent' : 'You')
-    : ((battle.team_b as any)?.userId === user?.id ? (battle.team_a as any)?.userName || 'Opponent' : 'You');
+  
+  // Simplified logic: if I won, winner is "You", loser is opponent name
+  // If I lost, winner is opponent name, loser is "You"
+  const opponentName = ((battle.team_a as any)?.userId === user?.id 
+    ? (battle.team_b as any)?.userName 
+    : (battle.team_a as any)?.userName) || 'Opponent';
+  
+  const winnerOwnerName = iWon ? 'You' : opponentName;
+  const loserOwnerName = iWon ? opponentName : 'You';
 
   return (
     <div className="min-h-screen bg-background">
