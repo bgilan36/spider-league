@@ -267,7 +267,22 @@ const Index = () => {
     try {
       setLeaderboardLoading(true);
       if (leaderboardType === 'weekly') {
-        // Fetch weekly rankings
+        // Get current week first
+        const { data: currentWeek, error: weekError } = await supabase
+          .from('weeks')
+          .select('id')
+          .order('start_date', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (weekError) {
+          console.error('Error fetching current week:', weekError);
+          setTopLeaderboardSpiders([]);
+          setLeaderboardLoading(false);
+          return;
+        }
+
+        // Fetch weekly rankings for current week only
         const {
           data,
           error
@@ -280,7 +295,7 @@ const Index = () => {
                 display_name
               )
             )
-          `).order('rank_position', {
+          `).eq('week_id', currentWeek.id).order('rank_position', {
           ascending: true
         }).limit(5);
         if (error) throw error;
