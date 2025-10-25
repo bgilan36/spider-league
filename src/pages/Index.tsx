@@ -1212,6 +1212,36 @@ const Index = () => {
       {/* New Spider Spotlight Section */}
       {user && <NewSpiderSpotlight />}
       
+      {/* Feedback Card */}
+      {user && (
+        <div className="container mx-auto px-4 mt-12 mb-8">
+          <a 
+            href="https://forms.gle/66uF4PESgaQb9U5r5" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="block"
+          >
+            <Card className="cursor-pointer hover:scale-[1.02] transition-transform duration-300 bg-gradient-to-br from-primary/10 via-background to-secondary/10 border-primary/20">
+              <CardContent className="p-8 text-center">
+                <h3 className="text-2xl font-bold mb-3 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                  Help Shape Spider League
+                </h3>
+                <p className="text-muted-foreground text-base mb-4">
+                  As a beta user, your feedback is invaluable! Share your thoughts and suggestions to help us make Spider League even better.
+                </p>
+                <div className="inline-flex items-center gap-2 text-primary font-semibold">
+                  <span>Submit Feedback</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14"/>
+                    <path d="m12 5 7 7-7 7"/>
+                  </svg>
+                </div>
+              </CardContent>
+            </Card>
+          </a>
+        </div>
+      )}
+      
       <SpiderDetailsModal
         spider={selectedSpider}
         isOpen={isModalOpen}
