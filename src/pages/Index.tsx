@@ -266,64 +266,54 @@ const Index = () => {
   const fetchTopLeaderboardSpiders = async () => {
     try {
       setLeaderboardLoading(true);
+
       if (leaderboardType === 'weekly') {
-        // Get current week first
-        const { data: currentWeek, error: weekError } = await supabase
-          .from('weeks')
-          .select('id')
-          .order('start_date', { ascending: false })
-          .limit(1)
-          .single();
+        // Weekly view: only include spiders uploaded during the current PT week
+        const ptNow = new Date(
+          new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })
+        );
+        const dayOfWeek = ptNow.getDay(); // 0 = Sunday
+        const weekStart = new Date(ptNow);
+        weekStart.setDate(ptNow.getDate() - dayOfWeek);
+        weekStart.setHours(0, 0, 0, 0);
 
-        if (weekError) {
-          console.error('Error fetching current week:', weekError);
-          setTopLeaderboardSpiders([]);
-          setLeaderboardLoading(false);
-          return;
-        }
+        const weekStartISO = weekStart.toISOString();
 
-        // Fetch weekly rankings for current week only
-        const {
-          data,
-          error
-        } = await supabase.from('weekly_rankings').select(`
-            power_score,
-            rank_position,
-            spiders (
-              id, nickname, species, image_url, rarity, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved, owner_id, created_at,
-              profiles (
-                display_name
-              )
-            )
-          `).eq('week_id', currentWeek.id).order('rank_position', {
-          ascending: true
-        }).limit(5);
-        if (error) throw error;
-
-        // Transform the data to match the Spider interface
-        const transformedData = (data || []).map(ranking => ({
-          ...ranking.spiders,
-          profiles: ranking.spiders?.profiles
-        })).filter(spider => spider && spider.id) as Spider[];
-        setTopLeaderboardSpiders(transformedData);
-      } else {
-        // Fetch all-time rankings (existing logic)
-        const {
-          data,
-          error
-        } = await supabase.from('spiders').select(`
+        const { data, error } = await supabase
+          .from('spiders')
+          .select(`
             id, nickname, species, image_url, rarity, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved, owner_id, created_at,
             profiles (
               display_name
             )
-          `).eq('is_approved', true).order('power_score', {
-          ascending: false
-        }).limit(5);
+          `)
+          .eq('is_approved', true)
+          .gte('created_at', weekStartISO)
+          .order('power_score', { ascending: false })
+          .limit(5);
+
+        if (error) throw error;
+        setTopLeaderboardSpiders(data || []);
+      } else {
+        // All-time rankings: all approved spiders
+        const { data, error } = await supabase
+          .from('spiders')
+          .select(`
+            id, nickname, species, image_url, rarity, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved, owner_id, created_at,
+            profiles (
+              display_name
+            )
+          `)
+          .eq('is_approved', true)
+          .order('power_score', { ascending: false })
+          .limit(5);
+
         if (error) throw error;
         setTopLeaderboardSpiders(data || []);
       }
     } catch (error) {
       console.error('Error fetching top spiders:', error);
+      setTopLeaderboardSpiders([]);
     } finally {
       setLeaderboardLoading(false);
     }
@@ -332,11 +322,10 @@ const Index = () => {
     try {
       setLeaderboardLoading(true);
 
-      // Get user rankings with cumulative power scores
-      const {
-        data: userRankings,
-        error
-      } = await supabase.from('spiders').select(`
+      // Base query for approved spiders with owner profile info
+      let query = supabase
+        .from('spiders')
+        .select(`
           owner_id,
           power_score,
           id,
@@ -344,14 +333,32 @@ const Index = () => {
           species,
           image_url,
           rarity,
+          created_at,
           profiles!owner_id (
             display_name,
             avatar_url
           )
-        `).eq('is_approved', true);
+        `)
+        .eq('is_approved', true);
+
+      // In weekly mode, only include spiders uploaded during the current PT week
+      if (leaderboardType === 'weekly') {
+        const ptNow = new Date(
+          new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })
+        );
+        const dayOfWeek = ptNow.getDay(); // 0 = Sunday
+        const weekStart = new Date(ptNow);
+        weekStart.setDate(ptNow.getDate() - dayOfWeek);
+        weekStart.setHours(0, 0, 0, 0);
+
+        const weekStartISO = weekStart.toISOString();
+        query = query.gte('created_at', weekStartISO);
+      }
+
+      const { data: userRankings, error } = await query;
       if (error) throw error;
 
-      // Process the data to calculate user cumulative scores
+      // Process the data to calculate user cumulative scores for the chosen timeframe
       const userMap = new Map();
       userRankings?.forEach((spider: any) => {
         const userId = spider.owner_id;
