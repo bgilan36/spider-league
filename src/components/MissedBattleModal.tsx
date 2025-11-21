@@ -14,6 +14,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/auth/AuthProvider';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
 
 interface MissedBattle {
   id: string;
@@ -188,8 +189,7 @@ const MissedBattleModal: React.FC<MissedBattleModalProps> = ({
                           </div>
                           <div className="text-xs text-muted-foreground flex items-center gap-2">
                             <Clock className="h-3 w-3" />
-                            {new Date(battle.created_at).toLocaleDateString()} at{' '}
-                            {new Date(battle.created_at).toLocaleTimeString()}
+                            {format(new Date(battle.created_at), 'MMM d, h:mm a')}
                           </div>
                         </div>
                         <Button size="sm" variant="outline">
