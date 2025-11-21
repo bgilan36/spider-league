@@ -229,6 +229,7 @@ const Leaderboard = () => {
 
   const fetchWeeks = async () => {
     try {
+      // Get all weeks
       const { data: weeksData, error } = await supabase
         .from('weeks')
         .select('*')
@@ -236,11 +237,47 @@ const Leaderboard = () => {
 
       if (error) throw error;
 
-      setWeeks(weeksData || []);
+      // Check if we need to create the current week
+      const now = new Date();
+      const hasCurrentWeek = weeksData?.some(week => {
+        const startDate = new Date(week.start_date);
+        const endDate = new Date(week.end_date);
+        return now >= startDate && now <= endDate;
+      });
+
+      // If no current week exists, create a dynamic "current week" entry
+      let finalWeeksData = weeksData || [];
+      if (!hasCurrentWeek) {
+        // Calculate current week boundaries (Sunday to Saturday)
+        const currentDate = new Date();
+        const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 6 = Saturday
+        const weekStart = new Date(currentDate);
+        weekStart.setDate(currentDate.getDate() - dayOfWeek);
+        weekStart.setHours(0, 0, 0, 0);
+        
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        weekEnd.setHours(23, 59, 59, 999);
+
+        // Create a temporary current week object
+        const currentWeek = {
+          id: 'current-week',
+          week_number: (weeksData?.[0]?.week_number || 0) + 1,
+          start_date: weekStart.toISOString(),
+          end_date: weekEnd.toISOString(),
+          season_id: weeksData?.[0]?.season_id || 'default-season',
+          is_locked: false,
+          created_at: new Date().toISOString()
+        };
+
+        finalWeeksData = [currentWeek, ...finalWeeksData];
+      }
+
+      setWeeks(finalWeeksData);
       
       // Set current week (most recent) as default
-      if (weeksData && weeksData.length > 0) {
-        const currentWeek = weeksData[0];
+      if (finalWeeksData.length > 0) {
+        const currentWeek = finalWeeksData[0];
         setCurrentWeekId(currentWeek.id);
         setSelectedWeekId(currentWeek.id);
       }
@@ -509,15 +546,15 @@ const Leaderboard = () => {
               
               return (
                 <Card key={user.user_id} className={`${rank === 1 ? 'ring-2 ring-amber-500' : ''} hover:shadow-lg transition-all`}>
-                  <CardContent className="flex items-center gap-4 p-6">
-                    <div className="flex items-center gap-3">
+                  <CardContent className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 p-4 sm:p-6">
+                    <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
                       {getRankIcon(rank)}
-                      <Badge variant="secondary" className="font-bold text-lg px-3 py-1">
+                      <Badge variant="secondary" className="font-bold text-base sm:text-lg px-2 sm:px-3 py-1">
                         {getRankBadge(rank)}
                       </Badge>
                     </div>
                     
-                    <div className="w-20 h-20 rounded-full overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
                       {user.avatar_url ? (
                         <img 
                           src={user.avatar_url} 
@@ -526,58 +563,58 @@ const Leaderboard = () => {
                           loading="lazy"
                         />
                       ) : (
-                        <div className="text-2xl font-bold text-muted-foreground">
+                        <div className="text-xl sm:text-2xl font-bold text-muted-foreground">
                           {userName.charAt(0).toUpperCase()}
                         </div>
                       )}
                     </div>
                     
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 mb-1">
+                    <div className="min-w-0 flex-1 w-full sm:w-auto">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
                         <ClickableUsername 
                           userId={user.user_id} 
                           displayName={userName}
                           variant="ghost"
-                          className="font-bold text-xl hover:text-primary p-0 h-auto"
+                          className="font-bold text-lg sm:text-xl hover:text-primary p-0 h-auto"
                         />
-                        <Badge variant="outline">
+                        <Badge variant="outline" className="text-xs">
                           {spiderCount} Spider{spiderCount !== 1 ? 's' : ''}
                         </Badge>
                         {isWeekly && battleSpiders > 0 && (
-                          <Badge variant="secondary" className="bg-red-500 text-white">
-                            +{battleSpiders} from battles
+                          <Badge variant="secondary" className="bg-red-500 text-white text-xs">
+                            +{battleSpiders}
                           </Badge>
                         )}
                       </div>
                       {user.top_spider && (
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="text-sm text-muted-foreground">Top Spider:</p>
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <p className="text-xs sm:text-sm text-muted-foreground">Top Spider:</p>
                           <button 
                             onClick={() => handleSpiderClick({
                               ...user.top_spider!,
                               hit_points: 50, damage: 50, speed: 50, defense: 50, venom: 50, webcraft: 50,
                               is_approved: true, owner_id: user.user_id, created_at: new Date().toISOString()
                             })}
-                            className="text-sm font-medium hover:text-primary transition-colors cursor-pointer underline decoration-dotted underline-offset-2"
+                            className="text-xs sm:text-sm font-medium hover:text-primary transition-colors cursor-pointer underline decoration-dotted underline-offset-2 truncate max-w-[200px]"
                           >
                             {user.top_spider.nickname}
                           </button>
                           <Badge 
                             variant="secondary" 
-                            className={`${rarityColors[user.top_spider.rarity]} text-white text-xs`}
+                            className={`${rarityColors[user.top_spider.rarity]} text-white text-xs flex-shrink-0`}
                           >
                             {user.top_spider.rarity}
                           </Badge>
                         </div>
                       )}
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         {isWeekly ? 'Weekly' : 'Total'} Collection Power Score
                       </p>
                     </div>
                     
-                    <div className="text-right flex-shrink-0 ml-4">
-                      <div className="text-3xl font-bold">{powerScore}</div>
-                      <div className="text-sm text-muted-foreground">Power Score</div>
+                    <div className="text-right flex-shrink-0 w-full sm:w-auto sm:ml-4 border-t sm:border-t-0 pt-3 sm:pt-0">
+                      <div className="text-2xl sm:text-3xl font-bold">{powerScore}</div>
+                      <div className="text-xs sm:text-sm text-muted-foreground">Power Score</div>
                     </div>
                   </CardContent>
                 </Card>
@@ -598,14 +635,14 @@ const Leaderboard = () => {
             
             return (
               <Card key={user.user_id} className="hover:shadow-md transition-shadow">
-                <CardContent className="flex items-center gap-4 p-4">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="flex items-center gap-2 w-16">
+                <CardContent className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 sm:p-4">
+                  <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                    <div className="flex items-center gap-1 sm:gap-2 w-12 sm:w-16 flex-shrink-0">
                       {getRankIcon(rank)}
-                      <span className="font-bold text-lg min-w-0">#{rank}</span>
+                      <span className="font-bold text-base sm:text-lg">#{rank}</span>
                     </div>
                     
-                    <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
                       {user.avatar_url ? (
                         <img 
                           src={user.avatar_url} 
@@ -614,25 +651,25 @@ const Leaderboard = () => {
                           loading="lazy"
                         />
                       ) : (
-                        <div className="text-lg font-bold text-muted-foreground">
+                        <div className="text-base sm:text-lg font-bold text-muted-foreground">
                           {userName.charAt(0).toUpperCase()}
                         </div>
                       )}
                     </div>
                     
                     <div className="min-w-0 flex-1">
-                       <div className="flex items-center gap-2 mb-1">
+                       <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-1">
                           <ClickableUsername 
                             userId={user.user_id} 
                             displayName={userName}
                             variant="ghost"
-                            className="font-semibold truncate hover:text-primary p-0 h-auto"
+                            className="font-semibold text-sm sm:text-base truncate hover:text-primary p-0 h-auto max-w-[120px] sm:max-w-none"
                           />
-                         <Badge variant="outline" className="text-xs">
+                         <Badge variant="outline" className="text-xs flex-shrink-0">
                            {spiderCount} Spider{spiderCount !== 1 ? 's' : ''}
                          </Badge>
                         {isWeekly && battleSpiders > 0 && (
-                          <Badge variant="secondary" className="bg-red-500 text-white text-xs">
+                          <Badge variant="secondary" className="bg-red-500 text-white text-xs flex-shrink-0">
                             +{battleSpiders}
                           </Badge>
                         )}
@@ -644,7 +681,7 @@ const Leaderboard = () => {
                             hit_points: 50, damage: 50, speed: 50, defense: 50, venom: 50, webcraft: 50,
                             is_approved: true, owner_id: user.user_id, created_at: new Date().toISOString()
                           })}
-                          className="text-xs text-muted-foreground truncate hover:text-primary transition-colors cursor-pointer underline decoration-dotted underline-offset-2"
+                          className="text-xs text-muted-foreground truncate hover:text-primary transition-colors cursor-pointer underline decoration-dotted underline-offset-2 max-w-[200px] block"
                         >
                           Top: {user.top_spider.nickname} ({user.top_spider.power_score})
                         </button>
@@ -652,8 +689,8 @@ const Leaderboard = () => {
                     </div>
                   </div>
                   
-                  <div className="text-right flex-shrink-0 ml-4">
-                    <div className="text-2xl font-bold">{powerScore}</div>
+                  <div className="text-right flex-shrink-0 w-full sm:w-auto sm:ml-4 border-t sm:border-t-0 pt-2 sm:pt-0">
+                    <div className="text-xl sm:text-2xl font-bold">{powerScore}</div>
                     <div className="text-xs text-muted-foreground">Power Score</div>
                   </div>
                 </CardContent>
