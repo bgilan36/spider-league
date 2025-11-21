@@ -1048,24 +1048,12 @@ export type Database = {
         Args: { user_id_param: string }
         Returns: boolean
       }
-      cleanup_stale_presence: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      get_current_pt_week_end: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      get_current_pt_week_start: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      get_current_week: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      cleanup_stale_presence: { Args: never; Returns: undefined }
+      get_current_pt_week_end: { Args: never; Returns: string }
+      get_current_pt_week_start: { Args: never; Returns: string }
+      get_current_week: { Args: never; Returns: string }
       get_user_rankings_all_time: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           avatar_url: string
           display_name: string
@@ -1115,18 +1103,12 @@ export type Database = {
         }
         Returns: undefined
       }
-      sanitize_plain_text: {
-        Args: { t: string }
-        Returns: string
-      }
+      sanitize_plain_text: { Args: { t: string }; Returns: string }
       transfer_spider_ownership: {
         Args: { new_owner_id: string; spider_id: string }
         Returns: undefined
       }
-      update_weekly_rankings: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      update_weekly_rankings: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
