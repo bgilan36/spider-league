@@ -267,7 +267,7 @@ const Leaderboard = () => {
 
       if (weekError) throw weekError;
 
-      // Get spiders created this week and spiders acquired in battles this week
+      // Only get spiders created during this specific week
       const { data: weekSpiders, error: spiderError } = await supabase
         .from('spiders')
         .select(`
@@ -290,36 +290,10 @@ const Leaderboard = () => {
 
       if (spiderError) throw spiderError;
 
-      // Get spiders acquired through battles this week
-      const { data: battleSpiders, error: battleError } = await supabase
-        .from('battle_challenges')
-        .select(`
-          winner_id,
-          loser_spider_id,
-          spiders!loser_spider_id (
-            owner_id,
-            power_score,
-            id,
-            nickname,
-            species,
-            image_url,
-            rarity,
-            profiles!owner_id (
-              display_name,
-              avatar_url
-            )
-          )
-        `)
-        .eq('status', 'COMPLETED')
-        .gte('created_at', week.start_date)
-        .lte('created_at', week.end_date);
-
-      if (battleError) throw battleError;
-
       // Process the data to calculate weekly user scores
       const userMap = new Map<string, WeeklyUserRanking>();
       
-      // Process regular spiders created this week
+      // Process spiders created this week
       weekSpiders?.forEach((spider: any) => {
         const userId = spider.owner_id;
         const existing = userMap.get(userId);
@@ -345,48 +319,6 @@ const Leaderboard = () => {
             week_power_score: spider.power_score,
             week_spider_count: 1,
             spiders_acquired_in_battle: 0,
-            top_spider: {
-              id: spider.id,
-              nickname: spider.nickname,
-              species: spider.species,
-              image_url: spider.image_url,
-              power_score: spider.power_score,
-              rarity: spider.rarity
-            }
-          });
-        }
-      });
-
-      // Process battle-acquired spiders
-      battleSpiders?.forEach((battle: any) => {
-        const userId = battle.winner_id;
-        const spider = battle.spiders;
-        if (!spider) return;
-        
-        const existing = userMap.get(userId);
-        
-        if (existing) {
-          existing.week_power_score += spider.power_score;
-          existing.week_spider_count += 1;
-          existing.spiders_acquired_in_battle += 1;
-          if (!existing.top_spider || spider.power_score > existing.top_spider.power_score) {
-            existing.top_spider = {
-              id: spider.id,
-              nickname: spider.nickname,
-              species: spider.species,
-              image_url: spider.image_url,
-              power_score: spider.power_score,
-              rarity: spider.rarity
-            };
-          }
-        } else {
-          userMap.set(userId, {
-            user_id: userId,
-            display_name: spider.profiles?.display_name || null,
-            avatar_url: spider.profiles?.avatar_url || null,
-            week_power_score: spider.power_score,
-            week_spider_count: 1,
-            spiders_acquired_in_battle: 1,
             top_spider: {
               id: spider.id,
               nickname: spider.nickname,
