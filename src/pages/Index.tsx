@@ -629,21 +629,21 @@ const Index = () => {
       
       {/* Header */}
       <header className="glass-card border-b border-border/30 sticky top-0 z-40 backdrop-blur-xl">
-        <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+        <div className="container mx-auto px-3 sm:px-6 py-3 sm:py-5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0">
               <div className="flex-shrink-0">
-                <img src="/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png" alt="Spider League Logo" className="h-10 sm:h-14 w-auto object-contain drop-shadow-lg" />
+                <img src="/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png" alt="Spider League Logo" className="h-9 sm:h-12 w-auto object-contain drop-shadow-lg" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent truncate">
+                <h1 className="text-lg sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent truncate">
                   Spider League
                 </h1>
               </div>
             </div>
-            <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
               <NotificationsDropdown />
-              <Button variant="glass" size="icon" asChild className="h-11 w-11 sm:h-12 sm:w-12" title="My Spider Collection">
+              <Button variant="glass" size="icon" asChild className="h-10 w-10 sm:h-11 sm:w-11" title="My Spider Collection">
                 <Link to="/collection">
                   <img src="/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png" alt="Spider" className="h-5 w-5 sm:h-6 sm:w-6 object-contain" />
                 </Link>
@@ -655,7 +655,7 @@ const Index = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-8">
+      <main className="container mx-auto px-3 sm:px-6 py-3 sm:py-6">
         {/* Online Users Bar */}
         <OnlineUsersBar />
         
@@ -663,19 +663,19 @@ const Index = () => {
         <BattleRecapBanner />
         
         {/* My Spider Squad Section */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-3">
             <div>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
-                <h2 className="text-xl sm:text-2xl font-bold">This Week's Eligible Spiders</h2>
-                {userGlobalRank && <Badge variant="secondary" className="text-sm w-fit">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold">This Week's Eligible Spiders</h2>
+                {userGlobalRank && <Badge variant="secondary" className="text-xs sm:text-sm w-fit">
                     Global Rank #{userGlobalRank}
                   </Badge>}
-                <Badge variant="outline" className="text-sm w-fit">
+                <Badge variant="outline" className="text-xs sm:text-sm w-fit">
                   {Math.min(weeklyUploadCount, 3)}/3 Uploaded
                 </Badge>
               </div>
-              <p className="text-sm text-muted-foreground">You can upload up to 3 eligible spiders each week</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">You can upload up to 3 eligible spiders each week</p>
             </div>
             <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
               <Link to="/collection" className="flex items-center gap-2">
@@ -784,15 +784,15 @@ const Index = () => {
         </div>
 
         {/* Recent Battles Section */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-3">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold mb-2">Recent Battles</h2>
-              <p className="text-sm sm:text-base text-muted-foreground">
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-1 sm:mb-2">Recent Battles</h2>
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Latest battles across all players
               </p>
             </div>
-            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
+            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto min-h-[44px]">
               <Link to="/battle-history" className="flex items-center justify-center gap-2">
                 <Sword className="h-4 w-4" />
                 <span className="hidden sm:inline">View All Battles</span>
@@ -870,44 +870,44 @@ const Index = () => {
         </div>
 
         {/* Leaderboard Section */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-            <div className="flex-1">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-3">
-                <h2 className="text-xl sm:text-2xl font-bold">Leaderboards</h2>
-                <div className="flex gap-2">
-                  {/* All-Time vs Weekly Toggle */}
-                  <div className="flex bg-muted rounded-lg p-1 w-fit">
-                    <button onClick={() => setLeaderboardType('alltime')} className={`px-3 sm:px-4 py-2 text-sm font-medium rounded-md transition-colors min-h-[44px] ${leaderboardType === 'alltime' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
-                      All-Time
-                    </button>
-                    <button onClick={() => setLeaderboardType('weekly')} className={`px-3 sm:px-4 py-2 text-sm font-medium rounded-md transition-colors min-h-[44px] ${leaderboardType === 'weekly' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
-                      Weekly
-                    </button>
-                  </div>
-                  {/* Spiders vs Users Toggle */}
-                  <div className="flex bg-muted rounded-lg p-1 w-fit">
-                    <button onClick={() => setLeaderboardView('spiders')} className={`px-3 sm:px-4 py-2 text-sm font-medium rounded-md transition-colors min-h-[44px] ${leaderboardView === 'spiders' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
-                      Top Spiders
-                    </button>
-                    <button onClick={() => setLeaderboardView('users')} className={`px-3 sm:px-4 py-2 text-sm font-medium rounded-md transition-colors min-h-[44px] ${leaderboardView === 'users' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
-                      Top Users
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <p className="text-sm sm:text-base text-muted-foreground">
-                {leaderboardType === 'weekly' ? 'This week\'s ' : 'All-time '}
-                {leaderboardView === 'spiders' ? 'top 5 most powerful spider fighters' : 'top 5 trainers by cumulative power scores'}
-              </p>
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col gap-3 sm:gap-4 mb-4 sm:mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold">Leaderboards</h2>
+              <Button asChild variant="outline" size="sm" className="w-full sm:w-auto min-h-[44px]">
+                <Link to="/leaderboard" className="flex items-center justify-center gap-2">
+                  <Users className="h-4 w-4" />
+                  <span className="hidden sm:inline">View Full Leaderboard</span>
+                  <span className="sm:hidden">Leaderboard</span>
+                </Link>
+              </Button>
             </div>
-            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
-              <Link to="/leaderboard" className="flex items-center justify-center gap-2">
-                <Users className="h-4 w-4" />
-                <span className="hidden sm:inline">View Full Leaderboard</span>
-                <span className="sm:hidden">Leaderboard</span>
-              </Link>
-            </Button>
+            
+            <div className="flex flex-col sm:flex-row gap-2">
+              {/* All-Time vs Weekly Toggle */}
+              <div className="flex bg-muted rounded-lg p-1 w-full sm:w-fit">
+                <button onClick={() => setLeaderboardType('alltime')} className={`flex-1 sm:flex-none px-4 py-2.5 text-xs sm:text-sm font-medium rounded-md transition-colors min-h-[44px] ${leaderboardType === 'alltime' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
+                  All-Time
+                </button>
+                <button onClick={() => setLeaderboardType('weekly')} className={`flex-1 sm:flex-none px-4 py-2.5 text-xs sm:text-sm font-medium rounded-md transition-colors min-h-[44px] ${leaderboardType === 'weekly' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
+                  Weekly
+                </button>
+              </div>
+              {/* Spiders vs Users Toggle */}
+              <div className="flex bg-muted rounded-lg p-1 w-full sm:w-fit">
+                <button onClick={() => setLeaderboardView('spiders')} className={`flex-1 sm:flex-none px-4 py-2.5 text-xs sm:text-sm font-medium rounded-md transition-colors min-h-[44px] ${leaderboardView === 'spiders' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
+                  Top Spiders
+                </button>
+                <button onClick={() => setLeaderboardView('users')} className={`flex-1 sm:flex-none px-4 py-2.5 text-xs sm:text-sm font-medium rounded-md transition-colors min-h-[44px] ${leaderboardView === 'users' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
+                  Top Users
+                </button>
+              </div>
+            </div>
+            
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              {leaderboardType === 'weekly' ? 'This week\'s ' : 'All-time '}
+              {leaderboardView === 'spiders' ? 'top 5 most powerful spider fighters' : 'top 5 trainers by cumulative power scores'}
+            </p>
           </div>
 
           {leaderboardLoading ? <div className="flex items-center justify-center py-12">
@@ -925,45 +925,40 @@ const Index = () => {
             const rank = index + 1;
             const ownerName = (spider as any).profiles?.display_name || `User ${spider.owner_id?.slice(0, 8)}`;
             return <Card key={spider.id} className={`hover:shadow-md transition-shadow ${rank <= 3 ? 'ring-1 ring-primary/20' : ''}`}>
-                    <CardContent className="flex items-center gap-2 sm:gap-4 p-3 sm:p-4">
-                      <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
-                        <div className="w-6 sm:w-8 text-center">
-                          {rank === 1 && <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500 mx-auto" />}
-                          {rank === 2 && <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mx-auto" />}
-                          {rank === 3 && <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600 mx-auto" />}
-                          {rank > 3 && <span className="font-bold text-sm sm:text-lg">#{rank}</span>}
+                    <CardContent className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4">
+                      <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                        <div className="w-7 sm:w-8 text-center flex items-center justify-center">
+                          {rank === 1 && <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-amber-500" />}
+                          {rank === 2 && <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-gray-400" />}
+                          {rank === 3 && <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-amber-600" />}
+                          {rank > 3 && <span className="font-bold text-base sm:text-lg">#{rank}</span>}
                         </div>
-                        <Badge variant={rank <= 3 ? "default" : "secondary"} className="font-bold text-xs sm:text-sm hidden sm:inline-flex">
-                          {rank === 1 ? "1st" : rank === 2 ? "2nd" : rank === 3 ? "3rd" : `${rank}th`}
-                        </Badge>
                       </div>
                       
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-md overflow-hidden flex-shrink-0">
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden flex-shrink-0">
                         <img src={spider.image_url} alt={spider.nickname} className="w-full h-full object-cover" />
                       </div>
                       
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1 sm:gap-2 mb-1">
-                            <h4 className="font-semibold text-sm sm:text-base truncate">{spider.nickname}</h4>
-                            <Badge className={`text-xs ${rarityColors[spider.rarity]} text-white hidden sm:inline-flex`}>
-                              {spider.rarity}
-                            </Badge>
-                          </div>
-                          <p className="text-xs sm:text-sm text-muted-foreground truncate">{spider.species}</p>
-                          <p className="text-xs text-muted-foreground truncate hidden sm:block">
-                            Owner: {spider.owner_id ? <ClickableUsername userId={spider.owner_id} displayName={ownerName} className="text-foreground hover:text-primary" /> : ownerName}
-                          </p>
-                          {spider.created_at && <p className="text-xs text-muted-foreground">
-                              Uploaded: {format(new Date(spider.created_at), 'MMM d, yyyy')}
-                            </p>}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 mb-1">
+                          <h4 className="font-semibold text-sm sm:text-base truncate">{spider.nickname}</h4>
+                          <Badge className={`text-[10px] sm:text-xs ${rarityColors[spider.rarity]} text-white w-fit`}>
+                            {spider.rarity}
+                          </Badge>
                         </div>
-                        
-                        <BattleButton targetSpider={spider} size="sm" variant="outline" context="leaderboard" />
-                        
-                        <div className="text-right flex-shrink-0 ml-4">
-                          <div className="text-lg sm:text-xl font-bold">{spider.power_score}</div>
-                          <div className="text-xs text-muted-foreground">Power</div>
+                        <p className="text-xs text-muted-foreground truncate mb-0.5">{spider.species}</p>
+                        {spider.created_at && <p className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">
+                            Uploaded: {format(new Date(spider.created_at), 'MMM d, yyyy')}
+                          </p>}
+                      </div>
+                      
+                      <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                        <div className="text-right">
+                          <div className="text-base sm:text-lg md:text-xl font-bold">{spider.power_score}</div>
+                          <div className="text-[10px] sm:text-xs text-muted-foreground">Power</div>
                         </div>
+                        <BattleButton targetSpider={spider} size="sm" variant="outline" context="leaderboard" className="hidden sm:flex" />
+                      </div>
                     </CardContent>
                   </Card>;
           })}
@@ -980,33 +975,30 @@ const Index = () => {
             const rank = index + 1;
             const userName = user.display_name || `User ${user.user_id.slice(0, 8)}`;
             return <Card key={user.user_id} className={`hover:shadow-md transition-shadow ${rank <= 3 ? 'ring-1 ring-primary/20' : ''}`}>
-                      <CardContent className="flex items-center gap-2 sm:gap-4 p-3 sm:p-4">
-                        <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
-                          <div className="w-6 sm:w-8 text-center">
-                            {rank === 1 && <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500 mx-auto" />}
-                            {rank === 2 && <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mx-auto" />}
-                            {rank === 3 && <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600 mx-auto" />}
-                            {rank > 3 && <span className="font-bold text-sm sm:text-lg">#{rank}</span>}
+                      <CardContent className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4">
+                        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                          <div className="w-7 sm:w-8 text-center flex items-center justify-center">
+                            {rank === 1 && <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-amber-500" />}
+                            {rank === 2 && <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-gray-400" />}
+                            {rank === 3 && <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-amber-600" />}
+                            {rank > 3 && <span className="font-bold text-base sm:text-lg">#{rank}</span>}
                           </div>
-                          <Badge variant={rank <= 3 ? "default" : "secondary"} className="font-bold text-xs sm:text-sm hidden sm:inline-flex">
-                            {rank === 1 ? "1st" : rank === 2 ? "2nd" : rank === 3 ? "3rd" : `${rank}th`}
-                          </Badge>
                         </div>
                         
-                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
-                          {user.avatar_url ? <img src={user.avatar_url} alt={`${userName} avatar`} className="w-full h-full object-cover" /> : <div className="text-sm font-bold text-muted-foreground">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
+                          {user.avatar_url ? <img src={user.avatar_url} alt={`${userName} avatar`} className="w-full h-full object-cover" /> : <div className="text-base sm:text-lg font-bold text-muted-foreground">
                               {userName.charAt(0).toUpperCase()}
                             </div>}
                         </div>
                         
-                          <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-1 sm:gap-2 mb-1">
-                                <ClickableUsername userId={user.user_id} displayName={userName} variant="ghost" className="font-semibold text-sm sm:text-base truncate hover:text-primary p-0 h-auto" />
-                               <Badge variant="outline" className="text-xs">
-                                 {user.spider_count} Spider{user.spider_count !== 1 ? 's' : ''}
-                               </Badge>
-                             </div>
-                             {user.top_spider && <button onClick={() => handleSpiderClick({
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 mb-1">
+                            <ClickableUsername userId={user.user_id} displayName={userName} variant="ghost" className="font-semibold text-sm sm:text-base truncate hover:text-primary p-0 h-auto" />
+                            <Badge variant="outline" className="text-[10px] sm:text-xs w-fit">
+                              {user.spider_count} Spider{user.spider_count !== 1 ? 's' : ''}
+                            </Badge>
+                          </div>
+                          {user.top_spider && <button onClick={() => handleSpiderClick({
                     ...user.top_spider!,
                     hit_points: 50,
                     damage: 50,
@@ -1017,16 +1009,15 @@ const Index = () => {
                     is_approved: true,
                     owner_id: user.user_id,
                     created_at: new Date().toISOString()
-                  })} className="text-xs sm:text-sm text-muted-foreground truncate hover:text-primary transition-colors cursor-pointer underline decoration-dotted underline-offset-2">
-                                 Top: {user.top_spider.nickname} ({user.top_spider.power_score})
-                               </button>}
-                            <p className="text-xs text-muted-foreground">Collection Power Score</p>
-                          </div>
-                          
-                          <div className="text-right flex-shrink-0 ml-4">
-                            <div className="text-lg sm:text-xl font-bold">{user.total_power_score}</div>
-                            <div className="text-xs text-muted-foreground">Total Power</div>
-                          </div>
+                  })} className="text-[10px] sm:text-xs text-muted-foreground truncate hover:text-primary transition-colors cursor-pointer underline decoration-dotted underline-offset-2 text-left">
+                            Top: {user.top_spider.nickname} ({user.top_spider.power_score})
+                          </button>}
+                        </div>
+                        
+                        <div className="text-right flex-shrink-0">
+                          <div className="text-base sm:text-lg md:text-xl font-bold">{user.total_power_score}</div>
+                          <div className="text-[10px] sm:text-xs text-muted-foreground">Total Power</div>
+                        </div>
                       </CardContent>
                     </Card>;
           })}
@@ -1039,15 +1030,15 @@ const Index = () => {
       {user && <NewSpiderSpotlight />}
       
       {/* Feedback Card */}
-      {user && <div className="container mx-auto px-4 mt-12 mb-8">
+      {user && <div className="container mx-auto px-3 sm:px-6 mt-8 sm:mt-12 mb-6 sm:mb-8">
           <a href="https://forms.gle/66uF4PESgaQb9U5r5" target="_blank" rel="noopener noreferrer" className="block">
             <Card className="cursor-pointer hover:scale-[1.02] transition-transform duration-300 bg-gradient-to-br from-primary/10 via-background to-secondary/10 border-primary/20">
-              <CardContent className="p-8 text-center">
-                <h3 className="text-2xl font-bold mb-3 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              <CardContent className="p-6 sm:p-8 text-center">
+                <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 sm:mb-3 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                   Help Shape Spider League
                 </h3>
-                <p className="text-muted-foreground text-base mb-4">We need your beta user feedback to help us make Spider League better.</p>
-                <div className="inline-flex items-center gap-2 text-primary font-semibold">
+                <p className="text-muted-foreground text-sm sm:text-base mb-3 sm:mb-4">We need your beta user feedback to help us make Spider League better.</p>
+                <div className="inline-flex items-center gap-2 text-primary font-semibold text-sm sm:text-base">
                   <span>Submit Feedback</span>
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14" />
@@ -1068,13 +1059,13 @@ const Index = () => {
       <BadgeNotification badge={newBadge} isVisible={showBadgeNotification} onDismiss={dismissBadgeNotification} />
       
       {/* Footer */}
-      <footer className="border-t mt-16 py-8 bg-card/30">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-muted-foreground mb-4">
+      <footer className="border-t mt-12 sm:mt-16 py-6 sm:py-8 bg-card/30">
+        <div className="container mx-auto px-3 sm:px-6 text-center">
+          <p className="text-muted-foreground text-xs sm:text-sm mb-3 sm:mb-4">
             © 2025 Spider League. Share spiders for friendly battles.
           </p>
           <div className="flex items-center justify-center gap-4">
-            <Link to="/shop" className="text-primary hover:text-primary/80 transition-colors underline">
+            <Link to="/shop" className="text-primary hover:text-primary/80 transition-colors underline text-sm">
               Shop
             </Link>
           </div>
@@ -1082,17 +1073,17 @@ const Index = () => {
       </footer>
 
       {/* Spider Facts Ticker */}
-      <div className="relative overflow-hidden bg-primary/10 border-t py-3">
+      <div className="relative overflow-hidden bg-primary/10 border-t py-2 sm:py-3">
         <div className="flex animate-scroll whitespace-nowrap">
           {[...Array(2)].map((_, index) => <div key={index} className="flex items-center">
-              <span className="text-sm text-muted-foreground mx-8">🕷️ Spiders have been around for over 380 million years</span>
-              <span className="text-sm text-muted-foreground mx-8">🕸️ Spider silk is stronger than steel of the same thickness</span>
-              <span className="text-sm text-muted-foreground mx-8">🕷️ Most spiders have 8 eyes but some have 6, 4, 2, or even 0</span>
-              <span className="text-sm text-muted-foreground mx-8">🕸️ Spiders can't fly but some species can "balloon" using their silk</span>
-              <span className="text-sm text-muted-foreground mx-8">🕷️ The Goliath birdeater is the world's largest spider, reaching 12 inches</span>
-              <span className="text-sm text-muted-foreground mx-8">🕸️ A spider's fangs are actually chelicerae - modified appendages</span>
-              <span className="text-sm text-muted-foreground mx-8">🕷️ Jumping spiders can leap up to 50 times their body length</span>
-              <span className="text-sm text-muted-foreground mx-8">🕸️ Some spiders can survive for months without food</span>
+              <span className="text-xs sm:text-sm text-muted-foreground mx-6 sm:mx-8">🕷️ Spiders have been around for over 380 million years</span>
+              <span className="text-xs sm:text-sm text-muted-foreground mx-6 sm:mx-8">🕸️ Spider silk is stronger than steel of the same thickness</span>
+              <span className="text-xs sm:text-sm text-muted-foreground mx-6 sm:mx-8">🕷️ Most spiders have 8 eyes but some have 6, 4, 2, or even 0</span>
+              <span className="text-xs sm:text-sm text-muted-foreground mx-6 sm:mx-8">🕸️ Spiders can't fly but some species can "balloon" using their silk</span>
+              <span className="text-xs sm:text-sm text-muted-foreground mx-6 sm:mx-8">🕷️ The Goliath birdeater is the world's largest spider, reaching 12 inches</span>
+              <span className="text-xs sm:text-sm text-muted-foreground mx-6 sm:mx-8">🕸️ A spider's fangs are actually chelicerae - modified appendages</span>
+              <span className="text-xs sm:text-sm text-muted-foreground mx-6 sm:mx-8">🕷️ Jumping spiders can leap up to 50 times their body length</span>
+              <span className="text-xs sm:text-sm text-muted-foreground mx-6 sm:mx-8">🕸️ Some spiders can survive for months without food</span>
             </div>)}
         </div>
       </div>
