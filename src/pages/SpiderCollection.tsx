@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,9 @@ import BattleButton from "@/components/BattleButton";
 import BattleDetailsModal from "@/components/BattleDetailsModal";
 import SpiderDetailsModal from "@/components/SpiderDetailsModal";
 import ClickableUsername from "@/components/ClickableUsername";
-
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
+import { useIsMobile } from "@/hooks/use-mobile";
 interface Spider {
   id: string;
   nickname: string;
@@ -74,9 +76,24 @@ const SpiderCollection = () => {
     webcraft: Globe
   };
 
+  const isMobile = useIsMobile();
+
+  const handleRefresh = useCallback(async () => {
+    await fetchSpiders();
+  }, [user]);
+
+  const {
+    pullDistance,
+    isRefreshing,
+    progress,
+    shouldTrigger,
+  } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    disabled: !isMobile,
+  });
+
   useEffect(() => {
     fetchSpiders();
-
     // Set up real-time subscription for spider ownership changes
     const channel = supabase
       .channel('spider-ownership-changes')
@@ -418,6 +435,12 @@ const SpiderCollection = () => {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        isRefreshing={isRefreshing}
+        progress={progress}
+        shouldTrigger={shouldTrigger}
+      />
       <Helmet>
         <title>Spider Collection — Spider League</title>
         <meta name="description" content="View your spider collection and discover other fighters in Spider League." />
