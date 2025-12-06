@@ -144,6 +144,7 @@ const Leaderboard = () => {
       fetchWeeks(),
       ...(activeTab === "weekly" && selectedWeekId ? [fetchWeeklyUserRankings(selectedWeekId)] : [])
     ]);
+    toast({ title: "Refreshed", description: "Leaderboard updated" });
   }, [activeTab, selectedWeekId]);
 
   const {
