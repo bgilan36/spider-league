@@ -6,6 +6,13 @@ interface UsePullToRefreshOptions {
   disabled?: boolean;
 }
 
+// Trigger haptic feedback if supported
+const triggerHaptic = (duration: number = 10) => {
+  if ('vibrate' in navigator) {
+    navigator.vibrate(duration);
+  }
+};
+
 export const usePullToRefresh = ({
   onRefresh,
   threshold = 80,
@@ -16,6 +23,7 @@ export const usePullToRefresh = ({
   const [pullDistance, setPullDistance] = useState(0);
   const startY = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const hasTriggeredHaptic = useRef(false);
 
   const handleTouchStart = useCallback(
     (e: TouchEvent) => {
@@ -25,6 +33,7 @@ export const usePullToRefresh = ({
       if (window.scrollY === 0) {
         startY.current = e.touches[0].clientY;
         setIsPulling(true);
+        hasTriggeredHaptic.current = false;
       }
     },
     [disabled, isRefreshing]
@@ -40,7 +49,16 @@ export const usePullToRefresh = ({
       if (diff > 0 && window.scrollY === 0) {
         // Apply resistance to make it feel more natural
         const resistance = 0.4;
-        setPullDistance(Math.min(diff * resistance, threshold * 1.5));
+        const newDistance = Math.min(diff * resistance, threshold * 1.5);
+        setPullDistance(newDistance);
+        
+        // Trigger haptic when crossing threshold
+        if (newDistance >= threshold && !hasTriggeredHaptic.current) {
+          triggerHaptic(15);
+          hasTriggeredHaptic.current = true;
+        } else if (newDistance < threshold) {
+          hasTriggeredHaptic.current = false;
+        }
         
         // Prevent default scrolling when pulling down
         if (diff > 10) {
@@ -62,6 +80,7 @@ export const usePullToRefresh = ({
       
       try {
         await onRefresh();
+        triggerHaptic(20); // Success haptic
       } finally {
         setIsRefreshing(false);
         setPullDistance(0);
