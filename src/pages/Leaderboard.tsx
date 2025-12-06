@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +14,9 @@ import SpiderDetailsModal from "@/components/SpiderDetailsModal";
 import BattleButton from "@/components/BattleButton";
 import { UserProfileModal } from "@/components/UserProfileModal";
 import ClickableUsername from "@/components/ClickableUsername";
-
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
+import { useIsMobile } from "@/hooks/use-mobile";
 interface Spider {
   id: string;
   nickname: string;
@@ -133,6 +135,26 @@ const Leaderboard = () => {
     if (rank === 3) return "3rd";
     return `${rank}th`;
   };
+
+  const isMobile = useIsMobile();
+
+  const handleRefresh = useCallback(async () => {
+    await Promise.all([
+      fetchTopUsers(),
+      fetchWeeks(),
+      ...(activeTab === "weekly" && selectedWeekId ? [fetchWeeklyUserRankings(selectedWeekId)] : [])
+    ]);
+  }, [activeTab, selectedWeekId]);
+
+  const {
+    pullDistance,
+    isRefreshing,
+    progress,
+    shouldTrigger,
+  } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    disabled: !isMobile,
+  });
 
   useEffect(() => {
     fetchTopUsers();
@@ -406,6 +428,12 @@ const Leaderboard = () => {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        isRefreshing={isRefreshing}
+        progress={progress}
+        shouldTrigger={shouldTrigger}
+      />
       <Helmet>
         <title>User Leaderboard — Spider League</title>
         <meta name="description" content="View the top-ranked spider trainers by cumulative power scores." />
