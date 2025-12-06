@@ -80,6 +80,7 @@ const SpiderCollection = () => {
 
   const handleRefresh = useCallback(async () => {
     await fetchSpiders();
+    toast({ title: "Refreshed", description: "Collection updated" });
   }, [user]);
 
   const {

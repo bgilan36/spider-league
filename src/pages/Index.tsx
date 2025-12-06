@@ -115,6 +115,7 @@ const Index = () => {
     refreshPromises.push(fetchTopUsers());
     
     await Promise.all(refreshPromises);
+    toast({ title: "Refreshed", description: "Data updated successfully" });
     
     toast({
       title: "Refreshed",
