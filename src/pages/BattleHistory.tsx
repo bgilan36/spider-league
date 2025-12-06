@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
 import { format } from "date-fns";
 import BattleDetailsModal from "@/components/BattleDetailsModal";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Battle {
   id: string;
@@ -46,6 +49,23 @@ const BattleHistory = () => {
   const [loading, setLoading] = useState(true);
   const [selectedBattle, setSelectedBattle] = useState<Battle | null>(null);
   const [isBattleDetailsOpen, setIsBattleDetailsOpen] = useState(false);
+
+  const isMobile = useIsMobile();
+
+  const handleRefresh = useCallback(async () => {
+    await fetchBattleData();
+    toast({ title: "Refreshed", description: "Battle history updated" });
+  }, [user]);
+
+  const {
+    pullDistance,
+    isRefreshing,
+    progress,
+    shouldTrigger,
+  } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    disabled: !isMobile,
+  });
 
   useEffect(() => {
     if (user) {
@@ -256,7 +276,13 @@ const BattleHistory = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        isRefreshing={isRefreshing}
+        progress={progress}
+        shouldTrigger={shouldTrigger}
+      />
       <Helmet>
         <title>Battle History — Spider League</title>
         <meta name="description" content="View your battle history, statistics, and challenge records in Spider League." />
