@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/auth/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
 import { Upload, Trophy, Users, Loader2, Lightbulb, Plus, Sword, Bug } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { format } from "date-fns";
 import { HowItWorksModal } from "@/components/HowItWorksModal";
 import { UserProfileMenu } from "@/components/UserProfileMenu";
@@ -30,6 +30,9 @@ import NotificationsDropdown from "@/components/NotificationsDropdown";
 import OnlineUsersBar from "@/components/OnlineUsersBar";
 import NewSpiderSpotlight from "@/components/NewSpiderSpotlight";
 import { BattleRecapBanner } from "@/components/BattleRecapBanner";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
+import { useIsMobile } from "@/hooks/use-mobile";
 interface Spider {
   id: string;
   nickname: string;
@@ -90,6 +93,7 @@ const Index = () => {
   const [isBattleDetailsOpen, setIsBattleDetailsOpen] = useState(false);
   const [weeklyUploadCount, setWeeklyUploadCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isMobile = useIsMobile();
   const rarityColors = {
     COMMON: "bg-gray-500",
     UNCOMMON: "bg-green-500",
@@ -97,6 +101,37 @@ const Index = () => {
     EPIC: "bg-purple-500",
     LEGENDARY: "bg-amber-500"
   };
+  
+  // Pull-to-refresh handler
+  const handleRefresh = useCallback(async () => {
+    const refreshPromises: Promise<void>[] = [];
+    
+    if (user) {
+      refreshPromises.push(fetchUserSpiders());
+      refreshPromises.push(fetchUserGlobalRank());
+      refreshPromises.push(fetchRecentBattles());
+    }
+    refreshPromises.push(fetchTopLeaderboardSpiders());
+    refreshPromises.push(fetchTopUsers());
+    
+    await Promise.all(refreshPromises);
+    
+    toast({
+      title: "Refreshed",
+      description: "Data updated successfully",
+    });
+  }, [user, leaderboardType]);
+  
+  const {
+    isPulling,
+    isRefreshing,
+    pullDistance,
+    progress,
+    shouldTrigger,
+  } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    disabled: !isMobile,
+  });
   useEffect(() => {
     if (user) {
       fetchUserSpiders();
@@ -620,6 +655,13 @@ const Index = () => {
       </div>;
   }
   return <div className="min-h-screen bg-background overflow-x-hidden pb-safe">
+      {/* Pull to refresh indicator */}
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        isRefreshing={isRefreshing}
+        progress={progress}
+        shouldTrigger={shouldTrigger}
+      />
       <Helmet>
         <title>Dashboard — Spider League</title>
         <meta name="description" content="Manage your spider fighters and compete in Spider League battles." />
