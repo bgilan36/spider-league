@@ -40,6 +40,32 @@ serve(async (req: Request) => {
       );
     }
 
+    // SECURITY: Verify user has admin role
+    const { data: adminRole, error: roleError } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .maybeSingle();
+
+    if (roleError) {
+      console.error('Error checking admin role:', roleError);
+      return new Response(
+        JSON.stringify({ error: "Failed to verify permissions" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!adminRole) {
+      console.warn(`Unauthorized access attempt by user ${user.id}`);
+      return new Response(
+        JSON.stringify({ error: "Admin access required" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log(`Admin ${user.id} exporting email list`);
+
     // Query profiles table for users with email communications enabled
     const { data: profiles, error } = await supabase
       .from('profiles')

@@ -12,6 +12,9 @@ interface BattleState {
   turns: any[];
 }
 
+// UUID validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -22,7 +25,23 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { battleId } = await req.json();
+    const body = await req.json();
+    const { battleId } = body;
+
+    // INPUT VALIDATION: Validate battleId is a valid UUID
+    if (!battleId || typeof battleId !== 'string') {
+      return new Response(
+        JSON.stringify({ error: "battleId is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!UUID_REGEX.test(battleId)) {
+      return new Response(
+        JSON.stringify({ error: "battleId must be a valid UUID" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Fetch battle details
     const { data: battle, error: battleError } = await supabase
