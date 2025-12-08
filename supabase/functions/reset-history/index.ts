@@ -6,6 +6,18 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Whitelist of valid tables that can be reset
+const ALLOWED_TABLES = [
+  'battle_challenges',
+  'battles',
+  'weekly_rankings',
+  'weekly_uploads',
+  'matchups',
+  'spiders'
+] as const;
+
+type AllowedTable = typeof ALLOWED_TABLES[number];
+
 serve(async (req: Request) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -45,19 +57,34 @@ serve(async (req: Request) => {
 
     // Optionally parse scope from body (default: reset all)
     const payload = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
-    const scope: string[] = Array.isArray(payload?.scope) ? payload.scope : [
-      'battle_challenges',
-      'battles',
-      'weekly_rankings',
-      'weekly_uploads',
-      'matchups',
-      'spiders'
-    ];
+    let requestedScope: string[] = Array.isArray(payload?.scope) ? payload.scope : [...ALLOWED_TABLES];
+
+    // INPUT VALIDATION: Filter to only allowed tables (whitelist approach)
+    const invalidTables = requestedScope.filter(t => !ALLOWED_TABLES.includes(t as AllowedTable));
+    if (invalidTables.length > 0) {
+      console.warn(`User ${userData.user.id} attempted to reset invalid tables: ${invalidTables.join(', ')}`);
+      return new Response(
+        JSON.stringify({ 
+          error: "Invalid table names in scope",
+          invalid_tables: invalidTables,
+          allowed_tables: ALLOWED_TABLES
+        }), 
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Ensure scope only contains valid tables
+    const scope: AllowedTable[] = requestedScope.filter(
+      (t): t is AllowedTable => ALLOWED_TABLES.includes(t as AllowedTable)
+    );
 
     const results: Record<string, { deleted: number | null; error?: string }> = {};
 
     // Helper to delete all rows from a table and report count
-    const wipe = async (table: string) => {
+    const wipe = async (table: AllowedTable) => {
       const { error, count } = await supabase
         .from(table)
         .delete()
@@ -69,6 +96,8 @@ serve(async (req: Request) => {
     for (const table of scope) {
       await wipe(table);
     }
+
+    console.log(`User ${userData.user.id} reset tables: ${scope.join(', ')}`);
 
     return new Response(
       JSON.stringify({ message: 'Reset completed', results }),
