@@ -18,6 +18,7 @@ import TurnBasedBattle from "./pages/TurnBasedBattle";
 import AboutUs from "./pages/AboutUs";
 import Shop from "./pages/Shop";
 import UserCollection from "./pages/UserCollection";
+import AdminDashboard from "./pages/AdminDashboard";
 import { AuthProvider } from "@/auth/AuthProvider";
 import Layout from "@/components/Layout";
 import NotificationListener from "@/components/NotificationListener";
@@ -53,6 +54,7 @@ const App = () => (
                 <Route path="/roadmap" element={<Roadmap />} />
                 <Route path="/collection/:userId" element={<UserCollection />} />
                 <Route path="/shop" element={<Shop />} />
+                <Route path="/admin" element={<AdminDashboard />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
