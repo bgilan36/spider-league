@@ -86,19 +86,19 @@ const BattleButton: React.FC<BattleButtonProps> = ({
     if (!user) return;
 
     try {
-      // Get the current week's eligible spiders from weekly_uploads table
-      const ptNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-      const dayOfWeek = ptNow.getDay();
+      // Get the current week start from the database function to ensure consistency
+      const { data: weekStartData, error: weekStartError } = await supabase
+        .rpc('get_current_pt_week_start');
       
-      const weekStart = new Date(ptNow);
-      weekStart.setDate(ptNow.getDate() - dayOfWeek);
-      weekStart.setHours(0, 0, 0, 0);
+      if (weekStartError) throw weekStartError;
+      
+      const weekStart = weekStartData as string;
       
       const { data: weeklyUpload, error: weeklyError } = await supabase
         .from('weekly_uploads')
         .select('first_spider_id, second_spider_id, third_spider_id')
         .eq('user_id', user.id)
-        .eq('week_start', weekStart.toISOString().split('T')[0])
+        .eq('week_start', weekStart)
         .maybeSingle();
 
       if (weeklyError) throw weeklyError;
