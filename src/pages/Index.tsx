@@ -194,20 +194,14 @@ const Index = () => {
     if (!user) return;
     setSpidersLoading(true);
     try {
-      // Get the current week's eligible spiders (up to 3 spiders uploaded this week)
-      // Convert current time to PT (Pacific Time)
-      const ptNow = new Date(new Date().toLocaleString('en-US', {
-        timeZone: 'America/Los_Angeles'
-      }));
-      const dayOfWeek = ptNow.getDay(); // 0 = Sunday
-
-      // Calculate Sunday of current week in PT (week starts on Sunday)
-      const weekStart = new Date(ptNow);
-      weekStart.setDate(ptNow.getDate() - dayOfWeek);
-      weekStart.setHours(0, 0, 0, 0);
-
-      // Query spiders uploaded this week directly
-      const weekStartISO = weekStart.toISOString();
+      // Get the current week start from the database function to ensure consistency
+      const { data: weekStartData, error: weekStartError } = await supabase
+        .rpc('get_current_pt_week_start');
+      
+      if (weekStartError) throw weekStartError;
+      
+      // Convert the week start date to ISO timestamp for created_at comparison
+      const weekStartISO = new Date(weekStartData + 'T00:00:00-08:00').toISOString();
       const {
         data: spidersThisWeek,
         error: spidersError
