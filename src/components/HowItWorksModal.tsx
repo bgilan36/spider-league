@@ -34,7 +34,7 @@ export const HowItWorksModal = () => {
               Getting Started
             </h3>
             <div className="space-y-2 text-sm">
-              <p>1. <strong>Starter Spider:</strong> New players automatically receive a starter spider (300 Power Score) ready for battles</p>
+              <p>1. <strong>Starter Spider:</strong> New players automatically receive a starter spider (250 Power Score) ready for battles</p>
               <p>2. <strong>Upload Your Spider:</strong> Take a clear photo of any spider you find</p>
               <p>3. <strong>Weekly Limit:</strong> Each user can upload up to THREE spiders per week that are eligible for battles and challenges</p>
               <p>4. <strong>Week Reset:</strong> New upload window starts every Sunday at 12am PT</p>
