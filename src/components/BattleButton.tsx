@@ -81,6 +81,8 @@ const BattleButton: React.FC<BattleButtonProps> = ({
     return !!data;
   };
 
+  const [allSpidersHaveChallenges, setAllSpidersHaveChallenges] = useState(false);
+
   // Fetch user's eligible spiders for battle (only from current week's uploads)
   const fetchEligibleSpiders = async () => {
     if (!user) return;
@@ -131,12 +133,17 @@ const BattleButton: React.FC<BattleButtonProps> = ({
         // Filter out spiders that already have active challenges
         const eligibleSpiders = (data || []).filter(spider => !spidersWithChallenges.has(spider.id));
         setUserSpiders(eligibleSpiders);
+        
+        // Track if all spiders are in active challenges
+        setAllSpidersHaveChallenges(eligibleSpiders.length === 0 && (data || []).length > 0);
       } else {
         setUserSpiders([]);
+        setAllSpidersHaveChallenges(false);
       }
     } catch (error) {
       console.error('Error fetching eligible spiders:', error);
       setUserSpiders([]);
+      setAllSpidersHaveChallenges(false);
     }
   };
   // Cancel active challenge
@@ -437,7 +444,10 @@ const BattleButton: React.FC<BattleButtonProps> = ({
                   <Sword className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="font-medium mb-2">No Eligible Spiders</h3>
                   <p className="text-sm text-muted-foreground">
-                    You need spiders uploaded this week to create battle challenges
+                    {allSpidersHaveChallenges 
+                      ? "All your spiders this week already have active challenges. Cancel an existing challenge to free up a spider."
+                      : "You need spiders uploaded this week to create battle challenges"
+                    }
                   </p>
                 </div>
             )}
