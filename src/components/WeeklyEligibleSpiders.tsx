@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
-import { Plus, Upload, Sparkles, RefreshCcw, Target, Trophy, Check, Star, BarChart3, Swords, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Plus, Upload, Sparkles, RefreshCcw, Target, Trophy, Check, Star, BarChart3, Swords, TrendingUp, TrendingDown, Minus, Zap, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/auth/AuthProvider';
 import { toast } from 'sonner';
@@ -58,6 +58,8 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
   const [selectedSpiderForStats, setSelectedSpiderForStats] = useState<Spider | null>(null);
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
   const [topOpponents, setTopOpponents] = useState<Spider[]>([]);
+  const [quickBattleLoading, setQuickBattleLoading] = useState(false);
+  const [suggestedMatch, setSuggestedMatch] = useState<{ yourSpider: Spider; opponent: Spider } | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -190,6 +192,80 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
       setTopOpponents((data || []) as Spider[]);
     } catch (error) {
       console.error('Error fetching top opponents:', error);
+    }
+  };
+
+  // Find closest-powered opponent for quick battle
+  const findClosestOpponent = (yourSpiders: Spider[], opponents: Spider[]): { yourSpider: Spider; opponent: Spider } | null => {
+    if (yourSpiders.length === 0 || opponents.length === 0) return null;
+    
+    // Use your best spider for the match
+    const yourBestSpider = yourSpiders.reduce((best, s) => s.power_score > best.power_score ? s : best);
+    
+    // Find opponent with closest power score
+    let closestOpponent = opponents[0];
+    let smallestDiff = Math.abs(yourBestSpider.power_score - opponents[0].power_score);
+    
+    for (const opponent of opponents) {
+      const diff = Math.abs(yourBestSpider.power_score - opponent.power_score);
+      if (diff < smallestDiff) {
+        smallestDiff = diff;
+        closestOpponent = opponent;
+      }
+    }
+    
+    return { yourSpider: yourBestSpider, opponent: closestOpponent };
+  };
+
+  // Handle quick battle - automatically create challenge with closest opponent
+  const handleQuickBattle = async () => {
+    if (!user) return;
+    
+    const filledSpiders = eligibleSpiders.filter((s): s is Spider => s !== null);
+    if (filledSpiders.length === 0 || topOpponents.length === 0) {
+      toast.error('You need eligible spiders to start a quick battle');
+      return;
+    }
+    
+    const match = findClosestOpponent(filledSpiders, topOpponents);
+    if (!match) {
+      toast.error('Could not find a suitable opponent');
+      return;
+    }
+    
+    setSuggestedMatch(match);
+    setQuickBattleLoading(true);
+    
+    try {
+      // Create the challenge
+      const { data, error } = await supabase
+        .from('battle_challenges')
+        .insert({
+          challenger_id: user.id,
+          challenger_spider_id: match.yourSpider.id,
+          accepter_id: match.opponent.owner_id,
+          accepter_spider_id: match.opponent.id,
+          challenge_message: `⚡ Quick Battle! ${match.yourSpider.nickname} challenges ${match.opponent.nickname}!`
+        })
+        .select('id, created_at, expires_at, status')
+        .single();
+
+      if (error) throw error;
+      
+      toast.success(`Challenge sent! ${match.yourSpider.nickname} vs ${match.opponent.nickname}`);
+      
+      // Notify other components
+      window.dispatchEvent(new CustomEvent('challenge:created', { 
+        detail: { id: data.id, challenger_id: user.id, challenger_spider_id: match.yourSpider.id } 
+      }));
+      
+      onSpiderChange?.();
+    } catch (error: any) {
+      console.error('Error creating quick battle:', error);
+      toast.error(error.message || 'Failed to create challenge');
+    } finally {
+      setQuickBattleLoading(false);
+      setTimeout(() => setSuggestedMatch(null), 3000);
     }
   };
 
@@ -645,26 +721,78 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
                     </span>
                   </div>
                   
-                  {/* Quick Opponent Preview */}
-                  <div className="flex items-center justify-between">
-                    <p className="text-[10px] text-muted-foreground">Top challengers:</p>
-                    <div className="flex -space-x-2">
-                      {topOpponents.slice(0, 4).map((opponent) => (
-                        <img
-                          key={opponent.id}
-                          src={opponent.image_url}
-                          alt={opponent.nickname}
-                          title={`${opponent.nickname} (⚡${opponent.power_score})`}
-                          className="w-8 h-8 rounded-full border-2 border-background object-cover"
-                        />
-                      ))}
-                      {topOpponents.length > 4 && (
-                        <div className="w-8 h-8 rounded-full border-2 border-background bg-muted flex items-center justify-center text-[10px] font-medium">
-                          +{topOpponents.length - 4}
-                        </div>
-                      )}
+                  {/* Quick Opponent Preview & Quick Battle Button */}
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <p className="text-[10px] text-muted-foreground shrink-0">Top challengers:</p>
+                      <div className="flex -space-x-2">
+                        {topOpponents.slice(0, 3).map((opponent) => (
+                          <img
+                            key={opponent.id}
+                            src={opponent.image_url}
+                            alt={opponent.nickname}
+                            title={`${opponent.nickname} (⚡${opponent.power_score})`}
+                            className="w-7 h-7 rounded-full border-2 border-background object-cover"
+                          />
+                        ))}
+                      </div>
                     </div>
+                    
+                    {/* Quick Battle Button */}
+                    <Button
+                      size="sm"
+                      className="gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg"
+                      onClick={handleQuickBattle}
+                      disabled={quickBattleLoading}
+                    >
+                      {quickBattleLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Zap className="h-4 w-4" />
+                      )}
+                      <span className="hidden sm:inline">Quick Battle</span>
+                      <span className="sm:hidden">Battle</span>
+                    </Button>
                   </div>
+                  
+                  {/* Suggested Match Preview (shows after clicking Quick Battle) */}
+                  {suggestedMatch && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="flex items-center justify-center gap-3 p-3 bg-gradient-to-r from-primary/10 via-amber-500/10 to-primary/10 rounded-lg border border-primary/20"
+                    >
+                      <div className="flex items-center gap-2">
+                        <img
+                          src={suggestedMatch.yourSpider.image_url}
+                          alt={suggestedMatch.yourSpider.nickname}
+                          className="w-10 h-10 rounded-full border-2 border-primary object-cover"
+                        />
+                        <div className="text-xs">
+                          <p className="font-semibold truncate max-w-[80px]">{suggestedMatch.yourSpider.nickname}</p>
+                          <p className="text-muted-foreground">⚡ {suggestedMatch.yourSpider.power_score}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-1 text-amber-500">
+                        <Swords className="h-5 w-5" />
+                        <span className="text-xs font-bold">VS</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <div className="text-xs text-right">
+                          <p className="font-semibold truncate max-w-[80px]">{suggestedMatch.opponent.nickname}</p>
+                          <p className="text-muted-foreground">⚡ {suggestedMatch.opponent.power_score}</p>
+                        </div>
+                        <img
+                          src={suggestedMatch.opponent.image_url}
+                          alt={suggestedMatch.opponent.nickname}
+                          className="w-10 h-10 rounded-full border-2 border-amber-500 object-cover"
+                        />
+                      </div>
+                    </motion.div>
+                  )}
                 </div>
               );
             })()}
