@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
-import { Plus, Upload, Sparkles, RefreshCcw, Target, Trophy, Check, Star, BarChart3, Swords } from 'lucide-react';
+import { Plus, Upload, Sparkles, RefreshCcw, Target, Trophy, Check, Star, BarChart3, Swords, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/auth/AuthProvider';
 import { toast } from 'sonner';
@@ -57,11 +57,13 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
   const prevFilledSlots = useRef(0);
   const [selectedSpiderForStats, setSelectedSpiderForStats] = useState<Spider | null>(null);
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
+  const [topOpponents, setTopOpponents] = useState<Spider[]>([]);
 
   useEffect(() => {
     if (user) {
       fetchEligibleSpiders();
       fetchAllSpiders();
+      fetchTopOpponents();
     }
   }, [user]);
 
@@ -168,6 +170,26 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
       setAllSpiders((data || []) as Spider[]);
     } catch (error) {
       console.error('Error fetching spiders:', error);
+    }
+  };
+
+  const fetchTopOpponents = async () => {
+    if (!user) return;
+    
+    try {
+      // Fetch top 5 spiders from other users for comparison
+      const { data, error } = await supabase
+        .from('spiders')
+        .select('id, nickname, species, image_url, power_score, rarity, owner_id')
+        .eq('is_approved', true)
+        .neq('owner_id', user.id)
+        .order('power_score', { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+      setTopOpponents((data || []) as Spider[]);
+    } catch (error) {
+      console.error('Error fetching top opponents:', error);
     }
   };
 
@@ -568,8 +590,89 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
           })}
         </div>
 
+        {/* Power Comparison Section */}
+        {filledSlots > 0 && topOpponents.length > 0 && (
+          <div className="mt-4 p-4 bg-gradient-to-r from-primary/5 via-background to-primary/5 rounded-lg border border-primary/10">
+            <div className="flex items-center gap-2 mb-3">
+              <Trophy className="h-4 w-4 text-primary" />
+              <h4 className="font-semibold text-sm">Power Comparison vs Top Opponents</h4>
+            </div>
+            
+            {(() => {
+              const filledSpiders = eligibleSpiders.filter((s): s is Spider => s !== null);
+              const yourTotalPower = filledSpiders.reduce((sum, s) => sum + s.power_score, 0);
+              const yourAvgPower = Math.round(yourTotalPower / filledSpiders.length);
+              const topOpponentAvg = Math.round(topOpponents.reduce((sum, s) => sum + s.power_score, 0) / topOpponents.length);
+              const topOpponentMax = Math.max(...topOpponents.map(s => s.power_score));
+              const yourMaxPower = Math.max(...filledSpiders.map(s => s.power_score));
+              const powerDiff = yourAvgPower - topOpponentAvg;
+              
+              return (
+                <div className="space-y-3">
+                  {/* Your Stats vs Top Opponents */}
+                  <div className="grid grid-cols-2 gap-3 text-center">
+                    <div className="bg-background/50 rounded-lg p-3 border">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Your Roster</p>
+                      <p className="text-xl font-bold text-primary">⚡ {yourTotalPower}</p>
+                      <p className="text-[10px] text-muted-foreground">Avg: {yourAvgPower} | Best: {yourMaxPower}</p>
+                    </div>
+                    <div className="bg-background/50 rounded-lg p-3 border">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Top 5 Opponents</p>
+                      <p className="text-xl font-bold text-amber-500">⚡ {topOpponentAvg}</p>
+                      <p className="text-[10px] text-muted-foreground">Avg Score | Best: {topOpponentMax}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Power Difference Indicator */}
+                  <div className={`flex items-center justify-center gap-2 p-2 rounded-lg ${
+                    powerDiff > 50 ? 'bg-green-500/10 text-green-600' :
+                    powerDiff > 0 ? 'bg-green-500/5 text-green-500' :
+                    powerDiff > -50 ? 'bg-amber-500/10 text-amber-500' :
+                    'bg-red-500/10 text-red-500'
+                  }`}>
+                    {powerDiff > 0 ? (
+                      <TrendingUp className="h-4 w-4" />
+                    ) : powerDiff < 0 ? (
+                      <TrendingDown className="h-4 w-4" />
+                    ) : (
+                      <Minus className="h-4 w-4" />
+                    )}
+                    <span className="text-sm font-medium">
+                      {powerDiff > 50 ? 'Dominant Position! Your roster outpowers the competition.' :
+                       powerDiff > 0 ? `You're ahead by ${powerDiff} avg power.` :
+                       powerDiff > -50 ? `Close matchup! ${Math.abs(powerDiff)} power behind avg.` :
+                       `Underdog status: ${Math.abs(powerDiff)} power behind. Upload stronger spiders!`}
+                    </span>
+                  </div>
+                  
+                  {/* Quick Opponent Preview */}
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] text-muted-foreground">Top challengers:</p>
+                    <div className="flex -space-x-2">
+                      {topOpponents.slice(0, 4).map((opponent) => (
+                        <img
+                          key={opponent.id}
+                          src={opponent.image_url}
+                          alt={opponent.nickname}
+                          title={`${opponent.nickname} (⚡${opponent.power_score})`}
+                          className="w-8 h-8 rounded-full border-2 border-background object-cover"
+                        />
+                      ))}
+                      {topOpponents.length > 4 && (
+                        <div className="w-8 h-8 rounded-full border-2 border-background bg-muted flex items-center justify-center text-[10px] font-medium">
+                          +{topOpponents.length - 4}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
         {/* Info Text */}
-        <div className="text-center text-xs text-muted-foreground bg-muted/30 rounded-lg p-3">
+        <div className="text-center text-xs text-muted-foreground bg-muted/30 rounded-lg p-3 mt-4">
           <p>
             <strong>How it works:</strong> Activate up to 1 spider from your past collection, 
             plus upload up to {activatedSpider ? '2' : '3'} new spiders this week.
