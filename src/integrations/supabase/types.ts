@@ -927,6 +927,44 @@ export type Database = {
           },
         ]
       }
+      weekly_roster: {
+        Row: {
+          created_at: string
+          id: string
+          slot_number: number
+          spider_id: string
+          updated_at: string
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          slot_number?: number
+          spider_id: string
+          updated_at?: string
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          slot_number?: number
+          spider_id?: string
+          updated_at?: string
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_roster_spider_id_fkey"
+            columns: ["spider_id"]
+            isOneToOne: false
+            referencedRelation: "spiders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       weekly_uploads: {
         Row: {
           created_at: string
