@@ -33,6 +33,7 @@ import { BattleRecapBanner } from "@/components/BattleRecapBanner";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { useIsMobile } from "@/hooks/use-mobile";
+import WeeklyRosterManager from "@/components/WeeklyRosterManager";
 interface Spider {
   id: string;
   nickname: string;
@@ -695,6 +696,11 @@ const Index = () => {
       <main className="container mx-auto px-3 sm:px-6 py-3 sm:py-6">
         {/* Online Users Bar */}
         <OnlineUsersBar />
+        
+        {/* Weekly Active Spider - Easy reactivation from home page */}
+        <div className="mb-4">
+          <WeeklyRosterManager compact onRosterChange={fetchUserSpiders} />
+        </div>
         
         {/* Battle Recap Banner - Prominently displayed at the top */}
         <BattleRecapBanner />
