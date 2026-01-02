@@ -1101,7 +1101,7 @@ export type Database = {
           loser_user_id: string
           winner_user_id: string
         }
-        Returns: undefined
+        Returns: Json
       }
       sanitize_plain_text: { Args: { t: string }; Returns: string }
       transfer_spider_ownership: {

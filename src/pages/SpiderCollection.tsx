@@ -15,6 +15,7 @@ import BattleButton from "@/components/BattleButton";
 import BattleDetailsModal from "@/components/BattleDetailsModal";
 import SpiderDetailsModal from "@/components/SpiderDetailsModal";
 import ClickableUsername from "@/components/ClickableUsername";
+import WeeklyRosterManager from "@/components/WeeklyRosterManager";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -515,6 +516,11 @@ const SpiderCollection = () => {
           </Card>
         ) : (
           <>
+            {/* Weekly Roster Manager */}
+            <div className="mb-8">
+              <WeeklyRosterManager onRosterChange={fetchSpiders} />
+            </div>
+
             {/* Eligible Spiders Section */}
             <div className="mb-12">
               <div className="mb-6">
