@@ -32,6 +32,18 @@ const TurnBasedBattle = () => {
   const [showOutcomeReveal, setShowOutcomeReveal] = useState(false);
   const [hasConfirmedPresence, setHasConfirmedPresence] = useState(false);
   const [revealedTurnsCount, setRevealedTurnsCount] = useState(0);
+  const [statImprovements, setStatImprovements] = useState<Record<string, number> | null>(null);
+
+  // Extract stat improvements from the last turn's result
+  useEffect(() => {
+    if (turns.length > 0) {
+      const lastTurn = turns[turns.length - 1];
+      const result = lastTurn?.result_payload as any;
+      if (result?.stat_improvements && Object.keys(result.stat_improvements).length > 0) {
+        setStatImprovements(result.stat_improvements);
+      }
+    }
+  }, [turns]);
 
   // Check if coming from query param (direct notification link)
   useEffect(() => {
@@ -177,6 +189,8 @@ const TurnBasedBattle = () => {
           winnerOwnerName={winnerOwnerName}
           loserOwnerName={loserOwnerName}
           onComplete={handleOutcomeComplete}
+          statImprovements={statImprovements || undefined}
+          isCurrentUserWinner={iWon}
         />
       )}
       <Helmet>

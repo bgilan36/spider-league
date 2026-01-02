@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Trophy, Crown, Sparkles, Share2, X } from 'lucide-react';
+import { Trophy, Crown, Sparkles, Share2, X, TrendingUp, Zap, Shield, Target, Droplet, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Spider {
@@ -14,13 +14,42 @@ interface Spider {
   power_score: number;
 }
 
+interface StatImprovements {
+  hit_points?: number;
+  damage?: number;
+  speed?: number;
+  defense?: number;
+  venom?: number;
+  webcraft?: number;
+}
+
 interface BattleOutcomeRevealProps {
   winner: Spider;
   loser: Spider;
   winnerOwnerName: string;
   loserOwnerName: string;
   onComplete: () => void;
+  statImprovements?: StatImprovements;
+  isCurrentUserWinner?: boolean;
 }
+
+const statIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+  hit_points: Trophy,
+  damage: Target,
+  speed: Zap,
+  defense: Shield,
+  venom: Droplet,
+  webcraft: Globe,
+};
+
+const statLabels: Record<string, string> = {
+  hit_points: 'Hit Points',
+  damage: 'Damage',
+  speed: 'Speed',
+  defense: 'Defense',
+  venom: 'Venom',
+  webcraft: 'Webcraft',
+};
 
 const BattleOutcomeReveal: React.FC<BattleOutcomeRevealProps> = ({
   winner,
@@ -28,7 +57,10 @@ const BattleOutcomeReveal: React.FC<BattleOutcomeRevealProps> = ({
   winnerOwnerName,
   loserOwnerName,
   onComplete,
+  statImprovements,
+  isCurrentUserWinner,
 }) => {
+  const hasImprovements = statImprovements && Object.keys(statImprovements).length > 0;
   const handleShare = async () => {
     const shareText = `🕷️ ${winner.nickname} just won an epic battle in Spider League! 🏆\n\nJoin the action and battle your own spiders at https://spiderleague.app/`;
     const shareUrl = 'https://spiderleague.app/';
@@ -235,11 +267,54 @@ const BattleOutcomeReveal: React.FC<BattleOutcomeRevealProps> = ({
               {winner.nickname} prevails!
             </motion.div>
 
+            {/* Stat Improvements - Only show if current user won */}
+            {hasImprovements && isCurrentUserWinner && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 1.2, type: 'spring' }}
+                className="max-w-md mx-auto"
+              >
+                <Card className="ring-2 ring-emerald-500 bg-emerald-500/10 border-emerald-500/30">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-center gap-2 mb-3">
+                      <TrendingUp className="h-5 w-5 text-emerald-500" />
+                      <h4 className="font-bold text-emerald-500">Stats Improved!</h4>
+                    </div>
+                    <p className="text-xs text-muted-foreground text-center mb-3">
+                      {winner.nickname} gained experience from this victory
+                    </p>
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      {Object.entries(statImprovements).map(([stat, value]) => {
+                        const Icon = statIcons[stat];
+                        return (
+                          <motion.div
+                            key={stat}
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: 1.4, type: 'spring' }}
+                          >
+                            <Badge 
+                              variant="outline" 
+                              className="bg-emerald-500/20 border-emerald-500 text-emerald-400 gap-1"
+                            >
+                              {Icon && <Icon className="h-3 w-3" />}
+                              {statLabels[stat]}: +{value}
+                            </Badge>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
             {/* Defeated spider (grayed out) */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.5 }}
-              transition={{ delay: 1.3 }}
+              transition={{ delay: hasImprovements && isCurrentUserWinner ? 1.6 : 1.3 }}
               className="text-sm text-muted-foreground"
             >
               <p className="mb-2">Defeated:</p>
