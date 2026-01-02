@@ -33,7 +33,7 @@ import { BattleRecapBanner } from "@/components/BattleRecapBanner";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { useIsMobile } from "@/hooks/use-mobile";
-import WeeklyRosterManager from "@/components/WeeklyRosterManager";
+import WeeklyEligibleSpiders from "@/components/WeeklyEligibleSpiders";
 interface Spider {
   id: string;
   nickname: string;
@@ -697,65 +697,13 @@ const Index = () => {
         {/* Online Users Bar */}
         <OnlineUsersBar />
         
-        {/* Weekly Active Spider - Easy reactivation from home page */}
-        <div className="mb-4">
-          <WeeklyRosterManager compact onRosterChange={fetchUserSpiders} />
-        </div>
-        
-        {/* Battle Recap Banner - Prominently displayed at the top */}
-        <BattleRecapBanner />
-        
-        {/* Quick Actions Section */}
+        {/* Weekly Eligible Spiders - 3 slots with activation + uploads */}
         <div className="mb-6 sm:mb-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Upload New Spider Card */}
-            <Card className="border-2 border-dashed border-primary/50 bg-gradient-to-br from-primary/5 to-primary/10 hover:border-primary hover:shadow-xl transition-all duration-300 cursor-pointer" onClick={handleUploadClick}>
-              <CardContent className="p-6 flex flex-col items-center justify-center text-center min-h-[200px]">
-                <div className="inline-block cursor-pointer hover:scale-110 transition-transform duration-200 mb-4">
-                  <Upload className="h-12 w-12 text-primary mx-auto opacity-90" />
-                </div>
-                <h4 className="font-bold text-lg mb-2">Upload New Spider</h4>
-                <p className="text-muted-foreground mb-4 text-sm">
-                  Add spiders to your collection
-                </p>
-                <Button className="gradient-button pulse-glow" size="default" onClick={e => {
-                  e.stopPropagation();
-                  handleUploadClick();
-                }}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Upload Spider
-                </Button>
-              </CardContent>
-            </Card>
-            
-            {/* View Collection Card */}
-            <Card className="hover:shadow-lg transition-all cursor-pointer" onClick={() => navigate('/collection')}>
-              <CardContent className="p-6 flex flex-col items-center justify-center text-center min-h-[200px]">
-                <div className="inline-block cursor-pointer hover:scale-110 transition-transform duration-200 mb-4">
-                  <img src="/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png" alt="Spider" className="h-12 w-12 object-contain opacity-90" />
-                </div>
-                <h4 className="font-bold text-lg mb-2">Your Collection</h4>
-                <p className="text-muted-foreground mb-4 text-sm">
-                  View all your spiders
-                </p>
-                <div className="flex gap-2">
-                  <Button asChild variant="outline" size="default">
-                    <Link to="/collection" className="flex items-center gap-2">
-                      <Trophy className="h-4 w-4" />
-                      View Collection
-                    </Link>
-                  </Button>
-                  <Button asChild variant="outline" size="default">
-                    <Link to="/battle-history" className="flex items-center gap-2">
-                      <Sword className="h-4 w-4" />
-                      Battles
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <WeeklyEligibleSpiders onSpiderChange={fetchUserSpiders} />
         </div>
+        
+        {/* Battle Recap Banner - Prominently displayed */}
+        <BattleRecapBanner />
 
         {/* Battle Recaps for Challengers */}
         <BattleRecapAlert />
