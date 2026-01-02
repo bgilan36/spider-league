@@ -1082,6 +1082,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      improve_spider_after_victory: {
+        Args: { winner_spider_id: string }
+        Returns: Json
+      }
       increment_weekly_upload: {
         Args: { spider_id_param: string; user_id_param: string }
         Returns: undefined
