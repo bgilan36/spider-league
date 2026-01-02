@@ -268,9 +268,10 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
             const isEmpty = spider === null;
             
             if (isEmpty) {
-              // Empty slot
-              const canActivate = index === 0 && !activatedSpider && allSpiders.length > 0;
-              const canUpload = isUploadSlot || (index === 0 && allSpiders.length === 0);
+              // Empty slot - show options based on whether user has already activated a past spider
+              const hasActivatedSpider = activatedSpider !== null;
+              const canShowActivateOption = !hasActivatedSpider && allSpiders.length > 0;
+              const uploadsRemaining = maxUploads - uploadedSpiders.length;
               
               return (
                 <Card 
@@ -278,79 +279,99 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
                   className="border-2 border-dashed border-muted-foreground/30 bg-muted/20 hover:border-primary/50 hover:bg-primary/5 transition-all"
                 >
                   <CardContent className="p-4 flex flex-col items-center justify-center min-h-[180px] text-center">
-                    {canActivate ? (
-                      <>
-                        <div className="p-3 rounded-full bg-primary/10 mb-3">
-                          <RefreshCcw className="h-6 w-6 text-primary" />
+                    {canShowActivateOption ? (
+                      // Show BOTH options: Upload OR Activate
+                      <div className="flex flex-col items-center w-full space-y-3">
+                        <div className="p-2 rounded-full bg-primary/10">
+                          <Plus className="h-5 w-5 text-primary" />
                         </div>
-                        <p className="text-sm font-medium text-muted-foreground mb-1">Activate Past Spider</p>
-                        <p className="text-xs text-muted-foreground/70 mb-3">Choose 1 from collection</p>
-                        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" size="sm" className="gap-1">
-                              <Plus className="h-4 w-4" />
-                              Activate
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-md">
-                            <DialogHeader>
-                              <DialogTitle className="flex items-center gap-2">
-                                <Sparkles className="h-5 w-5 text-primary" />
+                        <p className="text-sm font-medium text-muted-foreground">Fill This Slot</p>
+                        
+                        <div className="flex flex-col gap-2 w-full">
+                          {/* Upload Option */}
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="gap-2 w-full"
+                            onClick={() => navigate('/upload')}
+                          >
+                            <Upload className="h-4 w-4" />
+                            Upload New Spider
+                          </Button>
+                          
+                          {/* Activate Option */}
+                          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                            <DialogTrigger asChild>
+                              <Button variant="ghost" size="sm" className="gap-2 w-full text-muted-foreground hover:text-foreground">
+                                <RefreshCcw className="h-4 w-4" />
                                 Activate Past Spider
-                              </DialogTitle>
-                            </DialogHeader>
-                            <p className="text-sm text-muted-foreground mb-4">
-                              Choose 1 spider from your collection (uploaded before this week) to be eligible for battles.
-                            </p>
-                            <ScrollArea className="max-h-[60vh]">
-                              <div className="space-y-2 pr-4">
-                                {allSpiders.length === 0 ? (
-                                  <p className="text-center text-muted-foreground py-8">
-                                    No past spiders available. Upload some spiders first!
-                                  </p>
-                                ) : (
-                                  allSpiders.map((s) => (
-                                    <Card
-                                      key={s.id}
-                                      className="cursor-pointer hover:ring-2 hover:ring-primary transition-all"
-                                      onClick={() => handleActivateSpider(s.id)}
-                                    >
-                                      <CardContent className="p-3">
-                                        <div className="flex items-center gap-3">
-                                          <img
-                                            src={s.image_url}
-                                            alt={s.nickname}
-                                            className="w-12 h-12 rounded object-cover"
-                                          />
-                                          <div className="flex-1 min-w-0">
-                                            <p className="font-medium truncate">{s.nickname}</p>
-                                            <p className="text-xs text-muted-foreground truncate">{s.species}</p>
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-md">
+                              <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2">
+                                  <Sparkles className="h-5 w-5 text-primary" />
+                                  Activate Past Spider
+                                </DialogTitle>
+                              </DialogHeader>
+                              <p className="text-sm text-muted-foreground mb-4">
+                                Choose 1 spider from your collection (uploaded before this week) to be eligible for battles.
+                              </p>
+                              <ScrollArea className="max-h-[60vh]">
+                                <div className="space-y-2 pr-4">
+                                  {allSpiders.length === 0 ? (
+                                    <p className="text-center text-muted-foreground py-8">
+                                      No past spiders available. Upload some spiders first!
+                                    </p>
+                                  ) : (
+                                    allSpiders.map((s) => (
+                                      <Card
+                                        key={s.id}
+                                        className="cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+                                        onClick={() => handleActivateSpider(s.id)}
+                                      >
+                                        <CardContent className="p-3">
+                                          <div className="flex items-center gap-3">
+                                            <img
+                                              src={s.image_url}
+                                              alt={s.nickname}
+                                              className="w-12 h-12 rounded object-cover"
+                                            />
+                                            <div className="flex-1 min-w-0">
+                                              <p className="font-medium truncate">{s.nickname}</p>
+                                              <p className="text-xs text-muted-foreground truncate">{s.species}</p>
+                                            </div>
+                                            <div className="text-right">
+                                              <Badge className={`${rarityColors[s.rarity]} text-white text-[10px]`}>
+                                                {s.rarity}
+                                              </Badge>
+                                              <p className="text-xs text-muted-foreground mt-1">⚡ {s.power_score}</p>
+                                            </div>
                                           </div>
-                                          <div className="text-right">
-                                            <Badge className={`${rarityColors[s.rarity]} text-white text-[10px]`}>
-                                              {s.rarity}
-                                            </Badge>
-                                            <p className="text-xs text-muted-foreground mt-1">⚡ {s.power_score}</p>
-                                          </div>
-                                        </div>
-                                      </CardContent>
-                                    </Card>
-                                  ))
-                                )}
-                              </div>
-                            </ScrollArea>
-                          </DialogContent>
-                        </Dialog>
-                      </>
+                                        </CardContent>
+                                      </Card>
+                                    ))
+                                  )}
+                                </div>
+                              </ScrollArea>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
+                        
+                        <p className="text-[10px] text-muted-foreground/60">
+                          {uploadsRemaining} upload{uploadsRemaining !== 1 ? 's' : ''} remaining
+                        </p>
+                      </div>
                     ) : (
+                      // Only show Upload option (past spider already activated OR no past spiders available)
                       <>
                         <div className="p-3 rounded-full bg-primary/10 mb-3">
                           <Upload className="h-6 w-6 text-primary" />
                         </div>
                         <p className="text-sm font-medium text-muted-foreground mb-1">Upload New Spider</p>
                         <p className="text-xs text-muted-foreground/70 mb-3">
-                          {maxUploads - uploadedSpiders.length > 0 
-                            ? `${maxUploads - uploadedSpiders.length} upload${maxUploads - uploadedSpiders.length > 1 ? 's' : ''} remaining`
+                          {uploadsRemaining > 0 
+                            ? `${uploadsRemaining} upload${uploadsRemaining > 1 ? 's' : ''} remaining`
                             : 'Limit reached'}
                         </p>
                         <Button 
@@ -358,6 +379,7 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
                           size="sm" 
                           className="gap-1"
                           onClick={() => navigate('/upload')}
+                          disabled={uploadsRemaining <= 0}
                         >
                           <Plus className="h-4 w-4" />
                           Upload
