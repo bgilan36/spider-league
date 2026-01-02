@@ -5,12 +5,14 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
-import { Plus, Upload, Sparkles, RefreshCcw, Target, Trophy, Check, Star } from 'lucide-react';
+import { Plus, Upload, Sparkles, RefreshCcw, Target, Trophy, Check, Star, BarChart3, Swords } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/auth/AuthProvider';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import SpiderDetailsModal from '@/components/SpiderDetailsModal';
+import BattleButton from '@/components/BattleButton';
 
 interface Spider {
   id: string;
@@ -21,6 +23,14 @@ interface Spider {
   rarity: 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY';
   created_at?: string;
   source?: 'activated' | 'uploaded';
+  hit_points?: number;
+  damage?: number;
+  speed?: number;
+  defense?: number;
+  venom?: number;
+  webcraft?: number;
+  is_approved?: boolean;
+  owner_id?: string;
 }
 
 interface WeeklyEligibleSpidersProps {
@@ -45,6 +55,8 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const prevFilledSlots = useRef(0);
+  const [selectedSpiderForStats, setSelectedSpiderForStats] = useState<Spider | null>(null);
+  const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -82,7 +94,15 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
             image_url,
             power_score,
             rarity,
-            created_at
+            created_at,
+            hit_points,
+            damage,
+            speed,
+            defense,
+            venom,
+            webcraft,
+            is_approved,
+            owner_id
           )
         `)
         .eq('user_id', user.id)
@@ -105,7 +125,7 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
       // Fetch spiders uploaded this week
       const { data: uploadedData, error: uploadedError } = await supabase
         .from('spiders')
-        .select('id, nickname, species, image_url, power_score, rarity, created_at')
+        .select('id, nickname, species, image_url, power_score, rarity, created_at, hit_points, damage, speed, defense, venom, webcraft, is_approved, owner_id')
         .eq('owner_id', user.id)
         .eq('is_approved', true)
         .gte('created_at', weekStartISO)
@@ -138,7 +158,7 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
       // Fetch spiders from BEFORE this week (for activation)
       const { data, error } = await supabase
         .from('spiders')
-        .select('id, nickname, species, image_url, power_score, rarity, created_at')
+        .select('id, nickname, species, image_url, power_score, rarity, created_at, hit_points, damage, speed, defense, venom, webcraft, is_approved, owner_id')
         .eq('owner_id', user.id)
         .eq('is_approved', true)
         .lt('created_at', weekStartISO)
@@ -472,12 +492,25 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
                     : 'border-green-500/50 bg-green-500/5'
                 }`}
               >
-                <div className="aspect-square relative">
+                <div 
+                  className="aspect-square relative cursor-pointer group"
+                  onClick={() => {
+                    setSelectedSpiderForStats(spider);
+                    setIsStatsModalOpen(true);
+                  }}
+                >
                   <img
                     src={spider.image_url}
                     alt={spider.nickname}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition-transform group-hover:scale-105"
                   />
+                  {/* Hover overlay with stats hint */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                    <div className="flex items-center gap-1 text-white text-sm font-medium">
+                      <BarChart3 className="h-4 w-4" />
+                      View Stats
+                    </div>
+                  </div>
                   <Badge 
                     className={`absolute top-2 right-2 ${rarityColors[spider.rarity]} text-white text-[10px]`}
                   >
@@ -496,17 +529,39 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
                 <div className="p-3 text-center">
                   <p className="font-bold text-sm truncate">{spider.nickname}</p>
                   <p className="text-xs text-muted-foreground truncate mb-1">{spider.species}</p>
-                  <p className="text-xs">⚡ {spider.power_score}</p>
-                  {spider.source === 'activated' && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="mt-2 text-xs h-7 text-muted-foreground hover:text-destructive"
-                      onClick={handleDeactivateSpider}
-                    >
-                      Change
-                    </Button>
-                  )}
+                  <p className="text-xs mb-2">⚡ {spider.power_score}</p>
+                  
+                  {/* Action buttons */}
+                  <div className="flex gap-1 justify-center">
+                    <BattleButton 
+                      targetSpider={{
+                        ...spider,
+                        hit_points: spider.hit_points || 0,
+                        damage: spider.damage || 0,
+                        speed: spider.speed || 0,
+                        defense: spider.defense || 0,
+                        venom: spider.venom || 0,
+                        webcraft: spider.webcraft || 0,
+                        is_approved: spider.is_approved ?? true,
+                      }}
+                      size="sm"
+                      variant="default"
+                      className="flex-1 h-7 text-xs gap-1"
+                    />
+                    {spider.source === 'activated' && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-7 text-xs text-muted-foreground hover:text-destructive px-2"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeactivateSpider();
+                        }}
+                      >
+                        Change
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </Card>
             );
@@ -524,6 +579,25 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
           </p>
         </div>
       </CardContent>
+
+      {/* Spider Stats Modal */}
+      <SpiderDetailsModal
+        spider={selectedSpiderForStats ? {
+          ...selectedSpiderForStats,
+          hit_points: selectedSpiderForStats.hit_points || 0,
+          damage: selectedSpiderForStats.damage || 0,
+          speed: selectedSpiderForStats.speed || 0,
+          defense: selectedSpiderForStats.defense || 0,
+          venom: selectedSpiderForStats.venom || 0,
+          webcraft: selectedSpiderForStats.webcraft || 0,
+          is_approved: selectedSpiderForStats.is_approved ?? true,
+        } : null}
+        isOpen={isStatsModalOpen}
+        onClose={() => {
+          setIsStatsModalOpen(false);
+          setSelectedSpiderForStats(null);
+        }}
+      />
     </Card>
   );
 };
