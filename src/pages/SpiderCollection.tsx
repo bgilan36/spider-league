@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/components/ui/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trophy, Zap, Shield, Target, Droplet, Globe, ArrowUpDown, Swords } from "lucide-react";
+import { Plus, Trophy, Zap, Shield, Target, Droplet, Globe, ArrowUpDown, Swords, RefreshCcw, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
 import PowerScoreArc from "@/components/PowerScoreArc";
@@ -36,6 +36,7 @@ interface Spider {
   owner_id?: string;
   created_at: string;
   is_eligible?: boolean;
+  eligibility_type?: 'activated' | 'uploaded';
   battle_won_from?: {
     battle_id: string;
     defeated_user: string;
@@ -145,14 +146,31 @@ const SpiderCollection = () => {
       const weekStart = new Date(ptNow);
       weekStart.setDate(ptNow.getDate() - dayOfWeek);
       weekStart.setHours(0, 0, 0, 0);
+      const weekStartStr = weekStart.toISOString().split('T')[0];
       const weekStartISO = weekStart.toISOString();
 
-      // Identify spiders uploaded this week (first 3 are eligible)
-      const eligibleSpiderIds = new Set(
-        (userSpiders || [])
-          .filter(spider => spider.created_at && new Date(spider.created_at) >= weekStart)
-          .slice(0, 3)
-          .map(spider => spider.id)
+      // Fetch activated spider from weekly_roster
+      const { data: rosterData, error: rosterError } = await (supabase as any)
+        .from('weekly_roster')
+        .select('spider_id')
+        .eq('user_id', user.id)
+        .eq('week_start', weekStartStr)
+        .maybeSingle();
+
+      if (rosterError && rosterError.code !== 'PGRST116') {
+        console.error('Error fetching roster:', rosterError);
+      }
+
+      const activatedSpiderId = rosterData?.spider_id || null;
+
+      // Identify spiders uploaded this week (up to 3, or 2 if one is activated)
+      const uploadedThisWeek = (userSpiders || [])
+        .filter(spider => spider.created_at && new Date(spider.created_at) >= weekStart)
+        .filter(spider => spider.id !== activatedSpiderId); // Exclude activated spider from upload count
+
+      const maxUploadsEligible = activatedSpiderId ? 2 : 3;
+      const eligibleUploadedIds = new Set(
+        uploadedThisWeek.slice(0, maxUploadsEligible).map(spider => spider.id)
       );
 
       // Fetch battle information for spiders won through battles
@@ -179,13 +197,23 @@ const SpiderCollection = () => {
       // Combine spider data with battle attribution and eligibility status
       const spidersWithAttribution = (userSpiders || []).map(spider => {
         const battleInfo = battleChallenges?.find(bc => bc.loser_spider_id === spider.id);
-        const isEligible = eligibleSpiderIds.has(spider.id);
+        const isActivated = spider.id === activatedSpiderId;
+        const isUploadedEligible = eligibleUploadedIds.has(spider.id);
+        const isEligible = isActivated || isUploadedEligible;
+        
+        let eligibilityType: 'activated' | 'uploaded' | undefined;
+        if (isActivated) {
+          eligibilityType = 'activated';
+        } else if (isUploadedEligible) {
+          eligibilityType = 'uploaded';
+        }
         
         if (battleInfo) {
           const challengerProfile = challengerProfiles?.find(p => p.id === battleInfo.challenger_id);
           return {
             ...spider,
             is_eligible: isEligible,
+            eligibility_type: eligibilityType,
             battle_won_from: {
               battle_id: battleInfo.battle_id,
               defeated_user: battleInfo.challenger_id,
@@ -195,7 +223,8 @@ const SpiderCollection = () => {
         }
         return {
           ...spider,
-          is_eligible: isEligible
+          is_eligible: isEligible,
+          eligibility_type: eligibilityType
         };
       });
 
@@ -330,11 +359,20 @@ const SpiderCollection = () => {
         >
           {spider.rarity}
         </Badge>
-        {spider.is_eligible && !isFallenHero && (
+        {spider.is_eligible && !isFallenHero && spider.eligibility_type === 'activated' && (
           <Badge 
-            className="absolute top-2 left-2 bg-green-600 text-white"
+            className="absolute top-2 left-2 bg-amber-600 text-white gap-1"
           >
-            Eligible
+            <RefreshCcw className="h-3 w-3" />
+            Activated
+          </Badge>
+        )}
+        {spider.is_eligible && !isFallenHero && spider.eligibility_type === 'uploaded' && (
+          <Badge 
+            className="absolute top-2 left-2 bg-green-600 text-white gap-1"
+          >
+            <Upload className="h-3 w-3" />
+            Uploaded
           </Badge>
         )}
       </div>
