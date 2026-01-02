@@ -705,112 +705,56 @@ const Index = () => {
         {/* Battle Recap Banner - Prominently displayed at the top */}
         <BattleRecapBanner />
         
-        {/* My Spider Squad Section */}
+        {/* Quick Actions Section */}
         <div className="mb-6 sm:mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-3">
-            <div>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-                <h2 className="text-lg sm:text-xl md:text-2xl font-bold">This Week's Eligible Spiders</h2>
-                {userGlobalRank && <Badge variant="secondary" className="text-xs sm:text-sm w-fit">
-                    Global Rank #{userGlobalRank}
-                  </Badge>}
-                <Badge variant="outline" className="text-xs sm:text-sm w-fit">
-                  {Math.min(weeklyUploadCount, 3)}/3 Uploaded
-                </Badge>
-              </div>
-              <p className="text-xs sm:text-sm text-muted-foreground">You can upload up to 3 eligible spiders each week</p>
-            </div>
-            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
-              <Link to="/collection" className="flex items-center gap-2">
-                <img src="/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png" alt="Spider" className="h-4 w-4 object-contain" />
-                View Full Collection
-              </Link>
-            </Button>
-          </div>
-
-          {spidersLoading ? <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin" />
-            </div> : userSpiders.length === 0 ? <Card className="border-2 border-dashed cursor-pointer hover:border-primary/70 transition-all" onClick={() => fileInputRef.current?.click()}>
-              <CardContent className="pt-6 text-center py-16">
-                <Upload className="h-20 w-20 text-primary mx-auto mb-6 opacity-80" />
-                <h3 className="text-2xl font-bold mb-3">No Eligible Spiders This Week</h3>
-                <p className="text-muted-foreground mb-8 text-lg max-w-md mx-auto">
-                  Upload up to 3 spiders this week to make them eligible for battles and rankings!
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Upload New Spider Card */}
+            <Card className="border-2 border-dashed border-primary/50 bg-gradient-to-br from-primary/5 to-primary/10 hover:border-primary hover:shadow-xl transition-all duration-300 cursor-pointer" onClick={handleUploadClick}>
+              <CardContent className="p-6 flex flex-col items-center justify-center text-center min-h-[200px]">
+                <div className="inline-block cursor-pointer hover:scale-110 transition-transform duration-200 mb-4">
+                  <Upload className="h-12 w-12 text-primary mx-auto opacity-90" />
+                </div>
+                <h4 className="font-bold text-lg mb-2">Upload New Spider</h4>
+                <p className="text-muted-foreground mb-4 text-sm">
+                  Add spiders to your collection
                 </p>
-                <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <Button asChild className="gradient-button relative z-10 pulse-glow" size="lg" onClick={e => e.stopPropagation()}>
-                    <Link to="/upload" className="flex items-center gap-2">
-                      <Plus className="h-5 w-5" />
-                      Upload Spider Now
+                <Button className="gradient-button pulse-glow" size="default" onClick={e => {
+                  e.stopPropagation();
+                  handleUploadClick();
+                }}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Upload Spider
+                </Button>
+              </CardContent>
+            </Card>
+            
+            {/* View Collection Card */}
+            <Card className="hover:shadow-lg transition-all cursor-pointer" onClick={() => navigate('/collection')}>
+              <CardContent className="p-6 flex flex-col items-center justify-center text-center min-h-[200px]">
+                <div className="inline-block cursor-pointer hover:scale-110 transition-transform duration-200 mb-4">
+                  <img src="/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png" alt="Spider" className="h-12 w-12 object-contain opacity-90" />
+                </div>
+                <h4 className="font-bold text-lg mb-2">Your Collection</h4>
+                <p className="text-muted-foreground mb-4 text-sm">
+                  View all your spiders
+                </p>
+                <div className="flex gap-2">
+                  <Button asChild variant="outline" size="default">
+                    <Link to="/collection" className="flex items-center gap-2">
+                      <Trophy className="h-4 w-4" />
+                      View Collection
                     </Link>
                   </Button>
-                  <Button asChild variant="outline" size="lg" onClick={e => e.stopPropagation()}>
-                    <Link to="/collection" className="flex items-center gap-2">
-                      <Trophy className="h-5 w-5" />
-                      View Full Collection
+                  <Button asChild variant="outline" size="default">
+                    <Link to="/battle-history" className="flex items-center gap-2">
+                      <Sword className="h-4 w-4" />
+                      Battles
                     </Link>
                   </Button>
                 </div>
               </CardContent>
-            </Card> : <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* Upload CTA Card - shown when user can upload more spiders */}
-                {weeklyUploadCount < 3 && <Card className="border-2 border-dashed border-primary/50 bg-gradient-to-br from-primary/5 to-primary/10 hover:border-primary hover:shadow-xl transition-all duration-300 cursor-pointer" onClick={handleUploadClick}>
-                    <CardContent className="p-6 flex flex-col items-center justify-center h-full min-h-[400px] text-center">
-                      <div className="inline-block cursor-pointer hover:scale-110 transition-transform duration-200 mb-4">
-                        <Upload className="h-16 w-16 text-primary mx-auto opacity-90" />
-                      </div>
-                      <h4 className="font-bold text-xl mb-2">
-                        {weeklyUploadCount === 0 ? 'Upload Your First Spider' : weeklyUploadCount === 1 ? 'Upload 2 More Spiders' : 'Upload 1 More Spider'}
-                      </h4>
-                      <p className="text-muted-foreground mb-4 text-sm">
-                        {3 - weeklyUploadCount} {3 - weeklyUploadCount === 1 ? 'upload' : 'uploads'} remaining this week
-                      </p>
-                      <Button className="gradient-button pulse-glow w-full" size="lg" onClick={e => {
-                  e.stopPropagation();
-                  handleUploadClick();
-                }}>
-                        <Plus className="h-5 w-5" />
-                        Upload Spider Now
-                      </Button>
-                    </CardContent>
-                  </Card>}
-                
-                {userSpiders.map(spider => <Card key={spider.id} className="hover:shadow-lg transition-shadow">
-                    <CardContent className="p-6">
-                      <div className="cursor-pointer hover:scale-105 transition-transform" onClick={() => handleSpiderClick(spider)}>
-                        <div className="aspect-square relative mb-4 rounded-lg overflow-hidden">
-                          <img src={spider.image_url} alt={spider.nickname} className="w-full h-full object-cover" />
-                          <Badge className={`absolute top-2 right-2 ${rarityColors[spider.rarity]} text-white`}>
-                            {spider.rarity}
-                          </Badge>
-                        </div>
-                        <div className="text-center space-y-3">
-                          <div>
-                            <h4 className="font-bold text-xl mb-1">{spider.nickname}</h4>
-                            <p className="text-muted-foreground">{spider.species}</p>
-                          </div>
-                          <div className="flex justify-center">
-                            <PowerScoreArc score={spider.power_score} size="medium" />
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Battle Button */}
-                      {spider.is_approved && <BattleButton targetSpider={spider} size="default" variant="default" context="collection" className="w-full" />}
-                    </CardContent>
-                  </Card>)}
-              </div>
-              
-              <div className="flex justify-center">
-                <Button asChild variant="outline">
-                  <Link to="/battle-history" className="flex items-center gap-2">
-                    <Sword className="h-4 w-4" />
-                    Battle History
-                  </Link>
-                </Button>
-              </div>
-            </div>}
+            </Card>
+          </div>
         </div>
 
         {/* Battle Recaps for Challengers */}
