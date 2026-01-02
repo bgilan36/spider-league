@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
-import { Plus, Upload, Sparkles, RefreshCcw, Target, Trophy, Check } from 'lucide-react';
+import { Plus, Upload, Sparkles, RefreshCcw, Target, Trophy, Check, Star } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/auth/AuthProvider';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Spider {
   id: string;
@@ -42,6 +43,8 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
   const [allSpiders, setAllSpiders] = useState<Spider[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const prevFilledSlots = useRef(0);
 
   useEffect(() => {
     if (user) {
@@ -230,15 +233,77 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
   const filledSlots = eligibleSpiders.filter(s => s !== null).length;
   const progressPercent = (filledSlots / 3) * 100;
 
+  // Trigger celebration when roster becomes complete
+  useEffect(() => {
+    if (filledSlots === 3 && prevFilledSlots.current < 3 && prevFilledSlots.current > 0) {
+      setShowCelebration(true);
+      const timer = setTimeout(() => setShowCelebration(false), 3000);
+      return () => clearTimeout(timer);
+    }
+    prevFilledSlots.current = filledSlots;
+  }, [filledSlots]);
+
+  // Generate confetti particles
+  const confettiParticles = Array.from({ length: 20 }, (_, i) => ({
+    id: i,
+    x: Math.random() * 100,
+    delay: Math.random() * 0.5,
+    color: ['#22c55e', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899'][Math.floor(Math.random() * 5)],
+  }));
+
   return (
-    <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-background to-primary/5">
-      <CardContent className="p-4 sm:p-6">
+    <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-background to-primary/5 relative overflow-hidden">
+      {/* Celebration Animation */}
+      <AnimatePresence>
+        {showCelebration && (
+          <>
+            {/* Confetti particles */}
+            {confettiParticles.map((particle) => (
+              <motion.div
+                key={particle.id}
+                initial={{ y: -20, x: `${particle.x}%`, opacity: 1, scale: 0 }}
+                animate={{ 
+                  y: '100%', 
+                  opacity: [1, 1, 0],
+                  scale: [0, 1, 1],
+                  rotate: [0, 360, 720]
+                }}
+                exit={{ opacity: 0 }}
+                transition={{ 
+                  duration: 2.5, 
+                  delay: particle.delay,
+                  ease: 'easeOut'
+                }}
+                className="absolute z-10 pointer-events-none"
+                style={{ left: `${particle.x}%` }}
+              >
+                <Star className="h-4 w-4" style={{ color: particle.color, fill: particle.color }} />
+              </motion.div>
+            ))}
+            
+            {/* Glowing overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0, 0.3, 0] }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.5 }}
+              className="absolute inset-0 bg-gradient-to-br from-green-500/20 via-primary/10 to-amber-500/20 pointer-events-none z-0"
+            />
+          </>
+        )}
+      </AnimatePresence>
+
+      <CardContent className="p-4 sm:p-6 relative z-1">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
+            <motion.div 
+              className="p-2 rounded-lg bg-primary/10"
+              animate={showCelebration ? { scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] } : {}}
+              transition={{ duration: 0.5, repeat: showCelebration ? 3 : 0 }}
+            >
               <Target className="h-5 w-5 text-primary" />
-            </div>
+            </motion.div>
             <div>
               <h3 className="font-bold text-lg">This Week's Eligible Spiders</h3>
               <p className="text-xs sm:text-sm text-muted-foreground">
@@ -248,10 +313,16 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
           </div>
           
           {filledSlots === 3 && (
-            <Badge className="bg-green-600 text-white gap-1 self-start sm:self-auto">
-              <Check className="h-3 w-3" />
-              Roster Complete!
-            </Badge>
+            <motion.div
+              initial={showCelebration ? { scale: 0, rotate: -180 } : { scale: 1 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 10 }}
+            >
+              <Badge className="bg-green-600 text-white gap-1 self-start sm:self-auto">
+                <Check className="h-3 w-3" />
+                Roster Complete!
+              </Badge>
+            </motion.div>
           )}
         </div>
 
