@@ -222,6 +222,26 @@ const BattleMode: React.FC<{ showChallenges?: boolean }> = ({ showChallenges = t
     setLoading(true);
     
     try {
+      // Check if the accepter spider already has an active challenge
+      const { data: existingChallenges, error: checkError } = await supabase
+        .from('battle_challenges')
+        .select('id')
+        .or(`challenger_spider_id.eq.${accepterSpider.id},accepter_spider_id.eq.${accepterSpider.id}`)
+        .in('status', ['OPEN', 'ACCEPTED'])
+        .gt('expires_at', new Date().toISOString());
+
+      if (checkError) throw checkError;
+
+      if (existingChallenges && existingChallenges.length > 0) {
+        toast({
+          title: "Spider Unavailable",
+          description: `${accepterSpider.nickname} already has an active challenge`,
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
       // Update challenge to accepted
       const { error: updateError } = await supabase
         .from('battle_challenges')
