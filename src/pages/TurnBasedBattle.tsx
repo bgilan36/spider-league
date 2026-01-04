@@ -150,9 +150,9 @@ const TurnBasedBattle = () => {
   }
 
   const battleEnded = !battle.is_active;
-  const iWon = battle.winner === 'TEAM_A' 
+  const iWon = battle.winner === 'A' 
     ? (battle.team_a as any)?.userId === user?.id 
-    : battle.winner === 'TEAM_B'
+    : battle.winner === 'B'
     ? (battle.team_b as any)?.userId === user?.id
     : false;
 
