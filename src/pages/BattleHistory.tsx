@@ -4,9 +4,9 @@ import { Link, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import { ArrowLeft, Trophy, Swords, Crown, Calendar } from "lucide-react";
+import { ArrowLeft, Trophy, Swords, Crown, Calendar, Bug } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
 import { format } from "date-fns";
@@ -23,14 +23,26 @@ interface Battle {
   team_b: any;
   winner: "A" | "B" | "TIE" | null;
   battle_log: any;
+  challenge_id?: string;
 }
-
 
 interface BattleStats {
   totalBattles: number;
   wins: number;
   losses: number;
   ties: number;
+  winRate: number;
+}
+
+interface SpiderBattleRecord {
+  spiderId: string;
+  nickname: string;
+  species: string;
+  image_url: string;
+  wins: number;
+  losses: number;
+  ties: number;
+  totalBattles: number;
   winRate: number;
 }
 
@@ -46,9 +58,11 @@ const BattleHistory = () => {
     ties: 0,
     winRate: 0,
   });
+  const [spiderRecords, setSpiderRecords] = useState<SpiderBattleRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBattle, setSelectedBattle] = useState<Battle | null>(null);
   const [isBattleDetailsOpen, setIsBattleDetailsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("battles");
 
   const isMobile = useIsMobile();
 
@@ -92,109 +106,31 @@ const BattleHistory = () => {
     try {
       setLoading(true);
 
-      // Mock battle data
-      const mockBattles = [
-        {
-          id: "battle-1",
-          created_at: "2024-01-15T14:30:00Z",
-          type: "CHALLENGE",
-          team_a: [
-            {
-              owner_id: user.id,
-              nickname: "Shadowstrike",
-              species: "Black Widow",
-              image_url: "/lovable-uploads/218cca6b-fdab-43a0-9a30-c4defe401691.png"
-            }
-          ],
-          team_b: [
-            {
-              owner_id: "other-user-1",
-              nickname: "Venomfang",
-              species: "Brown Recluse",
-              image_url: "/lovable-uploads/72396214-19a6-4e47-b07c-6dd315d94727.png"
-            }
-          ],
-          winner: "A",
-          battle_log: {}
-        },
-        {
-          id: "battle-2",
-          created_at: "2024-01-12T09:15:00Z",
-          type: "CHALLENGE",
-          team_a: [
-            {
-              owner_id: "other-user-2",
-              nickname: "Webweaver",
-              species: "Orb Weaver",
-              image_url: "/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png"
-            }
-          ],
-          team_b: [
-            {
-              owner_id: user.id,
-              nickname: "Nightcrawler",
-              species: "Wolf Spider",
-              image_url: "/lovable-uploads/218cca6b-fdab-43a0-9a30-c4defe401691.png"
-            }
-          ],
-          winner: "B",
-          battle_log: {}
-        },
-        {
-          id: "battle-3",
-          created_at: "2024-01-10T16:45:00Z",
-          type: "SANDBOX",
-          team_a: [
-            {
-              owner_id: user.id,
-              nickname: "Frostbite",
-              species: "Jumping Spider",
-              image_url: "/lovable-uploads/72396214-19a6-4e47-b07c-6dd315d94727.png"
-            }
-          ],
-          team_b: [
-            {
-              owner_id: "other-user-3",
-              nickname: "Steelclaw",
-              species: "Tarantula",
-              image_url: "/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png"
-            }
-          ],
-          winner: "TIE",
-          battle_log: {}
-        },
-        {
-          id: "battle-4",
-          created_at: "2024-01-08T11:20:00Z",
-          type: "CHALLENGE",
-          team_a: [
-            {
-              owner_id: user.id,
-              nickname: "Thunderstrike",
-              species: "Black Widow",
-              image_url: "/lovable-uploads/218cca6b-fdab-43a0-9a30-c4defe401691.png"
-            }
-          ],
-          team_b: [
-            {
-              owner_id: "other-user-4",
-              nickname: "Poisonheart",
-              species: "Brown Recluse",
-              image_url: "/lovable-uploads/72396214-19a6-4e47-b07c-6dd315d94727.png"
-            }
-          ],
-          winner: "B",
-          battle_log: {}
-        }
-      ];
+      // Fetch real battles from Supabase where user was a participant
+      const { data: battlesData, error } = await supabase
+        .from('battles')
+        .select('*')
+        .eq('is_active', false)
+        .order('created_at', { ascending: false })
+        .limit(100);
 
-      setBattles(mockBattles as any);
+      if (error) throw error;
+
+      // Filter battles where the user was a participant
+      const userBattles = (battlesData || []).filter(battle => {
+        const teamA = battle.team_a as any;
+        const teamB = battle.team_b as any;
+        return teamA?.userId === user.id || teamB?.userId === user.id;
+      });
+
+      setBattles(userBattles as Battle[]);
       
-      // Calculate stats
-      calculateStats(mockBattles);
+      // Calculate stats and spider records
+      calculateStats(userBattles);
+      calculateSpiderRecords(userBattles);
 
     } catch (error: any) {
-      console.error("Error loading mock battle data:", error);
+      console.error("Error loading battle data:", error);
       toast({
         title: "Error",
         description: "Failed to load battle history",
@@ -212,11 +148,10 @@ const BattleHistory = () => {
     let losses = 0;
     let ties = 0;
 
-    // Count battle outcomes
     battleData.forEach(battle => {
-      const teamA = Array.isArray(battle.team_a) ? battle.team_a : [];
-      const teamB = Array.isArray(battle.team_b) ? battle.team_b : [];
-      const isTeamA = teamA?.[0]?.owner_id === user.id;
+      const teamA = battle.team_a as any;
+      const teamB = battle.team_b as any;
+      const isTeamA = teamA?.userId === user.id;
       
       if (battle.winner === "TIE") {
         ties++;
@@ -240,6 +175,59 @@ const BattleHistory = () => {
       ties,
       winRate,
     });
+  };
+
+  const calculateSpiderRecords = (battleData: any[]) => {
+    if (!user) return;
+
+    const spiderMap = new Map<string, SpiderBattleRecord>();
+
+    battleData.forEach(battle => {
+      const teamA = battle.team_a as any;
+      const teamB = battle.team_b as any;
+      const isTeamA = teamA?.userId === user.id;
+      
+      const userTeam = isTeamA ? teamA : teamB;
+      const spiderId = userTeam?.spiderId;
+      
+      if (!spiderId) return;
+
+      if (!spiderMap.has(spiderId)) {
+        spiderMap.set(spiderId, {
+          spiderId,
+          nickname: userTeam?.nickname || 'Unknown',
+          species: userTeam?.species || 'Unknown',
+          image_url: userTeam?.imageUrl || '',
+          wins: 0,
+          losses: 0,
+          ties: 0,
+          totalBattles: 0,
+          winRate: 0,
+        });
+      }
+
+      const record = spiderMap.get(spiderId)!;
+      record.totalBattles++;
+
+      if (battle.winner === "TIE") {
+        record.ties++;
+      } else if (
+        (battle.winner === "A" && isTeamA) ||
+        (battle.winner === "B" && !isTeamA)
+      ) {
+        record.wins++;
+      } else if (battle.winner) {
+        record.losses++;
+      }
+
+      record.winRate = record.totalBattles > 0 
+        ? Math.round((record.wins / record.totalBattles) * 100) 
+        : 0;
+    });
+
+    // Sort by total battles descending
+    const records = Array.from(spiderMap.values()).sort((a, b) => b.totalBattles - a.totalBattles);
+    setSpiderRecords(records);
   };
 
   const getResultBadge = (battle: Battle, isUserTeamA: boolean) => {
@@ -386,96 +374,154 @@ const BattleHistory = () => {
           </CardContent>
         </Card>
 
-        {/* Battle Results Section */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Swords className="h-5 w-5" />
+        {/* Tabbed Content */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="battles" className="gap-2">
+              <Swords className="h-4 w-4" />
               Battle Results
-            </CardTitle>
-            <CardDescription>
-              Complete history of your spider battles
-            </CardDescription>
-          </CardHeader>
-        </Card>
+            </TabsTrigger>
+            <TabsTrigger value="spiders" className="gap-2">
+              <Bug className="h-4 w-4" />
+              Spider Records
+            </TabsTrigger>
+          </TabsList>
 
-        {battles.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-12">
-              <Swords className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-semibold mb-2">No battles yet</h3>
-              <p className="text-muted-foreground">Your battle results will appear here once you start fighting</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {battles.map((battle) => {
-              const teamA = Array.isArray(battle.team_a) ? battle.team_a : [];
-              const teamB = Array.isArray(battle.team_b) ? battle.team_b : [];
-              const isUserTeamA = teamA?.[0]?.owner_id === user?.id;
-              const userSpider = isUserTeamA ? teamA?.[0] : teamB?.[0];
-              const opponentSpider = isUserTeamA ? teamB?.[0] : teamA?.[0];
-              
-              return (
-                <Card key={battle.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleBattleClick(battle)}>
-                  <CardContent className="flex items-center gap-4 p-6">
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className="text-center">
-                        <div className="text-sm text-muted-foreground mb-1">Your Spider</div>
-                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted mx-auto mb-2">
-                          {userSpider?.image_url && (
-                            <img 
-                              src={userSpider.image_url} 
-                              alt={userSpider.nickname}
-                              className="w-full h-full object-cover"
-                            />
-                          )}
+          <TabsContent value="battles" className="mt-6">
+            {battles.length === 0 ? (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <Swords className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-lg font-semibold mb-2">No battles yet</h3>
+                  <p className="text-muted-foreground">Your battle results will appear here once you start fighting</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {battles.map((battle) => {
+                  const teamA = battle.team_a as any;
+                  const teamB = battle.team_b as any;
+                  const isUserTeamA = teamA?.userId === user?.id;
+                  const userTeam = isUserTeamA ? teamA : teamB;
+                  const opponentTeam = isUserTeamA ? teamB : teamA;
+                  
+                  return (
+                    <Card key={battle.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleBattleClick(battle)}>
+                      <CardContent className="flex items-center gap-4 p-6">
+                        <div className="flex items-center gap-4 flex-1">
+                          <div className="text-center">
+                            <div className="text-sm text-muted-foreground mb-1">Your Spider</div>
+                            <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted mx-auto mb-2">
+                              {userTeam?.imageUrl && (
+                                <img 
+                                  src={userTeam.imageUrl} 
+                                  alt={userTeam.nickname}
+                                  className="w-full h-full object-cover"
+                                />
+                              )}
+                            </div>
+                            <div className="font-medium text-sm">{userTeam?.nickname || 'Unknown'}</div>
+                            <div className="text-xs text-muted-foreground">{userTeam?.species}</div>
+                          </div>
+                          
+                          <div className="text-center flex-shrink-0">
+                            <div className="text-2xl font-bold mb-2">VS</div>
+                            {getResultBadge(battle, isUserTeamA)}
+                          </div>
+                          
+                          <div className="text-center">
+                            <div className="text-sm text-muted-foreground mb-1">Opponent</div>
+                            <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted mx-auto mb-2">
+                              {opponentTeam?.imageUrl && (
+                                <img 
+                                  src={opponentTeam.imageUrl} 
+                                  alt={opponentTeam.nickname}
+                                  className="w-full h-full object-cover"
+                                />
+                              )}
+                            </div>
+                            <div className="font-medium text-sm">{opponentTeam?.nickname || 'Unknown'}</div>
+                            <div className="text-xs text-muted-foreground">{opponentTeam?.species}</div>
+                          </div>
                         </div>
-                        <div className="font-medium text-sm">{userSpider?.nickname || 'Unknown'}</div>
-                        <div className="text-xs text-muted-foreground">{userSpider?.species}</div>
-                      </div>
-                      
-                      <div className="text-center flex-shrink-0">
-                        <div className="text-2xl font-bold mb-2">VS</div>
-                        {getResultBadge(battle, isUserTeamA)}
-                      </div>
-                      
-                      <div className="text-center">
-                        <div className="text-sm text-muted-foreground mb-1">Opponent</div>
-                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted mx-auto mb-2">
-                          {opponentSpider?.image_url && (
-                            <img 
-                              src={opponentSpider.image_url} 
-                              alt={opponentSpider.nickname}
-                              className="w-full h-full object-cover"
-                            />
-                          )}
+                        
+                        <div className="text-right">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm text-muted-foreground">
+                              {format(new Date(battle.created_at), 'MMM d, yyyy')}
+                            </span>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {format(new Date(battle.created_at), 'h:mm a')}
+                          </div>
+                          <Badge variant="outline" className="mt-2">
+                            {battle.type}
+                          </Badge>
                         </div>
-                        <div className="font-medium text-sm">{opponentSpider?.nickname || 'Unknown'}</div>
-                        <div className="text-xs text-muted-foreground">{opponentSpider?.species}</div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="spiders" className="mt-6">
+            {spiderRecords.length === 0 ? (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <Bug className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-lg font-semibold mb-2">No spider records yet</h3>
+                  <p className="text-muted-foreground">Your spiders' battle records will appear here once they start fighting</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {spiderRecords.map((record) => (
+                  <Card key={record.spiderId} className="overflow-hidden">
+                    <div className="flex items-center gap-4 p-4">
+                      <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                        {record.image_url && (
+                          <img 
+                            src={record.image_url} 
+                            alt={record.nickname}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold truncate">{record.nickname}</h4>
+                        <p className="text-xs text-muted-foreground truncate">{record.species}</p>
+                        <div className="flex items-center gap-1 mt-2">
+                          <Badge variant="outline" className="text-xs">
+                            {record.totalBattles} battles
+                          </Badge>
+                          <Badge 
+                            className={`text-xs ${
+                              record.winRate >= 60 ? 'bg-green-500' : 
+                              record.winRate >= 40 ? 'bg-amber-500' : 
+                              'bg-red-500'
+                            } text-white`}
+                          >
+                            {record.winRate}% WR
+                          </Badge>
+                        </div>
                       </div>
                     </div>
-                    
-                    <div className="text-right">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">
-                          {format(new Date(battle.created_at), 'MMM d, yyyy')}
-                        </span>
+                    <div className="bg-muted/30 px-4 py-3 border-t">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-green-500 font-medium">{record.wins}W</span>
+                        <span className="text-red-500 font-medium">{record.losses}L</span>
+                        <span className="text-muted-foreground font-medium">{record.ties}T</span>
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        {format(new Date(battle.created_at), 'h:mm a')}
-                      </div>
-                      <Badge variant="outline" className="mt-2">
-                        {battle.type}
-                      </Badge>
                     </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        )}
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
         
         <BattleDetailsModal 
           isOpen={isBattleDetailsOpen}
