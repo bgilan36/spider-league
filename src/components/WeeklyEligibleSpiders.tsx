@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
-import { Plus, Upload, Sparkles, RefreshCcw, Target, Trophy, Check, Star, BarChart3, Swords } from 'lucide-react';
+import { Plus, Upload, Sparkles, RefreshCcw, Target, Trophy, Check, Star, BarChart3, Swords, Zap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/auth/AuthProvider';
 import { toast } from 'sonner';
@@ -58,14 +58,64 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
   const [selectedSpiderForStats, setSelectedSpiderForStats] = useState<Spider | null>(null);
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
   const [recommendedChallenger, setRecommendedChallenger] = useState<Spider | null>(null);
+  const [activeChallengeSpiderIds, setActiveChallengeSpiderIds] = useState<Set<string>>(new Set());
+
+  const fetchActiveChallenges = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('battle_challenges')
+        .select('challenger_spider_id')
+        .eq('challenger_id', user.id)
+        .eq('status', 'OPEN')
+        .gt('expires_at', new Date().toISOString());
+
+      if (error) throw error;
+      
+      const ids = new Set((data || []).map(c => c.challenger_spider_id));
+      setActiveChallengeSpiderIds(ids);
+    } catch (error) {
+      console.error('Error fetching active challenges:', error);
+    }
+  };
 
   useEffect(() => {
     if (user) {
       fetchEligibleSpiders();
       fetchAllSpiders();
       fetchRecommendedChallenger();
+      fetchActiveChallenges();
     }
   }, [user]);
+
+  // Listen for challenge events to update indicators
+  useEffect(() => {
+    const onChallengeCreated = (e: CustomEvent) => {
+      const spiderId = e.detail?.challenger_spider_id;
+      if (spiderId) {
+        setActiveChallengeSpiderIds(prev => new Set([...prev, spiderId]));
+      }
+    };
+    const onChallengeCancelled = (e: CustomEvent) => {
+      const spiderId = e.detail?.challenger_spider_id;
+      if (spiderId) {
+        setActiveChallengeSpiderIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(spiderId);
+          return newSet;
+        });
+      }
+    };
+
+    window.addEventListener('challenge:created', onChallengeCreated as EventListener);
+    window.addEventListener('challenge:cancelled', onChallengeCancelled as EventListener);
+    
+    return () => {
+      window.removeEventListener('challenge:created', onChallengeCreated as EventListener);
+      window.removeEventListener('challenge:cancelled', onChallengeCancelled as EventListener);
+    };
+  }, []);
 
   const getWeekStartStr = () => {
     const ptNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
@@ -550,17 +600,29 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
             }
 
             // Filled slot
+            const hasActiveChallenge = activeChallengeSpiderIds.has(spider.id);
+            
             return (
               <Card 
                 key={spider.id}
-                className={`overflow-hidden border-2 ${
-                  spider.source === 'activated' 
-                    ? 'border-amber-500/50 bg-amber-500/5' 
-                    : 'border-green-500/50 bg-green-500/5'
+                className={`overflow-hidden border-2 relative ${
+                  hasActiveChallenge 
+                    ? 'border-primary/70 ring-2 ring-primary/30' 
+                    : spider.source === 'activated' 
+                      ? 'border-amber-500/50 bg-amber-500/5' 
+                      : 'border-green-500/50 bg-green-500/5'
                 }`}
               >
+                {/* Active Challenge Indicator */}
+                {hasActiveChallenge && (
+                  <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-r from-primary to-primary-glow text-primary-foreground text-[10px] font-semibold py-0.5 px-2 flex items-center justify-center gap-1">
+                    <Zap className="h-3 w-3 animate-pulse" />
+                    Challenge Active
+                  </div>
+                )}
+                
                 <div 
-                  className="aspect-square relative cursor-pointer group"
+                  className={`aspect-square relative cursor-pointer group ${hasActiveChallenge ? 'mt-5' : ''}`}
                   onClick={() => {
                     setSelectedSpiderForStats(spider);
                     setIsStatsModalOpen(true);
