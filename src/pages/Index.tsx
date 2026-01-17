@@ -34,6 +34,8 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { useIsMobile } from "@/hooks/use-mobile";
 import WeeklyEligibleSpiders from "@/components/WeeklyEligibleSpiders";
+import { LoginStreakDisplay } from "@/components/LoginStreakDisplay";
+import { SpiderOfTheDayCard } from "@/components/SpiderOfTheDayCard";
 interface Spider {
   id: string;
   nickname: string;
@@ -694,8 +696,16 @@ const Index = () => {
       </header>
 
       <main className="container mx-auto px-3 sm:px-6 py-3 sm:py-6">
-        {/* Online Users Bar */}
-        <OnlineUsersBar />
+        {/* Login Streak & Online Users */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <LoginStreakDisplay />
+          <OnlineUsersBar />
+        </div>
+
+        {/* Spider of the Day */}
+        <div className="mb-6">
+          <SpiderOfTheDayCard onSpiderClick={handleSpiderClick} />
+        </div>
         
         {/* Weekly Eligible Spiders - 3 slots with activation + uploads */}
         <div className="mb-6 sm:mb-8">

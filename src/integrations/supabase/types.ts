@@ -338,6 +338,39 @@ export type Database = {
           },
         ]
       }
+      login_streaks: {
+        Row: {
+          created_at: string
+          current_streak: number
+          id: string
+          last_login_date: string
+          longest_streak: number
+          streak_power_bonus: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_login_date?: string
+          longest_streak?: number
+          streak_power_bonus?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_login_date?: string
+          longest_streak?: number
+          streak_power_bonus?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       matchups: {
         Row: {
           battle_id: string | null
@@ -736,6 +769,38 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      spider_of_the_day: {
+        Row: {
+          created_at: string
+          featured_date: string
+          id: string
+          power_bonus: number
+          spider_id: string
+        }
+        Insert: {
+          created_at?: string
+          featured_date?: string
+          id?: string
+          power_bonus?: number
+          spider_id: string
+        }
+        Update: {
+          created_at?: string
+          featured_date?: string
+          id?: string
+          power_bonus?: number
+          spider_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spider_of_the_day_spider_id_fkey"
+            columns: ["spider_id"]
+            isOneToOne: false
+            referencedRelation: "spiders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       spiders: {
         Row: {
@@ -1146,6 +1211,7 @@ export type Database = {
         Returns: Json
       }
       sanitize_plain_text: { Args: { t: string }; Returns: string }
+      select_spider_of_the_day: { Args: never; Returns: undefined }
       transfer_spider_ownership: {
         Args: { new_owner_id: string; spider_id: string }
         Returns: undefined
