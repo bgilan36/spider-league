@@ -23,7 +23,37 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // AUTHORIZATION: Validate JWT and get user
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      console.log("Auto-battle: Missing or invalid Authorization header");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Create a client with the user's token to validate it
+    const userSupabase = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await userSupabase.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      console.log("Auto-battle: Invalid JWT token", claimsError);
+      return new Response(
+        JSON.stringify({ error: "Invalid token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const userId = claimsData.claims.sub;
+    console.log("Auto-battle: Authenticated user:", userId);
 
     const body = await req.json();
     const { battleId } = body;
@@ -56,6 +86,17 @@ serve(async (req) => {
     const spider2 = battle.team_b.spider;
     const user1 = battle.team_a.userId;
     const user2 = battle.team_b.userId;
+
+    // AUTHORIZATION: Verify caller is a battle participant
+    if (userId !== user1 && userId !== user2) {
+      console.log("Auto-battle: User is not a battle participant", { userId, user1, user2 });
+      return new Response(
+        JSON.stringify({ error: "Not a battle participant" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log("Auto-battle: Participant verified, starting battle", { battleId, userId });
 
     // Initialize battle state
     const state: BattleState = {
