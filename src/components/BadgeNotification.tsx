@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { BadgeIcon } from "@/components/BadgeIcon";
+import { useConfetti } from "@/hooks/useConfetti";
 
 interface BadgeData {
   id: string;
@@ -31,9 +32,13 @@ const rarityColors = {
 
 export const BadgeNotification = ({ badge, isVisible, onDismiss }: BadgeNotificationProps) => {
   const [autoHide, setAutoHide] = useState(false);
+  const { fireConfetti } = useConfetti();
 
   useEffect(() => {
     if (isVisible && badge) {
+      // Fire confetti when badge notification appears
+      fireConfetti('badge');
+      
       const timer = setTimeout(() => {
         setAutoHide(true);
         setTimeout(onDismiss, 500); // Allow exit animation to complete
@@ -41,11 +46,11 @@ export const BadgeNotification = ({ badge, isVisible, onDismiss }: BadgeNotifica
 
       return () => clearTimeout(timer);
     }
-  }, [isVisible, badge, onDismiss]);
+  }, [isVisible, badge, onDismiss, fireConfetti]);
 
   if (!badge) return null;
 
-  
+
 
   return (
     <AnimatePresence>
