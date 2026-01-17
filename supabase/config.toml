@@ -7,7 +7,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.auto-battle]
-verify_jwt = true
+verify_jwt = false
 
 [functions.export-email-list]
 verify_jwt = true
