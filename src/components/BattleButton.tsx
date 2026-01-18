@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useAuth } from "@/auth/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Sword } from "lucide-react";
+import { Sword, Loader2 } from "lucide-react";
 
 interface Spider {
   id: string;
@@ -393,7 +393,11 @@ const BattleButton: React.FC<BattleButtonProps> = ({
         }}
         title={hasActiveChallenge && isOwnSpider ? "Cancel this spider's active challenge" : undefined}
       >
-        <Sword className="h-4 w-4" />
+        {loading ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Sword className="h-4 w-4" />
+        )}
         <span className="hidden sm:inline ml-1">{hasActiveChallenge && isOwnSpider ? "Cancel Challenge" : buttonText}</span>
       </Button>
 
