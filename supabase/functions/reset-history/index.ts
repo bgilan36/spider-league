@@ -55,6 +55,32 @@ serve(async (req: Request) => {
       });
     }
 
+    // SECURITY: Verify user has admin role before allowing reset
+    const { data: adminRole, error: roleError } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userData.user.id)
+      .eq('role', 'admin')
+      .maybeSingle();
+
+    if (roleError) {
+      console.error('Error checking admin role:', roleError);
+      return new Response(
+        JSON.stringify({ error: "Failed to verify permissions" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!adminRole) {
+      console.warn(`Unauthorized reset attempt by user ${userData.user.id}`);
+      return new Response(
+        JSON.stringify({ error: "Admin access required" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log(`Admin ${userData.user.id} authorized for reset operation`);
+
     // Optionally parse scope from body (default: reset all)
     const payload = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
     let requestedScope: string[] = Array.isArray(payload?.scope) ? payload.scope : [...ALLOWED_TABLES];
