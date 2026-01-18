@@ -216,11 +216,21 @@ const BattleButton: React.FC<BattleButtonProps> = ({
 
       if (error) {
         console.error('Failed to create challenge (direct):', error);
-        toast({
-          title: "Error",
-          description: `Failed to create challenge: ${error.message}`,
-          variant: "destructive"
-        });
+        // Handle duplicate challenge constraint error with friendly message
+        if (error.code === '23505' || error.message.includes('idx_one_open_challenge_per_spider')) {
+          toast({
+            title: "Challenge Already Active",
+            description: `${targetSpider.nickname} already has an active challenge. Cancel it first to create a new one.`,
+            variant: "destructive"
+          });
+          setHasActiveChallenge(true);
+        } else {
+          toast({
+            title: "Error",
+            description: `Failed to create challenge: ${error.message}`,
+            variant: "destructive"
+          });
+        }
       } else {
       toast({
         title: "Challenge Created!",
@@ -263,11 +273,20 @@ const BattleButton: React.FC<BattleButtonProps> = ({
 
       if (error) {
         console.error('Failed to create challenge (targeted):', error);
-        toast({
-          title: "Error",
-          description: `Failed to create challenge: ${error.message}`,
-          variant: "destructive"
-        });
+        // Handle duplicate challenge constraint error with friendly message
+        if (error.code === '23505' || error.message.includes('idx_one_open_challenge_per_spider')) {
+          toast({
+            title: "Challenge Already Active",
+            description: `This spider already has an active challenge. Wait for it to expire or cancel it first.`,
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: `Failed to create challenge: ${error.message}`,
+            variant: "destructive"
+          });
+        }
       } else {
         toast({
           title: "Challenge Created!",
