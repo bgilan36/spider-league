@@ -1,14 +1,12 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 const FloatingHomeButton: React.FC = () => {
   const location = useLocation();
-  const isMobile = useIsMobile();
   
-  // Only show on mobile and not on home page
-  if (!isMobile || location.pathname === '/') {
+  // Hide on home page
+  if (location.pathname === '/') {
     return null;
   }
 
