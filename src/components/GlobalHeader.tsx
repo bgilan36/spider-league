@@ -50,7 +50,7 @@ const GlobalHeader: React.FC = () => {
               alt="Spider League" 
               className="h-8 w-auto"
             />
-            <span className="sr-only sm:not-sr-only text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+            <span className="sr-only sm:not-sr-only text-sm font-medium text-foreground transition-colors">
               Spider League
             </span>
           </Link>
