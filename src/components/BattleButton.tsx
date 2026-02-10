@@ -82,7 +82,7 @@ const BattleButton: React.FC<BattleButtonProps> = ({
 
   const [allSpidersHaveChallenges, setAllSpidersHaveChallenges] = useState(false);
 
-  // Fetch user's eligible spiders for battle (only from current week's uploads)
+  // Fetch user's eligible spiders for battle (from weekly_uploads + weekly_roster)
   const fetchEligibleSpiders = async () => {
     if (!user) return;
 
@@ -95,6 +95,7 @@ const BattleButton: React.FC<BattleButtonProps> = ({
       
       const weekStart = weekStartData as string;
       
+      // Fetch uploaded spiders from weekly_uploads
       const { data: weeklyUpload, error: weeklyError } = await supabase
         .from('weekly_uploads')
         .select('first_spider_id, second_spider_id, third_spider_id')
@@ -104,18 +105,34 @@ const BattleButton: React.FC<BattleButtonProps> = ({
 
       if (weeklyError) throw weeklyError;
 
-      // Collect all eligible spider IDs from this week
+      // Fetch activated spider from weekly_roster
+      const { data: rosterData, error: rosterError } = await (supabase as any)
+        .from('weekly_roster')
+        .select('spider_id')
+        .eq('user_id', user.id)
+        .eq('week_start', weekStart)
+        .maybeSingle();
+
+      if (rosterError && rosterError.code !== 'PGRST116') {
+        console.error('Error fetching roster:', rosterError);
+      }
+
+      // Collect all eligible spider IDs (uploads + activated)
       const spiderIds = [
         weeklyUpload?.first_spider_id,
         weeklyUpload?.second_spider_id,
-        weeklyUpload?.third_spider_id
+        weeklyUpload?.third_spider_id,
+        rosterData?.spider_id,
       ].filter(Boolean);
 
-      if (spiderIds.length > 0) {
+      // Deduplicate
+      const uniqueIds = [...new Set(spiderIds)];
+
+      if (uniqueIds.length > 0) {
         const { data, error } = await supabase
           .from('spiders')
           .select('*')
-          .in('id', spiderIds);
+          .in('id', uniqueIds);
 
         if (error) throw error;
 
