@@ -120,24 +120,8 @@ const BattleButton: React.FC<BattleButtonProps> = ({
 
         if (error) throw error;
 
-        // Filter out spiders that already have an active open challenge
-        const { data: activeChallenges } = await supabase
-          .from('battle_challenges')
-          .select('challenger_spider_id')
-          .in('challenger_spider_id', spiderIds)
-          .eq('status', 'OPEN')
-          .gt('expires_at', new Date().toISOString());
-
-        const activeChallengeSpiderIds = new Set(
-          (activeChallenges || []).map(c => c.challenger_spider_id)
-        );
-
-        const availableSpiders = (data || []).filter(
-          s => !activeChallengeSpiderIds.has(s.id)
-        );
-
-        setUserSpiders(availableSpiders);
-        setAllSpidersHaveChallenges(availableSpiders.length === 0 && (data || []).length > 0);
+        setUserSpiders(data || []);
+        setAllSpidersHaveChallenges(false);
       } else {
         setUserSpiders([]);
         setAllSpidersHaveChallenges(false);
@@ -267,13 +251,42 @@ const BattleButton: React.FC<BattleButtonProps> = ({
     setLoading(true);
     
     if (isOwnSpider) {
-      // Offer own spider for battle (this could be extended to create an "open challenge")
       toast({
         title: "Battle Offer Created!",
         description: `${targetSpider.nickname} is now available for battle challenges`,
       });
     } else {
-      // Challenge another user's spider
+      // Auto-cancel any existing open challenge for the chosen challenger spider
+      const { data: existingChallenge } = await supabase
+        .from('battle_challenges')
+        .select('id')
+        .eq('challenger_spider_id', challengerSpider.id)
+        .eq('challenger_id', user.id)
+        .eq('status', 'OPEN')
+        .gt('expires_at', new Date().toISOString())
+        .maybeSingle();
+
+      if (existingChallenge) {
+        const { error: cancelError } = await supabase
+          .from('battle_challenges')
+          .delete()
+          .eq('id', existingChallenge.id);
+
+        if (cancelError) {
+          console.error('Failed to cancel existing challenge:', cancelError);
+          toast({
+            title: "Error",
+            description: `Failed to cancel ${challengerSpider.nickname}'s existing challenge`,
+            variant: "destructive"
+          });
+          setLoading(false);
+          setShowDialog(false);
+          return;
+        }
+        window.dispatchEvent(new CustomEvent('challenge:cancelled', { detail: { challenger_spider_id: challengerSpider.id } }));
+      }
+
+      // Create the new targeted challenge
       const { data, error } = await supabase
         .from('battle_challenges')
         .insert({
@@ -288,26 +301,16 @@ const BattleButton: React.FC<BattleButtonProps> = ({
 
       if (error) {
         console.error('Failed to create challenge (targeted):', error);
-        // Handle duplicate challenge constraint error with friendly message
-        if (error.code === '23505' || error.message.includes('idx_one_open_challenge_per_spider')) {
-          toast({
-            title: "Challenge Already Active",
-            description: `This spider already has an active challenge. Wait for it to expire or cancel it first.`,
-            variant: "destructive"
-          });
-        } else {
-          toast({
-            title: "Error",
-            description: `Failed to create challenge: ${error.message}`,
-            variant: "destructive"
-          });
-        }
+        toast({
+          title: "Error",
+          description: `Failed to create challenge: ${error.message}`,
+          variant: "destructive"
+        });
       } else {
         toast({
           title: "Challenge Created!",
           description: `${challengerSpider.nickname} has challenged ${targetSpider.nickname}`,
         });
-        // Notify the homepage preview immediately
         window.dispatchEvent(new CustomEvent('challenge:created', { detail: { id: data.id, challenger_id: user.id, challenger_spider_id: challengerSpider.id } }));
       }
     }
