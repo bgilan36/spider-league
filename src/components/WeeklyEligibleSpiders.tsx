@@ -68,8 +68,7 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
         .from('battle_challenges')
         .select('challenger_spider_id')
         .eq('challenger_id', user.id)
-        .eq('status', 'OPEN')
-        .gt('expires_at', new Date().toISOString());
+        .eq('status', 'OPEN');
 
       if (error) throw error;
       

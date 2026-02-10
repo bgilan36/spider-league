@@ -63,14 +63,13 @@ const BattleButton: React.FC<BattleButtonProps> = ({
     ? "Offer this spider for battle challenges" 
     : `Challenge ${targetSpider.nickname} to battle`;
 
-  // Check if spider already has an active challenge
+  // Check if spider already has an active challenge (matches DB unique index which doesn't filter by expires_at)
   const checkActiveChallenge = async (spiderId: string) => {
     const { data, error } = await supabase
       .from('battle_challenges')
       .select('id')
       .eq('challenger_spider_id', spiderId)
       .eq('status', 'OPEN')
-      .gt('expires_at', new Date().toISOString())
       .maybeSingle();
     
     if (error) {
@@ -138,14 +137,13 @@ const BattleButton: React.FC<BattleButtonProps> = ({
 
     setLoading(true);
 
-    // Find and delete the active challenge
+    // Find and delete the active challenge (no expires_at filter to match DB constraint)
     const { data: activeChallenge } = await supabase
       .from('battle_challenges')
       .select('id')
       .eq('challenger_spider_id', targetSpider.id)
       .eq('challenger_id', user.id)
       .eq('status', 'OPEN')
-      .gt('expires_at', new Date().toISOString())
       .maybeSingle();
 
     if (!activeChallenge) {
@@ -190,16 +188,31 @@ const BattleButton: React.FC<BattleButtonProps> = ({
 
     setLoading(true);
 
-    // Check if spider already has an active challenge
-    const hasChallenge = await checkActiveChallenge(targetSpider.id);
-    if (hasChallenge) {
-      toast({
-        title: "Challenge Already Exists",
-        description: `${targetSpider.nickname} already has an active challenge`,
-        variant: "destructive"
-      });
-      setLoading(false);
-      return;
+    // Auto-cancel any existing OPEN challenge for this spider before creating a new one
+    const { data: existingChallenge } = await supabase
+      .from('battle_challenges')
+      .select('id')
+      .eq('challenger_spider_id', targetSpider.id)
+      .eq('status', 'OPEN')
+      .maybeSingle();
+
+    if (existingChallenge) {
+      const { error: cancelError } = await supabase
+        .from('battle_challenges')
+        .delete()
+        .eq('id', existingChallenge.id);
+
+      if (cancelError) {
+        console.error('Failed to cancel existing challenge:', cancelError);
+        toast({
+          title: "Error",
+          description: `Failed to cancel existing challenge for ${targetSpider.nickname}`,
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+      window.dispatchEvent(new CustomEvent('challenge:cancelled', { detail: { challenger_spider_id: targetSpider.id } }));
     }
 
     // Create an open challenge with this spider
@@ -256,14 +269,12 @@ const BattleButton: React.FC<BattleButtonProps> = ({
         description: `${targetSpider.nickname} is now available for battle challenges`,
       });
     } else {
-      // Auto-cancel any existing open challenge for the chosen challenger spider
+      // Auto-cancel any existing OPEN challenge for the chosen challenger spider (no expires_at filter to match DB constraint)
       const { data: existingChallenge } = await supabase
         .from('battle_challenges')
         .select('id')
         .eq('challenger_spider_id', challengerSpider.id)
-        .eq('challenger_id', user.id)
         .eq('status', 'OPEN')
-        .gt('expires_at', new Date().toISOString())
         .maybeSingle();
 
       if (existingChallenge) {
