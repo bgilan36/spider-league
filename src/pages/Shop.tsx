@@ -5,12 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ShoppingCart, Star } from "lucide-react";
 import { useState } from "react";
-import spiderTshirt from "@/assets/spider-tshirt.jpg";
-import spiderLongsleeve from "@/assets/spider-longsleeve.jpg";
-import spiderHoodie from "@/assets/spider-hoodie.jpg";
-import spiderKoozie from "@/assets/spider-koozie.jpg";
-import spiderStickers from "@/assets/spider-stickers.jpg";
-import spiderLeagueLogo from "@/assets/spider-league-logo.png";
+import shopShortSleeve from "@/assets/shop-short-sleeve.png";
+import shopLongSleeve from "@/assets/shop-long-sleeve.png";
+import shopHoodie from "@/assets/shop-hoodie.png";
+import shopKoozie from "@/assets/shop-koozie.png";
+import shopStickers from "@/assets/shop-stickers.png";
 
 interface Product {
   id: string;
@@ -30,7 +29,7 @@ const Shop = () => {
       name: "Spider League Short Sleeve T-Shirt",
       description: "Premium cotton t-shirt featuring the iconic Spider League logo. Perfect for everyday wear or showing your spider battle pride.",
       price: 24.99,
-      image: spiderLeagueLogo,
+      image: shopShortSleeve,
       category: "apparel"
     },
     {
@@ -38,7 +37,7 @@ const Shop = () => {
       name: "Spider League Long Sleeve T-Shirt", 
       description: "Comfortable long sleeve tee with Spider League branding. Great for cooler weather or layering.",
       price: 29.99,
-      image: spiderLeagueLogo,
+      image: shopLongSleeve,
       category: "apparel"
     },
     {
@@ -46,7 +45,7 @@ const Shop = () => {
       name: "Spider League Full-Zip Hoodie",
       description: "Premium fleece hoodie with full zip and Spider League embroidered logo. The ultimate in comfort and style.",
       price: 54.99,
-      image: spiderLeagueLogo, 
+      image: shopHoodie,
       category: "apparel"
     },
     {
@@ -54,7 +53,7 @@ const Shop = () => {
       name: "Spider League Beer Can Koozie",
       description: "Keep your drinks cold while representing the Spider League. Fits standard 12oz cans perfectly.",
       price: 9.99,
-      image: spiderLeagueLogo,
+      image: shopKoozie,
       category: "accessories"
     },
     {
@@ -62,7 +61,7 @@ const Shop = () => {
       name: "Spider League Sticker Pack",
       description: "High-quality vinyl sticker pack featuring various Spider League designs. Weather-resistant and perfect for laptops, water bottles, and more.",
       price: 7.99,
-      image: spiderLeagueLogo,
+      image: shopStickers,
       category: "accessories"
     }
   ];
