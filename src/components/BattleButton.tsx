@@ -120,9 +120,24 @@ const BattleButton: React.FC<BattleButtonProps> = ({
 
         if (error) throw error;
 
-        // All spiders from this week are eligible - they can challenge even if they have active challenges
-        setUserSpiders(data || []);
-        setAllSpidersHaveChallenges(false);
+        // Filter out spiders that already have an active open challenge
+        const { data: activeChallenges } = await supabase
+          .from('battle_challenges')
+          .select('challenger_spider_id')
+          .in('challenger_spider_id', spiderIds)
+          .eq('status', 'OPEN')
+          .gt('expires_at', new Date().toISOString());
+
+        const activeChallengeSpiderIds = new Set(
+          (activeChallenges || []).map(c => c.challenger_spider_id)
+        );
+
+        const availableSpiders = (data || []).filter(
+          s => !activeChallengeSpiderIds.has(s.id)
+        );
+
+        setUserSpiders(availableSpiders);
+        setAllSpidersHaveChallenges(availableSpiders.length === 0 && (data || []).length > 0);
       } else {
         setUserSpiders([]);
         setAllSpidersHaveChallenges(false);
