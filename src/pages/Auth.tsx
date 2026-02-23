@@ -8,7 +8,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
-import spiderLogo from "@/assets/spider-league-logo.png";
 
 const Auth = () => {
   const { user, loading } = useAuth();
@@ -114,7 +113,7 @@ const Auth = () => {
       <main className="mx-auto max-w-md px-6 py-12">
         <div className="flex flex-col items-center mb-8">
           <img 
-            src={spiderLogo} 
+            src="/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png"
             alt="Spider League Logo" 
             className="h-24 w-auto mb-4"
           />

@@ -6,10 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/auth/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
-import { Upload, Trophy, Users, Loader2, Lightbulb, Plus, Sword, Bug } from "lucide-react";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { Trophy, Users, Loader2, Sword, Bug, Heart, Camera, Target, Sparkles } from "lucide-react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { format } from "date-fns";
 import { HowItWorksModal } from "@/components/HowItWorksModal";
 import { UserProfileMenu } from "@/components/UserProfileMenu";
@@ -23,19 +25,16 @@ import BattleMode from "@/components/BattleMode";
 import BattleButton from "@/components/BattleButton";
 import ActiveChallengesPreview from "@/components/ActiveChallengesPreview";
 import BattleDetailsModal from "@/components/BattleDetailsModal";
-import { BattleRecapAlert } from "@/components/BattleRecapAlert";
 import ClickableUsername from "@/components/ClickableUsername";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import NotificationsDropdown from "@/components/NotificationsDropdown";
 import OnlineUsersBar from "@/components/OnlineUsersBar";
 import NewSpiderSpotlight from "@/components/NewSpiderSpotlight";
-import { BattleRecapBanner } from "@/components/BattleRecapBanner";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { useIsMobile } from "@/hooks/use-mobile";
 import WeeklyEligibleSpiders from "@/components/WeeklyEligibleSpiders";
-import { LoginStreakDisplay } from "@/components/LoginStreakDisplay";
-import { SpiderOfTheDayCard } from "@/components/SpiderOfTheDayCard";
+import { SpiderSkirmishCard } from "@/components/SpiderSkirmishCard";
 interface Spider {
   id: string;
   nickname: string;
@@ -53,6 +52,23 @@ interface Spider {
   owner_id?: string;
   created_at?: string;
 }
+
+interface RecentBattleSpider {
+  nickname: string;
+  species: string;
+  image_url: string;
+}
+
+interface RecentCombatItem {
+  id: string;
+  created_at: string;
+  mode: "battle" | "skirmish";
+  winner: "A" | "B" | "TIE" | null;
+  spider_a: RecentBattleSpider | null;
+  spider_b: RecentBattleSpider | null;
+  battle?: any;
+}
+
 const Index = () => {
   const {
     user,
@@ -90,11 +106,14 @@ const Index = () => {
   const [leaderboardLoading, setLeaderboardLoading] = useState(true);
   const [leaderboardType, setLeaderboardType] = useState<'alltime' | 'weekly'>('alltime');
   const [leaderboardView, setLeaderboardView] = useState<'spiders' | 'users'>('spiders');
-  const [recentBattles, setRecentBattles] = useState<any[]>([]);
+  const [recentBattles, setRecentBattles] = useState<RecentCombatItem[]>([]);
+  const [visibleRecentCount, setVisibleRecentCount] = useState(3);
   const [battlesLoading, setBattlesLoading] = useState(true);
   const [selectedBattle, setSelectedBattle] = useState<any>(null);
   const [isBattleDetailsOpen, setIsBattleDetailsOpen] = useState(false);
   const [weeklyUploadCount, setWeeklyUploadCount] = useState(0);
+  const [tipModalOpen, setTipModalOpen] = useState(false);
+  const [selectedTipAmount, setSelectedTipAmount] = useState<string>("5");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
   const rarityColors = {
@@ -104,6 +123,33 @@ const Index = () => {
     EPIC: "bg-purple-500",
     LEGENDARY: "bg-amber-500"
   };
+
+  const normalizedTipAmount = useMemo(() => {
+    const parsed = Number.parseFloat(selectedTipAmount);
+    if (!Number.isFinite(parsed) || parsed <= 0) return null;
+    return parsed.toFixed(2);
+  }, [selectedTipAmount]);
+
+  const venmoWebUrl = useMemo(() => {
+    if (!normalizedTipAmount) return "https://venmo.com/u/Brian-Gilan";
+    const params = new URLSearchParams({
+      txn: "pay",
+      amount: normalizedTipAmount,
+      note: "Spider League tip",
+    });
+    return `https://venmo.com/u/Brian-Gilan?${params.toString()}`;
+  }, [normalizedTipAmount]);
+
+  const venmoAppUrl = useMemo(() => {
+    if (!normalizedTipAmount) return "venmo://users/Brian-Gilan";
+    const params = new URLSearchParams({
+      txn: "pay",
+      recipients: "Brian-Gilan",
+      amount: normalizedTipAmount,
+      note: "Spider League tip",
+    });
+    return `venmo://paycharge?${params.toString()}`;
+  }, [normalizedTipAmount]);
   
   // Pull-to-refresh handler
   const handleRefresh = useCallback(async () => {
@@ -269,33 +315,74 @@ const Index = () => {
     try {
       setBattlesLoading(true);
 
-      // Fetch recent completed battles from all players
-      const {
-        data: battles,
-        error
-      } = await supabase.from('battles').select('*').eq('is_active', false).not('winner', 'is', null).order('created_at', {
-        ascending: false
-      }).limit(5);
-      if (error) throw error;
+      const [
+        {
+          data: battles,
+          error: battlesError
+        },
+        {
+          data: skirmishes,
+          error: skirmishesError
+        }
+      ] = await Promise.all([
+        supabase.from('battles').select('*').eq('is_active', false).not('winner', 'is', null).order('created_at', {
+          ascending: false
+        }).limit(24),
+        supabase.from('spider_skirmishes').select('id, created_at, winner_side, participants_snapshot, status').eq('status', 'COMPLETED').not('winner_side', 'is', null).order('created_at', {
+          ascending: false
+        }).limit(24)
+      ]);
 
-      // Parse team_a and team_b which are JSONB objects with structure:
-      // { userId: string, spider: { ...spider object } }
-      const battlesWithSpiders = (battles || []).map(battle => {
+      if (battlesError) throw battlesError;
+      if (skirmishesError) {
+        console.warn('Error fetching skirmishes for recent feed:', skirmishesError);
+      }
+
+      const recentBattleItems: RecentCombatItem[] = (battles || []).map((battle: any) => {
         const teamA = battle.team_a as any;
         const teamB = battle.team_b as any;
         return {
-          ...battle,
-          team_a: teamA?.spider ? [teamA.spider] : [],
-          team_b: teamB?.spider ? [teamB.spider] : []
+          id: `battle-${battle.id}`,
+          created_at: battle.created_at,
+          mode: 'battle' as const,
+          winner: battle.winner,
+          spider_a: teamA?.spider ?? teamA?.[0] ?? null,
+          spider_b: teamB?.spider ?? teamB?.[0] ?? null,
+          battle,
         };
       });
-      setRecentBattles(battlesWithSpiders);
+
+      const recentSkirmishItems: RecentCombatItem[] = ((skirmishes || []) as any[]).map((skirmish) => {
+        const snapshot = skirmish.participants_snapshot as any;
+        const playerSpider = snapshot?.player_spider ?? null;
+        const opponentSpider = snapshot?.opponent_spider ?? null;
+
+        return {
+          id: `skirmish-${skirmish.id}`,
+          created_at: skirmish.created_at,
+          mode: 'skirmish' as const,
+          winner: skirmish.winner_side ?? null,
+          spider_a: playerSpider,
+          spider_b: opponentSpider,
+        };
+      }).filter((item) => !!item.spider_a && !!item.spider_b);
+
+      const mergedFeed = [...recentBattleItems, ...recentSkirmishItems]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 24);
+
+      setRecentBattles(mergedFeed);
     } catch (error) {
       console.error('Error fetching recent battles:', error);
+      setRecentBattles([]);
     } finally {
       setBattlesLoading(false);
     }
   };
+  useEffect(() => {
+    setVisibleRecentCount(3);
+  }, [recentBattles.length]);
+
   const fetchTopLeaderboardSpiders = async () => {
     try {
       setLeaderboardLoading(true);
@@ -355,8 +442,37 @@ const Index = () => {
     try {
       setLeaderboardLoading(true);
 
-      // Base query for approved spiders with owner profile info
-      let query = supabase
+      if (leaderboardType === 'weekly') {
+        const { data: currentWeekId, error: weekIdError } = await supabase.rpc('get_current_week');
+        if (!weekIdError && currentWeekId) {
+          const { data, error } = await supabase.rpc('get_user_rankings_weekly', {
+            week_id_param: currentWeekId as string,
+          });
+          if (!error && data) {
+            const normalized = (data as any[]).map((row) => ({
+              ...row,
+              total_power_score: row.week_power_score ?? 0,
+              spider_count: row.week_spider_count ?? 0,
+              ranking_score: row.ranking_score ?? ((row.week_power_score ?? 0) + (row.experience_points ?? 0)),
+            }));
+            setTopUsers(normalized.slice(0, 5));
+            return;
+          }
+        }
+      } else {
+        const { data, error } = await supabase.rpc('get_user_rankings_all_time');
+        if (!error && data) {
+          const normalized = (data as any[]).map((row) => ({
+            ...row,
+            ranking_score: row.ranking_score ?? ((row.total_power_score ?? 0) + (row.experience_points ?? 0)),
+          }));
+          setTopUsers(normalized.slice(0, 5));
+          return;
+        }
+      }
+
+      // Fallback if leaderboard RPCs are unavailable locally.
+      let fallbackQuery = supabase
         .from('spiders')
         .select(`
           owner_id,
@@ -374,24 +490,17 @@ const Index = () => {
         `)
         .eq('is_approved', true);
 
-      // In weekly mode, only include spiders uploaded during the current PT week
       if (leaderboardType === 'weekly') {
-        const ptNow = new Date(
-          new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })
-        );
-        const dayOfWeek = ptNow.getDay(); // 0 = Sunday
+        const ptNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
         const weekStart = new Date(ptNow);
-        weekStart.setDate(ptNow.getDate() - dayOfWeek);
+        weekStart.setDate(ptNow.getDate() - ptNow.getDay());
         weekStart.setHours(0, 0, 0, 0);
-
-        const weekStartISO = weekStart.toISOString();
-        query = query.gte('created_at', weekStartISO);
+        fallbackQuery = fallbackQuery.gte('created_at', weekStart.toISOString());
       }
 
-      const { data: userRankings, error } = await query;
+      const { data: userRankings, error } = await fallbackQuery;
       if (error) throw error;
 
-      // Process the data to calculate user cumulative scores for the chosen timeframe
       const userMap = new Map();
       userRankings?.forEach((spider: any) => {
         const userId = spider.owner_id;
@@ -429,8 +538,9 @@ const Index = () => {
         }
       });
 
-      // Convert to array and sort by total power score
-      const sortedUsers = Array.from(userMap.values()).sort((a: any, b: any) => b.total_power_score - a.total_power_score).slice(0, 5);
+      const sortedUsers = Array.from(userMap.values())
+        .sort((a: any, b: any) => b.total_power_score - a.total_power_score)
+        .slice(0, 5);
       setTopUsers(sortedUsers);
     } catch (error) {
       console.error('Error fetching top users:', error);
@@ -649,6 +759,28 @@ const Index = () => {
           <p className="text-center text-sm text-muted-foreground mt-6">
             Battle with spiders you find in the wild.
           </p>
+
+          <section className="mt-10 border border-border/50 rounded-lg bg-card/40 p-4 sm:p-5">
+            <h2 className="text-sm font-semibold mb-2">How Spider League Works</h2>
+            <ul className="space-y-2 text-xs sm:text-sm text-muted-foreground">
+              <li className="flex items-start gap-2">
+                <Camera className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                <span>Take photos of real spiders you find in everyday life, upload them, and Spider League turns them into digital fighters with battle skills for your squad.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Target className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                <span>Build your weekly battle roster from eligible spiders.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                <span>Run quick skirmishes to earn XP and modest stat boosts for winning spiders.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Sword className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                <span>Enter battles against other players, where the winner can take ownership of the losing spider.</span>
+              </li>
+            </ul>
+          </section>
         </div>
       </div>;
   }
@@ -688,6 +820,23 @@ const Index = () => {
                   <img src="/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png" alt="Spider" className="h-5 w-5 sm:h-6 sm:w-6 object-contain" />
                 </Link>
               </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="glass"
+                    size="icon"
+                    onClick={() => setTipModalOpen(true)}
+                    className="h-10 w-10 sm:h-11 sm:w-11"
+                    aria-label="Buy the devs a coffee"
+                  >
+                    <Heart className="h-5 w-5 sm:h-6 sm:w-6" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="hidden sm:block">
+                  Buy the devs a coffee
+                </TooltipContent>
+              </Tooltip>
               <HowItWorksModal />
               <UserProfileMenu />
             </div>
@@ -695,52 +844,93 @@ const Index = () => {
         </div>
       </header>
 
+      <Dialog open={tipModalOpen} onOpenChange={setTipModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Support Spider League</DialogTitle>
+            <DialogDescription>
+              Tip the devs on Venmo. Quick tip is $5, or enter your own amount.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant={selectedTipAmount === "5" ? "default" : "outline"} onClick={() => setSelectedTipAmount("5")}>
+                $5
+              </Button>
+              <Button type="button" variant={selectedTipAmount === "10" ? "default" : "outline"} onClick={() => setSelectedTipAmount("10")}>
+                $10
+              </Button>
+              <Button type="button" variant={selectedTipAmount === "20" ? "default" : "outline"} onClick={() => setSelectedTipAmount("20")}>
+                $20
+              </Button>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="tip-amount">Custom amount (USD)</Label>
+              <Input
+                id="tip-amount"
+                inputMode="decimal"
+                placeholder="5.00"
+                value={selectedTipAmount}
+                onChange={(e) => setSelectedTipAmount(e.target.value)}
+              />
+            </div>
+
+            <p className="text-sm text-muted-foreground">
+              Venmo username: <span className="font-medium text-foreground">@Brian-Gilan</span>
+            </p>
+
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Button asChild disabled={!normalizedTipAmount}>
+                <a href={venmoAppUrl}>Open Venmo App</a>
+              </Button>
+              <Button asChild variant="outline" disabled={!normalizedTipAmount}>
+                <a href={venmoWebUrl} target="_blank" rel="noopener noreferrer">
+                  Pay on Venmo Web
+                </a>
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <main className="container mx-auto px-3 sm:px-6 py-3 sm:py-6">
-        {/* Login Streak & Online Users */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-          <LoginStreakDisplay />
+        {/* Above-the-fold focus: weekly roster, skirmish, battle snapshot */}
+        <section className="mb-8 grid gap-6 xl:grid-cols-12">
+          <div className="xl:col-span-7">
+            <WeeklyEligibleSpiders onSpiderChange={fetchUserSpiders} />
+          </div>
+
+          <div className="space-y-6 xl:col-span-5">
+            <SpiderSkirmishCard />
+            <ActiveChallengesPreview />
+          </div>
+        </section>
+
+        {/* Below-the-fold content */}
+        <div className="mb-6">
           <OnlineUsersBar />
         </div>
 
-        {/* Spider of the Day */}
-        <div className="mb-6">
-          <SpiderOfTheDayCard onSpiderClick={handleSpiderClick} />
-        </div>
-        
-        {/* Weekly Eligible Spiders - 3 slots with activation + uploads */}
-        <div className="mb-6 sm:mb-8">
-          <WeeklyEligibleSpiders onSpiderChange={fetchUserSpiders} />
-        </div>
-        
-        {/* Battle Recap Banner - Prominently displayed */}
-        <BattleRecapBanner />
-
-        {/* Battle Recaps for Challengers */}
-        <BattleRecapAlert />
-
-        {/* Active Challenges Section */}
+        {/* Battles Section */}
         <div className="mb-8">
-          <ActiveChallengesPreview />
-        </div>
-
-        {/* Battle Mode Section */}
-        <div className="mb-8">
-          <BattleMode showChallenges={false} />
+          <BattleMode showChallenges={true} showBattleStats={false} showCreateChallengeButton={false} />
         </div>
 
         {/* Recent Battles Section */}
         <div className="mb-6 sm:mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-3">
             <div>
-              <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-1 sm:mb-2">Recent Battles</h2>
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-1 sm:mb-2">Recent Battles and Skirmishes</h2>
               <p className="text-xs sm:text-sm text-muted-foreground">
-                Latest battles across all players
+                Latest battles and spider skirmishes
               </p>
             </div>
             <Button asChild variant="outline" size="sm" className="w-full sm:w-auto min-h-[44px]">
               <Link to="/battle-history" className="flex items-center justify-center gap-2">
                 <Sword className="h-4 w-4" />
-                <span className="hidden sm:inline">View All Battles</span>
+                <span className="hidden sm:inline">View All History</span>
                 <span className="sm:hidden">View All</span>
               </Link>
             </Button>
@@ -751,26 +941,48 @@ const Index = () => {
             </div> : recentBattles.length === 0 ? <Card>
               <CardContent className="pt-6 text-center py-12">
                 <Sword className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No battles yet</h3>
-                <p className="text-muted-foreground">No battles have been fought yet. Be the first to battle!</p>
+                <h3 className="text-lg font-semibold mb-2">No recent combat yet</h3>
+                <p className="text-muted-foreground">No battles or skirmishes have been recorded yet.</p>
               </CardContent>
             </Card> : <div className="space-y-3">
-              {recentBattles.map(battle => {
-            const teamA = Array.isArray(battle.team_a) ? battle.team_a : [];
-            const teamB = Array.isArray(battle.team_b) ? battle.team_b : [];
-            const spiderA = teamA[0];
-            const spiderB = teamB[0];
+              {recentBattles.slice(0, visibleRecentCount).map((combat) => {
+            const spiderA = combat.spider_a;
+            const spiderB = combat.spider_b;
+            if (!spiderA || !spiderB) return null;
+            const isBattleItem = combat.mode === "battle" && !!combat.battle;
+
             let resultBadge;
-            if (!battle.winner) {
+            if (!combat.winner) {
               resultBadge = <Badge variant="secondary">In Progress</Badge>;
-            } else if (battle.winner === "TIE") {
+            } else if (combat.winner === "TIE") {
               resultBadge = <Badge variant="outline">Tie</Badge>;
-            } else if (battle.winner === "A") {
+            } else if (combat.winner === "A") {
               resultBadge = <Badge className="bg-green-500 text-white">{spiderA?.nickname} Won</Badge>;
             } else {
               resultBadge = <Badge className="bg-green-500 text-white">{spiderB?.nickname} Won</Badge>;
             }
-            return <Card key={battle.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleBattleClick(battle)}>
+
+            const modeBadge = combat.mode === "skirmish" ? (
+              <Badge className="bg-primary/20 text-primary border border-primary/30">
+                <Bug className="h-3 w-3 mr-1" />
+                Skirmish
+              </Badge>
+            ) : (
+              <Badge variant="outline">
+                <Sword className="h-3 w-3 mr-1" />
+                Battle
+              </Badge>
+            );
+
+            return <Card
+                    key={combat.id}
+                    className={`${isBattleItem ? 'hover:shadow-md cursor-pointer' : 'cursor-default'} transition-shadow ${combat.mode === "skirmish" ? 'border-primary/40 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent' : ''}`}
+                    onClick={() => {
+                      if (isBattleItem) {
+                        handleBattleClick(combat.battle);
+                      }
+                    }}
+                  >
                     <CardContent className="flex items-center gap-2 sm:gap-4 p-3 sm:p-4">
                       <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                         {/* Spider A - Fixed width container */}
@@ -803,14 +1015,28 @@ const Index = () => {
                       
                       {/* Result and Date */}
                       <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                        {modeBadge}
                         {resultBadge}
                         <p className="text-xs text-muted-foreground">
-                          {format(new Date(battle.created_at), 'MMM d')}
+                          {format(new Date(combat.created_at), 'MMM d')}
                         </p>
                       </div>
                     </CardContent>
                   </Card>;
           })}
+
+              {recentBattles.length > visibleRecentCount ? (
+                <div className="pt-2 text-center">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setVisibleRecentCount((count) => count + 3)}
+                    className="min-w-32"
+                  >
+                    See more
+                  </Button>
+                </div>
+              ) : null}
             </div>}
         </div>
 
@@ -851,7 +1077,7 @@ const Index = () => {
             
             <p className="text-xs sm:text-sm text-muted-foreground">
               {leaderboardType === 'weekly' ? 'This week\'s ' : 'All-time '}
-              {leaderboardView === 'spiders' ? 'top 5 most powerful spider fighters' : 'top 5 trainers by cumulative power scores'}
+              {leaderboardView === 'spiders' ? 'top 5 most powerful spider fighters' : 'top 5 trainers by power + XP'}
             </p>
           </div>
 
@@ -960,8 +1186,11 @@ const Index = () => {
                         </div>
                         
                         <div className="text-right flex-shrink-0">
-                          <div className="text-base sm:text-lg md:text-xl font-bold">{user.total_power_score}</div>
-                          <div className="text-[10px] sm:text-xs text-muted-foreground">Total Power</div>
+                          <div className="text-base sm:text-lg md:text-xl font-bold">{user.ranking_score ?? user.total_power_score}</div>
+                          <div className="text-[10px] sm:text-xs text-muted-foreground">Power + XP</div>
+                          <div className="text-[10px] sm:text-xs text-muted-foreground">
+                            XP {user.experience_points ?? 0}
+                          </div>
                         </div>
                       </CardContent>
                     </Card>;

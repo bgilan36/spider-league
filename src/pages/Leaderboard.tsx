@@ -43,6 +43,8 @@ interface UserRanking {
   display_name: string | null;
   avatar_url: string | null;
   total_power_score: number;
+  experience_points: number;
+  ranking_score: number;
   spider_count: number;
   top_spider: {
     id: string;
@@ -59,6 +61,8 @@ interface WeeklyUserRanking {
   display_name: string | null;
   avatar_url: string | null;
   week_power_score: number;
+  experience_points: number;
+  ranking_score: number;
   week_spider_count: number;
   spiders_acquired_in_battle: number;
   top_spider: {
@@ -172,72 +176,16 @@ const Leaderboard = () => {
     try {
       setLoading(true);
 
-      // Get user rankings with cumulative power scores
-      const { data: userRankings, error } = await supabase
-        .from('spiders')
-        .select(`
-          owner_id,
-          power_score,
-          id,
-          nickname,
-          species,
-          image_url,
-          rarity,
-          profiles!owner_id (
-            display_name,
-            avatar_url
-          )
-        `)
-        .eq('is_approved', true);
-
+      const { data, error } = await supabase.rpc('get_user_rankings_all_time');
       if (error) throw error;
 
-      // Process the data to calculate user cumulative scores
-      const userMap = new Map<string, UserRanking>();
-      
-      userRankings?.forEach((spider: any) => {
-        const userId = spider.owner_id;
-        const existing = userMap.get(userId);
-        
-        if (existing) {
-          existing.total_power_score += spider.power_score;
-          existing.spider_count += 1;
-          // Update top spider if this one has higher power score
-          if (!existing.top_spider || spider.power_score > existing.top_spider.power_score) {
-            existing.top_spider = {
-              id: spider.id,
-              nickname: spider.nickname,
-              species: spider.species,
-              image_url: spider.image_url,
-              power_score: spider.power_score,
-              rarity: spider.rarity
-            };
-          }
-        } else {
-          userMap.set(userId, {
-            user_id: userId,
-            display_name: spider.profiles?.display_name || null,
-            avatar_url: spider.profiles?.avatar_url || null,
-            total_power_score: spider.power_score,
-            spider_count: 1,
-            top_spider: {
-              id: spider.id,
-              nickname: spider.nickname,
-              species: spider.species,
-              image_url: spider.image_url,
-              power_score: spider.power_score,
-              rarity: spider.rarity
-            }
-          });
-        }
-      });
+      const normalized = ((data as any[]) || []).map((row) => ({
+        ...row,
+        experience_points: row.experience_points ?? 0,
+        ranking_score: row.ranking_score ?? ((row.total_power_score ?? 0) + (row.experience_points ?? 0)),
+      }));
 
-      // Convert to array and sort by total power score
-      const sortedUsers = Array.from(userMap.values())
-        .sort((a, b) => b.total_power_score - a.total_power_score)
-        .slice(0, 100);
-
-      setTopUsers(sortedUsers);
+      setTopUsers(normalized.slice(0, 100));
     } catch (error: any) {
       console.error("Error fetching user leaderboard:", error);
       toast({ 
@@ -318,85 +266,94 @@ const Leaderboard = () => {
     try {
       setLoading(true);
 
-      // Get week dates first
-      const { data: week, error: weekError } = await supabase
-        .from('weeks')
-        .select('start_date, end_date')
-        .eq('id', weekId)
-        .single();
-
-      if (weekError) throw weekError;
-
-      // Only get spiders created during this specific week
-      const { data: weekSpiders, error: spiderError } = await supabase
-        .from('spiders')
-        .select(`
-          owner_id,
-          power_score,
-          id,
-          nickname,
-          species,
-          image_url,
-          rarity,
-          created_at,
-          profiles!owner_id (
-            display_name,
-            avatar_url
-          )
-        `)
-        .eq('is_approved', true)
-        .gte('created_at', week.start_date)
-        .lte('created_at', week.end_date);
-
-      if (spiderError) throw spiderError;
-
-      // Process the data to calculate weekly user scores
-      const userMap = new Map<string, WeeklyUserRanking>();
-      
-      // Process spiders created this week
-      weekSpiders?.forEach((spider: any) => {
-        const userId = spider.owner_id;
-        const existing = userMap.get(userId);
-        
-        if (existing) {
-          existing.week_power_score += spider.power_score;
-          existing.week_spider_count += 1;
-          if (!existing.top_spider || spider.power_score > existing.top_spider.power_score) {
-            existing.top_spider = {
-              id: spider.id,
-              nickname: spider.nickname,
-              species: spider.species,
-              image_url: spider.image_url,
-              power_score: spider.power_score,
-              rarity: spider.rarity
-            };
-          }
-        } else {
-          userMap.set(userId, {
-            user_id: userId,
-            display_name: spider.profiles?.display_name || null,
-            avatar_url: spider.profiles?.avatar_url || null,
-            week_power_score: spider.power_score,
-            week_spider_count: 1,
-            spiders_acquired_in_battle: 0,
-            top_spider: {
-              id: spider.id,
-              nickname: spider.nickname,
-              species: spider.species,
-              image_url: spider.image_url,
-              power_score: spider.power_score,
-              rarity: spider.rarity
-            }
-          });
+      const isUuidWeekId = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(weekId);
+      if (!isUuidWeekId) {
+        const selectedWeek = weeks.find((week) => week.id === weekId);
+        if (!selectedWeek) {
+          setWeeklyUserRankings([]);
+          return;
         }
+
+        const { data: weekSpiders, error: spiderError } = await supabase
+          .from('spiders')
+          .select(`
+            owner_id,
+            power_score,
+            id,
+            nickname,
+            species,
+            image_url,
+            rarity,
+            profiles!owner_id (
+              display_name,
+              avatar_url
+            )
+          `)
+          .eq('is_approved', true)
+          .gte('created_at', selectedWeek.start_date)
+          .lte('created_at', selectedWeek.end_date);
+
+        if (spiderError) throw spiderError;
+
+        const userMap = new Map<string, WeeklyUserRanking>();
+        weekSpiders?.forEach((spider: any) => {
+          const userId = spider.owner_id;
+          const existing = userMap.get(userId);
+          if (existing) {
+            existing.week_power_score += spider.power_score;
+            existing.week_spider_count += 1;
+            existing.ranking_score = existing.week_power_score + existing.experience_points;
+            if (!existing.top_spider || spider.power_score > existing.top_spider.power_score) {
+              existing.top_spider = {
+                id: spider.id,
+                nickname: spider.nickname,
+                species: spider.species,
+                image_url: spider.image_url,
+                power_score: spider.power_score,
+                rarity: spider.rarity,
+              };
+            }
+          } else {
+            userMap.set(userId, {
+              user_id: userId,
+              display_name: spider.profiles?.display_name || null,
+              avatar_url: spider.profiles?.avatar_url || null,
+              week_power_score: spider.power_score,
+              experience_points: 0,
+              ranking_score: spider.power_score,
+              week_spider_count: 1,
+              spiders_acquired_in_battle: 0,
+              top_spider: {
+                id: spider.id,
+                nickname: spider.nickname,
+                species: spider.species,
+                image_url: spider.image_url,
+                power_score: spider.power_score,
+                rarity: spider.rarity,
+              },
+            });
+          }
+        });
+
+        const fallbackRankings = Array.from(userMap.values())
+          .sort((a, b) => b.ranking_score - a.ranking_score)
+          .slice(0, 100);
+        setWeeklyUserRankings(fallbackRankings);
+        return;
+      }
+
+      const { data, error } = await supabase.rpc('get_user_rankings_weekly', {
+        week_id_param: weekId,
       });
+      if (error) throw error;
 
-      // Convert to array and sort by weekly power score
-      const sortedUsers = Array.from(userMap.values())
-        .sort((a, b) => b.week_power_score - a.week_power_score)
-        .slice(0, 100);
+      const normalized = ((data as any[]) || []).map((row) => ({
+        ...row,
+        experience_points: row.experience_points ?? 0,
+        ranking_score: row.ranking_score ?? ((row.week_power_score ?? 0) + (row.experience_points ?? 0)),
+      }));
 
-      setWeeklyUserRankings(sortedUsers);
+      setWeeklyUserRankings(normalized.slice(0, 100));
     } catch (error: any) {
       console.error("Error fetching weekly user rankings:", error);
       toast({ 
@@ -437,7 +394,7 @@ const Leaderboard = () => {
       />
       <Helmet>
         <title>User Leaderboard — Spider League</title>
-        <meta name="description" content="View the top-ranked spider trainers by cumulative power scores." />
+        <meta name="description" content="View the top-ranked spider trainers by Power + XP." />
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
         <link rel="canonical" href={`${window.location.origin}/leaderboard`} />
       </Helmet>
@@ -465,7 +422,7 @@ const Leaderboard = () => {
               />
             </div>
             <h1 className="text-2xl sm:text-4xl font-bold mb-1 sm:mb-2">User Leaderboard</h1>
-            <p className="text-muted-foreground text-sm sm:text-base">Top trainers ranked by cumulative power scores</p>
+            <p className="text-muted-foreground text-sm sm:text-base">Top trainers ranked by Power + XP</p>
           </div>
         </div>
 
@@ -570,6 +527,8 @@ const Leaderboard = () => {
               const userName = user.display_name || `User ${user.user_id.slice(0, 8)}`;
               const isWeekly = type === "weekly";
               const powerScore = isWeekly ? (user as WeeklyUserRanking).week_power_score : (user as UserRanking).total_power_score;
+              const experiencePoints = isWeekly ? (user as WeeklyUserRanking).experience_points : (user as UserRanking).experience_points;
+              const rankingScore = isWeekly ? (user as WeeklyUserRanking).ranking_score : (user as UserRanking).ranking_score;
               const spiderCount = isWeekly ? (user as WeeklyUserRanking).week_spider_count : (user as UserRanking).spider_count;
               const battleSpiders = isWeekly ? (user as WeeklyUserRanking).spiders_acquired_in_battle : 0;
               
@@ -609,6 +568,9 @@ const Leaderboard = () => {
                         <Badge variant="outline" className="text-xs">
                           {spiderCount} Spider{spiderCount !== 1 ? 's' : ''}
                         </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          XP {experiencePoints}
+                        </Badge>
                         {isWeekly && battleSpiders > 0 && (
                           <Badge variant="secondary" className="bg-red-500 text-white text-xs">
                             +{battleSpiders}
@@ -636,14 +598,13 @@ const Leaderboard = () => {
                           </Badge>
                         </div>
                       )}
-                      <p className="text-xs sm:text-sm text-muted-foreground">
-                        {isWeekly ? 'Weekly' : 'Total'} Collection Power Score
-                      </p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">Ranking uses Power + XP</p>
                     </div>
                     
                     <div className="text-right flex-shrink-0 w-full sm:w-auto sm:ml-4 border-t sm:border-t-0 pt-3 sm:pt-0">
-                      <div className="text-2xl sm:text-3xl font-bold">{powerScore}</div>
-                      <div className="text-xs sm:text-sm text-muted-foreground">Power Score</div>
+                      <div className="text-2xl sm:text-3xl font-bold">{rankingScore}</div>
+                      <div className="text-xs sm:text-sm text-muted-foreground">Power + XP</div>
+                      <div className="text-xs text-muted-foreground">Power {powerScore}</div>
                     </div>
                   </CardContent>
                 </Card>
@@ -659,6 +620,8 @@ const Leaderboard = () => {
             const userName = user.display_name || `User ${user.user_id.slice(0, 8)}`;
             const isWeekly = type === "weekly";
             const powerScore = isWeekly ? (user as WeeklyUserRanking).week_power_score : (user as UserRanking).total_power_score;
+            const experiencePoints = isWeekly ? (user as WeeklyUserRanking).experience_points : (user as UserRanking).experience_points;
+            const rankingScore = isWeekly ? (user as WeeklyUserRanking).ranking_score : (user as UserRanking).ranking_score;
             const spiderCount = isWeekly ? (user as WeeklyUserRanking).week_spider_count : (user as UserRanking).spider_count;
             const battleSpiders = isWeekly ? (user as WeeklyUserRanking).spiders_acquired_in_battle : 0;
             
@@ -697,6 +660,9 @@ const Leaderboard = () => {
                          <Badge variant="outline" className="text-xs flex-shrink-0">
                            {spiderCount} Spider{spiderCount !== 1 ? 's' : ''}
                          </Badge>
+                         <Badge variant="outline" className="text-xs flex-shrink-0">
+                           XP {experiencePoints}
+                         </Badge>
                         {isWeekly && battleSpiders > 0 && (
                           <Badge variant="secondary" className="bg-red-500 text-white text-xs flex-shrink-0">
                             +{battleSpiders}
@@ -719,8 +685,9 @@ const Leaderboard = () => {
                   </div>
                   
                   <div className="text-right flex-shrink-0 w-full sm:w-auto sm:ml-4 border-t sm:border-t-0 pt-2 sm:pt-0">
-                    <div className="text-xl sm:text-2xl font-bold">{powerScore}</div>
-                    <div className="text-xs text-muted-foreground">Power Score</div>
+                    <div className="text-xl sm:text-2xl font-bold">{rankingScore}</div>
+                    <div className="text-xs text-muted-foreground">Power + XP</div>
+                    <div className="text-xs text-muted-foreground">Power {powerScore}</div>
                   </div>
                 </CardContent>
               </Card>

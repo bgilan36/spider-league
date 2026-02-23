@@ -46,7 +46,17 @@ interface BattleChallenge {
   challenger_profile?: { display_name: string };
 }
 
-const BattleMode: React.FC<{ showChallenges?: boolean }> = ({ showChallenges = true }) => {
+interface BattleModeProps {
+  showChallenges?: boolean;
+  showBattleStats?: boolean;
+  showCreateChallengeButton?: boolean;
+}
+
+const BattleMode: React.FC<BattleModeProps> = ({
+  showChallenges = true,
+  showBattleStats = true,
+  showCreateChallengeButton = true,
+}) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { checkAndAwardBadges } = useBadgeSystem();
@@ -452,15 +462,14 @@ const BattleMode: React.FC<{ showChallenges?: boolean }> = ({ showChallenges = t
   return (
     <div className="space-y-6">
       {/* Battle Statistics */}
-      {user && <BattleStats userId={user.id} />}
+      {user && showBattleStats && <BattleStats userId={user.id} />}
       
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold gradient-text">Battle Mode</h2>
-          <p className="text-sm sm:text-base text-muted-foreground">Challenge other players and claim their spiders!</p>
+          <h2 className="text-2xl sm:text-3xl font-bold gradient-text">Battles</h2>
         </div>
         
-        {user && userSpiders.length > 0 && (
+        {user && showCreateChallengeButton && userSpiders.length > 0 && (
           <Button 
             onClick={() => setShowChallengeForm(true)} 
             className="flex items-center gap-2 w-full sm:w-auto"

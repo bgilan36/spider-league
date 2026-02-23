@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Sword, Timer, AlertCircle, Eye, X, Trophy } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Sword, Timer, AlertCircle, X, Trophy, CircleHelp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ChallengeDetailsModal from './ChallengeDetailsModal';
 import ClickableUsername from './ClickableUsername';
@@ -50,43 +50,92 @@ const ActiveChallengesPreview: React.FC = () => {
   const [selectedChallenge, setSelectedChallenge] = useState<BattleChallenge | null>(null);
   const [showChallengeModal, setShowChallengeModal] = useState(false);
 
-  // Fetch recent active challenges (limit to 3)
-  const fetchRecentChallenges = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('battle_challenges')
-        .select('*')
-        .eq('status', 'OPEN')
-        .gt('expires_at', new Date().toISOString())
-        .order('created_at', { ascending: false })
-        .limit(3);
+      // Fetch active challenges with balanced coverage:
+      // - snapshot from other players
+      // - all of this user's own open challenges (so none are silently hidden)
+      const fetchRecentChallenges = async () => {
+        try {
+          setLoading(true);
+          const nowIso = new Date().toISOString();
 
-      if (error) {
-        console.error('Error fetching challenges:', error);
+          let challengeRows: any[] = [];
+
+          if (user?.id) {
+            const [othersResult, myResult] = await Promise.all([
+              supabase
+                .from('battle_challenges')
+                .select('*')
+                .eq('status', 'OPEN')
+                .gt('expires_at', nowIso)
+                .neq('challenger_id', user.id)
+                .order('created_at', { ascending: false })
+                .limit(6),
+              supabase
+                .from('battle_challenges')
+                .select('*')
+                .eq('status', 'OPEN')
+                .eq('challenger_id', user.id)
+                .order('created_at', { ascending: false }),
+            ]);
+
+        if (othersResult.error) {
+          console.error('Error fetching other-user challenges:', othersResult.error);
+        }
+        if (myResult.error) {
+          console.error('Error fetching user challenges:', myResult.error);
+        }
+
+        const mergedMap = new Map<string, any>();
+        [...(myResult.data || []), ...(othersResult.data || [])].forEach((challenge) => {
+          if (!mergedMap.has(challenge.id)) {
+            mergedMap.set(challenge.id, challenge);
+          }
+        });
+        challengeRows = Array.from(mergedMap.values());
+      } else {
+        const { data, error } = await supabase
+          .from('battle_challenges')
+          .select('*')
+          .eq('status', 'OPEN')
+          .gt('expires_at', nowIso)
+          .order('created_at', { ascending: false })
+          .limit(6);
+
+        if (error) {
+          console.error('Error fetching challenges:', error);
+          return;
+        }
+        challengeRows = data || [];
+      }
+
+      if (challengeRows.length === 0) {
+        setChallenges([]);
         return;
       }
 
-      // Fetch related data separately
-      const challengesWithData = await Promise.all((data || []).map(async (challenge) => {
-        // Fetch challenger spider
-        const { data: spider } = await supabase
-          .from('spiders')
-          .select('*')
-          .eq('id', challenge.challenger_spider_id)
-          .single();
+      const spiderIds = Array.from(
+        new Set(challengeRows.map((challenge) => challenge.challenger_spider_id).filter(Boolean)),
+      );
+      const challengerIds = Array.from(
+        new Set(challengeRows.map((challenge) => challenge.challenger_id).filter(Boolean)),
+      );
 
-        // Fetch challenger profile
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('display_name')
-          .eq('id', challenge.challenger_id)
-          .single();
+      const [{ data: spiderRows }, { data: profileRows }] = await Promise.all([
+        spiderIds.length > 0
+          ? supabase.from('spiders').select('*').in('id', spiderIds)
+          : Promise.resolve({ data: [] as any[] } as any),
+        challengerIds.length > 0
+          ? supabase.from('profiles').select('id, display_name').in('id', challengerIds)
+          : Promise.resolve({ data: [] as any[] } as any),
+      ]);
 
-        return {
-          ...challenge,
-          challenger_spider: spider,
-          challenger_profile: profile
-        };
+      const spiderMap = new Map((spiderRows || []).map((spider: any) => [spider.id, spider]));
+      const profileMap = new Map((profileRows || []).map((profile: any) => [profile.id, profile]));
+
+      const challengesWithData = challengeRows.map((challenge: any) => ({
+        ...challenge,
+        challenger_spider: spiderMap.get(challenge.challenger_spider_id) || null,
+        challenger_profile: profileMap.get(challenge.challenger_id) || null,
       }));
 
       setChallenges(challengesWithData);
@@ -171,7 +220,7 @@ const ActiveChallengesPreview: React.FC = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [user?.id]);
 
   // Instant local event listeners to refresh without waiting for realtime
   useEffect(() => {
@@ -200,8 +249,14 @@ const ActiveChallengesPreview: React.FC = () => {
   }
 
   // Separate challenges into "from others" and "your own"
-  const challengesFromOthers = challenges.filter(c => c.challenger_id !== user?.id);
-  const yourChallenges = challenges.filter(c => c.challenger_id === user?.id);
+  const now = Date.now();
+  const challengesFromOthers = challenges
+    .filter(c => c.challenger_id !== user?.id)
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const yourChallenges = challenges
+    .filter(c => c.challenger_id === user?.id)
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const yourActiveChallenges = yourChallenges.filter((c) => new Date(c.expires_at).getTime() > now);
 
   return (
     <div className="space-y-4">
@@ -209,21 +264,32 @@ const ActiveChallengesPreview: React.FC = () => {
         <div>
           <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2 mb-2">
             <AlertCircle className="w-5 h-5 text-primary" />
-            Active Challenges
+            Battles
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label="Battles info"
+                >
+                  <CircleHelp className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">
+                These spiders are queued for battle. The winning user takes ownership of the losing spider.
+              </TooltipContent>
+            </Tooltip>
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground">
-            {challengesFromOthers.length > 0 
-              ? `${challengesFromOthers.length} challenge${challengesFromOthers.length > 1 ? 's' : ''} from other players` 
+            {challengesFromOthers.length > 0
+              ? `${challengesFromOthers.length} challenge${challengesFromOthers.length > 1 ? 's' : ''} from other players`
               : 'No challenges from other players yet'}
           </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <Badge variant="outline">Open to You: {challengesFromOthers.length}</Badge>
+            <Badge variant="secondary">Your Active: {yourActiveChallenges.length}</Badge>
+          </div>
         </div>
-        <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
-          <Link to="/battle-mode" className="flex items-center justify-center gap-2">
-            <Eye className="h-4 w-4" />
-            <span className="hidden sm:inline">View All Challenges</span>
-            <span className="sm:hidden">View All</span>
-          </Link>
-        </Button>
       </div>
       
       {challenges.length === 0 ? (
@@ -234,12 +300,6 @@ const ActiveChallengesPreview: React.FC = () => {
             <p className="text-sm sm:text-base text-muted-foreground mb-6">
               Be the first to create a challenge and start battling!
             </p>
-            <Button asChild className="gradient-button relative z-10">
-              <Link to="/battle-mode" className="flex items-center gap-2">
-                <Sword className="h-4 w-4" />
-                Go to Battle Mode
-              </Link>
-            </Button>
           </CardContent>
         </Card>
       ) : (
@@ -315,13 +375,13 @@ const ActiveChallengesPreview: React.FC = () => {
           )}
 
           {/* Your Active Challenges */}
-          {yourChallenges.length > 0 && (
+          {yourActiveChallenges.length > 0 && (
             <div className="space-y-3">
               <h3 className="text-lg font-semibold flex items-center gap-2">
                 <Trophy className="w-5 h-5 text-muted-foreground" />
                 Your Active Challenges
               </h3>
-              {yourChallenges.map((challenge) => {
+              {yourActiveChallenges.map((challenge) => {
                 const timeLeft = new Date(challenge.expires_at).getTime() - Date.now();
                 const hoursLeft = Math.max(0, Math.floor(timeLeft / (1000 * 60 * 60)));
 
@@ -392,17 +452,7 @@ const ActiveChallengesPreview: React.FC = () => {
               })}
             </div>
           )}
-          
-          {challenges.length === 3 && (
-            <div className="text-center pt-2">
-              <Button asChild variant="ghost" size="sm">
-                <Link to="/battle-mode" className="flex items-center gap-2">
-                  <Eye className="h-4 w-4" />
-                  View all active challenges
-                </Link>
-              </Button>
-            </div>
-          )}
+
         </div>
       )}
 
@@ -415,8 +465,7 @@ const ActiveChallengesPreview: React.FC = () => {
         }}
         challenge={selectedChallenge}
         onChallengeAccepted={(challenge, accepterSpider) => {
-          // Redirect to battle mode to start the battle
-          window.location.href = '/battle-mode';
+          window.location.href = '/';
         }}
       />
     </div>

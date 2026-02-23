@@ -282,6 +282,15 @@ All colors MUST be HSL.
     animation: pulse-glow 4s ease-in-out infinite;
   }
 
+  @keyframes pulse-glow-slow {
+    0%, 100% { box-shadow: var(--shadow-glow); }
+    50% { box-shadow: var(--shadow-glow), 0 0 18px hsl(var(--primary-glow) / 0.16); }
+  }
+
+  .pulse-glow-slow {
+    animation: pulse-glow-slow 6s ease-in-out infinite;
+  }
+
   /* Modern scrollbar */
   .custom-scrollbar::-webkit-scrollbar {
     width: 8px;
@@ -300,5 +309,19 @@ All colors MUST be HSL.
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--primary) / 0.8);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .floating,
+    .pulse-glow,
+    .pulse-glow-slow {
+      animation: none !important;
+    }
+
+    .gradient-button:hover,
+    .glass-card:hover,
+    .spider-card-mini:hover {
+      transform: none !important;
+    }
   }
 }

@@ -49,7 +49,7 @@ const TurnBasedBattle = () => {
   useEffect(() => {
     if (!battleId) {
       toast.error('No battle ID provided');
-      navigate('/battle-mode');
+      navigate('/');
       return;
     }
 
@@ -114,12 +114,12 @@ const TurnBasedBattle = () => {
 
   const handlePresenceCancel = () => {
     setShowPresenceGate(false);
-    navigate('/battle-mode');
+    navigate('/');
   };
 
   const handleOutcomeComplete = () => {
     setShowOutcomeReveal(false);
-    navigate('/battle-mode');
+    navigate('/');
   };
 
   if (loading) {
@@ -141,7 +141,7 @@ const TurnBasedBattle = () => {
           <CardContent className="p-6 text-center">
             <p className="text-muted-foreground">Battle not found</p>
             <Button asChild className="mt-4">
-              <Link to="/battle-mode">Back to Battle Mode</Link>
+              <Link to="/">Back to Home</Link>
             </Button>
           </CardContent>
         </Card>
@@ -219,7 +219,7 @@ const TurnBasedBattle = () => {
             </div>
             
             <Button variant="ghost" asChild>
-              <Link to="/battle-mode">
+              <Link to="/">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back
               </Link>
@@ -797,7 +797,7 @@ const TurnBasedBattle = () => {
                       Spider Claimed
                     </Badge>
                   )}
-                  <p className="text-sm text-muted-foreground mt-4">Redirecting to Battle Mode...</p>
+                  <p className="text-sm text-muted-foreground mt-4">Redirecting to Home...</p>
                 </CardContent>
               </Card>
             </motion.div>

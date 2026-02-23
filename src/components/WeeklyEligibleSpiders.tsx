@@ -5,7 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
-import { Plus, Upload, Sparkles, RefreshCcw, Target, Trophy, Check, Star, BarChart3, Swords, Zap } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Plus, Upload, Sparkles, RefreshCcw, Target, Trophy, Check, Star, BarChart3, Zap, CircleHelp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/auth/AuthProvider';
 import { toast } from 'sonner';
@@ -57,7 +58,6 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
   const prevFilledSlots = useRef(0);
   const [selectedSpiderForStats, setSelectedSpiderForStats] = useState<Spider | null>(null);
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
-  const [recommendedChallenger, setRecommendedChallenger] = useState<Spider | null>(null);
   const [activeChallengeSpiderIds, setActiveChallengeSpiderIds] = useState<Set<string>>(new Set());
 
   const fetchActiveChallenges = async () => {
@@ -83,7 +83,6 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
     if (user) {
       fetchEligibleSpiders();
       fetchAllSpiders();
-      fetchRecommendedChallenger();
       fetchActiveChallenges();
     }
   }, [user]);
@@ -219,71 +218,6 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
       setAllSpiders((data || []) as Spider[]);
     } catch (error) {
       console.error('Error fetching spiders:', error);
-    }
-  };
-
-  const fetchRecommendedChallenger = async () => {
-    if (!user) return;
-    
-    try {
-      const weekStartStr = getWeekStartStr();
-      
-      // Fetch a random eligible spider from other users (from their weekly roster or recent uploads)
-      // First try weekly roster spiders from other users
-      const { data: rosterData, error: rosterError } = await (supabase as any)
-        .from('weekly_roster')
-        .select(`
-          spider_id,
-          spiders (
-            id,
-            nickname,
-            species,
-            image_url,
-            power_score,
-            rarity,
-            owner_id,
-            hit_points,
-            damage,
-            speed,
-            defense,
-            venom,
-            webcraft,
-            is_approved
-          )
-        `)
-        .eq('week_start', weekStartStr)
-        .neq('user_id', user.id)
-        .limit(10);
-
-      if (rosterError) {
-        console.error('Error fetching roster challengers:', rosterError);
-      }
-      
-      const eligibleChallengers: Spider[] = (rosterData || [])
-        .filter((r: any) => r.spiders && r.spiders.is_approved)
-        .map((r: any) => r.spiders);
-      
-      // If we have challengers, pick one randomly
-      if (eligibleChallengers.length > 0) {
-        const randomIndex = Math.floor(Math.random() * eligibleChallengers.length);
-        setRecommendedChallenger(eligibleChallengers[randomIndex]);
-      } else {
-        // Fallback: get any approved spider from another user
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('spiders')
-          .select('id, nickname, species, image_url, power_score, rarity, owner_id, hit_points, damage, speed, defense, venom, webcraft, is_approved')
-          .eq('is_approved', true)
-          .neq('owner_id', user.id)
-          .order('power_score', { ascending: false })
-          .limit(10);
-
-        if (!fallbackError && fallbackData && fallbackData.length > 0) {
-          const randomIndex = Math.floor(Math.random() * fallbackData.length);
-          setRecommendedChallenger(fallbackData[randomIndex] as Spider);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching recommended challenger:', error);
     }
   };
 
@@ -441,7 +375,23 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
               <Target className="h-5 w-5 text-primary" />
             </motion.div>
             <div>
-              <h3 className="font-bold text-lg">This Week's Eligible Spiders</h3>
+              <div className="flex items-center gap-1.5">
+                <h3 className="font-bold text-lg">This Week's Eligible Spiders</h3>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      className="inline-flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      aria-label="Eligible spiders info"
+                    >
+                      <CircleHelp className="h-4 w-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs">
+                    These are your weekly battle-eligible spiders. Spider Skirmish can use any spider from your collection.
+                  </TooltipContent>
+                </Tooltip>
+              </div>
               <p className="text-xs sm:text-sm text-muted-foreground">
                 Build your battle roster: {filledSlots}/3 slots filled
               </p>
@@ -479,11 +429,29 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
               const hasActivatedSpider = activatedSpider !== null;
               const canShowActivateOption = !hasActivatedSpider && allSpiders.length > 0;
               const uploadsRemaining = maxUploads - uploadedSpiders.length;
+              const canUploadFromTile = uploadsRemaining > 0;
               
               return (
                 <Card 
                   key={index}
-                  className="border-2 border-dashed border-muted-foreground/30 bg-muted/20 hover:border-primary/50 hover:bg-primary/5 transition-all"
+                  className={`border-2 border-dashed border-muted-foreground/30 bg-muted/20 transition-all ${
+                    canUploadFromTile ? 'cursor-pointer hover:border-primary/50 hover:bg-primary/5' : ''
+                  }`}
+                  onClick={() => {
+                    if (canUploadFromTile) {
+                      navigate('/upload');
+                    }
+                  }}
+                  onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>) => {
+                    if (!canUploadFromTile) return;
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      navigate('/upload');
+                    }
+                  }}
+                  role={canUploadFromTile ? 'button' : undefined}
+                  tabIndex={canUploadFromTile ? 0 : undefined}
+                  aria-label={canUploadFromTile ? 'Upload new spider' : undefined}
                 >
                   <CardContent className="p-4 flex flex-col items-center justify-center min-h-[180px] text-center">
                     {canShowActivateOption ? (
@@ -500,7 +468,13 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
                             variant="outline" 
                             size="sm" 
                             className="gap-2 w-full"
-                            onClick={() => navigate('/upload')}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              if (canUploadFromTile) {
+                                navigate('/upload');
+                              }
+                            }}
+                            disabled={!canUploadFromTile}
                           >
                             <Upload className="h-4 w-4" />
                             Upload New Spider
@@ -509,7 +483,12 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
                           {/* Activate Option */}
                           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                             <DialogTrigger asChild>
-                              <Button variant="ghost" size="sm" className="gap-2 w-full text-muted-foreground hover:text-foreground">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="gap-2 w-full text-muted-foreground hover:text-foreground"
+                                onClick={(event) => event.stopPropagation()}
+                              >
                                 <RefreshCcw className="h-4 w-4" />
                                 Activate Past Spider
                               </Button>
@@ -585,7 +564,12 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
                           variant="outline" 
                           size="sm" 
                           className="gap-1"
-                          onClick={() => navigate('/upload')}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            if (canUploadFromTile) {
+                              navigate('/upload');
+                            }
+                          }}
                           disabled={uploadsRemaining <= 0}
                         >
                           <Plus className="h-4 w-4" />
@@ -695,66 +679,6 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
             );
           })}
         </div>
-
-        {/* Recommended Challenger Section */}
-        {filledSlots > 0 && recommendedChallenger && (
-          <div className="mt-4 p-4 bg-gradient-to-r from-amber-500/5 via-background to-amber-500/5 rounded-lg border border-amber-500/20">
-            <div className="flex items-center gap-2 mb-3">
-              <Swords className="h-4 w-4 text-amber-500" />
-              <h4 className="font-semibold text-sm">Recommended Challenger</h4>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              {/* Challenger Spider Card */}
-              <div 
-                className="flex-1 flex items-center gap-3 p-3 bg-background/50 rounded-lg border cursor-pointer hover:border-amber-500/50 transition-colors"
-                onClick={() => {
-                  setSelectedSpiderForStats(recommendedChallenger);
-                  setIsStatsModalOpen(true);
-                }}
-              >
-                <img
-                  src={recommendedChallenger.image_url}
-                  alt={recommendedChallenger.nickname}
-                  className="w-14 h-14 rounded-lg object-cover border-2 border-amber-500/30"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm truncate">{recommendedChallenger.nickname}</p>
-                  <p className="text-xs text-muted-foreground truncate">{recommendedChallenger.species}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Badge className={`${rarityColors[recommendedChallenger.rarity]} text-white text-[10px] px-1.5 py-0`}>
-                      {recommendedChallenger.rarity}
-                    </Badge>
-                    <span className="text-xs font-medium text-amber-500">⚡ {recommendedChallenger.power_score}</span>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Challenge Button */}
-              <BattleButton
-                targetSpider={{
-                  id: recommendedChallenger.id,
-                  nickname: recommendedChallenger.nickname,
-                  species: recommendedChallenger.species,
-                  image_url: recommendedChallenger.image_url,
-                  power_score: recommendedChallenger.power_score,
-                  rarity: recommendedChallenger.rarity,
-                  hit_points: recommendedChallenger.hit_points || 0,
-                  damage: recommendedChallenger.damage || 0,
-                  speed: recommendedChallenger.speed || 0,
-                  defense: recommendedChallenger.defense || 0,
-                  venom: recommendedChallenger.venom || 0,
-                  webcraft: recommendedChallenger.webcraft || 0,
-                  is_approved: recommendedChallenger.is_approved ?? true,
-                  owner_id: recommendedChallenger.owner_id || '',
-                }}
-                variant="default"
-                size="default"
-                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shrink-0"
-              />
-            </div>
-          </div>
-        )}
 
         {/* Info Text */}
         <div className="text-center text-xs text-muted-foreground bg-muted/30 rounded-lg p-3 mt-4">

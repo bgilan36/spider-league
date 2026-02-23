@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, MessageSquare, Zap, Trophy, Skull, Swords } from 'lucide-react';
+import { Bell, MessageSquare, Zap, Trophy, Skull, Swords, Bug } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -16,7 +16,7 @@ import ClickableUsername from './ClickableUsername';
 
 interface Notification {
   id: string;
-  type: 'wall_post' | 'bite' | 'battle_win' | 'battle_loss' | 'challenge';
+  type: 'wall_post' | 'bite' | 'battle_win' | 'battle_loss' | 'challenge' | 'skirmish_win' | 'skirmish_loss';
   message: string;
   created_at: string;
   from_user_id?: string;
@@ -33,11 +33,24 @@ const NotificationsDropdown = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
 
+  const getLoginStorageKey = (userId: string) => `spider-league-last-login-${userId}`;
+
+  const getAndUpdateLastLoginTimestamp = () => {
+    if (!user || typeof window === 'undefined') return new Date(0).toISOString();
+    const key = getLoginStorageKey(user.id);
+    const previous = localStorage.getItem(key) || new Date(0).toISOString();
+    localStorage.setItem(key, new Date().toISOString());
+    return previous;
+  };
+
   useEffect(() => {
-    if (user) {
-      fetchNotifications();
-      setupRealtimeSubscriptions();
-    }
+    if (!user) return;
+
+    const lastLogin = getAndUpdateLastLoginTimestamp();
+    fetchNotifications(lastLogin);
+    const cleanup = setupRealtimeSubscriptions();
+
+    return cleanup;
   }, [user]);
 
   const setupRealtimeSubscriptions = () => {
@@ -118,15 +131,39 @@ const NotificationsDropdown = () => {
       )
       .subscribe();
 
+    // Subscribe to skirmish results
+    const skirmishChannel = supabase
+      .channel('skirmish-notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'spider_skirmishes',
+          filter: `status=eq.COMPLETED`
+        },
+        (payload) => {
+          const skirmish = payload.new as any;
+          const isParticipant =
+            skirmish.initiator_user_id === user.id ||
+            skirmish.opponent_user_id === user.id;
+          if (isParticipant) {
+            fetchNotifications();
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(wallPostsChannel);
       supabase.removeChannel(bitesChannel);
       supabase.removeChannel(battlesChannel);
       supabase.removeChannel(challengesChannel);
+      supabase.removeChannel(skirmishChannel);
     };
   };
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = async (sinceLoginIso?: string) => {
     if (!user) return;
 
     try {
@@ -233,6 +270,40 @@ const NotificationsDropdown = () => {
         });
       }
 
+      // Fetch spider skirmish results. On first login load, include skirmishes since previous login.
+      const skirmishSince = sinceLoginIso || oneDayAgo;
+      const { data: skirmishes } = await supabase
+        .from('spider_skirmishes')
+        .select('id, created_at, winner_side, initiator_user_id, opponent_user_id, participants_snapshot')
+        .eq('status', 'COMPLETED')
+        .gte('created_at', skirmishSince)
+        .or(`initiator_user_id.eq.${user.id},opponent_user_id.eq.${user.id}`)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (skirmishes) {
+        skirmishes.forEach((skirmish: any) => {
+          const isInitiator = skirmish.initiator_user_id === user.id;
+          const userWon =
+            (isInitiator && skirmish.winner_side === 'A') ||
+            (!isInitiator && skirmish.winner_side === 'B');
+          const snapshot = skirmish.participants_snapshot as any;
+          const opponentSpiderName = isInitiator
+            ? snapshot?.opponent_spider?.nickname
+            : snapshot?.player_spider?.nickname;
+
+          notifications.push({
+            id: `skirmish-${skirmish.id}`,
+            type: userWon ? 'skirmish_win' : 'skirmish_loss',
+            message: userWon
+              ? `Your spider won a Spider Skirmish against ${opponentSpiderName || 'an opponent'}!`
+              : `Your spider lost a Spider Skirmish to ${opponentSpiderName || 'an opponent'}.`,
+            created_at: skirmish.created_at,
+            read: false
+          });
+        });
+      }
+
       // Fetch recent challenges (last 24 hours) - challenges directed at this user
       const { data: challenges } = await supabase
         .from('battle_challenges')
@@ -290,6 +361,10 @@ const NotificationsDropdown = () => {
         return <Skull className="h-4 w-4 text-red-500" />;
       case 'challenge':
         return <Swords className="h-4 w-4 text-purple-500" />;
+      case 'skirmish_win':
+        return <Bug className="h-4 w-4 text-emerald-500" />;
+      case 'skirmish_loss':
+        return <Bug className="h-4 w-4 text-rose-500" />;
       default:
         return <Bell className="h-4 w-4" />;
     }
@@ -315,6 +390,10 @@ const NotificationsDropdown = () => {
           navigate(`/battle/${notification.battle_id}`);
         }
         break;
+      case 'skirmish_win':
+      case 'skirmish_loss':
+        navigate('/');
+        break;
       case 'wall_post':
       case 'bite':
         if (notification.from_user_id) {
@@ -322,7 +401,7 @@ const NotificationsDropdown = () => {
         }
         break;
       case 'challenge':
-        navigate('/battle-mode');
+        navigate('/');
         break;
     }
   };

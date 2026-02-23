@@ -11,8 +11,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, Upload, MessageSquare, Heart } from "lucide-react";
+import { Loader2, Upload, MessageSquare, Heart, Trophy } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import BattleStats from "@/components/BattleStats";
 
 interface Profile {
   display_name: string | null;
@@ -284,8 +285,12 @@ export const UserProfileMenu = () => {
           </DialogHeader>
           
           <Tabs defaultValue="edit" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="edit">Edit Profile</TabsTrigger>
+              <TabsTrigger value="stats">
+                <Trophy className="h-4 w-4 mr-2" />
+                Stats
+              </TabsTrigger>
               <TabsTrigger value="wall">
                 <MessageSquare className="h-4 w-4 mr-2" />
                 Wall ({wallPosts.length})
@@ -386,6 +391,12 @@ export const UserProfileMenu = () => {
                   Save Changes
                 </Button>
               </div>
+            </TabsContent>
+
+            <TabsContent value="stats">
+              <ScrollArea className="h-[400px] pr-4">
+                <BattleStats userId={user.id} />
+              </ScrollArea>
             </TabsContent>
 
             <TabsContent value="wall">

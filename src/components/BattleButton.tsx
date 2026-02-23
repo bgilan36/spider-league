@@ -52,7 +52,7 @@ const BattleButton: React.FC<BattleButtonProps> = ({
   // Check if this is the user's own spider
   const isOwnSpider = user && targetSpider.owner_id === user.id;
   
-  // Hide battle button for own spiders on leaderboards (use Battle Mode instead)
+  // Hide battle button for own spiders on leaderboards (use the home Battles section instead)
   if (context === "leaderboard" && isOwnSpider) {
     return null;
   }

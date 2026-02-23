@@ -1,73 +1,43 @@
-# Welcome to your Lovable project
+# Spider League
 
-## Project info
+Rebuilt from Lovable onto a production-ready stack:
 
-**URL**: https://lovable.dev/projects/963eb32d-660e-416c-ae28-f1c33d1a03b5
+- Next.js
+- React + TypeScript
+- Tailwind CSS + shadcn/ui
+- Supabase
 
-## How can I edit this code?
+## Local Development
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/963eb32d-660e-416c-ae28-f1c33d1a03b5) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Then open `http://localhost:3000`.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Scripts
 
-**Use GitHub Codespaces**
+- `npm run dev`: start Next.js dev server
+- `npm run build`: production build
+- `npm run start`: run production server
+- `npm run lint`: lint source files
+- `npm run typecheck`: TypeScript checks
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Notes on the Migration
 
-## What technologies are used for this project?
+- Existing React Router routes are preserved inside a Next.js catch-all page for fast parity.
+- Supabase integration and current app functionality are retained.
+- UX improvements added in this migration:
+  - Skip-to-content keyboard accessibility link
+  - Route change screen reader announcements
+  - Automatic scroll reset on navigation
+  - Duplicate notification listener removed
 
-This project is built with:
+## Spider Skirmish
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/963eb32d-660e-416c-ae28-f1c33d1a03b5) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- New one-click `Spider Skirmish` CTA appears above the fold on the dashboard.
+- Matchmaking picks a relatively even opponent from another user using power/stat similarity with widening match bands.
+- Skirmishes run server-side and return deterministic turn logs for replay.
+- Winners gain small bounded spider stat improvements and user XP.
+- Existing weekly winner-take-all battle mode is unchanged.

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,7 +7,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { HelpCircle, Upload, Sword, Trophy, Target, Shield, Zap } from "lucide-react";
+import { HelpCircle, Upload, Sword, Trophy, Target, Shield, Zap, Sparkles, CircleHelp } from "lucide-react";
 
 export const HowItWorksModal = () => {
   return (
@@ -22,33 +21,67 @@ export const HowItWorksModal = () => {
         <DialogHeader>
           <DialogTitle className="text-2xl">Spider League Rules & Guide</DialogTitle>
           <DialogDescription>
-            Everything you need to know about competing in Spider League
+            Current gameplay rules for uploads, skirmishes, battles, and rewards.
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-6 mt-4">
-          {/* Getting Started */}
           <section>
             <h3 className="text-lg font-semibold mb-3 flex items-center">
               <Upload className="mr-2 h-5 w-5 text-primary" />
-              Getting Started
+              Core Loop
             </h3>
             <div className="space-y-2 text-sm">
-              <p>1. <strong>Starter Spider:</strong> New players automatically receive a starter spider (250 Power Score) ready for battles</p>
-              <p>2. <strong>Upload Your Spider:</strong> Take a clear photo of any spider you find</p>
-              <p>3. <strong>Weekly Limit:</strong> Each user can upload up to THREE spiders per week that are eligible for battles and challenges</p>
-              <p>4. <strong>Week Reset:</strong> New upload window starts every Sunday at 12am PT</p>
-              <p>5. <strong>AI Analysis:</strong> Our system identifies the species and generates battle stats</p>
-              <p>6. <strong>Ranking:</strong> Your spiders get ranked on leaderboards based on Power Score</p>
-              <p>7. <strong>Collection:</strong> Your spiders join your fighter roster with unique abilities</p>
+              <p>1. <strong>Start with a spider:</strong> New accounts receive a starter spider so you can play immediately.</p>
+              <p>2. <strong>Upload real spiders:</strong> Take photos of spiders you find and upload them to generate playable fighters.</p>
+              <p>3. <strong>Build your roster:</strong> Choose weekly battle-eligible spiders and run skirmishes any time from your collection.</p>
+              <p>4. <strong>Compete and progress:</strong> Win battles and skirmishes to grow your account and spiders.</p>
             </div>
           </section>
 
-          {/* Stats System */}
+          <section>
+            <h3 className="text-lg font-semibold mb-3 flex items-center">
+              <CircleHelp className="mr-2 h-5 w-5 text-primary" />
+              Weekly Eligibility Rules (Battles)
+            </h3>
+            <div className="space-y-2 text-sm">
+              <p>• <strong>3 weekly battle slots:</strong> Your weekly battle roster has three slots.</p>
+              <p>• <strong>Upload cap:</strong> You can upload up to three spiders per week (week resets Sunday, PT).</p>
+              <p>• <strong>Mix-and-match roster:</strong> You can activate one older spider, then fill remaining slots with new weekly uploads.</p>
+              <p>• <strong>Battles use eligible spiders:</strong> Only weekly eligible spiders can be used for battle challenges.</p>
+            </div>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold mb-3 flex items-center">
+              <Sparkles className="mr-2 h-5 w-5 text-primary" />
+              Skirmish Rules
+            </h3>
+            <div className="space-y-2 text-sm">
+              <p>• <strong>Any spider can skirmish:</strong> Skirmishes can use any spider in your collection (not just weekly eligible spiders).</p>
+              <p>• <strong>Suggested even matchup:</strong> The app suggests a relatively balanced opponent from another user.</p>
+              <p>• <strong>Daily limit:</strong> Each user can run up to <strong>3 skirmishes per day</strong>.</p>
+              <p>• <strong>Skirmish rewards:</strong> Winning gives XP to the winning user and modest stat boosts to the winning spider.</p>
+              <p>• <strong>No ownership transfer:</strong> Skirmishes are scrimmages; spider ownership never changes.</p>
+            </div>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold mb-3 flex items-center">
+              <Sword className="mr-2 h-5 w-5 text-primary" />
+              Battle Rules
+            </h3>
+            <div className="space-y-2 text-sm">
+              <p>• <strong>Challenge system:</strong> Create or accept battle challenges with weekly eligible spiders.</p>
+              <p>• <strong>High stakes:</strong> In battles, the losing spider transfers to the winning user.</p>
+              <p>• <strong>Battle XP:</strong> Completed matchup battles award XP to the winning user.</p>
+            </div>
+          </section>
+
           <section>
             <h3 className="text-lg font-semibold mb-3 flex items-center">
               <Target className="mr-2 h-5 w-5 text-primary" />
-              Combat Stats System
+              Combat Stats
             </h3>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="flex items-center">
@@ -90,53 +123,23 @@ export const HowItWorksModal = () => {
             </div>
           </section>
 
-          {/* Rarity System */}
-          <section>
-            <h3 className="text-lg font-semibold mb-3">Spider Rarity</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center">
-                <div className="w-4 h-4 mr-2 bg-gray-500 rounded" />
-                <strong>Common:</strong> Basic spiders with standard stats
-              </div>
-              <div className="flex items-center">
-                <div className="w-4 h-4 mr-2 bg-green-500 rounded" />
-                <strong>Uncommon:</strong> Slightly enhanced abilities
-              </div>
-              <div className="flex items-center">
-                <div className="w-4 h-4 mr-2 bg-blue-500 rounded" />
-                <strong>Rare:</strong> Strong fighters with good stats
-              </div>
-              <div className="flex items-center">
-                <div className="w-4 h-4 mr-2 bg-purple-500 rounded" />
-                <strong>Epic:</strong> Powerful spiders with high stats
-              </div>
-              <div className="flex items-center">
-                <div className="w-4 h-4 mr-2 bg-amber-500 rounded" />
-                <strong>Legendary:</strong> Elite fighters with maximum potential
-              </div>
-            </div>
-          </section>
-
-          {/* Battle System (Coming Soon) */}
           <section>
             <h3 className="text-lg font-semibold mb-3 flex items-center">
-              <Sword className="mr-2 h-5 w-5 text-primary" />
-              Battle System (Coming Soon)
+              <Trophy className="mr-2 h-5 w-5 text-primary" />
+              Progression & Ranking
             </h3>
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p>• <strong>Weekly Matchups:</strong> Compete against other players</p>
-              <p>• <strong>Team Strategy:</strong> Build balanced teams of 3 spiders</p>
-              <p>• <strong>Turn-Based Combat:</strong> Speed determines turn order</p>
-              <p>• <strong>Special Abilities:</strong> Venom and web attacks provide tactical advantages</p>
-              <p>• <strong>Seasonal Rankings:</strong> Climb the leaderboard for glory</p>
+            <div className="space-y-2 text-sm">
+              <p>• <strong>User XP:</strong> XP is earned from skirmish wins and battle wins.</p>
+              <p>• <strong>Spider growth:</strong> Stat boosts apply to the specific spider that wins a skirmish.</p>
+              <p>• <strong>Leaderboard score:</strong> Rankings reflect both spider power and earned XP.</p>
+              <p>• <strong>Server-authoritative outcomes:</strong> Match results and rewards are validated server-side.</p>
             </div>
           </section>
 
-          {/* Power Score */}
           <section>
-            <h3 className="text-lg font-semibold mb-3">Power Score</h3>
-            <p className="text-sm">
-              Your spider's overall combat effectiveness, calculated from all stats. Higher power scores indicate stronger fighters capable of competing at elite levels.
+            <h3 className="text-lg font-semibold mb-3">Power Score & Rarity</h3>
+            <p className="text-sm text-muted-foreground">
+              Power Score summarizes overall combat strength. Rarity tiers (Common to Legendary) indicate overall quality bands, but battles and skirmishes are still decided by full stat interactions and turn-by-turn outcomes.
             </p>
           </section>
         </div>

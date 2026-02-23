@@ -13,7 +13,6 @@ import SpiderCollection from "./pages/SpiderCollection";
 import Leaderboard from "./pages/Leaderboard";
 import Roadmap from "./pages/Roadmap";
 import BattleHistory from "./pages/BattleHistory";
-import BattleMode from "./pages/BattleMode";
 import TurnBasedBattle from "./pages/TurnBasedBattle";
 import AboutUs from "./pages/AboutUs";
 import Shop from "./pages/Shop";
@@ -24,6 +23,8 @@ import Layout from "@/components/Layout";
 import NotificationListener from "@/components/NotificationListener";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import BattleNotification from "@/components/BattleNotification";
+import RouteAnnouncer from "@/components/RouteAnnouncer";
+import ScrollToTop from "@/components/ScrollToTop";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,8 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <RouteAnnouncer />
+            <ScrollToTop />
             <NotificationListener />
             <BattleNotification />
             <Layout>
@@ -49,7 +52,6 @@ const App = () => (
                 <Route path="/collection" element={<SpiderCollection />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
                 <Route path="/battle-history" element={<BattleHistory />} />
-                <Route path="/battle-mode" element={<BattleMode />} />
                 <Route path="/battle/:battleId" element={<TurnBasedBattle />} />
                 <Route path="/roadmap" element={<Roadmap />} />
                 <Route path="/collection/:userId" element={<UserCollection />} />

@@ -1,16 +1,5 @@
 import { Trophy } from "lucide-react";
 
-// Import all badge graphics
-import firstSpiderBadge from "@/assets/badges/first-spider.png";
-import firstVictoryBadge from "@/assets/badges/first-victory.png";
-import spiderCollectorBadge from "@/assets/badges/spider-collector.png";
-import powerPlayerBadge from "@/assets/badges/power-player.png";
-import battleVeteranBadge from "@/assets/badges/battle-veteran.png";
-import spiderMasterBadge from "@/assets/badges/spider-master.png";
-import eliteTrainerBadge from "@/assets/badges/elite-trainer.png";
-import legendaryFighterBadge from "@/assets/badges/legendary-fighter.png";
-import legendaryTrainerBadge from "@/assets/badges/legendary-trainer.png";
-
 interface BadgeIconProps {
   badgeName: string;
   size?: "sm" | "md" | "lg";
@@ -18,15 +7,15 @@ interface BadgeIconProps {
 }
 
 const badgeImageMap: Record<string, string> = {
-  "First Spider": firstSpiderBadge,
-  "First Victory": firstVictoryBadge,
-  "Spider Collector": spiderCollectorBadge,
-  "Power Player": powerPlayerBadge,
-  "Battle Veteran": battleVeteranBadge,
-  "Spider Master": spiderMasterBadge,
-  "Elite Trainer": eliteTrainerBadge,
-  "Legendary Fighter": legendaryFighterBadge,
-  "Legendary Trainer": legendaryTrainerBadge,
+  "First Spider": "/images/badges/first-spider.png",
+  "First Victory": "/images/badges/first-victory.png",
+  "Spider Collector": "/images/badges/spider-collector.png",
+  "Power Player": "/images/badges/power-player.png",
+  "Battle Veteran": "/images/badges/battle-veteran.png",
+  "Spider Master": "/images/badges/spider-master.png",
+  "Elite Trainer": "/images/badges/elite-trainer.png",
+  "Legendary Fighter": "/images/badges/legendary-fighter.png",
+  "Legendary Trainer": "/images/badges/legendary-trainer.png",
 };
 
 const sizeClasses = {

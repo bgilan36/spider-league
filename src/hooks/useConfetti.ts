@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import confetti from 'canvas-confetti';
 
-type ConfettiType = 'victory' | 'badge' | 'milestone' | 'streak' | 'spotlight';
+type ConfettiType = 'victory' | 'badge' | 'milestone' | 'streak';
 
 export const useConfetti = () => {
   const fireConfetti = useCallback((type: ConfettiType = 'victory') => {
@@ -86,19 +86,6 @@ export const useConfetti = () => {
         setTimeout(fire, 300);
         break;
 
-      case 'spotlight':
-        // Sparkle effect for spider of the day
-        confetti({
-          ...defaults,
-          particleCount: 80,
-          spread: 100,
-          origin: { y: 0.5 },
-          colors: ['#fbbf24', '#fde68a', '#ffffff', '#f59e0b'],
-          shapes: ['star'],
-          scalar: 1.5,
-          ticks: 150
-        });
-        break;
     }
   }, []);
 
