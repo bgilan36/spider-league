@@ -318,7 +318,7 @@ export const SpiderSkirmishCard = () => {
     if (!user) return null;
     const { startIso, endIso } = getUtcDayBounds();
 
-    const { count, error } = await supabase
+    const { count, error } = await (supabase as any)
       .from("spider_skirmishes")
       .select("id", { count: "exact", head: true })
       .eq("initiator_user_id", user.id)
@@ -437,7 +437,7 @@ export const SpiderSkirmishCard = () => {
     const localSuggestionPromise = buildClientSideSuggestion();
 
     try {
-      const { data, error } = await supabase.rpc("get_spider_skirmish_suggestion");
+      const { data, error } = await (supabase as any).rpc("get_spider_skirmish_suggestion");
       const serverSuggestion = !error && data ? (data as SkirmishSuggestion) : null;
       if (serverSuggestion?.available && serverSuggestion.player_spider && serverSuggestion.opponent_spider) {
         setSuggestion(serverSuggestion);
@@ -522,7 +522,7 @@ export const SpiderSkirmishCard = () => {
       let parsedResult: SkirmishResult | null = null;
       let usedLocalFallback = false;
 
-      const startWithArgs = await supabase.rpc("start_spider_skirmish", {
+      const startWithArgs = await (supabase as any).rpc("start_spider_skirmish", {
         p_player_spider_id: suggestion?.player_spider?.id ?? null,
         p_idempotency_key: idempotencyKey,
       });
@@ -530,7 +530,7 @@ export const SpiderSkirmishCard = () => {
       if (!startWithArgs.error && startWithArgs.data) {
         parsedResult = startWithArgs.data as SkirmishResult;
       } else if (isMissingSkirmishRpc(startWithArgs.error)) {
-        const startWithoutArgs = await supabase.rpc("start_spider_skirmish");
+        const startWithoutArgs = await (supabase as any).rpc("start_spider_skirmish");
         if (!startWithoutArgs.error && startWithoutArgs.data) {
           parsedResult = startWithoutArgs.data as SkirmishResult;
         } else if (isMissingSkirmishRpc(startWithoutArgs.error)) {
