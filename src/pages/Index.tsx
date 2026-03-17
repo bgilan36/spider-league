@@ -328,9 +328,9 @@ const Index = () => {
         supabase.from('battles').select('*').eq('is_active', false).not('winner', 'is', null).order('created_at', {
           ascending: false
         }).limit(24),
-        (supabase as any).from('spider_skirmishes').select('id, created_at, winner_side, player_spider_snapshot, opponent_spider_snapshot').not('winner_side', 'is', null).order('created_at', {
-          ascending: false
-        }).limit(24)
+        (supabase as any).rpc('get_recent_public_skirmishes', {
+          row_limit: 24
+        })
       ]);
 
       if (battlesError) throw battlesError;
