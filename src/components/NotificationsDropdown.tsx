@@ -140,16 +140,10 @@ const NotificationsDropdown = () => {
           event: 'INSERT',
           schema: 'public',
           table: 'spider_skirmishes',
-          filter: `status=eq.COMPLETED`
+          filter: `initiator_user_id=eq.${user.id}`
         },
-        (payload) => {
-          const skirmish = payload.new as any;
-          const isParticipant =
-            skirmish.initiator_user_id === user.id ||
-            skirmish.opponent_user_id === user.id;
-          if (isParticipant) {
-            fetchNotifications();
-          }
+        () => {
+          fetchNotifications();
         }
       )
       .subscribe();
