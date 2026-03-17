@@ -1,105 +1,529 @@
 import { Helmet } from "react-helmet-async";
-import { Link, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { Loader2, LogOut, Sparkles, Sword, Trophy, Upload, Users } from "lucide-react";
+
 import { useAuth } from "@/auth/AuthProvider";
-import { useToast } from "@/components/ui/use-toast";
-import { Trophy, Users, Loader2, Sword, Bug, Heart, Camera, Target, Sparkles } from "lucide-react";
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { format } from "date-fns";
-import { HowItWorksModal } from "@/components/HowItWorksModal";
-import { UserProfileMenu } from "@/components/UserProfileMenu";
-import { BadgeNotification } from "@/components/BadgeNotification";
-import { useBadgeSystem } from "@/hooks/useBadgeSystem";
-import { UserProfileModal } from "@/components/UserProfileModal";
-import { supabase } from "@/integrations/supabase/client";
-import PowerScoreArc from "@/components/PowerScoreArc";
-import SpiderDetailsModal from "@/components/SpiderDetailsModal";
-import BattleMode from "@/components/BattleMode";
-import BattleButton from "@/components/BattleButton";
 import ActiveChallengesPreview from "@/components/ActiveChallengesPreview";
 import BattleDetailsModal from "@/components/BattleDetailsModal";
-import ClickableUsername from "@/components/ClickableUsername";
-
+import BattleMode from "@/components/BattleMode";
 import NotificationsDropdown from "@/components/NotificationsDropdown";
 import OnlineUsersBar from "@/components/OnlineUsersBar";
-import { usePullToRefresh } from "@/hooks/usePullToRefresh";
-import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
-import { useIsMobile } from "@/hooks/use-mobile";
-import WeeklyEligibleSpiders from "@/components/WeeklyEligibleSpiders";
 import { SpiderSkirmishCard } from "@/components/SpiderSkirmishCard";
-...
-      </main>
-      
-      {/* Feedback Card */}
-      {user && <div className="container mx-auto px-3 sm:px-6 mt-8 sm:mt-12 mb-6 sm:mb-8">
-          <a href="https://forms.gle/66uF4PESgaQb9U5r5" target="_blank" rel="noopener noreferrer" className="block">
-            <Card className="cursor-pointer hover:scale-[1.02] transition-transform duration-300 bg-gradient-to-br from-primary/10 via-background to-secondary/10 border-primary/20">
-              <CardContent className="p-6 sm:p-8 text-center">
-                <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 sm:mb-3 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                  Help Shape Spider League
-                </h3>
-                <p className="text-muted-foreground text-sm sm:text-base mb-3 sm:mb-4">We need your beta user feedback to help us make Spider League better.</p>
-                <div className="inline-flex items-center gap-2 text-primary font-semibold text-sm sm:text-base">
-                  <span>Submit Feedback</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14" />
-                    <path d="m12 5 7 7-7 7" />
-                  </svg>
-                </div>
-              </CardContent>
-            </Card>
-          </a>
-        </div>}
-      
-      <SpiderDetailsModal spider={selectedSpider} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-      
-      <BattleDetailsModal isOpen={isBattleDetailsOpen} onClose={() => setIsBattleDetailsOpen(false)} battle={selectedBattle} />
+import WeeklyEligibleSpiders from "@/components/WeeklyEligibleSpiders";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
-      <UserProfileModal userId={selectedUserId} isOpen={isUserModalOpen} onClose={handleUserModalClose} />
+interface RecentBattleSpider {
+  id?: string;
+  nickname: string;
+  species: string;
+  image_url: string;
+  power_score?: number;
+}
 
-      <BadgeNotification badge={newBadge} isVisible={showBadgeNotification} onDismiss={dismissBadgeNotification} />
-      
-      {/* Footer */}
-      <footer className="border-t mt-12 sm:mt-16 py-6 sm:py-8 bg-card/30">
-        <div className="container mx-auto px-3 sm:px-6 text-center">
-          <p className="text-muted-foreground text-xs sm:text-sm mb-3 sm:mb-4">
-            © 2025 Spider League. Share spiders for friendly battles.
-          </p>
-          <div className="flex items-center justify-center gap-4">
-            <Link to="/shop" className="text-primary hover:text-primary/80 transition-colors underline text-sm">
-              Shop
-            </Link>
+interface RecentCombatItem {
+  id: string;
+  created_at: string;
+  mode: "battle" | "skirmish";
+  winner: "A" | "B" | "TIE" | null;
+  spider_a: RecentBattleSpider | null;
+  spider_b: RecentBattleSpider | null;
+  battle?: any;
+}
+
+const Index = () => {
+  const {
+    user,
+    loading: authLoading,
+    signIn,
+    signUp,
+    signOut,
+    signInWithGoogle,
+    signInAsDemo,
+  } = useAuth();
+  const { toast } = useToast();
+
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
+  const [recentBattles, setRecentBattles] = useState<RecentCombatItem[]>([]);
+  const [battlesLoading, setBattlesLoading] = useState(true);
+  const [selectedBattle, setSelectedBattle] = useState<any>(null);
+  const [isBattleDetailsOpen, setIsBattleDetailsOpen] = useState(false);
+
+  const isPublishedHost = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return /(^|\.)spiderleague\.app$|(^|\.)spider-league\.lovable\.app$/i.test(window.location.hostname);
+  }, []);
+
+  const fetchRecentBattles = async () => {
+    try {
+      setBattlesLoading(true);
+
+      const [{ data: battles, error: battlesError }, { data: skirmishes, error: skirmishesError }] = await Promise.all([
+        supabase
+          .from("battles")
+          .select("*")
+          .eq("is_active", false)
+          .not("winner", "is", null)
+          .order("created_at", { ascending: false })
+          .limit(24),
+        (supabase as any).rpc("get_recent_public_skirmishes", { row_limit: 24 }),
+      ]);
+
+      if (battlesError) throw battlesError;
+      if (skirmishesError) {
+        console.warn("Error fetching skirmishes for recent feed:", skirmishesError);
+      }
+
+      const recentBattleItems: RecentCombatItem[] = (battles || []).map((battle: any) => {
+        const teamA = battle.team_a as any;
+        const teamB = battle.team_b as any;
+
+        return {
+          id: `battle-${battle.id}`,
+          created_at: battle.created_at,
+          mode: "battle",
+          winner: battle.winner,
+          spider_a: teamA?.spider ?? teamA?.[0] ?? null,
+          spider_b: teamB?.spider ?? teamB?.[0] ?? null,
+          battle,
+        };
+      });
+
+      const recentSkirmishItems: RecentCombatItem[] = ((skirmishes || []) as any[])
+        .map((skirmish) => ({
+          id: `skirmish-${skirmish.id}`,
+          created_at: skirmish.created_at,
+          mode: "skirmish" as const,
+          winner: skirmish.winner_side ?? null,
+          spider_a: skirmish.player_spider_snapshot ?? null,
+          spider_b: skirmish.opponent_spider_snapshot ?? null,
+        }))
+        .filter((item) => !!item.spider_a && !!item.spider_b);
+
+      setRecentBattles(
+        [...recentBattleItems, ...recentSkirmishItems]
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+          .slice(0, 24),
+      );
+    } catch (error) {
+      console.error("Error fetching recent battles:", error);
+      setRecentBattles([]);
+    } finally {
+      setBattlesLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      void fetchRecentBattles();
+      const channel = supabase
+        .channel("homepage-recent-combat")
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "battles" }, () => {
+          void fetchRecentBattles();
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+
+    setRecentBattles([]);
+    setBattlesLoading(false);
+  }, [user]);
+
+  const handleAuthSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSubmitting(true);
+
+    try {
+      if (isSignUp) {
+        const { error } = await signUp(email, password);
+        if (error) throw error;
+
+        toast({
+          title: "Account created",
+          description: "Check your email to confirm your account.",
+        });
+      } else {
+        if (rememberMe) {
+          localStorage.setItem("rememberMe", Date.now().toString());
+          sessionStorage.removeItem("tempSession");
+        } else {
+          localStorage.removeItem("rememberMe");
+          sessionStorage.setItem("tempSession", "true");
+        }
+
+        const { error } = await signIn(email, password);
+        if (error) throw error;
+      }
+    } catch (error: any) {
+      toast({
+        title: isSignUp ? "Sign up failed" : "Sign in failed",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+      setSubmitting(false);
+      return;
+    }
+
+    setSubmitting(false);
+  };
+
+  const handleGoogleSignIn = async () => {
+    setSubmitting(true);
+    localStorage.setItem("rememberMe", Date.now().toString());
+
+    const { error } = await signInWithGoogle();
+    if (error) {
+      toast({
+        title: "Google sign-in failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      setSubmitting(false);
+    }
+  };
+
+  const handleDemoSignIn = async () => {
+    setSubmitting(true);
+    const { error } = await signInAsDemo();
+
+    if (error) {
+      toast({
+        title: "Demo sign-in failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+
+    setSubmitting(false);
+  };
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
+        <Helmet>
+          <title>Spider League</title>
+          <meta
+            name="description"
+            content="Upload spiders, discover matchups, and battle in Spider League."
+          />
+          <link rel="canonical" href={typeof window !== "undefined" ? `${window.location.origin}/` : "/"} />
+        </Helmet>
+
+        <div className="w-full max-w-md">
+          <div className="mb-8 text-center">
+            <div className="mb-4 flex justify-center">
+              <img
+                src="/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png"
+                alt="Spider League logo"
+                className="h-20 w-auto"
+              />
+            </div>
+            <h1 className="text-3xl font-bold">Spider League</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Battle with spiders you find in the wild.
+            </p>
           </div>
-        </div>
-      </footer>
 
-      {/* Spider Facts Ticker */}
-      <div className="relative overflow-hidden bg-primary/10 border-t py-2 sm:py-3">
-        <div className="flex animate-scroll whitespace-nowrap">
-          {[...Array(2)].map((_, index) => <div key={index} className="flex items-center">
-              <span className="text-xs sm:text-sm text-muted-foreground mx-6 sm:mx-8">🕷️ Spiders have been around for over 380 million years</span>
-              <span className="text-xs sm:text-sm text-muted-foreground mx-6 sm:mx-8">🕸️ Spider silk is stronger than steel of the same thickness</span>
-              <span className="text-xs sm:text-sm text-muted-foreground mx-6 sm:mx-8">🕷️ Most spiders have 8 eyes but some have 6, 4, 2, or even 0</span>
-              <span className="text-xs sm:text-sm text-muted-foreground mx-6 sm:mx-8">🕸️ Spiders can't fly but some species can "balloon" using their silk</span>
-              <span className="text-xs sm:text-sm text-muted-foreground mx-6 sm:mx-8">🕷️ The Goliath birdeater is the world's largest spider, reaching 12 inches</span>
-              <span className="text-xs sm:text-sm text-muted-foreground mx-6 sm:mx-8">🕸️ A spider's fangs are actually chelicerae - modified appendages</span>
-              <span className="text-xs sm:text-sm text-muted-foreground mx-6 sm:mx-8">🕷️ Jumping spiders can leap up to 50 times their body length</span>
-              <span className="text-xs sm:text-sm text-muted-foreground mx-6 sm:mx-8">🕸️ Some spiders can survive for months without food</span>
-            </div>)}
+          <Card>
+            <CardHeader>
+              <CardTitle>{isSignUp ? "Create Account" : "Sign In"}</CardTitle>
+              <CardDescription>
+                {isSignUp
+                  ? "Create an account to start building your spider army"
+                  : "Welcome back! Sign in to your account"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-4 space-y-3">
+                <Button type="button" variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={submitting}>
+                  Continue with Google
+                </Button>
+                {!isPublishedHost && (
+                  <Button type="button" variant="secondary" className="w-full" onClick={handleDemoSignIn} disabled={submitting}>
+                    🕷️ Sign in as Demo User (Development)
+                  </Button>
+                )}
+                <div className="text-center text-xs text-muted-foreground">or continue with email</div>
+              </div>
+
+              <form onSubmit={handleAuthSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+
+                {!isSignUp && (
+                  <div className="flex items-center space-x-2">
+                    <Checkbox id="remember-main" checked={rememberMe} onCheckedChange={(checked) => setRememberMe(Boolean(checked))} />
+                    <Label htmlFor="remember-main" className="cursor-pointer text-sm font-normal">
+                      Keep me logged in for 30 days
+                    </Label>
+                  </div>
+                )}
+
+                <Button type="submit" className="w-full" disabled={submitting}>
+                  {submitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {isSignUp ? "Creating Account..." : "Signing In..."}
+                    </>
+                  ) : isSignUp ? (
+                    "Create Account"
+                  ) : (
+                    "Sign In"
+                  )}
+                </Button>
+              </form>
+
+              <div className="mt-4 text-center">
+                <Button
+                  variant="link"
+                  onClick={() => {
+                    setIsSignUp((prev) => !prev);
+                    setEmail("");
+                    setPassword("");
+                  }}
+                >
+                  {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
+    );
+  }
 
-      
-      
-      {/* Hidden file input for quick upload */}
-      <input ref={fileInputRef} type="file" accept="image/*,.heic,.heif" className="hidden" onChange={handleFileSelect} />
-    </div>;
+  return (
+    <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Spider League Dashboard</title>
+        <meta
+          name="description"
+          content="Manage your spiders, run skirmishes, and follow recent battles in Spider League."
+        />
+        <link rel="canonical" href={typeof window !== "undefined" ? `${window.location.origin}/` : "/"} />
+      </Helmet>
+
+      <header className="border-b bg-card/50 backdrop-blur">
+        <div className="container mx-auto flex items-center justify-between gap-4 px-4 py-4 sm:px-6">
+          <div>
+            <h1 className="text-2xl font-bold">Spider League</h1>
+            <p className="text-sm text-muted-foreground">Skirmishes, battles, and weekly competition.</p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <NotificationsDropdown />
+            <Button asChild variant="outline" size="sm">
+              <Link to="/upload">
+                <Upload className="mr-2 h-4 w-4" />
+                Upload
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => void signOut()}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Sign out
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <main className="container mx-auto space-y-8 px-4 py-6 sm:px-6">
+        <section className="grid gap-4 md:grid-cols-4">
+          <Card>
+            <CardContent className="flex items-center gap-3 p-5">
+              <Sparkles className="h-5 w-5 text-primary" />
+              <div>
+                <div className="text-sm text-muted-foreground">Practice mode</div>
+                <div className="font-semibold">Spider Skirmishes</div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center gap-3 p-5">
+              <Sword className="h-5 w-5 text-primary" />
+              <div>
+                <div className="text-sm text-muted-foreground">High stakes</div>
+                <div className="font-semibold">Battles</div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center gap-3 p-5">
+              <Users className="h-5 w-5 text-primary" />
+              <div>
+                <div className="text-sm text-muted-foreground">Community</div>
+                <div className="font-semibold">Active players</div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center gap-3 p-5">
+              <Trophy className="h-5 w-5 text-primary" />
+              <div>
+                <div className="text-sm text-muted-foreground">History</div>
+                <div className="font-semibold">Recent results</div>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section className="grid gap-6 xl:grid-cols-12">
+          <div className="xl:col-span-7">
+            <WeeklyEligibleSpiders />
+          </div>
+          <div className="space-y-6 xl:col-span-5">
+            <SpiderSkirmishCard />
+            <ActiveChallengesPreview />
+          </div>
+        </section>
+
+        <OnlineUsersBar />
+
+        <BattleMode showChallenges={true} showBattleStats={false} showCreateChallengeButton={false} />
+
+        <section className="space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-2xl font-bold">Recent Battles and Skirmishes</h2>
+              <p className="text-sm text-muted-foreground">Latest public combat activity across Spider League.</p>
+            </div>
+            <Button asChild variant="outline" size="sm">
+              <Link to="/battle-history">View All History</Link>
+            </Button>
+          </div>
+
+          {battlesLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : recentBattles.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <Sword className="mx-auto mb-4 h-10 w-10 text-muted-foreground" />
+                <p className="font-medium">No recent combat yet</p>
+                <p className="mt-1 text-sm text-muted-foreground">Start a skirmish or battle to get the feed moving.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {recentBattles.slice(0, 9).map((combat) => {
+                const clickable = combat.mode === "battle" && combat.battle;
+                const outcomeLabel =
+                  combat.mode === "skirmish"
+                    ? combat.winner === "A"
+                      ? `${combat.spider_a?.nickname} won`
+                      : `${combat.spider_b?.nickname} won`
+                    : combat.winner === "A"
+                      ? `${combat.spider_a?.nickname} won`
+                      : combat.winner === "B"
+                        ? `${combat.spider_b?.nickname} won`
+                        : "Tie";
+
+                return (
+                  <Card
+                    key={combat.id}
+                    className={clickable ? "cursor-pointer transition-transform hover:scale-[1.01]" : undefined}
+                    onClick={clickable ? () => {
+                      setSelectedBattle(combat.battle);
+                      setIsBattleDetailsOpen(true);
+                    } : undefined}
+                  >
+                    <CardContent className="space-y-4 p-5">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="text-sm font-semibold capitalize">{combat.mode}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(combat.created_at).toLocaleString()}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                        <div className="min-w-0 text-center">
+                          {combat.spider_a?.image_url && (
+                            <img
+                              src={combat.spider_a.image_url}
+                              alt={combat.spider_a.nickname}
+                              className="mx-auto mb-2 h-20 w-20 rounded-xl object-cover"
+                            />
+                          )}
+                          <div className="truncate font-semibold">{combat.spider_a?.nickname}</div>
+                          <div className="truncate text-xs text-muted-foreground">{combat.spider_a?.species}</div>
+                        </div>
+
+                        <div className="text-sm font-bold text-muted-foreground">VS</div>
+
+                        <div className="min-w-0 text-center">
+                          {combat.spider_b?.image_url && (
+                            <img
+                              src={combat.spider_b.image_url}
+                              alt={combat.spider_b.nickname}
+                              className="mx-auto mb-2 h-20 w-20 rounded-xl object-cover"
+                            />
+                          )}
+                          <div className="truncate font-semibold">{combat.spider_b?.nickname}</div>
+                          <div className="truncate text-xs text-muted-foreground">{combat.spider_b?.species}</div>
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg bg-muted px-3 py-2 text-sm font-medium text-foreground">
+                        {outcomeLabel}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      </main>
+
+      <BattleDetailsModal
+        isOpen={isBattleDetailsOpen}
+        onClose={() => setIsBattleDetailsOpen(false)}
+        battle={selectedBattle}
+      />
+    </div>
+  );
 };
+
 export default Index;
