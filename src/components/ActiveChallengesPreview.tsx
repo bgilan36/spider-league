@@ -74,6 +74,7 @@ const ActiveChallengesPreview: React.FC = () => {
                 .from('battle_challenges')
                 .select('*')
                 .eq('status', 'OPEN')
+                .gt('expires_at', nowIso)
                 .eq('challenger_id', user.id)
                 .order('created_at', { ascending: false }),
             ]);
