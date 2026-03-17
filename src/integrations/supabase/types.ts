@@ -151,42 +151,6 @@ export type Database = {
           },
         ]
       }
-      battle_xp_awards: {
-        Row: {
-          battle_id: string
-          created_at: string
-          winner_user_id: string
-          xp_awarded: number
-        }
-        Insert: {
-          battle_id: string
-          created_at?: string
-          winner_user_id: string
-          xp_awarded: number
-        }
-        Update: {
-          battle_id?: string
-          created_at?: string
-          winner_user_id?: string
-          xp_awarded?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "battle_xp_awards_battle_id_fkey"
-            columns: ["battle_id"]
-            isOneToOne: true
-            referencedRelation: "battles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "battle_xp_awards_winner_user_id_fkey"
-            columns: ["winner_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       battle_turns: {
         Row: {
           action_payload: Json
@@ -838,109 +802,6 @@ export type Database = {
           },
         ]
       }
-      spider_skirmishes: {
-        Row: {
-          created_at: string
-          id: string
-          idempotency_key: string | null
-          initiator_spider_id: string
-          initiator_user_id: string
-          matchup_score: number
-          opponent_spider_id: string
-          opponent_user_id: string
-          participants_snapshot: Json
-          resolved_at: string
-          reward_payload: Json
-          rng_seed: string
-          status: string
-          turn_log: Json
-          winner_side: Database["public"]["Enums"]["battle_winner"] | null
-          winner_spider_id: string | null
-          winner_user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          idempotency_key?: string | null
-          initiator_spider_id: string
-          initiator_user_id: string
-          matchup_score?: number
-          opponent_spider_id: string
-          opponent_user_id: string
-          participants_snapshot?: Json
-          resolved_at?: string
-          reward_payload?: Json
-          rng_seed: string
-          status?: string
-          turn_log?: Json
-          winner_side?: Database["public"]["Enums"]["battle_winner"] | null
-          winner_spider_id?: string | null
-          winner_user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          idempotency_key?: string | null
-          initiator_spider_id?: string
-          initiator_user_id?: string
-          matchup_score?: number
-          opponent_spider_id?: string
-          opponent_user_id?: string
-          participants_snapshot?: Json
-          resolved_at?: string
-          reward_payload?: Json
-          rng_seed?: string
-          status?: string
-          turn_log?: Json
-          winner_side?: Database["public"]["Enums"]["battle_winner"] | null
-          winner_spider_id?: string | null
-          winner_user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "spider_skirmishes_initiator_spider_id_fkey"
-            columns: ["initiator_spider_id"]
-            isOneToOne: false
-            referencedRelation: "spiders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "spider_skirmishes_initiator_user_id_fkey"
-            columns: ["initiator_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "spider_skirmishes_opponent_spider_id_fkey"
-            columns: ["opponent_spider_id"]
-            isOneToOne: false
-            referencedRelation: "spiders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "spider_skirmishes_opponent_user_id_fkey"
-            columns: ["opponent_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "spider_skirmishes_winner_spider_id_fkey"
-            columns: ["winner_spider_id"]
-            isOneToOne: false
-            referencedRelation: "spiders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "spider_skirmishes_winner_user_id_fkey"
-            columns: ["winner_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       spiders: {
         Row: {
           created_at: string | null
@@ -1064,38 +925,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      user_progression: {
-        Row: {
-          created_at: string
-          experience_points: number
-          level: number
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          experience_points?: number
-          level?: number
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          experience_points?: number
-          level?: number
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_progression_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       user_roles: {
         Row: {
@@ -1323,24 +1152,14 @@ export type Database = {
         Returns: boolean
       }
       cleanup_stale_presence: { Args: never; Returns: undefined }
-      ensure_user_progression: {
-        Args: { p_user_id: string }
-        Returns: undefined
-      }
       get_current_pt_week_end: { Args: never; Returns: string }
       get_current_pt_week_start: { Args: never; Returns: string }
       get_current_week: { Args: never; Returns: string }
-      get_spider_skirmish_suggestion: {
-        Args: never
-        Returns: Json
-      }
       get_user_rankings_all_time: {
         Args: never
         Returns: {
           avatar_url: string
           display_name: string
-          experience_points: number
-          ranking_score: number
           spider_count: number
           top_spider: Json
           total_power_score: number
@@ -1352,8 +1171,6 @@ export type Database = {
         Returns: {
           avatar_url: string
           display_name: string
-          experience_points: number
-          ranking_score: number
           spiders_acquired_in_battle: number
           top_spider: Json
           user_id: string
@@ -1367,10 +1184,6 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
-      }
-      improve_spider_for_skirmish: {
-        Args: { winner_spider_id: string }
-        Returns: Json
       }
       improve_spider_after_victory: {
         Args: { winner_spider_id: string }
@@ -1399,10 +1212,6 @@ export type Database = {
       }
       sanitize_plain_text: { Args: { t: string }; Returns: string }
       select_spider_of_the_day: { Args: never; Returns: undefined }
-      start_spider_skirmish: {
-        Args: { p_idempotency_key?: string; p_player_spider_id?: string }
-        Returns: Json
-      }
       transfer_spider_ownership: {
         Args: { new_owner_id: string; spider_id: string }
         Returns: undefined
