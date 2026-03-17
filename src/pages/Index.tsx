@@ -328,7 +328,7 @@ const Index = () => {
         supabase.from('battles').select('*').eq('is_active', false).not('winner', 'is', null).order('created_at', {
           ascending: false
         }).limit(24),
-        supabase.from('spider_skirmishes').select('id, created_at, winner_side, participants_snapshot, status').eq('status', 'COMPLETED').not('winner_side', 'is', null).order('created_at', {
+        (supabase as any).from('spider_skirmishes').select('id, created_at, winner_side, participants_snapshot, status').eq('status', 'COMPLETED').not('winner_side', 'is', null).order('created_at', {
           ascending: false
         }).limit(24)
       ]);

@@ -530,7 +530,7 @@ export const SpiderSkirmishCard = () => {
       if (!startWithArgs.error && startWithArgs.data) {
         parsedResult = startWithArgs.data as SkirmishResult;
       } else if (isMissingSkirmishRpc(startWithArgs.error)) {
-        const startWithoutArgs = await supabase.rpc("start_spider_skirmish");
+        const startWithoutArgs = await (supabase as any).rpc("start_spider_skirmish");
         if (!startWithoutArgs.error && startWithoutArgs.data) {
           parsedResult = startWithoutArgs.data as SkirmishResult;
         } else if (isMissingSkirmishRpc(startWithoutArgs.error)) {
