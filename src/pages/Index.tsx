@@ -1262,7 +1262,7 @@ const Index = () => {
         </div>
       </div>
 
-      <InstallPrompt />
+      
       
       {/* Hidden file input for quick upload */}
       <input ref={fileInputRef} type="file" accept="image/*,.heic,.heif" className="hidden" onChange={handleFileSelect} />
