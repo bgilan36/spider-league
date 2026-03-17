@@ -272,7 +272,7 @@ const NotificationsDropdown = () => {
 
       // Fetch spider skirmish results. On first login load, include skirmishes since previous login.
       const skirmishSince = sinceLoginIso || oneDayAgo;
-      const { data: skirmishes } = await supabase
+      const { data: skirmishes } = await (supabase as any)
         .from('spider_skirmishes')
         .select('id, created_at, winner_side, initiator_user_id, opponent_user_id, participants_snapshot')
         .eq('status', 'COMPLETED')
