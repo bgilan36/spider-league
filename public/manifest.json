@@ -2,26 +2,26 @@
   "name": "Spider League",
   "short_name": "Spider League",
   "description": "Upload spiders, generate stats, and battle in weekly matchups",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "display": "standalone",
   "background_color": "#0F172A",
   "theme_color": "#2563eb",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/favicon.png",
+      "src": "/favicon.png?v=2",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/favicon.png",
+      "src": "/favicon.png?v=2",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/favicon.png",
+      "src": "/favicon.png?v=2",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
