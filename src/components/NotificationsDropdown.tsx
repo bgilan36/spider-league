@@ -140,16 +140,10 @@ const NotificationsDropdown = () => {
           event: 'INSERT',
           schema: 'public',
           table: 'spider_skirmishes',
-          filter: `status=eq.COMPLETED`
+          filter: `initiator_user_id=eq.${user.id}`
         },
-        (payload) => {
-          const skirmish = payload.new as any;
-          const isParticipant =
-            skirmish.initiator_user_id === user.id ||
-            skirmish.opponent_user_id === user.id;
-          if (isParticipant) {
-            fetchNotifications();
-          }
+        () => {
+          fetchNotifications();
         }
       )
       .subscribe();
@@ -270,27 +264,20 @@ const NotificationsDropdown = () => {
         });
       }
 
-      // Fetch spider skirmish results. On first login load, include skirmishes since previous login.
+      // Fetch spider skirmish results (user's own skirmishes only, per RLS)
       const skirmishSince = sinceLoginIso || oneDayAgo;
-      const { data: skirmishes } = await (supabase as any)
+      const { data: skirmishes } = await supabase
         .from('spider_skirmishes')
-        .select('id, created_at, winner_side, initiator_user_id, opponent_user_id, participants_snapshot')
-        .eq('status', 'COMPLETED')
+        .select('id, created_at, winner_side, initiator_user_id, player_spider_snapshot, opponent_spider_snapshot')
+        .eq('initiator_user_id', user.id)
         .gte('created_at', skirmishSince)
-        .or(`initiator_user_id.eq.${user.id},opponent_user_id.eq.${user.id}`)
         .order('created_at', { ascending: false })
         .limit(10);
 
       if (skirmishes) {
         skirmishes.forEach((skirmish: any) => {
-          const isInitiator = skirmish.initiator_user_id === user.id;
-          const userWon =
-            (isInitiator && skirmish.winner_side === 'A') ||
-            (!isInitiator && skirmish.winner_side === 'B');
-          const snapshot = skirmish.participants_snapshot as any;
-          const opponentSpiderName = isInitiator
-            ? snapshot?.opponent_spider?.nickname
-            : snapshot?.player_spider?.nickname;
+          const userWon = skirmish.winner_side === 'A';
+          const opponentSpiderName = (skirmish.opponent_spider_snapshot as any)?.nickname;
 
           notifications.push({
             id: `skirmish-${skirmish.id}`,
