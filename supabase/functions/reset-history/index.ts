@@ -113,8 +113,9 @@ serve(async (req: Request) => {
     const wipe = async (table: AllowedTable) => {
       const { error, count } = await supabase
         .from(table)
-        .delete({ count: 'exact' })
-        .neq('id', '00000000-0000-0000-0000-000000000000');
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000')
+        .select('id', { count: 'exact', head: true });
       results[table] = { deleted: count ?? null, error: error?.message };
     };
 

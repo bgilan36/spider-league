@@ -21,7 +21,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import { AuthProvider } from "@/auth/AuthProvider";
 import Layout from "@/components/Layout";
 import NotificationListener from "@/components/NotificationListener";
-
+import { InstallPrompt } from "@/components/InstallPrompt";
 import BattleNotification from "@/components/BattleNotification";
 import RouteAnnouncer from "@/components/RouteAnnouncer";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -36,7 +36,7 @@ const App = () => (
     <HelmetProvider>
       <AuthProvider>
         <TooltipProvider>
-          
+          <InstallPrompt />
           <Toaster />
           <Sonner />
           <BrowserRouter>

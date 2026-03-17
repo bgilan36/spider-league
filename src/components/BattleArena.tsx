@@ -196,10 +196,10 @@ const BattleArena: React.FC<BattleArenaProps> = ({
           toOwner: winner.owner_id
         });
         
-        const { error: transferError } = await supabase.rpc('transfer_spider_ownership', {
-          spider_id: loser.id,
-          new_owner_id: winner.owner_id
-        });
+        const { error: transferError } = await supabase
+          .from('spiders')
+          .update({ owner_id: winner.owner_id })
+          .eq('id', loser.id);
           
         if (transferError) {
           console.error('Error transferring spider ownership:', transferError);
