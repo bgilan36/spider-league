@@ -318,7 +318,7 @@ export const SpiderSkirmishCard = () => {
     if (!user) return null;
     const { startIso, endIso } = getUtcDayBounds();
 
-    const { count, error } = await supabase
+    const { count, error } = await (supabase as any)
       .from("spider_skirmishes")
       .select("id", { count: "exact", head: true })
       .eq("initiator_user_id", user.id)
