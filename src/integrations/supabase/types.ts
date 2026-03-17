@@ -1231,6 +1231,16 @@ export type Database = {
       get_current_pt_week_end: { Args: never; Returns: string }
       get_current_pt_week_start: { Args: never; Returns: string }
       get_current_week: { Args: never; Returns: string }
+      get_recent_public_skirmishes: {
+        Args: { row_limit?: number }
+        Returns: {
+          created_at: string
+          id: string
+          opponent_spider_snapshot: Json
+          player_spider_snapshot: Json
+          winner_side: string
+        }[]
+      }
       get_spider_skirmish_suggestion: { Args: never; Returns: Json }
       get_user_rankings_all_time: {
         Args: never
