@@ -328,7 +328,7 @@ const Index = () => {
         supabase.from('battles').select('*').eq('is_active', false).not('winner', 'is', null).order('created_at', {
           ascending: false
         }).limit(24),
-        (supabase as any).from('spider_skirmishes').select('id, created_at, winner_side, participants_snapshot, status').eq('status', 'COMPLETED').not('winner_side', 'is', null).order('created_at', {
+        (supabase as any).from('spider_skirmishes').select('id, created_at, winner_side, player_spider_snapshot, opponent_spider_snapshot').not('winner_side', 'is', null).order('created_at', {
           ascending: false
         }).limit(24)
       ]);
@@ -353,9 +353,8 @@ const Index = () => {
       });
 
       const recentSkirmishItems: RecentCombatItem[] = ((skirmishes || []) as any[]).map((skirmish) => {
-        const snapshot = skirmish.participants_snapshot as any;
-        const playerSpider = snapshot?.player_spider ?? null;
-        const opponentSpider = snapshot?.opponent_spider ?? null;
+        const playerSpider = skirmish.player_spider_snapshot ?? null;
+        const opponentSpider = skirmish.opponent_spider_snapshot ?? null;
 
         return {
           id: `skirmish-${skirmish.id}`,
