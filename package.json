@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "build:dev": "next build",
+    "build": "rm -rf .next out dist && next build",
+    "build:dev": "rm -rf .next out dist && next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.typecheck.json --noEmit",
