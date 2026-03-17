@@ -437,7 +437,7 @@ export const SpiderSkirmishCard = () => {
     const localSuggestionPromise = buildClientSideSuggestion();
 
     try {
-      const { data, error } = await supabase.rpc("get_spider_skirmish_suggestion");
+      const { data, error } = await (supabase as any).rpc("get_spider_skirmish_suggestion");
       const serverSuggestion = !error && data ? (data as SkirmishSuggestion) : null;
       if (serverSuggestion?.available && serverSuggestion.player_spider && serverSuggestion.opponent_spider) {
         setSuggestion(serverSuggestion);
