@@ -648,6 +648,7 @@ export type Database = {
           season_ties: number | null
           season_wins: number | null
           updated_at: string
+          xp: number
         }
         Insert: {
           avatar_url?: string | null
@@ -660,6 +661,7 @@ export type Database = {
           season_ties?: number | null
           season_wins?: number | null
           updated_at?: string
+          xp?: number
         }
         Update: {
           avatar_url?: string | null
@@ -672,6 +674,7 @@ export type Database = {
           season_ties?: number | null
           season_wins?: number | null
           updated_at?: string
+          xp?: number
         }
         Relationships: []
       }
@@ -796,6 +799,79 @@ export type Database = {
           {
             foreignKeyName: "spider_of_the_day_spider_id_fkey"
             columns: ["spider_id"]
+            isOneToOne: false
+            referencedRelation: "spiders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spider_skirmishes: {
+        Row: {
+          created_at: string
+          id: string
+          idempotency_key: string
+          initiator_user_id: string
+          matchup_score: number
+          opponent_spider_id: string
+          opponent_spider_snapshot: Json
+          player_spider_id: string
+          player_spider_snapshot: Json
+          rewards: Json
+          rng_seed: string
+          turn_log: Json
+          winner_side: string
+          winner_spider_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          idempotency_key: string
+          initiator_user_id: string
+          matchup_score?: number
+          opponent_spider_id: string
+          opponent_spider_snapshot?: Json
+          player_spider_id: string
+          player_spider_snapshot?: Json
+          rewards?: Json
+          rng_seed: string
+          turn_log?: Json
+          winner_side: string
+          winner_spider_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          idempotency_key?: string
+          initiator_user_id?: string
+          matchup_score?: number
+          opponent_spider_id?: string
+          opponent_spider_snapshot?: Json
+          player_spider_id?: string
+          player_spider_snapshot?: Json
+          rewards?: Json
+          rng_seed?: string
+          turn_log?: Json
+          winner_side?: string
+          winner_spider_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spider_skirmishes_opponent_spider_id_fkey"
+            columns: ["opponent_spider_id"]
+            isOneToOne: false
+            referencedRelation: "spiders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spider_skirmishes_player_spider_id_fkey"
+            columns: ["player_spider_id"]
+            isOneToOne: false
+            referencedRelation: "spiders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spider_skirmishes_winner_spider_id_fkey"
+            columns: ["winner_spider_id"]
             isOneToOne: false
             referencedRelation: "spiders"
             referencedColumns: ["id"]
@@ -1155,6 +1231,7 @@ export type Database = {
       get_current_pt_week_end: { Args: never; Returns: string }
       get_current_pt_week_start: { Args: never; Returns: string }
       get_current_week: { Args: never; Returns: string }
+      get_spider_skirmish_suggestion: { Args: never; Returns: Json }
       get_user_rankings_all_time: {
         Args: never
         Returns: {
@@ -1212,6 +1289,10 @@ export type Database = {
       }
       sanitize_plain_text: { Args: { t: string }; Returns: string }
       select_spider_of_the_day: { Args: never; Returns: undefined }
+      start_spider_skirmish: {
+        Args: { p_idempotency_key?: string; p_player_spider_id?: string }
+        Returns: Json
+      }
       transfer_spider_ownership: {
         Args: { new_owner_id: string; spider_id: string }
         Returns: undefined
