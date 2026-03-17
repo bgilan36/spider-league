@@ -522,7 +522,7 @@ export const SpiderSkirmishCard = () => {
       let parsedResult: SkirmishResult | null = null;
       let usedLocalFallback = false;
 
-      const startWithArgs = await supabase.rpc("start_spider_skirmish", {
+      const startWithArgs = await (supabase as any).rpc("start_spider_skirmish", {
         p_player_spider_id: suggestion?.player_spider?.id ?? null,
         p_idempotency_key: idempotencyKey,
       });
