@@ -1,5 +1,6 @@
 import type { AppProps } from "next/app";
 import Head from "next/head";
+// @ts-ignore - CSS import for Next.js pages router
 import "../src/index.css";
 
 export default function MyApp({ Component, pageProps }: AppProps) {
