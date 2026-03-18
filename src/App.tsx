@@ -36,7 +36,7 @@ const App = () => (
     <HelmetProvider>
       <AuthProvider>
         <TooltipProvider>
-          <InstallPrompt />
+          
           <Toaster />
           <Sonner />
           <BrowserRouter>
