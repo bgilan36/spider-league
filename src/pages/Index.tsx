@@ -328,9 +328,7 @@ const Index = () => {
         supabase.from('battles').select('*').eq('is_active', false).not('winner', 'is', null).order('created_at', {
           ascending: false
         }).limit(24),
-        (supabase as any).from('spider_skirmishes').select('id, created_at, winner_side, participants_snapshot, status').eq('status', 'COMPLETED').not('winner_side', 'is', null).order('created_at', {
-          ascending: false
-        }).limit(24)
+        supabase.rpc('get_recent_public_skirmishes', { row_limit: 24 })
       ]);
 
       if (battlesError) throw battlesError;
@@ -352,20 +350,19 @@ const Index = () => {
         };
       });
 
-      const recentSkirmishItems: RecentCombatItem[] = ((skirmishes || []) as any[]).map((skirmish) => {
-        const snapshot = skirmish.participants_snapshot as any;
-        const playerSpider = snapshot?.player_spider ?? null;
-        const opponentSpider = snapshot?.opponent_spider ?? null;
+      const recentSkirmishItems: RecentCombatItem[] = ((skirmishes || []) as any[]).map((skirmish: any) => {
+        const playerSpider = skirmish.player_spider_snapshot as any;
+        const opponentSpider = skirmish.opponent_spider_snapshot as any;
 
         return {
           id: `skirmish-${skirmish.id}`,
           created_at: skirmish.created_at,
           mode: 'skirmish' as const,
           winner: skirmish.winner_side ?? null,
-          spider_a: playerSpider,
-          spider_b: opponentSpider,
+          spider_a: playerSpider ? { nickname: playerSpider.nickname, species: playerSpider.species, image_url: playerSpider.image_url } : null,
+          spider_b: opponentSpider ? { nickname: opponentSpider.nickname, species: opponentSpider.species, image_url: opponentSpider.image_url } : null,
         };
-      }).filter((item) => !!item.spider_a && !!item.spider_b);
+      }).filter((item: RecentCombatItem) => !!item.spider_a && !!item.spider_b);
 
       const mergedFeed = [...recentBattleItems, ...recentSkirmishItems]
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
