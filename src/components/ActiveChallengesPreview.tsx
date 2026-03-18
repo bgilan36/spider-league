@@ -235,7 +235,7 @@ const ActiveChallengesPreview: React.FC = () => {
       window.removeEventListener('challenge:cancelled', refresh as any);
       window.removeEventListener('challenge:accepted', refresh as any);
     };
-  }, []);
+  }, [user?.id]);
 
   if (loading) {
     return (
