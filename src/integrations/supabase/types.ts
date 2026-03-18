@@ -1228,6 +1228,7 @@ export type Database = {
         Returns: boolean
       }
       cleanup_stale_presence: { Args: never; Returns: undefined }
+      gen_random_bytes: { Args: { length: number }; Returns: string }
       get_current_pt_week_end: { Args: never; Returns: string }
       get_current_pt_week_start: { Args: never; Returns: string }
       get_current_week: { Args: never; Returns: string }
