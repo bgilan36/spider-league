@@ -962,18 +962,23 @@ const Index = () => {
             const modeBadge = (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Badge
-                    className={combat.mode === "skirmish"
-                      ? "bg-primary/20 text-primary border border-primary/30 cursor-default"
-                      : "cursor-default"}
-                    variant={combat.mode === "skirmish" ? "default" : "outline"}
+                  <span
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex"
                   >
-                    {combat.mode === "skirmish" ? (
-                      <><Bug className="h-3 w-3 mr-1" />Skirmish</>
-                    ) : (
-                      <><Sword className="h-3 w-3 mr-1" />Battle</>
-                    )}
-                  </Badge>
+                    <Badge
+                      className={combat.mode === "skirmish"
+                        ? "bg-primary/20 text-primary border border-primary/30 cursor-default pointer-events-none"
+                        : "cursor-default pointer-events-none"}
+                      variant={combat.mode === "skirmish" ? "default" : "outline"}
+                    >
+                      {combat.mode === "skirmish" ? (
+                        <><Bug className="h-3 w-3 mr-1" />Skirmish</>
+                      ) : (
+                        <><Sword className="h-3 w-3 mr-1" />Battle</>
+                      )}
+                    </Badge>
+                  </span>
                 </TooltipTrigger>
                 <TooltipContent>
                   {combat.mode === "skirmish"
