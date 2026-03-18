@@ -959,16 +959,28 @@ const Index = () => {
               resultBadge = <Badge className="bg-green-500 text-white">{spiderB?.nickname} Won</Badge>;
             }
 
-            const modeBadge = combat.mode === "skirmish" ? (
-              <Badge className="bg-primary/20 text-primary border border-primary/30">
-                <Bug className="h-3 w-3 mr-1" />
-                Skirmish
-              </Badge>
-            ) : (
-              <Badge variant="outline">
-                <Sword className="h-3 w-3 mr-1" />
-                Battle
-              </Badge>
+            const modeBadge = (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge
+                    className={combat.mode === "skirmish"
+                      ? "bg-primary/20 text-primary border border-primary/30 cursor-default"
+                      : "cursor-default"}
+                    variant={combat.mode === "skirmish" ? "default" : "outline"}
+                  >
+                    {combat.mode === "skirmish" ? (
+                      <><Bug className="h-3 w-3 mr-1" />Skirmish</>
+                    ) : (
+                      <><Sword className="h-3 w-3 mr-1" />Battle</>
+                    )}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {combat.mode === "skirmish"
+                    ? "A quick practice skirmish — no spiders change hands"
+                    : "A high-stakes battle — winner takes the loser's spider"}
+                </TooltipContent>
+              </Tooltip>
             );
 
             return <Card
