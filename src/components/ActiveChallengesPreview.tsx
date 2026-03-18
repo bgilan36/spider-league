@@ -204,36 +204,33 @@ const ActiveChallengesPreview: React.FC = () => {
         event: 'INSERT',
         schema: 'public',
         table: 'battle_challenges'
-      }, (payload) => {
-        console.log('New challenge created:', payload);
-        fetchRecentChallenges();
+      }, () => {
+        fetchRef.current();
       })
       .on('postgres_changes', {
         event: 'UPDATE',
         schema: 'public',
         table: 'battle_challenges'
-      }, (payload) => {
-        console.log('Challenge updated:', payload);
-        fetchRecentChallenges();
+      }, () => {
+        fetchRef.current();
       })
       .on('postgres_changes', {
         event: 'DELETE',
         schema: 'public',
         table: 'battle_challenges'
-      }, (payload) => {
-        console.log('Challenge deleted:', payload);
-        fetchRecentChallenges();
+      }, () => {
+        fetchRef.current();
       })
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id]);
+  }, [user?.id, fetchRecentChallenges]);
 
   // Instant local event listeners to refresh without waiting for realtime
   useEffect(() => {
-    const refresh = () => fetchRecentChallenges();
+    const refresh = () => fetchRef.current();
     window.addEventListener('challenge:created', refresh as any);
     window.addEventListener('challenge:cancelled', refresh as any);
     window.addEventListener('challenge:accepted', refresh as any);
@@ -242,7 +239,7 @@ const ActiveChallengesPreview: React.FC = () => {
       window.removeEventListener('challenge:cancelled', refresh as any);
       window.removeEventListener('challenge:accepted', refresh as any);
     };
-  }, [user?.id]);
+  }, []);
 
   if (loading) {
     return (
