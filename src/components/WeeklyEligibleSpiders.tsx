@@ -418,7 +418,7 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
         </div>
 
         {/* 3-Slot Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4">
           {eligibleSpiders.map((spider, index) => {
             const isActivatedSlot = index === 0 && activatedSpider;
             const isUploadSlot = !isActivatedSlot;
