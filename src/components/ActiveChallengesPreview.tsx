@@ -52,10 +52,12 @@ const ActiveChallengesPreview: React.FC = () => {
   const [showChallengeModal, setShowChallengeModal] = useState(false);
   const [isBattleInfoOpen, setIsBattleInfoOpen] = useState(false);
 
+  const fetchRef = useRef<() => void>(() => {});
+
       // Fetch active challenges with balanced coverage:
       // - snapshot from other players
       // - all of this user's own open challenges (so none are silently hidden)
-      const fetchRecentChallenges = async () => {
+      const fetchRecentChallenges = useCallback(async () => {
         try {
           setLoading(true);
           const nowIso = new Date().toISOString();
