@@ -658,7 +658,7 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
                       }}
                       size="sm"
                       variant="default"
-                      className="flex-1 h-7 text-xs gap-1"
+                      className="flex-1 h-6 sm:h-7 text-[10px] sm:text-xs gap-1"
                     />
                     {spider.source === 'activated' && (
                       <Button 
