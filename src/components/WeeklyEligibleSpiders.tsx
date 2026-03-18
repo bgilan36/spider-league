@@ -418,7 +418,7 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
         </div>
 
         {/* 3-Slot Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4">
           {eligibleSpiders.map((spider, index) => {
             const isActivatedSlot = index === 0 && activatedSpider;
             const isUploadSlot = !isActivatedSlot;
@@ -453,7 +453,7 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
                   tabIndex={canUploadFromTile ? 0 : undefined}
                   aria-label={canUploadFromTile ? 'Upload new spider' : undefined}
                 >
-                  <CardContent className="p-4 flex flex-col items-center justify-center min-h-[180px] text-center">
+                  <CardContent className="p-2 sm:p-4 flex flex-col items-center justify-center min-h-[120px] sm:min-h-[180px] text-center">
                     {canShowActivateOption ? (
                       // Show BOTH options: Upload OR Activate
                       <div className="flex flex-col items-center w-full space-y-3">
@@ -605,7 +605,7 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
                 )}
                 
                 <div 
-                  className={`aspect-square relative cursor-pointer group ${hasActiveChallenge ? 'mt-5' : ''}`}
+                  className={`aspect-[4/3] sm:aspect-square relative cursor-pointer group ${hasActiveChallenge ? 'mt-5' : ''}`}
                   onClick={() => {
                     setSelectedSpiderForStats(spider);
                     setIsStatsModalOpen(true);
@@ -638,10 +638,10 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
                     {spider.source === 'activated' ? 'Activated' : 'Uploaded'}
                   </Badge>
                 </div>
-                <div className="p-3 text-center">
-                  <p className="font-bold text-sm truncate">{spider.nickname}</p>
-                  <p className="text-xs text-muted-foreground truncate mb-1">{spider.species}</p>
-                  <p className="text-xs mb-2">⚡ {spider.power_score}</p>
+                <div className="p-1.5 sm:p-3 text-center">
+                  <p className="font-bold text-xs sm:text-sm truncate">{spider.nickname}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate mb-0.5 sm:mb-1">{spider.species}</p>
+                  <p className="text-[10px] sm:text-xs mb-1 sm:mb-2">⚡ {spider.power_score}</p>
                   
                   {/* Action buttons */}
                   <div className="flex gap-1 justify-center">
@@ -658,7 +658,7 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
                       }}
                       size="sm"
                       variant="default"
-                      className="flex-1 h-7 text-xs gap-1"
+                      className="flex-1 h-6 sm:h-7 text-[10px] sm:text-xs gap-1"
                     />
                     {spider.source === 'activated' && (
                       <Button 
