@@ -26,7 +26,7 @@ import BattleButton from "@/components/BattleButton";
 import ActiveChallengesPreview from "@/components/ActiveChallengesPreview";
 import BattleDetailsModal from "@/components/BattleDetailsModal";
 import ClickableUsername from "@/components/ClickableUsername";
-import { InstallPrompt } from "@/components/InstallPrompt";
+
 import NotificationsDropdown from "@/components/NotificationsDropdown";
 import OnlineUsersBar from "@/components/OnlineUsersBar";
 import NewSpiderSpotlight from "@/components/NewSpiderSpotlight";
@@ -1262,7 +1262,7 @@ const Index = () => {
         </div>
       </div>
 
-      <InstallPrompt />
+      
       
       {/* Hidden file input for quick upload */}
       <input ref={fileInputRef} type="file" accept="image/*,.heic,.heif" className="hidden" onChange={handleFileSelect} />
