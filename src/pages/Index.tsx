@@ -993,43 +993,41 @@ const Index = () => {
                       }
                     }}
                   >
-                    <CardContent className="flex items-center gap-2 sm:gap-4 p-3 sm:p-4">
-                      <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                        {/* Spider A - Fixed width container */}
-                        <div className="flex items-center gap-2 sm:gap-3 w-36 sm:w-40 flex-shrink-0">
+                    <CardContent className="p-3 sm:p-4">
+                      <div className="flex items-center gap-3">
+                        {/* Spider A */}
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
                           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden flex-shrink-0">
                             <img src={spiderA?.image_url} alt={spiderA?.nickname} className="w-full h-full object-cover" />
                           </div>
-                          <div className="min-w-0 flex-1">
+                          <div className="min-w-0">
                             <p className="font-medium text-sm truncate">{spiderA?.nickname}</p>
                             <p className="text-xs text-muted-foreground truncate">{spiderA?.species}</p>
                           </div>
                         </div>
                         
                         {/* VS */}
-                        <div className="flex-shrink-0 mx-2">
-                          <span className="text-xs font-bold text-muted-foreground">VS</span>
-                        </div>
+                        <span className="text-xs font-bold text-muted-foreground flex-shrink-0">VS</span>
                         
-                        {/* Spider B - Fixed width container */}
-                        <div className="flex items-center gap-2 sm:gap-3 w-36 sm:w-40 flex-shrink-0">
+                        {/* Spider B */}
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
                           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden flex-shrink-0">
                             <img src={spiderB?.image_url} alt={spiderB?.nickname} className="w-full h-full object-cover" />
                           </div>
-                          <div className="min-w-0 flex-1">
+                          <div className="min-w-0">
                             <p className="font-medium text-sm truncate">{spiderB?.nickname}</p>
                             <p className="text-xs text-muted-foreground truncate">{spiderB?.species}</p>
                           </div>
                         </div>
-                      </div>
-                      
-                      {/* Result and Date */}
-                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                        {modeBadge}
-                        {resultBadge}
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(combat.created_at), 'MMM d')}
-                        </p>
+                        
+                        {/* Result and Date */}
+                        <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-1">
+                          {modeBadge}
+                          {resultBadge}
+                          <p className="text-xs text-muted-foreground whitespace-nowrap">
+                            {format(new Date(combat.created_at), 'MMM d')}
+                          </p>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>;
