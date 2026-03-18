@@ -464,6 +464,37 @@ const ActiveChallengesPreview: React.FC = () => {
           window.location.href = '/';
         }}
       />
+
+      {/* Battle Info Dialog */}
+      <Dialog open={isBattleInfoOpen} onOpenChange={setIsBattleInfoOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sword className="h-5 w-5 text-primary" />
+              What are Battles?
+            </DialogTitle>
+            <DialogDescription>
+              High-stakes spider combat where ownership is on the line.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 text-sm text-muted-foreground">
+            <p>
+              Battles are competitive fights between two players' spiders. The winning user
+              takes ownership of the losing spider — so choose wisely!
+            </p>
+            <p>
+              <strong className="text-foreground">How it works:</strong> A player creates a challenge
+              by selecting one of their spiders. Other players can accept the challenge with one of
+              their own spiders. Once accepted, the battle is resolved and the winner claims the
+              loser's spider.
+            </p>
+            <p>
+              <strong className="text-foreground">Strategy tip:</strong> Consider your spider's stats
+              carefully. Speed, venom, defense, and damage all play a role in determining the outcome.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
