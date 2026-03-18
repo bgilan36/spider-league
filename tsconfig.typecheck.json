@@ -1,7 +1,5 @@
 {
-  "extends": "./tsconfig.app.json"
-}
-  "extends": "./tsconfig.json",
-  "include": ["next-env.d.ts", "pages/**/*.ts", "pages/**/*.tsx", "src/**/*.ts", "src/**/*.tsx"],
-  "exclude": ["node_modules", "supabase/**", "vite.config.ts", "src/main.tsx"]
+  "extends": "./tsconfig.app.json",
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules", "supabase/**", "vite.config.ts"]
 }
