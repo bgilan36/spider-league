@@ -910,10 +910,6 @@ const Index = () => {
           <OnlineUsersBar />
         </div>
 
-        {/* Battles Section */}
-        <div className="mb-8">
-          <BattleMode showChallenges={true} showBattleStats={false} showCreateChallengeButton={false} />
-        </div>
 
         {/* Recent Battles Section */}
         <div className="mb-6 sm:mb-8">
