@@ -638,10 +638,10 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
                     {spider.source === 'activated' ? 'Activated' : 'Uploaded'}
                   </Badge>
                 </div>
-                <div className="p-3 text-center">
-                  <p className="font-bold text-sm truncate">{spider.nickname}</p>
-                  <p className="text-xs text-muted-foreground truncate mb-1">{spider.species}</p>
-                  <p className="text-xs mb-2">⚡ {spider.power_score}</p>
+                <div className="p-1.5 sm:p-3 text-center">
+                  <p className="font-bold text-xs sm:text-sm truncate">{spider.nickname}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate mb-0.5 sm:mb-1">{spider.species}</p>
+                  <p className="text-[10px] sm:text-xs mb-1 sm:mb-2">⚡ {spider.power_score}</p>
                   
                   {/* Action buttons */}
                   <div className="flex gap-1 justify-center">
