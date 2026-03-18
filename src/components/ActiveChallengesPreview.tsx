@@ -50,6 +50,7 @@ const ActiveChallengesPreview: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedChallenge, setSelectedChallenge] = useState<BattleChallenge | null>(null);
   const [showChallengeModal, setShowChallengeModal] = useState(false);
+  const [isBattleInfoOpen, setIsBattleInfoOpen] = useState(false);
 
       // Fetch active challenges with balanced coverage:
       // - snapshot from other players
