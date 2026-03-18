@@ -605,7 +605,7 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
                 )}
                 
                 <div 
-                  className={`aspect-square relative cursor-pointer group ${hasActiveChallenge ? 'mt-5' : ''}`}
+                  className={`aspect-[4/3] sm:aspect-square relative cursor-pointer group ${hasActiveChallenge ? 'mt-5' : ''}`}
                   onClick={() => {
                     setSelectedSpiderForStats(spider);
                     setIsStatsModalOpen(true);
