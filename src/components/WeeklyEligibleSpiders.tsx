@@ -453,7 +453,7 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
                   tabIndex={canUploadFromTile ? 0 : undefined}
                   aria-label={canUploadFromTile ? 'Upload new spider' : undefined}
                 >
-                  <CardContent className="p-4 flex flex-col items-center justify-center min-h-[180px] text-center">
+                  <CardContent className="p-2 sm:p-4 flex flex-col items-center justify-center min-h-[120px] sm:min-h-[180px] text-center">
                     {canShowActivateOption ? (
                       // Show BOTH options: Upload OR Activate
                       <div className="flex flex-col items-center w-full space-y-3">
