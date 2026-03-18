@@ -148,7 +148,12 @@ const ActiveChallengesPreview: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
+
+  // Keep ref updated so event listeners always call the latest version
+  useEffect(() => {
+    fetchRef.current = fetchRecentChallenges;
+  }, [fetchRecentChallenges]);
 
   const handleCancelChallenge = async (challengeId: string, e: React.MouseEvent) => {
     e.stopPropagation();
