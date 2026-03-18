@@ -267,20 +267,14 @@ const ActiveChallengesPreview: React.FC = () => {
           <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2 mb-2">
             <AlertCircle className="w-5 h-5 text-primary" />
             Battles
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  className="inline-flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  aria-label="Battles info"
-                >
-                  <CircleHelp className="h-4 w-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs">
-                These spiders are queued for battle. The winning user takes ownership of the losing spider.
-              </TooltipContent>
-            </Tooltip>
+            <button
+              type="button"
+              className="inline-flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label="Battles info"
+              onClick={() => setIsBattleInfoOpen(true)}
+            >
+              <Info className="h-4 w-4" />
+            </button>
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground">
             {challengesFromOthers.length > 0
