@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
@@ -52,10 +52,12 @@ const ActiveChallengesPreview: React.FC = () => {
   const [showChallengeModal, setShowChallengeModal] = useState(false);
   const [isBattleInfoOpen, setIsBattleInfoOpen] = useState(false);
 
+  const fetchRef = useRef<() => void>(() => {});
+
       // Fetch active challenges with balanced coverage:
       // - snapshot from other players
       // - all of this user's own open challenges (so none are silently hidden)
-      const fetchRecentChallenges = async () => {
+      const fetchRecentChallenges = useCallback(async () => {
         try {
           setLoading(true);
           const nowIso = new Date().toISOString();
@@ -146,7 +148,12 @@ const ActiveChallengesPreview: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
+
+  // Keep ref updated so event listeners always call the latest version
+  useEffect(() => {
+    fetchRef.current = fetchRecentChallenges;
+  }, [fetchRecentChallenges]);
 
   const handleCancelChallenge = async (challengeId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -197,36 +204,33 @@ const ActiveChallengesPreview: React.FC = () => {
         event: 'INSERT',
         schema: 'public',
         table: 'battle_challenges'
-      }, (payload) => {
-        console.log('New challenge created:', payload);
-        fetchRecentChallenges();
+      }, () => {
+        fetchRef.current();
       })
       .on('postgres_changes', {
         event: 'UPDATE',
         schema: 'public',
         table: 'battle_challenges'
-      }, (payload) => {
-        console.log('Challenge updated:', payload);
-        fetchRecentChallenges();
+      }, () => {
+        fetchRef.current();
       })
       .on('postgres_changes', {
         event: 'DELETE',
         schema: 'public',
         table: 'battle_challenges'
-      }, (payload) => {
-        console.log('Challenge deleted:', payload);
-        fetchRecentChallenges();
+      }, () => {
+        fetchRef.current();
       })
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id]);
+  }, [user?.id, fetchRecentChallenges]);
 
   // Instant local event listeners to refresh without waiting for realtime
   useEffect(() => {
-    const refresh = () => fetchRecentChallenges();
+    const refresh = () => fetchRef.current();
     window.addEventListener('challenge:created', refresh as any);
     window.addEventListener('challenge:cancelled', refresh as any);
     window.addEventListener('challenge:accepted', refresh as any);
