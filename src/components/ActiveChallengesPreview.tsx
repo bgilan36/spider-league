@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Sword, Timer, AlertCircle, X, Trophy, CircleHelp } from 'lucide-react';
+import { Sword, Timer, AlertCircle, X, Trophy, Info } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import ChallengeDetailsModal from './ChallengeDetailsModal';
 import ClickableUsername from './ClickableUsername';
@@ -49,6 +50,7 @@ const ActiveChallengesPreview: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedChallenge, setSelectedChallenge] = useState<BattleChallenge | null>(null);
   const [showChallengeModal, setShowChallengeModal] = useState(false);
+  const [isBattleInfoOpen, setIsBattleInfoOpen] = useState(false);
 
       // Fetch active challenges with balanced coverage:
       // - snapshot from other players
@@ -265,20 +267,14 @@ const ActiveChallengesPreview: React.FC = () => {
           <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2 mb-2">
             <AlertCircle className="w-5 h-5 text-primary" />
             Battles
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  className="inline-flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  aria-label="Battles info"
-                >
-                  <CircleHelp className="h-4 w-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs">
-                These spiders are queued for battle. The winning user takes ownership of the losing spider.
-              </TooltipContent>
-            </Tooltip>
+            <button
+              type="button"
+              className="inline-flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label="Battles info"
+              onClick={() => setIsBattleInfoOpen(true)}
+            >
+              <Info className="h-4 w-4" />
+            </button>
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground">
             {challengesFromOthers.length > 0
@@ -468,6 +464,37 @@ const ActiveChallengesPreview: React.FC = () => {
           window.location.href = '/';
         }}
       />
+
+      {/* Battle Info Dialog */}
+      <Dialog open={isBattleInfoOpen} onOpenChange={setIsBattleInfoOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sword className="h-5 w-5 text-primary" />
+              What are Battles?
+            </DialogTitle>
+            <DialogDescription>
+              High-stakes spider combat where ownership is on the line.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 text-sm text-muted-foreground">
+            <p>
+              Battles are competitive fights between two players' spiders. The winning user
+              takes ownership of the losing spider — so choose wisely!
+            </p>
+            <p>
+              <strong className="text-foreground">How it works:</strong> A player creates a challenge
+              by selecting one of their spiders. Other players can accept the challenge with one of
+              their own spiders. Once accepted, the battle is resolved and the winner claims the
+              loser's spider.
+            </p>
+            <p>
+              <strong className="text-foreground">Strategy tip:</strong> Consider your spider's stats
+              carefully. Speed, venom, defense, and damage all play a role in determining the outcome.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
