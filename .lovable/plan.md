@@ -1,29 +1,33 @@
 
 
-# Plan: New User Excitement & DAU Boost
+# Onboarding Flow for New Users
 
 ## Overview
 
-Two features to make new users' first minutes exciting and give returning users a reason to open the app daily.
+Carousel-style onboarding modal for first-time logins. Walks users through Spider League mechanics and gets them excited to jump in immediately with their starter spider.
 
----
+## Tracking Completion
 
-## Feature 1: First Skirmish Guided Banner ✅
+Add `has_completed_onboarding boolean default false` to `profile_settings`. Set to `true` when user finishes or dismisses.
 
-After onboarding closes, show a pulsing animated banner that guides the user into their very first skirmish. Disappears permanently once they complete one.
+## Onboarding Slides (4 total)
 
-### Implemented
-- Migration: Added `has_completed_first_skirmish` to `profile_settings`
-- `src/components/FirstSkirmishBanner.tsx` — animated banner with CTA
-- `src/pages/Index.tsx` — queries flag, renders banner, auto-scrolls to Combat Hub after onboarding
+1. **Welcome** -- Logo + "Welcome to Spider League!" Brief tagline about collecting and battling real spiders.
+2. **Upload & Collect** -- Camera icon. Find real spiders, photograph them, upload to generate fighters with unique stats and rarity.
+3. **Combat** -- Sword/Bug icons. Skirmishes = daily practice (XP, no risk). Battles = high stakes (winner takes the loser's spider).
+4. **Get Started** -- Show the user's starter spider with its image, name, and stats. "You already have your first spider -- jump into a Skirmish right now!" Big "Enter the Arena" CTA button that closes modal and marks onboarding complete.
 
----
+Dot indicators at bottom + Next/Back buttons. Dismissing via X also marks complete.
 
-## Feature 2: Welcome Back Daily Reward ✅
+## Technical Steps
 
-When a returning user opens the app for the first time that day, show an animated welcome-back moment with bonus XP tied to their login streak.
+1. **Migration**: `ALTER TABLE profile_settings ADD COLUMN has_completed_onboarding boolean DEFAULT false`
+2. **Create `src/components/OnboardingModal.tsx`**: `Dialog` + `Carousel` (embla). Slide 4 fetches user's spider to display. On complete, updates `profile_settings`.
+3. **Wire into `src/pages/Index.tsx`**: After auth, query `has_completed_onboarding`. If `false`, show modal.
 
-### Implemented
-- `src/hooks/useLoginStreak.ts` — awards daily XP (5 base + 1/streak day, max 15)
-- `src/components/LoginStreakDisplay.tsx` — "Welcome back! +XP" animation on new day
-- `src/pages/Index.tsx` — LoginStreakDisplay rendered below header
+## Files
+
+- Migration (add column)
+- `src/components/OnboardingModal.tsx` -- new
+- `src/pages/Index.tsx` -- onboarding check + render
+

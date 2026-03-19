@@ -8,7 +8,6 @@ interface LoginStreak {
   lastLoginDate: string;
   streakPowerBonus: number;
   isNewDay: boolean;
-  dailyBonusXp: number;
 }
 
 export const useLoginStreak = () => {
@@ -18,35 +17,9 @@ export const useLoginStreak = () => {
   const [justUpdated, setJustUpdated] = useState(false);
 
   const calculateStreakBonus = (days: number): number => {
+    // Bonus power: 1% per day, up to 10% max
     return Math.min(days, 10);
   };
-
-  const calculateDailyXp = (streakDays: number): number => {
-    // 5 XP base + 1 XP per streak day, up to 15 XP max
-    return Math.min(5 + streakDays, 15);
-  };
-
-  const awardDailyXp = useCallback(async (xpAmount: number) => {
-    if (!user) return;
-    await supabase
-      .from('profiles')
-      .update({ xp: undefined }) // We'll use RPC-style increment instead
-      .eq('id', user.id);
-    
-    // Use raw SQL via rpc isn't available, so fetch current XP and add
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('xp')
-      .eq('id', user.id)
-      .single();
-    
-    if (profile) {
-      await supabase
-        .from('profiles')
-        .update({ xp: profile.xp + xpAmount })
-        .eq('id', user.id);
-    }
-  }, [user]);
 
   const checkAndUpdateStreak = useCallback(async () => {
     if (!user) {
@@ -58,6 +31,7 @@ export const useLoginStreak = () => {
     try {
       const today = new Date().toISOString().split('T')[0];
       
+      // Fetch existing streak
       const { data: existingStreak, error: fetchError } = await supabase
         .from('login_streaks')
         .select('*')
@@ -67,8 +41,8 @@ export const useLoginStreak = () => {
       if (fetchError) throw fetchError;
 
       if (!existingStreak) {
-        const dailyXp = calculateDailyXp(1);
-        const { error: insertError } = await supabase
+        // First login - create streak
+        const { data: newStreak, error: insertError } = await supabase
           .from('login_streaks')
           .insert({
             user_id: user.id,
@@ -76,19 +50,18 @@ export const useLoginStreak = () => {
             longest_streak: 1,
             last_login_date: today,
             streak_power_bonus: calculateStreakBonus(1)
-          });
+          })
+          .select()
+          .single();
 
         if (insertError) throw insertError;
-
-        await awardDailyXp(dailyXp);
 
         setStreak({
           currentStreak: 1,
           longestStreak: 1,
           lastLoginDate: today,
           streakPowerBonus: calculateStreakBonus(1),
-          isNewDay: true,
-          dailyBonusXp: dailyXp,
+          isNewDay: true
         });
         setJustUpdated(true);
       } else {
@@ -98,19 +71,19 @@ export const useLoginStreak = () => {
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
         if (diffDays === 0) {
+          // Same day login - no update needed
           setStreak({
             currentStreak: existingStreak.current_streak,
             longestStreak: existingStreak.longest_streak,
             lastLoginDate: existingStreak.last_login_date,
             streakPowerBonus: existingStreak.streak_power_bonus,
-            isNewDay: false,
-            dailyBonusXp: 0,
+            isNewDay: false
           });
         } else if (diffDays === 1) {
+          // Consecutive day - increment streak
           const newCurrentStreak = existingStreak.current_streak + 1;
           const newLongestStreak = Math.max(newCurrentStreak, existingStreak.longest_streak);
           const bonus = calculateStreakBonus(newCurrentStreak);
-          const dailyXp = calculateDailyXp(newCurrentStreak);
 
           const { error: updateError } = await supabase
             .from('login_streaks')
@@ -124,19 +97,16 @@ export const useLoginStreak = () => {
 
           if (updateError) throw updateError;
 
-          await awardDailyXp(dailyXp);
-
           setStreak({
             currentStreak: newCurrentStreak,
             longestStreak: newLongestStreak,
             lastLoginDate: today,
             streakPowerBonus: bonus,
-            isNewDay: true,
-            dailyBonusXp: dailyXp,
+            isNewDay: true
           });
           setJustUpdated(true);
         } else {
-          const dailyXp = calculateDailyXp(1);
+          // Streak broken - reset to 1
           const { error: updateError } = await supabase
             .from('login_streaks')
             .update({
@@ -148,15 +118,12 @@ export const useLoginStreak = () => {
 
           if (updateError) throw updateError;
 
-          await awardDailyXp(dailyXp);
-
           setStreak({
             currentStreak: 1,
             longestStreak: existingStreak.longest_streak,
             lastLoginDate: today,
             streakPowerBonus: calculateStreakBonus(1),
-            isNewDay: true,
-            dailyBonusXp: dailyXp,
+            isNewDay: true
           });
           setJustUpdated(true);
         }
@@ -166,12 +133,13 @@ export const useLoginStreak = () => {
     } finally {
       setLoading(false);
     }
-  }, [user, awardDailyXp]);
+  }, [user]);
 
   useEffect(() => {
     checkAndUpdateStreak();
   }, [checkAndUpdateStreak]);
 
+  // Reset justUpdated after 5 seconds (for animation purposes)
   useEffect(() => {
     if (justUpdated) {
       const timer = setTimeout(() => setJustUpdated(false), 5000);

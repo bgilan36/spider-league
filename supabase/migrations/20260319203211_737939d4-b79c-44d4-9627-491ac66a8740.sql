@@ -1,1 +1,0 @@
-ALTER TABLE public.profile_settings ADD COLUMN has_completed_first_skirmish boolean DEFAULT false;

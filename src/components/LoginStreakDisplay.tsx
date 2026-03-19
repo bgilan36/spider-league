@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Flame, Star, Zap, Sparkles } from 'lucide-react';
+import { Flame, Star, Zap } from 'lucide-react';
 import { useLoginStreak } from '@/hooks/useLoginStreak';
 import { useConfetti } from '@/hooks/useConfetti';
 import { Badge } from '@/components/ui/badge';
@@ -43,32 +43,8 @@ export const LoginStreakDisplay = () => {
       <motion.div
         initial={justUpdated ? { scale: 0.8, opacity: 0 } : false}
         animate={{ scale: 1, opacity: 1 }}
-        className="flex flex-wrap items-center gap-2"
+        className="flex items-center gap-2"
       >
-        {/* Welcome back banner for new day */}
-        {justUpdated && streak.isNewDay && (
-          <motion.div
-            initial={{ opacity: 0, y: -8, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.4, ease: 'easeOut' }}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/20 border border-accent/30 text-sm"
-          >
-            <Sparkles className="h-4 w-4 text-primary" />
-            <span className="font-medium text-foreground">Welcome back!</span>
-            {streak.dailyBonusXp > 0 && (
-              <motion.span
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.3, type: 'spring', stiffness: 300 }}
-                className="font-bold text-primary"
-              >
-                +{streak.dailyBonusXp} XP
-              </motion.span>
-            )}
-          </motion.div>
-        )}
-
         <motion.div
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${getStreakColor()} text-white text-sm font-semibold shadow-lg`}
           whileHover={{ scale: 1.05 }}
