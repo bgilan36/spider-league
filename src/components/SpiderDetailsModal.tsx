@@ -139,6 +139,12 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
             >
               {spider.rarity}
             </Badge>
+            {spiderLevel > 1 && (
+              <Badge variant="outline" className="gap-1">
+                <Star className="h-3 w-3" />
+                Lv.{spiderLevel}
+              </Badge>
+            )}
           </DialogTitle>
           <DialogDescription className="text-lg">
             {spider.species}
