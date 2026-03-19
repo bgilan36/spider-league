@@ -121,6 +121,8 @@ const Index = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showFirstSkirmishBanner, setShowFirstSkirmishBanner] = useState(false);
+  const combatHubRef = useRef<HTMLDivElement>(null);
   const rarityColors = {
     COMMON: "bg-gray-500",
     UNCOMMON: "bg-green-500",
