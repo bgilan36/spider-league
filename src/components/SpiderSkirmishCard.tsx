@@ -307,7 +307,7 @@ const resolveClientSideSkirmish = (
   };
 };
 
-export const SpiderSkirmishCard = () => {
+export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { fireConfetti } = useConfetti();

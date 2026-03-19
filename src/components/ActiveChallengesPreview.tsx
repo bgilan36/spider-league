@@ -43,7 +43,7 @@ interface BattleChallenge {
   challenger_profile?: { display_name: string };
 }
 
-const ActiveChallengesPreview: React.FC = () => {
+const ActiveChallengesPreview: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [challenges, setChallenges] = useState<BattleChallenge[]>([]);
