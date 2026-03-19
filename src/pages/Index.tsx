@@ -1151,6 +1151,8 @@ const Index = () => {
                         className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
                         onClick={(e) => { e.stopPropagation(); handleSpiderClick(spider); }}
                       >
+                        <img src={spider.image_url} alt={spider.nickname} className="w-full h-full object-cover" />
+                      </div>
                       
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-1 mb-1">
