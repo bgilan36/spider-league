@@ -35,6 +35,8 @@ interface Spider {
   is_approved: boolean;
   owner_id?: string;
   created_at: string;
+  xp?: number;
+  level?: number;
   is_eligible?: boolean;
   eligibility_type?: 'activated' | 'uploaded';
   battle_won_from?: {
