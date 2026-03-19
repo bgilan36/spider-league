@@ -1036,7 +1036,10 @@ const Index = () => {
                         
                         {/* Spider B */}
                         <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <div className="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
+                          <div
+                            className="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-primary/50 rounded-md transition-all"
+                            onClick={(e) => { e.stopPropagation(); handleSpiderThumbnailClick(spiderB?.id); }}
+                          >
                             <div className="w-full h-full rounded-md overflow-hidden">
                               <img src={spiderB?.image_url} alt={spiderB?.nickname} className="w-full h-full object-cover" />
                             </div>
