@@ -1335,6 +1335,8 @@ const Index = () => {
       
       {/* Hidden file input for quick upload */}
       <input ref={fileInputRef} type="file" accept="image/*,.heic,.heif" className="hidden" onChange={handleFileSelect} />
+
+      <OnboardingModal open={showOnboarding} onComplete={() => setShowOnboarding(false)} />
     </div>;
 };
 export default Index;
