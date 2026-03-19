@@ -882,6 +882,11 @@ const Index = () => {
         </div>
       </header>
 
+      {/* Login Streak */}
+      <div className="container mx-auto px-3 sm:px-6 pt-3">
+        <LoginStreakDisplay />
+      </div>
+
       <Dialog open={tipModalOpen} onOpenChange={setTipModalOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
