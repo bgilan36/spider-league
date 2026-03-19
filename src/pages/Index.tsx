@@ -997,8 +997,13 @@ const Index = () => {
                       <div className="flex items-center gap-3">
                         {/* Spider A */}
                         <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden flex-shrink-0">
-                            <img src={spiderA?.image_url} alt={spiderA?.nickname} className="w-full h-full object-cover" />
+                          <div className="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
+                            <div className="w-full h-full rounded-md overflow-hidden">
+                              <img src={spiderA?.image_url} alt={spiderA?.nickname} className="w-full h-full object-cover" />
+                            </div>
+                            {isWinnerA && (
+                              <Trophy className="absolute -top-1.5 -right-1.5 h-4 w-4 text-yellow-500 drop-shadow-md" />
+                            )}
                           </div>
                           <div className="min-w-0">
                             <p className="font-medium text-sm truncate">{spiderA?.nickname}</p>
