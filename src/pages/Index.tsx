@@ -104,7 +104,7 @@ const Index = () => {
   const [topLeaderboardSpiders, setTopLeaderboardSpiders] = useState<Spider[]>([]);
   const [topUsers, setTopUsers] = useState<any[]>([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(true);
-  const [leaderboardType, setLeaderboardType] = useState<'alltime' | 'weekly'>('alltime');
+  const [leaderboardType, setLeaderboardType] = useState<'alltime' | 'weekly'>('weekly');
   const [leaderboardView, setLeaderboardView] = useState<'spiders' | 'users'>('spiders');
   const [recentBattles, setRecentBattles] = useState<RecentCombatItem[]>([]);
   const [visibleRecentCount, setVisibleRecentCount] = useState(3);
