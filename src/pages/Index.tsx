@@ -118,6 +118,7 @@ const Index = () => {
   const [selectedTipAmount, setSelectedTipAmount] = useState<string>("5");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const rarityColors = {
     COMMON: "bg-gray-500",
     UNCOMMON: "bg-green-500",
