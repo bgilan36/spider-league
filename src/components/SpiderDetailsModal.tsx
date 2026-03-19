@@ -12,7 +12,7 @@ import PowerScoreArc from "@/components/PowerScoreArc";
 import BattleButton from "@/components/BattleButton";
 import ShareButton from "@/components/ShareButton";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, ChevronRight } from "lucide-react";
+import { Loader2, ChevronRight, Star } from "lucide-react";
 import { format } from "date-fns";
 import BattleDetailsModal from "@/components/BattleDetailsModal";
 
@@ -32,6 +32,8 @@ interface Spider {
   is_approved: boolean;
   owner_id?: string;
   created_at?: string;
+  xp?: number;
+  level?: number;
 }
 
 interface SpiderDetailsModalProps {
@@ -117,6 +119,15 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
     { name: "Webcraft", value: spider.webcraft, max: 100 },
   ];
 
+  const spiderLevel = spider.level ?? 1;
+  const spiderXp = spider.xp ?? 0;
+  const XP_THRESHOLDS = [0, 50, 120, 220, 360, 550, 800, 1100, 1500, 2000];
+  const currentLevelXp = XP_THRESHOLDS[spiderLevel - 1] ?? 0;
+  const nextLevelXp = spiderLevel < 10 ? XP_THRESHOLDS[spiderLevel] : XP_THRESHOLDS[9];
+  const xpInLevel = spiderXp - currentLevelXp;
+  const xpNeeded = nextLevelXp - currentLevelXp;
+  const xpProgress = spiderLevel >= 10 ? 100 : (xpInLevel / xpNeeded) * 100;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl sm:max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto">
@@ -128,6 +139,12 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
             >
               {spider.rarity}
             </Badge>
+            {spiderLevel > 1 && (
+              <Badge variant="outline" className="gap-1">
+                <Star className="h-3 w-3" />
+                Lv.{spiderLevel}
+              </Badge>
+            )}
           </DialogTitle>
           <DialogDescription className="text-lg">
             {spider.species}
@@ -150,6 +167,25 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
                 <div className="text-3xl font-bold">{spider.power_score}</div>
                 <div className="text-sm text-muted-foreground">Total Power Score</div>
               </div>
+            </div>
+
+            {/* XP & Level Progress */}
+            <div className="rounded-lg border bg-card p-3 space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium flex items-center gap-1">
+                  <Star className="h-4 w-4 text-yellow-500" />
+                  Level {spiderLevel}
+                </span>
+                <span className="text-muted-foreground">
+                  {spiderLevel >= 10 ? 'MAX' : `${spiderXp} / ${nextLevelXp} XP`}
+                </span>
+              </div>
+              <Progress value={xpProgress} className="h-2" />
+              {spiderLevel < 10 && (
+                <p className="text-xs text-muted-foreground text-center">
+                  {nextLevelXp - spiderXp} XP to next level
+                </p>
+              )}
             </div>
           </div>
 
