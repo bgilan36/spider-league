@@ -1,64 +1,33 @@
-# Unified Combat Hub — Above-the-Fold Redesign
 
-## Current Layout (lines 913-924)
 
-```text
-┌────────────────────────────┬──────────────────────┐
-│  WeeklyEligibleSpiders     │  SpiderSkirmishCard   │
-│  (7 cols)                  │  ActiveChallengesPreview│
-│                            │  (5 cols)             │
-└────────────────────────────┴──────────────────────┘
-```
+# Onboarding Flow for New Users
 
-Skirmishes and Battles sit in a stacked column on the right, visually disconnected — they look like two unrelated widgets.
+## Overview
 
-## Proposed Layout
+Carousel-style onboarding modal for first-time logins. Walks users through Spider League mechanics and gets them excited to jump in immediately with their starter spider.
 
-Merge Skirmishes and Battles into a single **"Combat Hub"** card on the right side, using tabs to switch between them. The weekly roster stays on the left.
+## Tracking Completion
 
-```text
-┌────────────────────────────┬──────────────────────┐
-│  WeeklyEligibleSpiders     │  ┌─ COMBAT HUB ────┐ │
-│  (7 cols)                  │  │ [Skirmish][Battle]│ │
-│                            │  │                   │ │
-│                            │  │ (tab content)     │ │
-│                            │  └───────────────────┘ │
-│                            │  (5 cols)              │
-└────────────────────────────┴────────────────────────┘
-```
+Add `has_completed_onboarding boolean default false` to `profile_settings`. Set to `true` when user finishes or dismisses.
 
-### Combat Hub Design
+## Onboarding Slides (4 total)
 
-- **Single Card** with a shared header: "Combat" or "Combat Hub"
-- **Two tabs**: "Skirmish" and "Battles"
-  - **Skirmish tab**: Renders the existing `SpiderSkirmishCard` content (matchup, swap, start button, daily usage)
-  - **Battles tab**: Renders the existing `ActiveChallengesPreview` content (open challenges, your active challenges, cancel/accept flows)
-- Subtle visual cues on each tab label:
-  - Skirmish tab: `Bug` icon + blue accent
-  - Battles tab: `Sword` icon + red accent
-- Active tab gets a colored underline matching its accent color
+1. **Welcome** -- Logo + "Welcome to Spider League!" Brief tagline about collecting and battling real spiders.
+2. **Upload & Collect** -- Camera icon. Find real spiders, photograph them, upload to generate fighters with unique stats and rarity.
+3. **Combat** -- Sword/Bug icons. Skirmishes = daily practice (XP, no risk). Battles = high stakes (winner takes the loser's spider).
+4. **Get Started** -- Show the user's starter spider with its image, name, and stats. "You already have your first spider -- jump into a Skirmish right now!" Big "Enter the Arena" CTA button that closes modal and marks onboarding complete.
 
-### Why This Works
-
-- Reduces vertical scroll by combining two stacked sections into one tabbed card
-- Makes it immediately clear that skirmishes and battles are two modes of the same "combat" system
-- Keeps each mode's full functionality intact — just wrapped in tabs instead of separate cards
-- Matches the unified "Combat Activity" feed pattern already established below the fold
+Dot indicators at bottom + Next/Back buttons. Dismissing via X also marks complete.
 
 ## Technical Steps
 
-1. **Create `CombatHub.tsx**` — a new wrapper component containing:
-  - A `Tabs` component (from shadcn/ui) with two `TabsTrigger`s ("Skirmish" with Bug icon, "Battles" with Sword icon)
-  - `TabsContent` for skirmish renders `<SpiderSkirmishCard />`
-  - `TabsContent` for battles renders `<ActiveChallengesPreview />`
-  - Styled with a single Card wrapper and colored tab indicators
-2. **Update `src/pages/Index.tsx**` (lines 915-924):
-  - Replace the separate `<SpiderSkirmishCard />` and `<ActiveChallengesPreview />` with `<CombatHub />`
-  - Remove individual imports if no longer used elsewhere
+1. **Migration**: `ALTER TABLE profile_settings ADD COLUMN has_completed_onboarding boolean DEFAULT false`
+2. **Create `src/components/OnboardingModal.tsx`**: `Dialog` + `Carousel` (embla). Slide 4 fetches user's spider to display. On complete, updates `profile_settings`.
+3. **Wire into `src/pages/Index.tsx`**: After auth, query `has_completed_onboarding`. If `false`, show modal.
 
-## Files Modified
+## Files
 
-- `src/components/CombatHub.tsx` — new file
-- `src/pages/Index.tsx` — swap right-column content to `<CombatHub />`
+- Migration (add column)
+- `src/components/OnboardingModal.tsx` -- new
+- `src/pages/Index.tsx` -- onboarding check + render
 
- below are modifications to the plan that I want. Make sure that when another user has an active challenge that you can accept, that it's pretty obvious in the combat hub ( not hidden behind the battle tab ). When there's no active challenges, prioritize the user's attention to the start skirmish so they have some kind of activity to do that's engaging every time that they log into the app. this will help with daily active user metrics 
