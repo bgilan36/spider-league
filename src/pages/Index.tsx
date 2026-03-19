@@ -54,6 +54,7 @@ interface Spider {
 }
 
 interface RecentBattleSpider {
+  id?: string;
   nickname: string;
   species: string;
   image_url: string;
