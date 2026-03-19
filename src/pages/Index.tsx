@@ -23,7 +23,7 @@ import PowerScoreArc from "@/components/PowerScoreArc";
 import SpiderDetailsModal from "@/components/SpiderDetailsModal";
 import BattleMode from "@/components/BattleMode";
 import BattleButton from "@/components/BattleButton";
-import ActiveChallengesPreview from "@/components/ActiveChallengesPreview";
+import CombatHub from "@/components/CombatHub";
 import BattleDetailsModal from "@/components/BattleDetailsModal";
 import ClickableUsername from "@/components/ClickableUsername";
 
@@ -34,7 +34,6 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { useIsMobile } from "@/hooks/use-mobile";
 import WeeklyEligibleSpiders from "@/components/WeeklyEligibleSpiders";
-import { SpiderSkirmishCard } from "@/components/SpiderSkirmishCard";
 interface Spider {
   id: string;
   nickname: string;
@@ -917,9 +916,8 @@ const Index = () => {
             <WeeklyEligibleSpiders onSpiderChange={fetchUserSpiders} />
           </div>
 
-          <div className="space-y-6 xl:col-span-5">
-            <SpiderSkirmishCard />
-            <ActiveChallengesPreview />
+          <div className="xl:col-span-5">
+            <CombatHub />
           </div>
         </section>
 

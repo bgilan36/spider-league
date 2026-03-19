@@ -43,7 +43,7 @@ interface BattleChallenge {
   challenger_profile?: { display_name: string };
 }
 
-const ActiveChallengesPreview: React.FC = () => {
+const ActiveChallengesPreview: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [challenges, setChallenges] = useState<BattleChallenge[]>([]);
@@ -243,7 +243,7 @@ const ActiveChallengesPreview: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="animate-pulse">
+      <div className={`animate-pulse ${embedded ? 'px-4 pb-4 pt-2' : ''}`}>
         <div className="h-6 bg-muted rounded w-48 mb-4"></div>
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
@@ -265,7 +265,8 @@ const ActiveChallengesPreview: React.FC = () => {
   const yourActiveChallenges = yourChallenges.filter((c) => new Date(c.expires_at).getTime() > now);
 
   return (
-    <div className="space-y-4">
+    <div className={`space-y-4 ${embedded ? 'px-4 pb-4 pt-2' : ''}`}>
+      {!embedded && (
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2 mb-2">
@@ -291,6 +292,7 @@ const ActiveChallengesPreview: React.FC = () => {
           </div>
         </div>
       </div>
+      )}
       
       {challenges.length === 0 ? (
         <Card>
