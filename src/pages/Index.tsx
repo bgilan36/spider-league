@@ -109,6 +109,7 @@ const Index = () => {
   const [leaderboardView, setLeaderboardView] = useState<'spiders' | 'users'>('spiders');
   const [recentBattles, setRecentBattles] = useState<RecentCombatItem[]>([]);
   const [visibleRecentCount, setVisibleRecentCount] = useState(3);
+  const [combatFilter, setCombatFilter] = useState<'all' | 'battle' | 'skirmish'>('all');
   const [battlesLoading, setBattlesLoading] = useState(true);
   const [selectedBattle, setSelectedBattle] = useState<any>(null);
   const [isBattleDetailsOpen, setIsBattleDetailsOpen] = useState(false);
