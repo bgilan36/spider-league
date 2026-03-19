@@ -12,6 +12,12 @@ interface Spider {
   species: string;
   image_url: string;
   power_score: number;
+  hit_points?: number;
+  damage?: number;
+  speed?: number;
+  defense?: number;
+  venom?: number;
+  webcraft?: number;
 }
 
 interface StatImprovements {
