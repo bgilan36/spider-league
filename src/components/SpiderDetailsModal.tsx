@@ -32,6 +32,8 @@ interface Spider {
   is_approved: boolean;
   owner_id?: string;
   created_at?: string;
+  xp?: number;
+  level?: number;
 }
 
 interface SpiderDetailsModalProps {
