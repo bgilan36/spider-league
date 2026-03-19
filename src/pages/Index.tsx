@@ -552,6 +552,20 @@ const Index = () => {
     setSelectedSpider(spider);
     setIsModalOpen(true);
   };
+  const handleSpiderThumbnailClick = async (spiderId?: string) => {
+    if (!spiderId) return;
+    try {
+      const { data, error } = await supabase
+        .from('spiders')
+        .select('*')
+        .eq('id', spiderId)
+        .single();
+      if (error || !data) return;
+      handleSpiderClick(data as Spider);
+    } catch (e) {
+      console.error('Error fetching spider:', e);
+    }
+  };
   const handleUserClick = (userId: string) => {
     setSelectedUserId(userId);
     setIsUserModalOpen(true);
