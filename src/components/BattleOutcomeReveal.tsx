@@ -273,40 +273,65 @@ const BattleOutcomeReveal: React.FC<BattleOutcomeRevealProps> = ({
               {winner.nickname} prevails!
             </motion.div>
 
-            {/* Stat Improvements - Only show if current user won */}
+            {/* Stat Bar Chart - Only show if current user won */}
             {hasImprovements && isCurrentUserWinner && (
               <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.2, type: 'spring' }}
-                className="max-w-md mx-auto"
+                className="max-w-md mx-auto w-full"
               >
                 <Card className="ring-2 ring-emerald-500 bg-emerald-500/10 border-emerald-500/30">
                   <CardContent className="p-4">
-                    <div className="flex items-center justify-center gap-2 mb-3">
+                    <div className="flex items-center justify-center gap-2 mb-4">
                       <TrendingUp className="h-5 w-5 text-emerald-500" />
-                      <h4 className="font-bold text-emerald-500">Stats Improved!</h4>
+                      <h4 className="font-bold text-emerald-500">Stats After Victory</h4>
                     </div>
-                    <p className="text-xs text-muted-foreground text-center mb-3">
-                      {winner.nickname} gained experience from this victory
-                    </p>
-                    <div className="flex flex-wrap gap-2 justify-center">
-                      {Object.entries(statImprovements).map(([stat, value]) => {
+                    <div className="space-y-3">
+                      {(['hit_points', 'damage', 'speed', 'defense', 'venom', 'webcraft'] as const).map((stat, i) => {
+                        const currentVal = (winner as any)[stat] ?? 0;
+                        const improvement = statImprovements[stat] ?? 0;
+                        const baseVal = currentVal - improvement;
+                        const maxVal = 100;
                         const Icon = statIcons[stat];
+                        
                         return (
                           <motion.div
                             key={stat}
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ delay: 1.4, type: 'spring' }}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 1.4 + i * 0.08 }}
+                            className="flex items-center gap-2"
                           >
-                            <Badge 
-                              variant="outline" 
-                              className="bg-emerald-500/20 border-emerald-500 text-emerald-400 gap-1"
-                            >
-                              {Icon && <Icon className="h-3 w-3" />}
-                              {statLabels[stat]}: +{value}
-                            </Badge>
+                            <div className="flex items-center gap-1.5 w-24 shrink-0">
+                              {Icon && <Icon className="h-3.5 w-3.5 text-muted-foreground" />}
+                              <span className="text-xs text-muted-foreground truncate">{statLabels[stat]}</span>
+                            </div>
+                            <div className="flex-1 h-5 bg-muted/50 rounded-full overflow-hidden relative">
+                              {/* Base stat bar */}
+                              <motion.div
+                                className="absolute inset-y-0 left-0 bg-primary/60 rounded-full"
+                                initial={{ width: 0 }}
+                                animate={{ width: `${(baseVal / maxVal) * 100}%` }}
+                                transition={{ delay: 1.5 + i * 0.08, duration: 0.5, ease: 'easeOut' }}
+                              />
+                              {/* Improvement bar (different color) */}
+                              {improvement > 0 && (
+                                <motion.div
+                                  className="absolute inset-y-0 bg-emerald-500 rounded-r-full"
+                                  style={{ left: `${(baseVal / maxVal) * 100}%` }}
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${(improvement / maxVal) * 100}%` }}
+                                  transition={{ delay: 1.9 + i * 0.08, duration: 0.4, ease: 'easeOut' }}
+                                />
+                              )}
+                            </div>
+                            <div className="w-16 shrink-0 text-right">
+                              <span className="text-xs font-mono font-medium">{currentVal}</span>
+                              {improvement > 0 && (
+                                <span className="text-xs font-bold text-emerald-500 ml-1">+{improvement}</span>
+                              )}
+                            </div>
                           </motion.div>
                         );
                       })}
@@ -320,7 +345,7 @@ const BattleOutcomeReveal: React.FC<BattleOutcomeRevealProps> = ({
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.5 }}
-              transition={{ delay: hasImprovements && isCurrentUserWinner ? 1.6 : 1.3 }}
+              transition={{ delay: hasImprovements && isCurrentUserWinner ? 1.8 : 1.3 }}
               className="text-sm text-muted-foreground"
             >
               <p className="mb-2">Defeated:</p>
