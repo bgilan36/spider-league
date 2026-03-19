@@ -1361,7 +1361,13 @@ const Index = () => {
       {/* Hidden file input for quick upload */}
       <input ref={fileInputRef} type="file" accept="image/*,.heic,.heif" className="hidden" onChange={handleFileSelect} />
 
-      <OnboardingModal open={showOnboarding} onComplete={() => setShowOnboarding(false)} />
+      <OnboardingModal open={showOnboarding} onComplete={() => {
+        setShowOnboarding(false);
+        // Auto-scroll to combat hub after onboarding
+        setTimeout(() => {
+          combatHubRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
+      }} />
     </div>;
 };
 export default Index;
