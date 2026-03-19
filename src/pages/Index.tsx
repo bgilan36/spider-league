@@ -944,15 +944,15 @@ const Index = () => {
             if (!spiderA || !spiderB) return null;
             const isBattleItem = combat.mode === "battle" && !!combat.battle;
 
+            const winnerSide = combat.winner; // "A", "B", "TIE", or null
+            const isWinnerA = winnerSide === "A";
+            const isWinnerB = winnerSide === "B";
+
             let resultBadge;
             if (!combat.winner) {
               resultBadge = <Badge variant="secondary">In Progress</Badge>;
             } else if (combat.winner === "TIE") {
               resultBadge = <Badge variant="outline">Tie</Badge>;
-            } else if (combat.winner === "A") {
-              resultBadge = <Badge className="bg-green-500 text-white">{spiderA?.nickname} Won</Badge>;
-            } else {
-              resultBadge = <Badge className="bg-green-500 text-white">{spiderB?.nickname} Won</Badge>;
             }
 
             const modeBadge = (
@@ -997,8 +997,13 @@ const Index = () => {
                       <div className="flex items-center gap-3">
                         {/* Spider A */}
                         <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden flex-shrink-0">
-                            <img src={spiderA?.image_url} alt={spiderA?.nickname} className="w-full h-full object-cover" />
+                          <div className="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
+                            <div className="w-full h-full rounded-md overflow-hidden">
+                              <img src={spiderA?.image_url} alt={spiderA?.nickname} className="w-full h-full object-cover" />
+                            </div>
+                            {isWinnerA && (
+                              <Trophy className="absolute -top-1.5 -right-1.5 h-4 w-4 text-yellow-500 drop-shadow-md" />
+                            )}
                           </div>
                           <div className="min-w-0">
                             <p className="font-medium text-sm truncate">{spiderA?.nickname}</p>
@@ -1011,8 +1016,13 @@ const Index = () => {
                         
                         {/* Spider B */}
                         <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden flex-shrink-0">
-                            <img src={spiderB?.image_url} alt={spiderB?.nickname} className="w-full h-full object-cover" />
+                          <div className="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
+                            <div className="w-full h-full rounded-md overflow-hidden">
+                              <img src={spiderB?.image_url} alt={spiderB?.nickname} className="w-full h-full object-cover" />
+                            </div>
+                            {isWinnerB && (
+                              <Trophy className="absolute -top-1.5 -right-1.5 h-4 w-4 text-yellow-500 drop-shadow-md" />
+                            )}
                           </div>
                           <div className="min-w-0">
                             <p className="font-medium text-sm truncate">{spiderB?.nickname}</p>
@@ -1023,7 +1033,7 @@ const Index = () => {
                         {/* Result and Date */}
                         <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-1 max-w-[100px] sm:max-w-none">
                           {modeBadge}
-                          <div className="max-w-full [&>span]:max-w-full [&>span]:truncate [&>span]:block">{resultBadge}</div>
+                          {resultBadge && <div className="max-w-full [&>span]:max-w-full [&>span]:truncate [&>span]:block">{resultBadge}</div>}
                           <p className="text-xs text-muted-foreground whitespace-nowrap">
                             {format(new Date(combat.created_at), 'MMM d')}
                           </p>
