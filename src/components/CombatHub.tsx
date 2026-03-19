@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bug, Sword, Zap } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Bug, Sword, Zap, CircleHelp } from "lucide-react";
 import { SpiderSkirmishCard } from "@/components/SpiderSkirmishCard";
 import ActiveChallengesPreview from "@/components/ActiveChallengesPreview";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,6 +61,22 @@ const CombatHub = () => {
             <CardTitle className="text-lg flex items-center gap-2">
               <Zap className="h-5 w-5 text-primary" />
               Combat Hub
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="inline-flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label="Combat Hub info"
+                  >
+                    <CircleHelp className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-xs text-xs leading-relaxed">
+                  <p className="font-semibold mb-1">Skirmishes vs Battles</p>
+                  <p><strong>Skirmishes</strong> are quick, low-stakes practice fights — you earn XP but never lose your spider. Up to 3 per day.</p>
+                  <p className="mt-1"><strong>Battles</strong> are high-stakes challenges — the winner takes ownership of the loser's spider. Only weekly roster spiders can battle.</p>
+                </TooltipContent>
+              </Tooltip>
             </CardTitle>
           </div>
           <TabsList className="w-full mt-2">
