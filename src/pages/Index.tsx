@@ -30,6 +30,7 @@ import ClickableUsername from "@/components/ClickableUsername";
 import NotificationsDropdown from "@/components/NotificationsDropdown";
 import OnlineUsersBar from "@/components/OnlineUsersBar";
 import NewSpiderSpotlight from "@/components/NewSpiderSpotlight";
+import OnboardingModal from "@/components/OnboardingModal";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -117,6 +118,7 @@ const Index = () => {
   const [selectedTipAmount, setSelectedTipAmount] = useState<string>("5");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const rarityColors = {
     COMMON: "bg-gray-500",
     UNCOMMON: "bg-green-500",
@@ -198,6 +200,21 @@ const Index = () => {
     fetchTopLeaderboardSpiders();
     fetchTopUsers();
   }, [user, leaderboardType]);
+
+  // Check onboarding status for new users
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profile_settings")
+      .select("has_completed_onboarding")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!data || data.has_completed_onboarding === false) {
+          setShowOnboarding(true);
+        }
+      });
+  }, [user]);
 
   // Set up real-time subscription for battles
   useEffect(() => {
@@ -1318,6 +1335,8 @@ const Index = () => {
       
       {/* Hidden file input for quick upload */}
       <input ref={fileInputRef} type="file" accept="image/*,.heic,.heif" className="hidden" onChange={handleFileSelect} />
+
+      <OnboardingModal open={showOnboarding} onComplete={() => setShowOnboarding(false)} />
     </div>;
 };
 export default Index;

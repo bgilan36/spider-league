@@ -497,6 +497,7 @@ export type Database = {
           created_at: string
           email_communications_enabled: boolean
           google_id: string | null
+          has_completed_onboarding: boolean | null
           id: string
           updated_at: string
         }
@@ -504,6 +505,7 @@ export type Database = {
           created_at?: string
           email_communications_enabled?: boolean
           google_id?: string | null
+          has_completed_onboarding?: boolean | null
           id: string
           updated_at?: string
         }
@@ -511,6 +513,7 @@ export type Database = {
           created_at?: string
           email_communications_enabled?: boolean
           google_id?: string | null
+          has_completed_onboarding?: boolean | null
           id?: string
           updated_at?: string
         }
