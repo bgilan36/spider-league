@@ -379,7 +379,14 @@ const SpiderCollection = () => {
         )}
       </div>
       <CardHeader className="pb-4">
-        <CardTitle className="text-lg">{spider.nickname}</CardTitle>
+        <div className="flex items-center gap-2">
+          <CardTitle className="text-lg flex-1">{spider.nickname}</CardTitle>
+          {(spider.level ?? 1) > 1 && (
+            <Badge variant="outline" className="text-xs font-bold shrink-0">
+              Lv.{spider.level}
+            </Badge>
+          )}
+        </div>
         <CardDescription>{spider.species}</CardDescription>
         <div className="flex justify-center mt-2">
           <PowerScoreArc score={spider.power_score} />

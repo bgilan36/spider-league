@@ -119,6 +119,15 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
     { name: "Webcraft", value: spider.webcraft, max: 100 },
   ];
 
+  const spiderLevel = spider.level ?? 1;
+  const spiderXp = spider.xp ?? 0;
+  const XP_THRESHOLDS = [0, 50, 120, 220, 360, 550, 800, 1100, 1500, 2000];
+  const currentLevelXp = XP_THRESHOLDS[spiderLevel - 1] ?? 0;
+  const nextLevelXp = spiderLevel < 10 ? XP_THRESHOLDS[spiderLevel] : XP_THRESHOLDS[9];
+  const xpInLevel = spiderXp - currentLevelXp;
+  const xpNeeded = nextLevelXp - currentLevelXp;
+  const xpProgress = spiderLevel >= 10 ? 100 : (xpInLevel / xpNeeded) * 100;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl sm:max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto">
