@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bug, Sword, Zap } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Bug, Sword, Zap, CircleHelp } from "lucide-react";
 import { SpiderSkirmishCard } from "@/components/SpiderSkirmishCard";
 import ActiveChallengesPreview from "@/components/ActiveChallengesPreview";
 import { supabase } from "@/integrations/supabase/client";
