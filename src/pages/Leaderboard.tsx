@@ -91,7 +91,7 @@ const Leaderboard = () => {
   const [selectedWeekId, setSelectedWeekId] = useState<string>("");
   const [currentWeekId, setCurrentWeekId] = useState<string>("");
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"all-time" | "weekly">("all-time");
+  const [activeTab, setActiveTab] = useState<"all-time" | "weekly">("weekly");
   const [selectedSpider, setSelectedSpider] = useState<Spider | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
