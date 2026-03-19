@@ -781,7 +781,7 @@ const Index = () => {
         </div>
       </div>;
   }
-  return <div className="min-h-screen bg-background overflow-x-hidden pb-safe">
+  return <div className="min-h-screen bg-background overflow-x-hidden pb-safe w-full max-w-full">
       {/* Pull to refresh indicator */}
       <PullToRefreshIndicator
         pullDistance={pullDistance}
@@ -1021,9 +1021,9 @@ const Index = () => {
                         </div>
                         
                         {/* Result and Date */}
-                        <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-1">
+                        <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-1 max-w-[100px] sm:max-w-none">
                           {modeBadge}
-                          {resultBadge}
+                          <div className="max-w-full [&>span]:max-w-full [&>span]:truncate [&>span]:block">{resultBadge}</div>
                           <p className="text-xs text-muted-foreground whitespace-nowrap">
                             {format(new Date(combat.created_at), 'MMM d')}
                           </p>
@@ -1255,7 +1255,7 @@ const Index = () => {
       </footer>
 
       {/* Spider Facts Ticker */}
-      <div className="relative overflow-hidden bg-primary/10 border-t py-2 sm:py-3">
+      <div className="relative overflow-hidden bg-primary/10 border-t py-2 sm:py-3 w-full max-w-full">
         <div className="flex animate-scroll whitespace-nowrap">
           {[...Array(2)].map((_, index) => <div key={index} className="flex items-center">
               <span className="text-xs sm:text-sm text-muted-foreground mx-6 sm:mx-8">🕷️ Spiders have been around for over 380 million years</span>
