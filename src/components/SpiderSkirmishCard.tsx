@@ -677,180 +677,182 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
   const skirmishesRemainingToday = Math.max(dailySkirmishUsage.limit - dailySkirmishUsage.used, 0);
   const dailyLimitReached = skirmishesRemainingToday <= 0;
 
-  return (
-    <>
-      <Card className="glass-card border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <CardTitle className="text-xl sm:text-2xl">Skirmishes</CardTitle>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => setIsInfoOpen(true)}
-              aria-label="What is Spider Skirmish?"
-            >
-              <Info className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {suggestionLoading ? (
-            <div className="flex items-center gap-3 rounded-lg border border-border/50 p-4">
-              <Loader2 className="h-5 w-5 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">Finding your best skirmish matchup...</p>
+  const skirmishContent = (
+    <div className="space-y-4">
+      {suggestionLoading ? (
+        <div className="flex items-center gap-3 rounded-lg border border-border/50 p-4">
+          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Finding your best skirmish matchup...</p>
+        </div>
+      ) : suggestion?.available && suggestion.player_spider && suggestion.opponent_spider ? (
+        <>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-lg border border-border/60 bg-card/60 p-3">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Your Spider</p>
+                {playerSpiderOptions.length > 1 ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 gap-1 px-2 text-xs"
+                    onClick={() => setIsSwapPanelOpen((current) => !current)}
+                  >
+                    <RefreshCcw className="h-3 w-3" />
+                    Swap
+                  </Button>
+                ) : null}
+              </div>
+              <div className="mt-2 flex items-center gap-3">
+                <img
+                  src={suggestion.player_spider.image_url}
+                  alt={suggestion.player_spider.nickname}
+                  className="h-12 w-12 rounded-md object-cover"
+                />
+                <div className="min-w-0">
+                  <p className="truncate font-semibold">{suggestion.player_spider.nickname}</p>
+                  <p className="truncate text-xs text-muted-foreground">{suggestion.player_spider.species}</p>
+                  <p className="text-xs text-primary">Power {suggestion.player_spider.power_score}</p>
+                </div>
+              </div>
             </div>
-          ) : suggestion?.available && suggestion.player_spider && suggestion.opponent_spider ? (
-            <>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-lg border border-border/60 bg-card/60 p-3">
-                  <div className="mb-2 flex items-center justify-between gap-2">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Your Spider</p>
-                    {playerSpiderOptions.length > 1 ? (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 gap-1 px-2 text-xs"
-                        onClick={() => setIsSwapPanelOpen((current) => !current)}
-                      >
-                        <RefreshCcw className="h-3 w-3" />
-                        Swap
-                      </Button>
-                    ) : null}
-                  </div>
-                  <div className="mt-2 flex items-center gap-3">
-                    <img
-                      src={suggestion.player_spider.image_url}
-                      alt={suggestion.player_spider.nickname}
-                      className="h-12 w-12 rounded-md object-cover"
-                    />
-                    <div className="min-w-0">
-                      <p className="truncate font-semibold">{suggestion.player_spider.nickname}</p>
-                      <p className="truncate text-xs text-muted-foreground">{suggestion.player_spider.species}</p>
-                      <p className="text-xs text-primary">Power {suggestion.player_spider.power_score}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="rounded-lg border border-border/60 bg-card/60 p-3">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Suggested Rival</p>
-                  <div className="mt-2 flex items-center gap-3">
-                    <img
-                      src={suggestion.opponent_spider.image_url}
-                      alt={suggestion.opponent_spider.nickname}
-                      className="h-12 w-12 rounded-md object-cover"
-                    />
-                    <div className="min-w-0">
-                      <p className="truncate font-semibold">{suggestion.opponent_spider.nickname}</p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {suggestion.opponent_spider.species}
-                        {suggestion.opponent_spider.owner_display_name
-                          ? ` · ${suggestion.opponent_spider.owner_display_name}`
-                          : ""}
-                      </p>
-                      <p className="text-xs text-primary">Power {suggestion.opponent_spider.power_score}</p>
-                    </div>
-                  </div>
+            <div className="rounded-lg border border-border/60 bg-card/60 p-3">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Suggested Rival</p>
+              <div className="mt-2 flex items-center gap-3">
+                <img
+                  src={suggestion.opponent_spider.image_url}
+                  alt={suggestion.opponent_spider.nickname}
+                  className="h-12 w-12 rounded-md object-cover"
+                />
+                <div className="min-w-0">
+                  <p className="truncate font-semibold">{suggestion.opponent_spider.nickname}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {suggestion.opponent_spider.species}
+                    {suggestion.opponent_spider.owner_display_name
+                      ? ` · ${suggestion.opponent_spider.owner_display_name}`
+                      : ""}
+                  </p>
+                  <p className="text-xs text-primary">Power {suggestion.opponent_spider.power_score}</p>
                 </div>
               </div>
+            </div>
+          </div>
 
-              {playerSpiderOptions.length > 1 && (
-                <div
-                  className={`overflow-hidden transition-all duration-300 ease-out ${
-                    isSwapPanelOpen ? "max-h-52 opacity-100" : "max-h-0 opacity-0"
-                  }`}
-                >
-                  <div className="rounded-lg border border-border/60 bg-card/40 p-3">
-                    <p className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">Swap Your Spider</p>
-                    <div className="flex flex-wrap gap-2">
-                      {playerSpiderOptions.slice(0, 8).map((spider) => (
-                        <Button
-                          key={spider.id}
-                          type="button"
-                          size="sm"
-                          variant={currentPlayerSpiderId === spider.id ? "default" : "outline"}
-                          className="h-8 gap-2 px-2 text-xs"
-                          onClick={() => handleSelectPlayerSpider(spider.id)}
-                        >
-                          <img src={spider.image_url} alt={spider.nickname} className="h-4 w-4 rounded object-cover" />
-                          <span className="max-w-[110px] truncate">{spider.nickname}</span>
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
+          {playerSpiderOptions.length > 1 && (
+            <div
+              className={`overflow-hidden transition-all duration-300 ease-out ${
+                isSwapPanelOpen ? "max-h-52 opacity-100" : "max-h-0 opacity-0"
+              }`}
+            >
+              <div className="rounded-lg border border-border/60 bg-card/40 p-3">
+                <p className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">Swap Your Spider</p>
+                <div className="flex flex-wrap gap-2">
+                  {playerSpiderOptions.slice(0, 8).map((spider) => (
+                    <Button
+                      key={spider.id}
+                      type="button"
+                      size="sm"
+                      variant={currentPlayerSpiderId === spider.id ? "default" : "outline"}
+                      className="h-8 gap-2 px-2 text-xs"
+                      onClick={() => handleSelectPlayerSpider(spider.id)}
+                    >
+                      <img src={spider.image_url} alt={spider.nickname} className="h-4 w-4 rounded object-cover" />
+                      <span className="max-w-[110px] truncate">{spider.nickname}</span>
+                    </Button>
+                  ))}
                 </div>
-              )}
-
-              <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
-                {typeof suggestion.matchup_score === "number" ? (
-                  <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary">
-                    Match Quality {Math.round(suggestion.matchup_score)}%
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary">
-                    One-tap battle
-                  </Badge>
-                )}
-                <Badge variant="outline" className="border-border/60 bg-background/50">
-                  {dailySkirmishUsage.used}/{dailySkirmishUsage.limit} today
-                </Badge>
-                <Button
-                  type="button"
-                  onClick={handleStartSkirmish}
-                  disabled={startingSkirmish || dailyLimitReached}
-                  className={`gradient-button h-11 w-full px-5 text-sm sm:w-auto sm:text-base ${
-                    !startingSkirmish && !dailyLimitReached && !prefersReducedMotion ? "pulse-glow-slow" : ""
-                  }`}
-                >
-                  {startingSkirmish ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Starting...
-                    </>
-                  ) : (
-                    <>
-                      <PlayCircle className="mr-2 h-4 w-4" />
-                      Start Skirmish
-                    </>
-                  )}
-                </Button>
               </div>
-            </>
-          ) : (
-            <div className="rounded-lg border border-border/60 bg-card/60 p-4">
-              {suggestion?.reason ? (
-                <p className="mb-3 text-sm text-muted-foreground">{suggestion.reason}</p>
-              ) : null}
-              <Button
-                type="button"
-                onClick={handleStartSkirmish}
-                disabled={startingSkirmish || dailyLimitReached}
-                className={`gradient-button h-11 w-full px-5 text-sm sm:w-auto sm:text-base ${
-                  !startingSkirmish && !dailyLimitReached && !prefersReducedMotion ? "pulse-glow-slow" : ""
-                }`}
-              >
-                {startingSkirmish ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Starting...
-                  </>
-                ) : (
-                  <>
-                    <PlayCircle className="mr-2 h-4 w-4" />
-                    Start Skirmish
-                  </>
-                )}
-              </Button>
             </div>
           )}
-      {embedded ? (
-        </div>
-      ) : (
-        <></><>{/* close CardContent+Card */}</><>
-        </CardContent>
-      </Card>
+
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
+            {typeof suggestion.matchup_score === "number" ? (
+              <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary">
+                Match Quality {Math.round(suggestion.matchup_score)}%
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary">
+                One-tap battle
+              </Badge>
+            )}
+            <Badge variant="outline" className="border-border/60 bg-background/50">
+              {dailySkirmishUsage.used}/{dailySkirmishUsage.limit} today
+            </Badge>
+            <Button
+              type="button"
+              onClick={handleStartSkirmish}
+              disabled={startingSkirmish || dailyLimitReached}
+              className={`gradient-button h-11 w-full px-5 text-sm sm:w-auto sm:text-base ${
+                !startingSkirmish && !dailyLimitReached && !prefersReducedMotion ? "pulse-glow-slow" : ""
+              }`}
+            >
+              {startingSkirmish ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Starting...
+                </>
+              ) : (
+                <>
+                  <PlayCircle className="mr-2 h-4 w-4" />
+                  Start Skirmish
+                </>
+              )}
+            </Button>
+          </div>
         </>
+      ) : (
+        <div className="rounded-lg border border-border/60 bg-card/60 p-4">
+          {suggestion?.reason ? (
+            <p className="mb-3 text-sm text-muted-foreground">{suggestion.reason}</p>
+          ) : null}
+          <Button
+            type="button"
+            onClick={handleStartSkirmish}
+            disabled={startingSkirmish || dailyLimitReached}
+            className={`gradient-button h-11 w-full px-5 text-sm sm:w-auto sm:text-base ${
+              !startingSkirmish && !dailyLimitReached && !prefersReducedMotion ? "pulse-glow-slow" : ""
+            }`}
+          >
+            {startingSkirmish ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Starting...
+              </>
+            ) : (
+              <>
+                <PlayCircle className="mr-2 h-4 w-4" />
+                Start Skirmish
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <>
+      {embedded ? (
+        <div className="px-4 pb-4 pt-2">{skirmishContent}</div>
+      ) : (
+        <Card className="glass-card border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-xl sm:text-2xl">Skirmishes</CardTitle>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => setIsInfoOpen(true)}
+                aria-label="What is Spider Skirmish?"
+              >
+                <Info className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>{skirmishContent}</CardContent>
+        </Card>
       )}
 
       <Dialog open={isInfoOpen} onOpenChange={setIsInfoOpen}>
