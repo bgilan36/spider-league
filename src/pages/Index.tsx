@@ -31,6 +31,8 @@ import NotificationsDropdown from "@/components/NotificationsDropdown";
 import OnlineUsersBar from "@/components/OnlineUsersBar";
 import NewSpiderSpotlight from "@/components/NewSpiderSpotlight";
 import OnboardingModal from "@/components/OnboardingModal";
+import FirstSkirmishBanner from "@/components/FirstSkirmishBanner";
+import { LoginStreakDisplay } from "@/components/LoginStreakDisplay";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -119,6 +121,8 @@ const Index = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showFirstSkirmishBanner, setShowFirstSkirmishBanner] = useState(false);
+  const combatHubRef = useRef<HTMLDivElement>(null);
   const rarityColors = {
     COMMON: "bg-gray-500",
     UNCOMMON: "bg-green-500",
@@ -201,17 +205,20 @@ const Index = () => {
     fetchTopUsers();
   }, [user, leaderboardType]);
 
-  // Check onboarding status for new users
+  // Check onboarding + first skirmish status
   useEffect(() => {
     if (!user) return;
     supabase
       .from("profile_settings")
-      .select("has_completed_onboarding")
+      .select("has_completed_onboarding, has_completed_first_skirmish")
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data }) => {
         if (!data || data.has_completed_onboarding === false) {
           setShowOnboarding(true);
+        }
+        if (!data || data.has_completed_first_skirmish === false) {
+          setShowFirstSkirmishBanner(true);
         }
       });
   }, [user]);
@@ -875,6 +882,11 @@ const Index = () => {
         </div>
       </header>
 
+      {/* Login Streak */}
+      <div className="container mx-auto px-3 sm:px-6 pt-3">
+        <LoginStreakDisplay />
+      </div>
+
       <Dialog open={tipModalOpen} onOpenChange={setTipModalOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -928,12 +940,30 @@ const Index = () => {
 
       <main className="container mx-auto px-3 sm:px-6 py-3 sm:py-6">
         {/* Above-the-fold focus: weekly roster, skirmish, battle snapshot */}
+        {showFirstSkirmishBanner && !showOnboarding && (
+          <div className="mb-4">
+            <FirstSkirmishBanner
+              onStartSkirmish={() => {
+                combatHubRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }}
+              onDismiss={() => {
+                setShowFirstSkirmishBanner(false);
+                if (user) {
+                  supabase
+                    .from("profile_settings")
+                    .upsert({ id: user.id, has_completed_first_skirmish: true }, { onConflict: "id" });
+                }
+              }}
+            />
+          </div>
+        )}
+
         <section className="mb-8 grid gap-6 xl:grid-cols-12">
           <div className="xl:col-span-7">
             <WeeklyEligibleSpiders onSpiderChange={fetchUserSpiders} />
           </div>
 
-          <div className="xl:col-span-5">
+          <div className="xl:col-span-5" ref={combatHubRef}>
             <CombatHub />
           </div>
         </section>
@@ -1336,7 +1366,13 @@ const Index = () => {
       {/* Hidden file input for quick upload */}
       <input ref={fileInputRef} type="file" accept="image/*,.heic,.heif" className="hidden" onChange={handleFileSelect} />
 
-      <OnboardingModal open={showOnboarding} onComplete={() => setShowOnboarding(false)} />
+      <OnboardingModal open={showOnboarding} onComplete={() => {
+        setShowOnboarding(false);
+        // Auto-scroll to combat hub after onboarding
+        setTimeout(() => {
+          combatHubRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
+      }} />
     </div>;
 };
 export default Index;
