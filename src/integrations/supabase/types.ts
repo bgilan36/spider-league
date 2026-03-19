@@ -887,6 +887,7 @@ export type Database = {
           id: string
           image_url: string
           is_approved: boolean | null
+          level: number
           nickname: string
           owner_id: string
           power_score: number
@@ -898,6 +899,7 @@ export type Database = {
           updated_at: string | null
           venom: number
           webcraft: number
+          xp: number
         }
         Insert: {
           created_at?: string | null
@@ -907,6 +909,7 @@ export type Database = {
           id?: string
           image_url: string
           is_approved?: boolean | null
+          level?: number
           nickname: string
           owner_id: string
           power_score?: number
@@ -918,6 +921,7 @@ export type Database = {
           updated_at?: string | null
           venom: number
           webcraft: number
+          xp?: number
         }
         Update: {
           created_at?: string | null
@@ -927,6 +931,7 @@ export type Database = {
           id?: string
           image_url?: string
           is_approved?: boolean | null
+          level?: number
           nickname?: string
           owner_id?: string
           power_score?: number
@@ -938,6 +943,7 @@ export type Database = {
           updated_at?: string | null
           venom?: number
           webcraft?: number
+          xp?: number
         }
         Relationships: [
           {
@@ -1223,6 +1229,11 @@ export type Database = {
         Args: { user_id_param: string }
         Returns: undefined
       }
+      award_spider_xp: {
+        Args: { p_seed?: string; p_spider_id: string; p_xp_amount: number }
+        Returns: Json
+      }
+      calculate_spider_level: { Args: { spider_xp: number }; Returns: number }
       can_user_upload_this_week: {
         Args: { user_id_param: string }
         Returns: boolean
@@ -1309,6 +1320,7 @@ export type Database = {
         Returns: undefined
       }
       update_weekly_rankings: { Args: never; Returns: undefined }
+      xp_for_next_level: { Args: { current_level: number }; Returns: number }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
