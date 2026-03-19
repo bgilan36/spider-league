@@ -201,6 +201,21 @@ const Index = () => {
     fetchTopUsers();
   }, [user, leaderboardType]);
 
+  // Check onboarding status for new users
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profile_settings")
+      .select("has_completed_onboarding")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!data || data.has_completed_onboarding === false) {
+          setShowOnboarding(true);
+        }
+      });
+  }, [user]);
+
   // Set up real-time subscription for battles
   useEffect(() => {
     const channel = supabase.channel('battles-updates').on('postgres_changes', {
