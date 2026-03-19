@@ -387,8 +387,9 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
                       <CircleHelp className="h-4 w-4" />
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-xs">
-                    These are your weekly battle-eligible spiders. Spider Skirmish can use any spider from your collection.
+                  <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
+                    <p className="font-semibold mb-1">Weekly Eligible Spiders</p>
+                    <p>Each week you get 3 roster slots: up to 2 newly uploaded spiders + 1 activated from your past collection. These are the spiders eligible for high-stakes <strong>Battles</strong> (where ownership transfers to the winner). <strong>Skirmishes</strong> can use any spider you own — no roster needed.</p>
                   </TooltipContent>
                 </Tooltip>
               </div>
