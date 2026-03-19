@@ -336,7 +336,7 @@ export const SpiderSkirmishCard = () => {
 
   const fetchDailySkirmishUsage = useCallback(async () => {
     if (!user) return null;
-    const { startIso, endIso } = getUtcDayBounds();
+    const { startIso, endIso } = getPacificDayBounds();
 
     const { count, error } = await supabase
       .from("spider_skirmishes")
