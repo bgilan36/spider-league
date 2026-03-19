@@ -205,17 +205,20 @@ const Index = () => {
     fetchTopUsers();
   }, [user, leaderboardType]);
 
-  // Check onboarding status for new users
+  // Check onboarding + first skirmish status
   useEffect(() => {
     if (!user) return;
     supabase
       .from("profile_settings")
-      .select("has_completed_onboarding")
+      .select("has_completed_onboarding, has_completed_first_skirmish")
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data }) => {
         if (!data || data.has_completed_onboarding === false) {
           setShowOnboarding(true);
+        }
+        if (!data || data.has_completed_first_skirmish === false) {
+          setShowFirstSkirmishBanner(true);
         }
       });
   }, [user]);
