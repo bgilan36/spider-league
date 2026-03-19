@@ -168,6 +168,25 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
                 <div className="text-sm text-muted-foreground">Total Power Score</div>
               </div>
             </div>
+
+            {/* XP & Level Progress */}
+            <div className="rounded-lg border bg-card p-3 space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium flex items-center gap-1">
+                  <Star className="h-4 w-4 text-yellow-500" />
+                  Level {spiderLevel}
+                </span>
+                <span className="text-muted-foreground">
+                  {spiderLevel >= 10 ? 'MAX' : `${spiderXp} / ${nextLevelXp} XP`}
+                </span>
+              </div>
+              <Progress value={xpProgress} className="h-2" />
+              {spiderLevel < 10 && (
+                <p className="text-xs text-muted-foreground text-center">
+                  {nextLevelXp - spiderXp} XP to next level
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Attributes */}
