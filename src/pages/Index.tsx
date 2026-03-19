@@ -54,6 +54,7 @@ interface Spider {
 }
 
 interface RecentBattleSpider {
+  id?: string;
   nickname: string;
   species: string;
   image_url: string;
@@ -339,13 +340,15 @@ const Index = () => {
       const recentBattleItems: RecentCombatItem[] = (battles || []).map((battle: any) => {
         const teamA = battle.team_a as any;
         const teamB = battle.team_b as any;
+        const spiderA = teamA?.spider ?? teamA?.[0] ?? null;
+        const spiderB = teamB?.spider ?? teamB?.[0] ?? null;
         return {
           id: `battle-${battle.id}`,
           created_at: battle.created_at,
           mode: 'battle' as const,
           winner: battle.winner,
-          spider_a: teamA?.spider ?? teamA?.[0] ?? null,
-          spider_b: teamB?.spider ?? teamB?.[0] ?? null,
+          spider_a: spiderA ? { id: spiderA.id, nickname: spiderA.nickname, species: spiderA.species, image_url: spiderA.image_url } : null,
+          spider_b: spiderB ? { id: spiderB.id, nickname: spiderB.nickname, species: spiderB.species, image_url: spiderB.image_url } : null,
           battle,
         };
       });
@@ -359,8 +362,8 @@ const Index = () => {
           created_at: skirmish.created_at,
           mode: 'skirmish' as const,
           winner: skirmish.winner_side ?? null,
-          spider_a: playerSpider ? { nickname: playerSpider.nickname, species: playerSpider.species, image_url: playerSpider.image_url } : null,
-          spider_b: opponentSpider ? { nickname: opponentSpider.nickname, species: opponentSpider.species, image_url: opponentSpider.image_url } : null,
+          spider_a: playerSpider ? { id: playerSpider.id, nickname: playerSpider.nickname, species: playerSpider.species, image_url: playerSpider.image_url } : null,
+          spider_b: opponentSpider ? { id: opponentSpider.id, nickname: opponentSpider.nickname, species: opponentSpider.species, image_url: opponentSpider.image_url } : null,
         };
       }).filter((item: RecentCombatItem) => !!item.spider_a && !!item.spider_b);
 
@@ -548,6 +551,20 @@ const Index = () => {
   const handleSpiderClick = (spider: Spider) => {
     setSelectedSpider(spider);
     setIsModalOpen(true);
+  };
+  const handleSpiderThumbnailClick = async (spiderId?: string) => {
+    if (!spiderId) return;
+    try {
+      const { data, error } = await supabase
+        .from('spiders')
+        .select('*')
+        .eq('id', spiderId)
+        .single();
+      if (error || !data) return;
+      handleSpiderClick(data as Spider);
+    } catch (e) {
+      console.error('Error fetching spider:', e);
+    }
   };
   const handleUserClick = (userId: string) => {
     setSelectedUserId(userId);
@@ -997,7 +1014,10 @@ const Index = () => {
                       <div className="flex items-center gap-3">
                         {/* Spider A */}
                         <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <div className="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
+                          <div
+                            className="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-primary/50 rounded-md transition-all"
+                            onClick={(e) => { e.stopPropagation(); handleSpiderThumbnailClick(spiderA?.id); }}
+                          >
                             <div className="w-full h-full rounded-md overflow-hidden">
                               <img src={spiderA?.image_url} alt={spiderA?.nickname} className="w-full h-full object-cover" />
                             </div>
@@ -1016,7 +1036,10 @@ const Index = () => {
                         
                         {/* Spider B */}
                         <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <div className="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
+                          <div
+                            className="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-primary/50 rounded-md transition-all"
+                            onClick={(e) => { e.stopPropagation(); handleSpiderThumbnailClick(spiderB?.id); }}
+                          >
                             <div className="w-full h-full rounded-md overflow-hidden">
                               <img src={spiderB?.image_url} alt={spiderB?.nickname} className="w-full h-full object-cover" />
                             </div>
@@ -1124,7 +1147,10 @@ const Index = () => {
                         </div>
                       </div>
                       
-                      <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden flex-shrink-0">
+                      <div
+                        className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+                        onClick={(e) => { e.stopPropagation(); handleSpiderClick(spider); }}
+                      >
                         <img src={spider.image_url} alt={spider.nickname} className="w-full h-full object-cover" />
                       </div>
                       
