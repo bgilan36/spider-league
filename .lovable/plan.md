@@ -1,34 +1,64 @@
+# Unified Combat Hub — Above-the-Fold Redesign
 
+## Current Layout (lines 913-924)
 
-# Combine Battles & Skirmishes into a Unified Combat Activity Feed
+```text
+┌────────────────────────────┬──────────────────────┐
+│  WeeklyEligibleSpiders     │  SpiderSkirmishCard   │
+│  (7 cols)                  │  ActiveChallengesPreview│
+│                            │  (5 cols)             │
+└────────────────────────────┴──────────────────────┘
+```
 
-## What Changes
+Skirmishes and Battles sit in a stacked column on the right, visually disconnected — they look like two unrelated widgets.
 
-The current "Recent Battles and Skirmishes" section already merges both into one chronological list, but the presentation treats them almost identically -- the only differentiator is a small badge in the corner. The goal is to make the section feel more cohesive while still making it obvious which entries are battles vs skirmishes.
+## Proposed Layout
 
-## Design
+Merge Skirmishes and Battles into a single **"Combat Hub"** card on the right side, using tabs to switch between them. The weekly roster stays on the left.
 
-**Unified section with tab filters** at the top:
-- Three filter pills: **All** | **Battles** | **Skirmishes**
-- Default to "All" (current merged behavior)
-- Clicking a filter shows only that type
+```text
+┌────────────────────────────┬──────────────────────┐
+│  WeeklyEligibleSpiders     │  ┌─ COMBAT HUB ────┐ │
+│  (7 cols)                  │  │ [Skirmish][Battle]│ │
+│                            │  │                   │ │
+│                            │  │ (tab content)     │ │
+│                            │  └───────────────────┘ │
+│                            │  (5 cols)              │
+└────────────────────────────┴────────────────────────┘
+```
 
-**Visual differentiation per card** (subtle but clear):
-- **Battles**: Left border accent in red/orange (`border-l-4 border-red-500`), small Sword icon + "Battle" label, and a subtle "Stakes: Spider Transfer" note below the date
-- **Skirmishes**: Left border accent in blue/cyan (`border-l-4 border-primary`), small Bug icon + "Skirmish" label, and "Stakes: XP Only" note below the date
-- Remove the current tooltip-wrapped Badge in favor of the inline icon+label -- simpler and always visible
+### Combat Hub Design
 
-**Shared layout** stays the same: Spider A thumbnail (with trophy if winner) -- VS -- Spider B thumbnail -- metadata column on the right.
+- **Single Card** with a shared header: "Combat" or "Combat Hub"
+- **Two tabs**: "Skirmish" and "Battles"
+  - **Skirmish tab**: Renders the existing `SpiderSkirmishCard` content (matchup, swap, start button, daily usage)
+  - **Battles tab**: Renders the existing `ActiveChallengesPreview` content (open challenges, your active challenges, cancel/accept flows)
+- Subtle visual cues on each tab label:
+  - Skirmish tab: `Bug` icon + blue accent
+  - Battles tab: `Sword` icon + red accent
+- Active tab gets a colored underline matching its accent color
+
+### Why This Works
+
+- Reduces vertical scroll by combining two stacked sections into one tabbed card
+- Makes it immediately clear that skirmishes and battles are two modes of the same "combat" system
+- Keeps each mode's full functionality intact — just wrapped in tabs instead of separate cards
+- Matches the unified "Combat Activity" feed pattern already established below the fold
 
 ## Technical Steps
 
-1. **Add filter state** to Index.tsx: `const [combatFilter, setCombatFilter] = useState<'all' | 'battle' | 'skirmish'>('all')`
-2. **Add filter pills** below the section header -- three small buttons in a `bg-muted rounded-lg p-1` container (matching the leaderboard toggle style)
-3. **Filter the displayed list**: `recentBattles.filter(c => combatFilter === 'all' || c.mode === combatFilter)`
-4. **Restyle each card**: Replace the tooltip badge with a left border color + small inline icon/label. Add a one-line "stakes" descriptor
-5. **Update section title** to "Combat Activity" (shorter, more unified feel)
+1. **Create `CombatHub.tsx**` — a new wrapper component containing:
+  - A `Tabs` component (from shadcn/ui) with two `TabsTrigger`s ("Skirmish" with Bug icon, "Battles" with Sword icon)
+  - `TabsContent` for skirmish renders `<SpiderSkirmishCard />`
+  - `TabsContent` for battles renders `<ActiveChallengesPreview />`
+  - Styled with a single Card wrapper and colored tab indicators
+2. **Update `src/pages/Index.tsx**` (lines 915-924):
+  - Replace the separate `<SpiderSkirmishCard />` and `<ActiveChallengesPreview />` with `<CombatHub />`
+  - Remove individual imports if no longer used elsewhere
 
 ## Files Modified
 
-- `src/pages/Index.tsx` -- filter state, filter UI, card restyling (all within the existing Recent Battles section, ~lines 930-1082)
+- `src/components/CombatHub.tsx` — new file
+- `src/pages/Index.tsx` — swap right-column content to `<CombatHub />`
 
+ below are modifications to the plan that I want. Make sure that when another user has an active challenge that you can accept, that it's pretty obvious in the combat hub ( not hidden behind the battle tab ). When there's no active challenges, prioritize the user's attention to the start skirmish so they have some kind of activity to do that's engaging every time that they log into the app. this will help with daily active user metrics 
