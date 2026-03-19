@@ -918,9 +918,8 @@ const Index = () => {
             <WeeklyEligibleSpiders onSpiderChange={fetchUserSpiders} />
           </div>
 
-          <div className="space-y-6 xl:col-span-5">
-            <SpiderSkirmishCard />
-            <ActiveChallengesPreview />
+          <div className="xl:col-span-5">
+            <CombatHub />
           </div>
         </section>
 
