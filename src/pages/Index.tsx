@@ -340,13 +340,15 @@ const Index = () => {
       const recentBattleItems: RecentCombatItem[] = (battles || []).map((battle: any) => {
         const teamA = battle.team_a as any;
         const teamB = battle.team_b as any;
+        const spiderA = teamA?.spider ?? teamA?.[0] ?? null;
+        const spiderB = teamB?.spider ?? teamB?.[0] ?? null;
         return {
           id: `battle-${battle.id}`,
           created_at: battle.created_at,
           mode: 'battle' as const,
           winner: battle.winner,
-          spider_a: teamA?.spider ?? teamA?.[0] ?? null,
-          spider_b: teamB?.spider ?? teamB?.[0] ?? null,
+          spider_a: spiderA ? { id: spiderA.id, nickname: spiderA.nickname, species: spiderA.species, image_url: spiderA.image_url } : null,
+          spider_b: spiderB ? { id: spiderB.id, nickname: spiderB.nickname, species: spiderB.species, image_url: spiderB.image_url } : null,
           battle,
         };
       });
@@ -360,8 +362,8 @@ const Index = () => {
           created_at: skirmish.created_at,
           mode: 'skirmish' as const,
           winner: skirmish.winner_side ?? null,
-          spider_a: playerSpider ? { nickname: playerSpider.nickname, species: playerSpider.species, image_url: playerSpider.image_url } : null,
-          spider_b: opponentSpider ? { nickname: opponentSpider.nickname, species: opponentSpider.species, image_url: opponentSpider.image_url } : null,
+          spider_a: playerSpider ? { id: playerSpider.id, nickname: playerSpider.nickname, species: playerSpider.species, image_url: playerSpider.image_url } : null,
+          spider_b: opponentSpider ? { id: opponentSpider.id, nickname: opponentSpider.nickname, species: opponentSpider.species, image_url: opponentSpider.image_url } : null,
         };
       }).filter((item: RecentCombatItem) => !!item.spider_a && !!item.spider_b);
 
