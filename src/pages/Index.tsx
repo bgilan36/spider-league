@@ -1021,9 +1021,9 @@ const Index = () => {
                         </div>
                         
                         {/* Result and Date */}
-                        <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-1">
+                        <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-1 max-w-[100px] sm:max-w-none">
                           {modeBadge}
-                          {resultBadge}
+                          <div className="max-w-full [&>span]:max-w-full [&>span]:truncate [&>span]:block">{resultBadge}</div>
                           <p className="text-xs text-muted-foreground whitespace-nowrap">
                             {format(new Date(combat.created_at), 'MMM d')}
                           </p>
