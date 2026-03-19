@@ -935,12 +935,30 @@ const Index = () => {
 
       <main className="container mx-auto px-3 sm:px-6 py-3 sm:py-6">
         {/* Above-the-fold focus: weekly roster, skirmish, battle snapshot */}
+        {showFirstSkirmishBanner && !showOnboarding && (
+          <div className="mb-4">
+            <FirstSkirmishBanner
+              onStartSkirmish={() => {
+                combatHubRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }}
+              onDismiss={() => {
+                setShowFirstSkirmishBanner(false);
+                if (user) {
+                  supabase
+                    .from("profile_settings")
+                    .upsert({ id: user.id, has_completed_first_skirmish: true }, { onConflict: "id" });
+                }
+              }}
+            />
+          </div>
+        )}
+
         <section className="mb-8 grid gap-6 xl:grid-cols-12">
           <div className="xl:col-span-7">
             <WeeklyEligibleSpiders onSpiderChange={fetchUserSpiders} />
           </div>
 
-          <div className="xl:col-span-5">
+          <div className="xl:col-span-5" ref={combatHubRef}>
             <CombatHub />
           </div>
         </section>
