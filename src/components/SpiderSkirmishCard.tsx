@@ -844,8 +844,14 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
               </Button>
             </div>
           )}
+      {embedded ? (
+        </div>
+      ) : (
+        <></><>{/* close CardContent+Card */}</><>
         </CardContent>
       </Card>
+        </>
+      )}
 
       <Dialog open={isInfoOpen} onOpenChange={setIsInfoOpen}>
         <DialogContent className="max-w-lg">
