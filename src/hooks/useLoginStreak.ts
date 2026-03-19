@@ -22,6 +22,11 @@ export const useLoginStreak = () => {
     return Math.min(days, 10);
   };
 
+  const calculateDailyXp = (streakDays: number): number => {
+    // 5 XP base + 1 XP per streak day, up to 15 XP max
+    return Math.min(5 + streakDays, 15);
+  };
+
   const checkAndUpdateStreak = useCallback(async () => {
     if (!user) {
       setStreak(null);
