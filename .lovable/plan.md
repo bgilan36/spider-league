@@ -1,33 +1,46 @@
 
 
-# Onboarding Flow for New Users
+# Plan: New User Excitement & DAU Boost
 
 ## Overview
 
-Carousel-style onboarding modal for first-time logins. Walks users through Spider League mechanics and gets them excited to jump in immediately with their starter spider.
+Two features to make new users' first minutes exciting and give returning users a reason to open the app daily.
 
-## Tracking Completion
+---
 
-Add `has_completed_onboarding boolean default false` to `profile_settings`. Set to `true` when user finishes or dismisses.
+## Feature 1: First Skirmish Guided Banner
 
-## Onboarding Slides (4 total)
+After onboarding closes, show a pulsing animated banner that guides the user into their very first skirmish. Disappears permanently once they complete one.
 
-1. **Welcome** -- Logo + "Welcome to Spider League!" Brief tagline about collecting and battling real spiders.
-2. **Upload & Collect** -- Camera icon. Find real spiders, photograph them, upload to generate fighters with unique stats and rarity.
-3. **Combat** -- Sword/Bug icons. Skirmishes = daily practice (XP, no risk). Battles = high stakes (winner takes the loser's spider).
-4. **Get Started** -- Show the user's starter spider with its image, name, and stats. "You already have your first spider -- jump into a Skirmish right now!" Big "Enter the Arena" CTA button that closes modal and marks onboarding complete.
+### Steps
+1. **Migration**: Add `has_completed_first_skirmish boolean default false` to `profile_settings`.
+2. **New `src/components/FirstSkirmishBanner.tsx`**: Animated, dismissible banner with a CTA that scrolls to Combat Hub. Only shown when flag is `false`.
+3. **Update `src/pages/Index.tsx`**: Query the flag, render banner above Combat Hub. After first skirmish completes, update the flag and hide the banner.
+4. **Update `src/components/OnboardingModal.tsx`**: "Enter the Arena" callback triggers auto-scroll to Combat Hub area.
 
-Dot indicators at bottom + Next/Back buttons. Dismissing via X also marks complete.
+### Files
+- Migration (alter `profile_settings`)
+- `src/components/FirstSkirmishBanner.tsx` — new
+- `src/pages/Index.tsx` — wire banner + flag query
+- `src/components/OnboardingModal.tsx` — minor callback update
 
-## Technical Steps
+---
 
-1. **Migration**: `ALTER TABLE profile_settings ADD COLUMN has_completed_onboarding boolean DEFAULT false`
-2. **Create `src/components/OnboardingModal.tsx`**: `Dialog` + `Carousel` (embla). Slide 4 fetches user's spider to display. On complete, updates `profile_settings`.
-3. **Wire into `src/pages/Index.tsx`**: After auth, query `has_completed_onboarding`. If `false`, show modal.
+## Feature 2: Welcome Back Daily Reward
 
-## Files
+When a returning user opens the app for the first time that day, show an animated welcome-back moment with bonus XP tied to their login streak.
 
-- Migration (add column)
-- `src/components/OnboardingModal.tsx` -- new
-- `src/pages/Index.tsx` -- onboarding check + render
+### Steps
+1. **Update `src/hooks/useLoginStreak.ts`**: Calculate and award `dailyBonusXp` (5 XP base + streak multiplier) when `isNewDay` is true.
+2. **Update `src/components/LoginStreakDisplay.tsx`**: When `justUpdated` is true, show a richer "Welcome Back!" animation highlighting XP earned and streak bonus.
+
+### Files
+- `src/hooks/useLoginStreak.ts` — add daily XP reward logic
+- `src/components/LoginStreakDisplay.tsx` — enhanced welcome-back display
+
+---
+
+## Implementation Order
+1. First Skirmish Banner (highest new-user impact)
+2. Welcome Back Daily Reward (DAU driver)
 
