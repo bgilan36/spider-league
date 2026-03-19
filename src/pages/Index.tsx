@@ -944,15 +944,15 @@ const Index = () => {
             if (!spiderA || !spiderB) return null;
             const isBattleItem = combat.mode === "battle" && !!combat.battle;
 
+            const winnerSide = combat.winner; // "A", "B", "TIE", or null
+            const isWinnerA = winnerSide === "A";
+            const isWinnerB = winnerSide === "B";
+
             let resultBadge;
             if (!combat.winner) {
               resultBadge = <Badge variant="secondary">In Progress</Badge>;
             } else if (combat.winner === "TIE") {
               resultBadge = <Badge variant="outline">Tie</Badge>;
-            } else if (combat.winner === "A") {
-              resultBadge = <Badge className="bg-green-500 text-white">{spiderA?.nickname} Won</Badge>;
-            } else {
-              resultBadge = <Badge className="bg-green-500 text-white">{spiderB?.nickname} Won</Badge>;
             }
 
             const modeBadge = (
