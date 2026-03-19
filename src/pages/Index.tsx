@@ -34,8 +34,6 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { useIsMobile } from "@/hooks/use-mobile";
 import WeeklyEligibleSpiders from "@/components/WeeklyEligibleSpiders";
-import { SpiderSkirmishCard } from "@/components/SpiderSkirmishCard";
-import ActiveChallengesPreview from "@/components/ActiveChallengesPreview";
 interface Spider {
   id: string;
   nickname: string;
