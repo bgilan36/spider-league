@@ -70,14 +70,34 @@ type SkirmishResult = {
 
 const DAILY_SKIRMISH_LIMIT = 3;
 
-const getUtcDayBounds = () => {
+const getPacificDayBounds = () => {
+  // Get current time in Pacific timezone
   const now = new Date();
-  const dayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  const nextDayStart = new Date(dayStart);
-  nextDayStart.setUTCDate(nextDayStart.getUTCDate() + 1);
+  const pacificFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+  const parts = pacificFormatter.formatToParts(now);
+  const year = parseInt(parts.find(p => p.type === 'year')!.value, 10);
+  const month = parseInt(parts.find(p => p.type === 'month')!.value, 10) - 1;
+  const day = parseInt(parts.find(p => p.type === 'day')!.value, 10);
+
+  // Build midnight PT as a Date by computing the PT offset
+  // Create a date at midnight UTC for that calendar date, then adjust
+  const midnightUtcGuess = new Date(Date.UTC(year, month, day, 12, 0, 0)); // noon UTC to safely format
+  const ptString = midnightUtcGuess.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' });
+  const ptNoon = new Date(ptString);
+  const offsetMs = midnightUtcGuess.getTime() - ptNoon.getTime();
+
+  // Midnight PT in UTC = calendar date midnight + offset
+  const dayStartUtc = new Date(Date.UTC(year, month, day) + offsetMs);
+  const nextDayStartUtc = new Date(dayStartUtc.getTime() + 24 * 60 * 60 * 1000);
+
   return {
-    startIso: dayStart.toISOString(),
-    endIso: nextDayStart.toISOString(),
+    startIso: dayStartUtc.toISOString(),
+    endIso: nextDayStartUtc.toISOString(),
   };
 };
 
