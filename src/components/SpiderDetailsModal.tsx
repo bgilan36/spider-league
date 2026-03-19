@@ -12,7 +12,7 @@ import PowerScoreArc from "@/components/PowerScoreArc";
 import BattleButton from "@/components/BattleButton";
 import ShareButton from "@/components/ShareButton";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, ChevronRight } from "lucide-react";
+import { Loader2, ChevronRight, Star } from "lucide-react";
 import { format } from "date-fns";
 import BattleDetailsModal from "@/components/BattleDetailsModal";
 
