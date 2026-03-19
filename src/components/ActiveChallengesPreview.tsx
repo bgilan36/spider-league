@@ -400,12 +400,12 @@ const ActiveChallengesPreview: React.FC = () => {
                       </div>
                       
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-semibold text-sm sm:text-base truncate">
+                        <div className="flex items-center gap-1 sm:gap-2 mb-1 flex-wrap">
+                          <h4 className="font-semibold text-sm sm:text-base truncate max-w-[120px] sm:max-w-none">
                             {challenge.challenger_spider?.nickname}
                           </h4>
-                          <Badge variant="secondary" className="text-xs">
-                            Your Challenge
+                          <Badge variant="secondary" className="text-[10px] sm:text-xs">
+                            Yours
                           </Badge>
                         </div>
                         <p className="text-xs sm:text-sm text-muted-foreground truncate">

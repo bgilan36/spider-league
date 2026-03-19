@@ -1255,7 +1255,7 @@ const Index = () => {
       </footer>
 
       {/* Spider Facts Ticker */}
-      <div className="relative overflow-hidden bg-primary/10 border-t py-2 sm:py-3">
+      <div className="relative overflow-hidden bg-primary/10 border-t py-2 sm:py-3 w-full max-w-full">
         <div className="flex animate-scroll whitespace-nowrap">
           {[...Array(2)].map((_, index) => <div key={index} className="flex items-center">
               <span className="text-xs sm:text-sm text-muted-foreground mx-6 sm:mx-8">🕷️ Spiders have been around for over 380 million years</span>
