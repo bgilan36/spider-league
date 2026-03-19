@@ -8,6 +8,7 @@ interface LoginStreak {
   lastLoginDate: string;
   streakPowerBonus: number;
   isNewDay: boolean;
+  dailyBonusXp: number;
 }
 
 export const useLoginStreak = () => {
