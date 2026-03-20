@@ -57,6 +57,22 @@ const statLabels: Record<string, string> = {
   webcraft: 'Webcraft',
 };
 
+const CountUp = ({ value, prefix = "", className = "" }: { value: number; prefix?: string; className?: string }) => {
+  const [display, setDisplay] = useState(0);
+  useEffect(() => {
+    const duration = 600;
+    const startTime = performance.now();
+    const step = (now: number) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(Math.round(eased * value));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, [value]);
+  return <span className={className}>{prefix}{display}</span>;
+};
+
 const BattleOutcomeReveal: React.FC<BattleOutcomeRevealProps> = ({
   winner,
   loser,
