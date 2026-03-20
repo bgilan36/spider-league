@@ -399,6 +399,7 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
       if (uploads.third_spider_id) newEligibleIds.add(uploads.third_spider_id);
     }
     setEligibleSpiderIds(newEligibleIds);
+    eligibleSpiderIdsRef.current = newEligibleIds;
 
     // Sort eligible spiders to the front so the default pick is an eligible spider
     const sortedSpiders = [...mySpiders].sort((a, b) => {
@@ -409,6 +410,7 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
 
     const playerSpiders = sortedSpiders.map((spider) => mapSpiderToSkirmish(spider));
     setPlayerSpiderOptions(playerSpiders);
+    playerSpiderOptionsRef.current = playerSpiders;
     setHasMoreSpiders(playerSpiders.length > 8);
     setSwapDisplayCount(8);
 
