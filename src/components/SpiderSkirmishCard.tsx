@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSpring, animated } from "framer-motion";
+
 
 const CountUp = ({ value, prefix = "", className = "" }: { value: number; prefix?: string; className?: string }) => {
   const [display, setDisplay] = useState(0);
