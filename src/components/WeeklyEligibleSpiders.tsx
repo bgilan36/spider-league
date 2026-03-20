@@ -47,7 +47,7 @@ const rarityColors: Record<string, string> = {
   LEGENDARY: 'bg-amber-500',
 };
 
-const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderChange }) => {
+const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderChange, newSpiderId }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [activatedSpider, setActivatedSpider] = useState<Spider | null>(null);
