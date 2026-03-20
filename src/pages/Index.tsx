@@ -84,6 +84,8 @@ const Index = () => {
     toast
   } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  const newSpiderId = (location.state as any)?.newSpiderId as string | undefined;
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
