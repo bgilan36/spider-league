@@ -1,5 +1,5 @@
 import { Helmet } from "react-helmet-async";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -84,6 +84,8 @@ const Index = () => {
     toast
   } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  const newSpiderId = (location.state as any)?.newSpiderId as string | undefined;
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -930,7 +932,7 @@ const Index = () => {
         {/* Above-the-fold focus: weekly roster, skirmish, battle snapshot */}
         <section className="mb-8 grid gap-6 xl:grid-cols-12">
           <div className="xl:col-span-7">
-            <WeeklyEligibleSpiders onSpiderChange={fetchUserSpiders} />
+            <WeeklyEligibleSpiders onSpiderChange={fetchUserSpiders} newSpiderId={newSpiderId} />
           </div>
 
           <div className="xl:col-span-5">

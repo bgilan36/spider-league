@@ -36,6 +36,7 @@ interface Spider {
 
 interface WeeklyEligibleSpidersProps {
   onSpiderChange?: () => void;
+  newSpiderId?: string;
 }
 
 const rarityColors: Record<string, string> = {
@@ -46,7 +47,7 @@ const rarityColors: Record<string, string> = {
   LEGENDARY: 'bg-amber-500',
 };
 
-const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderChange }) => {
+const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderChange, newSpiderId }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [activatedSpider, setActivatedSpider] = useState<Spider | null>(null);
@@ -638,6 +639,11 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
                   >
                     {spider.source === 'activated' ? 'Activated' : 'Uploaded'}
                   </Badge>
+                  {newSpiderId && spider.id === newSpiderId && (
+                    <Badge className="absolute bottom-2 left-2 bg-primary text-primary-foreground text-[10px] animate-pulse">
+                      New!
+                    </Badge>
+                  )}
                 </div>
                 <div className="p-1.5 sm:p-3 text-center">
                   <p className="font-bold text-xs sm:text-sm truncate">{spider.nickname}</p>

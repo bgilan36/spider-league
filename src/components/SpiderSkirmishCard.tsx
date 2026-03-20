@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -328,6 +328,8 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
   const [swapDisplayCount, setSwapDisplayCount] = useState(8);
   const [hasMoreSpiders, setHasMoreSpiders] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const playerSpiderOptionsRef = useRef<SkirmishSpider[]>([]);
+  const eligibleSpiderIdsRef = useRef<Set<string>>(new Set());
   const [dailySkirmishUsage, setDailySkirmishUsage] = useState<{ used: number; limit: number }>({
     used: 0,
     limit: DAILY_SKIRMISH_LIMIT,
@@ -397,6 +399,7 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
       if (uploads.third_spider_id) newEligibleIds.add(uploads.third_spider_id);
     }
     setEligibleSpiderIds(newEligibleIds);
+    eligibleSpiderIdsRef.current = newEligibleIds;
 
     // Sort eligible spiders to the front so the default pick is an eligible spider
     const sortedSpiders = [...mySpiders].sort((a, b) => {
@@ -407,6 +410,7 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
 
     const playerSpiders = sortedSpiders.map((spider) => mapSpiderToSkirmish(spider));
     setPlayerSpiderOptions(playerSpiders);
+    playerSpiderOptionsRef.current = playerSpiders;
     setHasMoreSpiders(playerSpiders.length > 8);
     setSwapDisplayCount(8);
 
@@ -498,8 +502,10 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
       const serverSuggestion = !error && data ? (data as SkirmishSuggestion) : null;
       if (serverSuggestion?.available && serverSuggestion.player_spider && serverSuggestion.opponent_spider) {
         // Override the server's player spider with an eligible one if available
-        if (playerSpiderOptions.length > 0 && eligibleSpiderIds.size > 0) {
-          const eligibleSpider = playerSpiderOptions.find((s) => eligibleSpiderIds.has(s.id));
+        const curOptions = playerSpiderOptionsRef.current;
+        const curEligible = eligibleSpiderIdsRef.current;
+        if (curOptions.length > 0 && curEligible.size > 0) {
+          const eligibleSpider = curOptions.find((s) => curEligible.has(s.id));
           if (eligibleSpider && eligibleSpider.id !== serverSuggestion.player_spider.id) {
             serverSuggestion.player_spider = eligibleSpider;
           }
@@ -529,7 +535,7 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
     } finally {
       setSuggestionLoading(false);
     }
-  }, [user, buildClientSideSuggestion, fetchDailySkirmishUsage, playerSpiderOptions, eligibleSpiderIds]);
+  }, [user, buildClientSideSuggestion, fetchDailySkirmishUsage]);
 
   useEffect(() => {
     fetchSuggestion();

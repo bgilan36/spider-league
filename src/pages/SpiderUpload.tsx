@@ -538,7 +538,7 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
       // Check for new badges after successful upload
       await checkAndAwardBadges(authUser.id);
       
-      navigate("/collection");
+      navigate("/", { state: { newSpiderId: insertData.id } });
     } catch (error: any) {
       console.error("Upload error:", error);
       toast({ title: "Upload failed", description: error.message, variant: "destructive" });
