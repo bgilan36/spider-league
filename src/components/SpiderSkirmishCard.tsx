@@ -324,6 +324,10 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [playerSpiderOptions, setPlayerSpiderOptions] = useState<SkirmishSpider[]>([]);
   const [opponentSpiderPool, setOpponentSpiderPool] = useState<SkirmishSpider[]>([]);
+  const [eligibleSpiderIds, setEligibleSpiderIds] = useState<Set<string>>(new Set());
+  const [swapDisplayCount, setSwapDisplayCount] = useState(8);
+  const [hasMoreSpiders, setHasMoreSpiders] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [dailySkirmishUsage, setDailySkirmishUsage] = useState<{ used: number; limit: number }>({
     used: 0,
     limit: DAILY_SKIRMISH_LIMIT,
