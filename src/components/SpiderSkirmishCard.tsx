@@ -1020,28 +1020,88 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
                 )}
               </div>
 
-              {replayState.isComplete && (
-                <Card className="border-primary/30 bg-primary/5">
-                  <CardContent className="space-y-3 p-4">
-                    <div className="flex items-center gap-2">
-                      <Trophy className="h-5 w-5 text-primary" />
-                      <p className="font-semibold">
-                        Winner:{" "}
-                        {result.winner_spider_id === result.player_spider.id
-                          ? result.player_spider.nickname
-                          : result.opponent_spider.nickname}
-                      </p>
-                    </div>
+              {replayState.isComplete && (() => {
+                const winnerSpider = result.winner_spider_id === result.player_spider.id
+                  ? result.player_spider
+                  : result.opponent_spider;
+                const statKeys = ['hit_points', 'damage', 'speed', 'defense', 'venom', 'webcraft'] as const;
+                const statLabels: Record<string, string> = {
+                  hit_points: 'HP', damage: 'DMG', speed: 'SPD',
+                  defense: 'DEF', venom: 'VNM', webcraft: 'WEB',
+                };
+                const improvements = result.rewards?.stat_improvements ?? {};
 
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">
-                        XP reward: {result.winner_side === "A"
-                          ? `+${result.rewards?.xp_gain ?? 0} XP awarded to you.`
-                          : `${winnerTrainerName} earned the XP from this win.`}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Spider attribute reward: {winnerSpiderName} receives the stat improvements for winning.
-                      </p>
+                return (
+                  <Card className="border-primary/30 bg-primary/5">
+                    <CardContent className="space-y-4 p-4">
+                      {/* Winner header with photo */}
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={winnerSpider.image_url}
+                          alt={winnerSpider.nickname}
+                          className="h-16 w-16 rounded-lg object-cover ring-2 ring-primary/40"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <Trophy className="h-5 w-5 text-primary shrink-0" />
+                            <p className="font-semibold truncate">Winner: {winnerSpider.nickname}</p>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {result.winner_side === "A"
+                              ? `+${result.rewards?.xp_gain ?? 0} XP awarded to you`
+                              : `${winnerTrainerName} earned the XP`}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Stat bar chart */}
+                      <div className="space-y-1.5">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Battle Stats {Object.keys(improvements).length > 0 ? '& Improvements' : ''}
+                        </p>
+                        {statKeys.map((stat) => {
+                          const improvement = (improvements as Record<string, number>)[stat] ?? 0;
+                          const currentVal = (winnerSpider as any)[stat] ?? 0;
+                          const baseVal = currentVal - improvement;
+                          const maxStat = 100;
+
+                          return (
+                            <div key={stat} className="flex items-center gap-2">
+                              <span className="w-8 text-[10px] font-semibold text-muted-foreground shrink-0">
+                                {statLabels[stat]}
+                              </span>
+                              <div className="relative flex-1 h-4 rounded-full bg-muted/40 overflow-hidden">
+                                {/* Base stat bar */}
+                                <div
+                                  className="absolute inset-y-0 left-0 rounded-full bg-primary/50 transition-all duration-500"
+                                  style={{ width: `${(baseVal / maxStat) * 100}%` }}
+                                />
+                                {/* Improvement bar */}
+                                {improvement > 0 && (
+                                  <div
+                                    className="absolute inset-y-0 rounded-full bg-emerald-500 transition-all duration-700"
+                                    style={{
+                                      left: `${(baseVal / maxStat) * 100}%`,
+                                      width: `${(improvement / maxStat) * 100}%`,
+                                    }}
+                                  />
+                                )}
+                              </div>
+                              <span className="w-7 text-right text-xs tabular-nums font-medium">
+                                {currentVal}
+                              </span>
+                              {improvement > 0 && (
+                                <span className="text-[10px] font-bold text-emerald-500 w-6">
+                                  +{improvement}
+                                </span>
+                              )}
+                              {improvement === 0 && <span className="w-6" />}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* XP & level badges */}
                       <div className="flex flex-wrap gap-2">
                         {result.winner_side === "A" ? (
                           <Badge>+{result.rewards?.xp_gain ?? 0} XP to you</Badge>
@@ -1049,24 +1109,17 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
                           <Badge variant="outline">XP to {winnerTrainerName}</Badge>
                         )}
                         {result.rewards?.new_level ? <Badge variant="outline">Your Level {result.rewards.new_level}</Badge> : null}
-                        {rewardStatEntries.length > 0 ? rewardStatEntries.map(([stat, value]) => (
-                          <Badge key={stat} variant="secondary">
-                            {winnerSpiderName}: {formatStatLabel(stat)} +{value}
-                          </Badge>
-                        )) : (
-                          <Badge variant="secondary">{winnerSpiderName}: +1 stat boost</Badge>
-                        )}
                       </div>
-                    </div>
 
-                    <div className="pt-1">
-                      <Button type="button" onClick={() => closeModal(false)}>
-                        Done
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+                      <div className="pt-1">
+                        <Button type="button" onClick={() => closeModal(false)}>
+                          Done
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })()}
             </div>
           )}
         </DialogContent>
