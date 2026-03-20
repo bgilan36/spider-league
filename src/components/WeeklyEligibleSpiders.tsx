@@ -36,6 +36,7 @@ interface Spider {
 
 interface WeeklyEligibleSpidersProps {
   onSpiderChange?: () => void;
+  newSpiderId?: string;
 }
 
 const rarityColors: Record<string, string> = {
