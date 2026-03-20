@@ -369,8 +369,7 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
         .select("id, owner_id, nickname, species, image_url, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved, created_at, updated_at")
         .eq("owner_id", user.id)
         .order("updated_at", { ascending: false, nullsFirst: false })
-        .order("created_at", { ascending: false, nullsFirst: false })
-        .limit(20),
+        .order("created_at", { ascending: false, nullsFirst: false }),
       supabase
         .from("weekly_roster")
         .select("spider_id")
@@ -389,24 +388,27 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
     }
 
     // Build set of eligible spider IDs (roster + weekly uploads)
-    const eligibleIds = new Set<string>();
-    (rosterResult.data ?? []).forEach((r) => eligibleIds.add(r.spider_id));
+    const newEligibleIds = new Set<string>();
+    (rosterResult.data ?? []).forEach((r) => newEligibleIds.add(r.spider_id));
     const uploads = weeklyUploadsResult.data;
     if (uploads) {
-      if (uploads.first_spider_id) eligibleIds.add(uploads.first_spider_id);
-      if (uploads.second_spider_id) eligibleIds.add(uploads.second_spider_id);
-      if (uploads.third_spider_id) eligibleIds.add(uploads.third_spider_id);
+      if (uploads.first_spider_id) newEligibleIds.add(uploads.first_spider_id);
+      if (uploads.second_spider_id) newEligibleIds.add(uploads.second_spider_id);
+      if (uploads.third_spider_id) newEligibleIds.add(uploads.third_spider_id);
     }
+    setEligibleSpiderIds(newEligibleIds);
 
     // Sort eligible spiders to the front so the default pick is an eligible spider
     const sortedSpiders = [...mySpiders].sort((a, b) => {
-      const aEligible = eligibleIds.has(a.id) ? 0 : 1;
-      const bEligible = eligibleIds.has(b.id) ? 0 : 1;
+      const aEligible = newEligibleIds.has(a.id) ? 0 : 1;
+      const bEligible = newEligibleIds.has(b.id) ? 0 : 1;
       return aEligible - bEligible;
     });
 
     const playerSpiders = sortedSpiders.map((spider) => mapSpiderToSkirmish(spider));
     setPlayerSpiderOptions(playerSpiders);
+    setHasMoreSpiders(playerSpiders.length > 8);
+    setSwapDisplayCount(8);
 
     const { data: opponentSpiders, error: opponentError } = await supabase
       .from("spiders")
