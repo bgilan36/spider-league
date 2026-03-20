@@ -324,6 +324,10 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [playerSpiderOptions, setPlayerSpiderOptions] = useState<SkirmishSpider[]>([]);
   const [opponentSpiderPool, setOpponentSpiderPool] = useState<SkirmishSpider[]>([]);
+  const [eligibleSpiderIds, setEligibleSpiderIds] = useState<Set<string>>(new Set());
+  const [swapDisplayCount, setSwapDisplayCount] = useState(8);
+  const [hasMoreSpiders, setHasMoreSpiders] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [dailySkirmishUsage, setDailySkirmishUsage] = useState<{ used: number; limit: number }>({
     used: 0,
     limit: DAILY_SKIRMISH_LIMIT,
@@ -365,8 +369,7 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
         .select("id, owner_id, nickname, species, image_url, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved, created_at, updated_at")
         .eq("owner_id", user.id)
         .order("updated_at", { ascending: false, nullsFirst: false })
-        .order("created_at", { ascending: false, nullsFirst: false })
-        .limit(20),
+        .order("created_at", { ascending: false, nullsFirst: false }),
       supabase
         .from("weekly_roster")
         .select("spider_id")
@@ -385,24 +388,27 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
     }
 
     // Build set of eligible spider IDs (roster + weekly uploads)
-    const eligibleIds = new Set<string>();
-    (rosterResult.data ?? []).forEach((r) => eligibleIds.add(r.spider_id));
+    const newEligibleIds = new Set<string>();
+    (rosterResult.data ?? []).forEach((r) => newEligibleIds.add(r.spider_id));
     const uploads = weeklyUploadsResult.data;
     if (uploads) {
-      if (uploads.first_spider_id) eligibleIds.add(uploads.first_spider_id);
-      if (uploads.second_spider_id) eligibleIds.add(uploads.second_spider_id);
-      if (uploads.third_spider_id) eligibleIds.add(uploads.third_spider_id);
+      if (uploads.first_spider_id) newEligibleIds.add(uploads.first_spider_id);
+      if (uploads.second_spider_id) newEligibleIds.add(uploads.second_spider_id);
+      if (uploads.third_spider_id) newEligibleIds.add(uploads.third_spider_id);
     }
+    setEligibleSpiderIds(newEligibleIds);
 
     // Sort eligible spiders to the front so the default pick is an eligible spider
     const sortedSpiders = [...mySpiders].sort((a, b) => {
-      const aEligible = eligibleIds.has(a.id) ? 0 : 1;
-      const bEligible = eligibleIds.has(b.id) ? 0 : 1;
+      const aEligible = newEligibleIds.has(a.id) ? 0 : 1;
+      const bEligible = newEligibleIds.has(b.id) ? 0 : 1;
       return aEligible - bEligible;
     });
 
     const playerSpiders = sortedSpiders.map((spider) => mapSpiderToSkirmish(spider));
     setPlayerSpiderOptions(playerSpiders);
+    setHasMoreSpiders(playerSpiders.length > 8);
+    setSwapDisplayCount(8);
 
     const { data: opponentSpiders, error: opponentError } = await supabase
       .from("spiders")
@@ -491,6 +497,13 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
       const { data, error } = await supabase.rpc("get_spider_skirmish_suggestion");
       const serverSuggestion = !error && data ? (data as SkirmishSuggestion) : null;
       if (serverSuggestion?.available && serverSuggestion.player_spider && serverSuggestion.opponent_spider) {
+        // Override the server's player spider with an eligible one if available
+        if (playerSpiderOptions.length > 0 && eligibleSpiderIds.size > 0) {
+          const eligibleSpider = playerSpiderOptions.find((s) => eligibleSpiderIds.has(s.id));
+          if (eligibleSpider && eligibleSpider.id !== serverSuggestion.player_spider.id) {
+            serverSuggestion.player_spider = eligibleSpider;
+          }
+        }
         setSuggestion(serverSuggestion);
         await localSuggestionPromise;
         return;
@@ -516,7 +529,7 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
     } finally {
       setSuggestionLoading(false);
     }
-  }, [user, buildClientSideSuggestion, fetchDailySkirmishUsage]);
+  }, [user, buildClientSideSuggestion, fetchDailySkirmishUsage, playerSpiderOptions, eligibleSpiderIds]);
 
   useEffect(() => {
     fetchSuggestion();
@@ -772,26 +785,44 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
           {playerSpiderOptions.length > 1 && (
             <div
               className={`overflow-hidden transition-all duration-300 ease-out ${
-                isSwapPanelOpen ? "max-h-52 opacity-100" : "max-h-0 opacity-0"
+                isSwapPanelOpen ? "max-h-[400px] opacity-100" : "max-h-0 opacity-0"
               }`}
             >
               <div className="rounded-lg border border-border/60 bg-card/40 p-3">
                 <p className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">Swap Your Spider</p>
                 <div className="flex flex-wrap gap-2">
-                  {playerSpiderOptions.slice(0, 8).map((spider) => (
+                  {playerSpiderOptions.slice(0, swapDisplayCount).map((spider) => (
                     <Button
                       key={spider.id}
                       type="button"
                       size="sm"
                       variant={currentPlayerSpiderId === spider.id ? "default" : "outline"}
-                      className="h-8 gap-2 px-2 text-xs"
+                      className={`h-8 gap-2 px-2 text-xs ${
+                        eligibleSpiderIds.has(spider.id) && currentPlayerSpiderId !== spider.id
+                          ? "border-primary/50 bg-primary/5"
+                          : ""
+                      }`}
                       onClick={() => handleSelectPlayerSpider(spider.id)}
                     >
                       <img src={spider.image_url} alt={spider.nickname} className="h-4 w-4 rounded object-cover" />
                       <span className="max-w-[110px] truncate">{spider.nickname}</span>
+                      {eligibleSpiderIds.has(spider.id) && (
+                        <span className="ml-0.5 h-1.5 w-1.5 rounded-full bg-primary" title="Eligible this week" />
+                      )}
                     </Button>
                   ))}
                 </div>
+                {playerSpiderOptions.length > swapDisplayCount && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="mt-2 h-7 w-full text-xs text-muted-foreground"
+                    onClick={() => setSwapDisplayCount((c) => c + 8)}
+                  >
+                    Load More ({playerSpiderOptions.length - swapDisplayCount} remaining)
+                  </Button>
+                )}
               </div>
             </div>
           )}
