@@ -535,7 +535,7 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
     } finally {
       setSuggestionLoading(false);
     }
-  }, [user, buildClientSideSuggestion, fetchDailySkirmishUsage, playerSpiderOptions, eligibleSpiderIds]);
+  }, [user, buildClientSideSuggestion, fetchDailySkirmishUsage]);
 
   useEffect(() => {
     fetchSuggestion();
