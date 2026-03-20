@@ -932,7 +932,7 @@ const Index = () => {
         {/* Above-the-fold focus: weekly roster, skirmish, battle snapshot */}
         <section className="mb-8 grid gap-6 xl:grid-cols-12">
           <div className="xl:col-span-7">
-            <WeeklyEligibleSpiders onSpiderChange={fetchUserSpiders} />
+            <WeeklyEligibleSpiders onSpiderChange={fetchUserSpiders} newSpiderId={newSpiderId} />
           </div>
 
           <div className="xl:col-span-5">
