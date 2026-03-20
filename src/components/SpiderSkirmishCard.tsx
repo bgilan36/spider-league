@@ -785,26 +785,44 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
           {playerSpiderOptions.length > 1 && (
             <div
               className={`overflow-hidden transition-all duration-300 ease-out ${
-                isSwapPanelOpen ? "max-h-52 opacity-100" : "max-h-0 opacity-0"
+                isSwapPanelOpen ? "max-h-[400px] opacity-100" : "max-h-0 opacity-0"
               }`}
             >
               <div className="rounded-lg border border-border/60 bg-card/40 p-3">
                 <p className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">Swap Your Spider</p>
                 <div className="flex flex-wrap gap-2">
-                  {playerSpiderOptions.slice(0, 8).map((spider) => (
+                  {playerSpiderOptions.slice(0, swapDisplayCount).map((spider) => (
                     <Button
                       key={spider.id}
                       type="button"
                       size="sm"
                       variant={currentPlayerSpiderId === spider.id ? "default" : "outline"}
-                      className="h-8 gap-2 px-2 text-xs"
+                      className={`h-8 gap-2 px-2 text-xs ${
+                        eligibleSpiderIds.has(spider.id) && currentPlayerSpiderId !== spider.id
+                          ? "border-primary/50 bg-primary/5"
+                          : ""
+                      }`}
                       onClick={() => handleSelectPlayerSpider(spider.id)}
                     >
                       <img src={spider.image_url} alt={spider.nickname} className="h-4 w-4 rounded object-cover" />
                       <span className="max-w-[110px] truncate">{spider.nickname}</span>
+                      {eligibleSpiderIds.has(spider.id) && (
+                        <span className="ml-0.5 h-1.5 w-1.5 rounded-full bg-primary" title="Eligible this week" />
+                      )}
                     </Button>
                   ))}
                 </div>
+                {playerSpiderOptions.length > swapDisplayCount && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="mt-2 h-7 w-full text-xs text-muted-foreground"
+                    onClick={() => setSwapDisplayCount((c) => c + 8)}
+                  >
+                    Load More ({playerSpiderOptions.length - swapDisplayCount} remaining)
+                  </Button>
+                )}
               </div>
             </div>
           )}
