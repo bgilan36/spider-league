@@ -343,9 +343,9 @@ const BattleOutcomeReveal: React.FC<BattleOutcomeRevealProps> = ({
                               )}
                             </div>
                             <div className="w-16 shrink-0 text-right">
-                              <span className="text-xs font-mono font-medium">{currentVal}</span>
+                              <CountUp value={currentVal} className="text-xs font-mono font-medium" />
                               {improvement > 0 && (
-                                <span className="text-xs font-bold text-emerald-500 ml-1">+{improvement}</span>
+                                <CountUp value={improvement} prefix=" +" className="text-xs font-bold text-emerald-500 ml-1" />
                               )}
                             </div>
                           </motion.div>
