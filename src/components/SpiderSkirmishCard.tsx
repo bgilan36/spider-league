@@ -328,6 +328,8 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
   const [swapDisplayCount, setSwapDisplayCount] = useState(8);
   const [hasMoreSpiders, setHasMoreSpiders] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const playerSpiderOptionsRef = useRef<SkirmishSpider[]>([]);
+  const eligibleSpiderIdsRef = useRef<Set<string>>(new Set());
   const [dailySkirmishUsage, setDailySkirmishUsage] = useState<{ used: number; limit: number }>({
     used: 0,
     limit: DAILY_SKIRMISH_LIMIT,
