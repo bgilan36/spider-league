@@ -497,6 +497,13 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
       const { data, error } = await supabase.rpc("get_spider_skirmish_suggestion");
       const serverSuggestion = !error && data ? (data as SkirmishSuggestion) : null;
       if (serverSuggestion?.available && serverSuggestion.player_spider && serverSuggestion.opponent_spider) {
+        // Override the server's player spider with an eligible one if available
+        if (playerSpiderOptions.length > 0 && eligibleSpiderIds.size > 0) {
+          const eligibleSpider = playerSpiderOptions.find((s) => eligibleSpiderIds.has(s.id));
+          if (eligibleSpider && eligibleSpider.id !== serverSuggestion.player_spider.id) {
+            serverSuggestion.player_spider = eligibleSpider;
+          }
+        }
         setSuggestion(serverSuggestion);
         await localSuggestionPromise;
         return;
@@ -522,7 +529,7 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
     } finally {
       setSuggestionLoading(false);
     }
-  }, [user, buildClientSideSuggestion, fetchDailySkirmishUsage]);
+  }, [user, buildClientSideSuggestion, fetchDailySkirmishUsage, playerSpiderOptions, eligibleSpiderIds]);
 
   useEffect(() => {
     fetchSuggestion();
