@@ -1,4 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+
+const CountUp = ({ value, prefix = "", className = "" }: { value: number; prefix?: string; className?: string }) => {
+  const [display, setDisplay] = useState(0);
+  useEffect(() => {
+    let start = 0;
+    const duration = 600;
+    const startTime = performance.now();
+    const step = (now: number) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(Math.round(eased * value));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, [value]);
+  return <span className={className}>{prefix}{display}</span>;
+};
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -1087,13 +1105,9 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
                                   />
                                 )}
                               </div>
-                              <span className="w-7 text-right text-xs tabular-nums font-medium">
-                                {currentVal}
-                              </span>
+                              <CountUp value={currentVal} className="w-7 text-right text-xs tabular-nums font-medium" />
                               {improvement > 0 && (
-                                <span className="text-[10px] font-bold text-emerald-500 w-6">
-                                  +{improvement}
-                                </span>
+                                <CountUp value={improvement} prefix="+" className="text-[10px] font-bold text-emerald-500 w-6" />
                               )}
                               {improvement === 0 && <span className="w-6" />}
                             </div>

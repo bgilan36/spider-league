@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -55,6 +55,22 @@ const statLabels: Record<string, string> = {
   defense: 'Defense',
   venom: 'Venom',
   webcraft: 'Webcraft',
+};
+
+const CountUp = ({ value, prefix = "", className = "" }: { value: number; prefix?: string; className?: string }) => {
+  const [display, setDisplay] = useState(0);
+  useEffect(() => {
+    const duration = 600;
+    const startTime = performance.now();
+    const step = (now: number) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(Math.round(eased * value));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, [value]);
+  return <span className={className}>{prefix}{display}</span>;
 };
 
 const BattleOutcomeReveal: React.FC<BattleOutcomeRevealProps> = ({
@@ -327,9 +343,9 @@ const BattleOutcomeReveal: React.FC<BattleOutcomeRevealProps> = ({
                               )}
                             </div>
                             <div className="w-16 shrink-0 text-right">
-                              <span className="text-xs font-mono font-medium">{currentVal}</span>
+                              <CountUp value={currentVal} className="text-xs font-mono font-medium" />
                               {improvement > 0 && (
-                                <span className="text-xs font-bold text-emerald-500 ml-1">+{improvement}</span>
+                                <CountUp value={improvement} prefix=" +" className="text-xs font-bold text-emerald-500 ml-1" />
                               )}
                             </div>
                           </motion.div>
