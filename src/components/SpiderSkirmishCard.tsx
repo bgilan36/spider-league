@@ -1087,13 +1087,9 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
                                   />
                                 )}
                               </div>
-                              <span className="w-7 text-right text-xs tabular-nums font-medium">
-                                {currentVal}
-                              </span>
+                              <CountUp value={currentVal} className="w-7 text-right text-xs tabular-nums font-medium" />
                               {improvement > 0 && (
-                                <span className="text-[10px] font-bold text-emerald-500 w-6">
-                                  +{improvement}
-                                </span>
+                                <CountUp value={improvement} prefix="+" className="text-[10px] font-bold text-emerald-500 w-6" />
                               )}
                               {improvement === 0 && <span className="w-6" />}
                             </div>
