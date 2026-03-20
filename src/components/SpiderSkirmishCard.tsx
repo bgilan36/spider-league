@@ -502,8 +502,10 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
       const serverSuggestion = !error && data ? (data as SkirmishSuggestion) : null;
       if (serverSuggestion?.available && serverSuggestion.player_spider && serverSuggestion.opponent_spider) {
         // Override the server's player spider with an eligible one if available
-        if (playerSpiderOptions.length > 0 && eligibleSpiderIds.size > 0) {
-          const eligibleSpider = playerSpiderOptions.find((s) => eligibleSpiderIds.has(s.id));
+        const curOptions = playerSpiderOptionsRef.current;
+        const curEligible = eligibleSpiderIdsRef.current;
+        if (curOptions.length > 0 && curEligible.size > 0) {
+          const eligibleSpider = curOptions.find((s) => curEligible.has(s.id));
           if (eligibleSpider && eligibleSpider.id !== serverSuggestion.player_spider.id) {
             serverSuggestion.player_spider = eligibleSpider;
           }
