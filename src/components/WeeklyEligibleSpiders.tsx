@@ -626,12 +626,12 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
                     </div>
                   </div>
                   <Badge 
-                    className={`absolute top-2 right-2 ${rarityColors[spider.rarity]} text-white text-[10px]`}
+                    className={`absolute top-2 right-2 ${rarityColors[spider.rarity]} text-white text-[10px] hidden sm:inline-flex`}
                   >
                     {spider.rarity}
                   </Badge>
                   <Badge 
-                    className={`absolute top-2 left-2 text-[10px] ${
+                    className={`absolute top-2 left-2 text-[10px] hidden sm:inline-flex ${
                       spider.source === 'activated' 
                         ? 'bg-amber-600 text-white' 
                         : 'bg-green-600 text-white'
