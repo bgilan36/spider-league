@@ -45,6 +45,7 @@ const rarityColors: Record<string, string> = {
 
 const WeeklyRosterManager: React.FC<WeeklyRosterManagerProps> = ({ onRosterChange, compact = false }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [roster, setRoster] = useState<RosterSlot[]>([]);
   const [allSpiders, setAllSpiders] = useState<Spider[]>([]);
   const [loading, setLoading] = useState(true);
