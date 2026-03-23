@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -44,6 +45,7 @@ const rarityColors: Record<string, string> = {
 
 const WeeklyRosterManager: React.FC<WeeklyRosterManagerProps> = ({ onRosterChange, compact = false }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [roster, setRoster] = useState<RosterSlot[]>([]);
   const [allSpiders, setAllSpiders] = useState<Spider[]>([]);
   const [loading, setLoading] = useState(true);
@@ -154,6 +156,7 @@ const WeeklyRosterManager: React.FC<WeeklyRosterManagerProps> = ({ onRosterChang
       await fetchRoster();
       setIsDialogOpen(false);
       onRosterChange?.();
+      navigate('/');
     } catch (error: any) {
       console.error('Error setting roster:', error);
       toast.error(error.message || 'Failed to activate spider');
