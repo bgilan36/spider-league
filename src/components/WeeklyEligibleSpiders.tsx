@@ -248,9 +248,9 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
       if (error) throw error;
       
       toast.success('Spider activated for this week!');
-      await fetchEligibleSpiders();
       setIsDialogOpen(false);
       onSpiderChange?.();
+      navigate('/');
     } catch (error: any) {
       console.error('Error activating spider:', error);
       toast.error(error.message || 'Failed to activate spider');
