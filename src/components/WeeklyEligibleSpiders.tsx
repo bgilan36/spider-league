@@ -645,13 +645,15 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
                     </Badge>
                   )}
                 </div>
-                <div className="p-1.5 sm:p-3 text-center">
-                  <p className="font-bold text-xs sm:text-sm truncate">{spider.nickname}</p>
-                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate mb-0.5 sm:mb-1">{spider.species}</p>
-                  <p className="text-[10px] sm:text-xs mb-1 sm:mb-2">⚡ {spider.power_score}</p>
+                <div className="p-2 sm:p-3">
+                  <p className="font-bold text-[11px] sm:text-sm truncate leading-tight">{spider.nickname}</p>
+                  <div className="flex items-center justify-between mt-0.5">
+                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate flex-1 min-w-0">{spider.species}</p>
+                    <span className="text-[10px] sm:text-xs font-medium ml-1 shrink-0">⚡{spider.power_score}</span>
+                  </div>
                   
                   {/* Action buttons */}
-                  <div className="flex gap-1 justify-center">
+                  <div className="flex gap-1 mt-1.5 sm:mt-2">
                     <BattleButton 
                       targetSpider={{
                         ...spider,
@@ -665,13 +667,13 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
                       }}
                       size="sm"
                       variant="default"
-                      className="flex-1 h-6 sm:h-7 text-[10px] sm:text-xs gap-1"
+                      className="flex-1 h-6 sm:h-7 text-[10px] sm:text-xs gap-1 px-1"
                     />
                     {spider.source === 'activated' && (
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        className="h-7 text-xs text-muted-foreground hover:text-destructive px-2"
+                        className="h-6 sm:h-7 text-[10px] sm:text-xs text-muted-foreground hover:text-destructive px-1.5"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeactivateSpider();
