@@ -156,6 +156,7 @@ const WeeklyRosterManager: React.FC<WeeklyRosterManagerProps> = ({ onRosterChang
       await fetchRoster();
       setIsDialogOpen(false);
       onRosterChange?.();
+      navigate('/');
     } catch (error: any) {
       console.error('Error setting roster:', error);
       toast.error(error.message || 'Failed to activate spider');
