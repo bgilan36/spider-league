@@ -86,6 +86,7 @@ serve(async (req) => {
     const spider2 = battle.team_b.spider;
     const user1 = battle.team_a.userId;
     const user2 = battle.team_b.userId;
+    const stakesType = battle.stakes_type || 'training';
 
     // AUTHORIZATION: Verify caller is a battle participant
     if (userId !== user1 && userId !== user2) {
@@ -96,8 +97,7 @@ serve(async (req) => {
       );
     }
 
-    console.log("Auto-battle: Participant verified, starting battle", { battleId, userId });
-
+    console.log("Auto-battle: Participant verified, starting battle", { battleId, userId, stakesType });
     // Initialize battle state
     const state: BattleState = {
       p1_hp: spider1.hit_points,
@@ -258,44 +258,22 @@ serve(async (req) => {
       })
       .eq("id", battleId);
 
-    // If linked to challenge, resolve it
+    // If linked to challenge, resolve it using the updated RPC
+    // (which handles training vs all-or-nothing stakes, streaks, cooldowns)
     if (battle.challenge_id) {
-      const loserSpider = winnerUser === user1 ? spider2 : spider1;
-
-      console.log('Transferring spider ownership:', {
-        spiderId: loserSpider.id,
-        fromUser: loserSpider.owner_id,
-        toUser: winnerUser
+      const { error: resolveError } = await supabase.rpc('resolve_battle_challenge', {
+        challenge_id: battle.challenge_id,
+        winner_user_id: winnerUser,
+        loser_user_id: loserUser,
+        battle_id_param: battleId,
       });
 
-      // Transfer spider ownership using the secure database function
-      const { error: transferError } = await supabase.rpc('transfer_spider_ownership', {
-        spider_id: loserSpider.id,
-        new_owner_id: winnerUser
-      });
-
-      if (transferError) {
-        console.error('Spider transfer error:', transferError);
-        throw new Error(`Failed to transfer spider: ${transferError.message}`);
+      if (resolveError) {
+        console.error('Resolve error:', resolveError);
+        throw new Error(`Failed to resolve challenge: ${resolveError.message}`);
       }
 
-      console.log('Spider transferred successfully');
-
-      // Update challenge
-      const { error: challengeError } = await supabase
-        .from("battle_challenges")
-        .update({
-          status: "COMPLETED",
-          battle_id: battleId,
-          winner_id: winnerUser,
-          loser_spider_id: loserSpider.id,
-        })
-        .eq("id", battle.challenge_id);
-
-      if (challengeError) {
-        console.error('Challenge update error:', challengeError);
-        throw new Error(`Failed to update challenge: ${challengeError.message}`);
-      }
+      console.log('Battle challenge resolved successfully');
 
       // Award badges
       const { error: badgeError } = await supabase.rpc("award_badges_for_user", {
@@ -304,7 +282,6 @@ serve(async (req) => {
 
       if (badgeError) {
         console.error('Badge award error:', badgeError);
-        // Don't throw here, badges are not critical
       }
     }
 

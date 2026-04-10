@@ -82,66 +82,25 @@ const BattleButton: React.FC<BattleButtonProps> = ({
 
   const [allSpidersHaveChallenges, setAllSpidersHaveChallenges] = useState(false);
 
-  // Fetch user's eligible spiders for battle (from weekly_uploads + weekly_roster)
+  // Fetch user's eligible spiders (active via eligible_until)
   const fetchEligibleSpiders = async () => {
     if (!user) return;
 
     try {
-      // Get the current week start from the database function to ensure consistency
-      const { data: weekStartData, error: weekStartError } = await supabase
-        .rpc('get_current_pt_week_start');
-      
-      if (weekStartError) throw weekStartError;
-      
-      const weekStart = weekStartData as string;
-      
-      // Fetch uploaded spiders from weekly_uploads
-      const { data: weeklyUpload, error: weeklyError } = await supabase
-        .from('weekly_uploads')
-        .select('first_spider_id, second_spider_id, third_spider_id')
-        .eq('user_id', user.id)
-        .eq('week_start', weekStart)
-        .maybeSingle();
+      const now = new Date().toISOString();
 
-      if (weeklyError) throw weeklyError;
+      // Fetch active (eligible) spiders
+      const { data, error } = await supabase
+        .from('spiders')
+        .select('*')
+        .eq('owner_id', user.id)
+        .eq('is_approved', true)
+        .gt('eligible_until', now);
 
-      // Fetch activated spider from weekly_roster
-      const { data: rosterData, error: rosterError } = await (supabase as any)
-        .from('weekly_roster')
-        .select('spider_id')
-        .eq('user_id', user.id)
-        .eq('week_start', weekStart)
-        .maybeSingle();
+      if (error) throw error;
 
-      if (rosterError && rosterError.code !== 'PGRST116') {
-        console.error('Error fetching roster:', rosterError);
-      }
-
-      // Collect all eligible spider IDs (uploads + activated)
-      const spiderIds = [
-        weeklyUpload?.first_spider_id,
-        weeklyUpload?.second_spider_id,
-        weeklyUpload?.third_spider_id,
-        rosterData?.spider_id,
-      ].filter(Boolean);
-
-      // Deduplicate
-      const uniqueIds = [...new Set(spiderIds)];
-
-      if (uniqueIds.length > 0) {
-        const { data, error } = await supabase
-          .from('spiders')
-          .select('*')
-          .in('id', uniqueIds);
-
-        if (error) throw error;
-
-        setUserSpiders(data || []);
-        setAllSpidersHaveChallenges(false);
-      } else {
-        setUserSpiders([]);
-        setAllSpidersHaveChallenges(false);
-      }
+      setUserSpiders(data || []);
+      setAllSpidersHaveChallenges(false);
     } catch (error) {
       console.error('Error fetching eligible spiders:', error);
       setUserSpiders([]);

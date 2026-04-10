@@ -7,7 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Sword, Timer, Trophy, AlertCircle, Clock } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Sword, Timer, Trophy, AlertCircle, Clock, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useBadgeSystem } from "@/hooks/useBadgeSystem";
 import BattleArena from './BattleArena';
@@ -65,6 +67,7 @@ const BattleMode: React.FC<BattleModeProps> = ({
   const [showChallengeForm, setShowChallengeForm] = useState(false);
   const [selectedSpider, setSelectedSpider] = useState<Spider | null>(null);
   const [challengeMessage, setChallengeMessage] = useState('');
+  const [isAllOrNothing, setIsAllOrNothing] = useState(false);
   const [activeBattle, setActiveBattle] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
@@ -109,59 +112,32 @@ const BattleMode: React.FC<BattleModeProps> = ({
     setChallenges(challengesWithData);
   };
 
-  // Fetch user's eligible spiders (excluding those with active challenges)
+  // Fetch user's eligible spiders (active via eligible_until)
   const fetchUserSpiders = async () => {
     if (!user) return;
 
-    // Get current week's uploads for this user
-    const { data: weeklyData, error: weeklyError } = await supabase
-      .from('weekly_uploads')
-      .select('first_spider_id, second_spider_id, third_spider_id')
-      .eq('user_id', user.id)
-      .order('week_start', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (weeklyError) {
-      console.error('Error fetching weekly uploads:', weeklyError);
-      return;
-    }
-
-    // Collect eligible spider IDs for this week
-    const eligibleSpiderIds = [
-      weeklyData?.first_spider_id,
-      weeklyData?.second_spider_id,
-      weeklyData?.third_spider_id
-    ].filter(Boolean);
-
-    if (eligibleSpiderIds.length === 0) {
-      setUserSpiders([]);
-      return;
-    }
-
-    // Fetch only spiders that are in this week's uploads
+    const now = new Date().toISOString();
     const { data, error } = await supabase
       .from('spiders')
       .select('*')
-      .in('id', eligibleSpiderIds)
-      .eq('is_approved', true);
+      .eq('owner_id', user.id)
+      .eq('is_approved', true)
+      .gt('eligible_until', now);
 
     if (error) {
       console.error('Error fetching eligible spiders:', error);
       return;
     }
 
-    // Get all open challenges for this user's spiders
+    // Filter out spiders with active challenges
     const { data: openChallenges } = await supabase
       .from('battle_challenges')
       .select('challenger_spider_id')
       .eq('challenger_id', user.id)
       .eq('status', 'OPEN')
-      .gt('expires_at', new Date().toISOString());
+      .gt('expires_at', now);
 
     const spidersWithChallenges = new Set(openChallenges?.map(c => c.challenger_spider_id) || []);
-    
-    // Filter out spiders that already have active challenges
     const eligibleSpiders = (data || []).filter(spider => !spidersWithChallenges.has(spider.id));
     setUserSpiders(eligibleSpiders);
   };
@@ -183,7 +159,8 @@ const BattleMode: React.FC<BattleModeProps> = ({
         .insert({
           challenger_id: user.id,
           challenger_spider_id: selectedSpider.id,
-          challenge_message: challengeMessage || `${selectedSpider.nickname} seeks a worthy opponent!`
+          challenge_message: challengeMessage || `${selectedSpider.nickname} seeks a worthy opponent!`,
+          is_all_or_nothing: isAllOrNothing,
         })
         .select('*')
         .single();

@@ -34,7 +34,7 @@ import OnboardingModal from "@/components/OnboardingModal";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { useIsMobile } from "@/hooks/use-mobile";
-import WeeklyEligibleSpiders from "@/components/WeeklyEligibleSpiders";
+import ActiveSpiders from "@/components/ActiveSpiders";
 interface Spider {
   id: string;
   nickname: string;
@@ -932,7 +932,7 @@ const Index = () => {
         {/* Above-the-fold focus: weekly roster, skirmish, battle snapshot */}
         <section className="mb-8 grid gap-6 xl:grid-cols-12">
           <div className="xl:col-span-7">
-            <WeeklyEligibleSpiders onSpiderChange={fetchUserSpiders} newSpiderId={newSpiderId} />
+            <ActiveSpiders onSpiderChange={fetchUserSpiders} newSpiderId={newSpiderId} />
           </div>
 
           <div className="xl:col-span-5">
