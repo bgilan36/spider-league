@@ -7,7 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Sword, Timer, Trophy, AlertCircle, Clock } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Sword, Timer, Trophy, AlertCircle, Clock, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useBadgeSystem } from "@/hooks/useBadgeSystem";
 import BattleArena from './BattleArena';
@@ -65,6 +67,7 @@ const BattleMode: React.FC<BattleModeProps> = ({
   const [showChallengeForm, setShowChallengeForm] = useState(false);
   const [selectedSpider, setSelectedSpider] = useState<Spider | null>(null);
   const [challengeMessage, setChallengeMessage] = useState('');
+  const [isAllOrNothing, setIsAllOrNothing] = useState(false);
   const [activeBattle, setActiveBattle] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
