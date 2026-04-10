@@ -88,6 +88,7 @@ export type Database = {
           created_at: string
           expires_at: string
           id: string
+          is_all_or_nothing: boolean
           loser_spider_id: string | null
           status: string
           winner_id: string | null
@@ -102,6 +103,7 @@ export type Database = {
           created_at?: string
           expires_at?: string
           id?: string
+          is_all_or_nothing?: boolean
           loser_spider_id?: string | null
           status?: string
           winner_id?: string | null
@@ -116,6 +118,7 @@ export type Database = {
           created_at?: string
           expires_at?: string
           id?: string
+          is_all_or_nothing?: boolean
           loser_spider_id?: string | null
           status?: string
           winner_id?: string | null
@@ -203,6 +206,7 @@ export type Database = {
           p1_current_hp: number | null
           p2_current_hp: number | null
           rng_seed: string
+          stakes_type: string
           team_a: Json
           team_b: Json
           turn_count: number | null
@@ -219,6 +223,7 @@ export type Database = {
           p1_current_hp?: number | null
           p2_current_hp?: number | null
           rng_seed: string
+          stakes_type?: string
           team_a: Json
           team_b: Json
           turn_count?: number | null
@@ -235,6 +240,7 @@ export type Database = {
           p1_current_hp?: number | null
           p2_current_hp?: number | null
           rng_seed?: string
+          stakes_type?: string
           team_a?: Json
           team_b?: Json
           turn_count?: number | null
@@ -647,8 +653,10 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           created_at: string
+          current_win_streak: number
           display_name: string | null
           id: string
+          longest_win_streak: number
           rating_elo: number | null
           season_losses: number | null
           season_ties: number | null
@@ -660,8 +668,10 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          current_win_streak?: number
           display_name?: string | null
           id: string
+          longest_win_streak?: number
           rating_elo?: number | null
           season_losses?: number | null
           season_ties?: number | null
@@ -673,8 +683,10 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          current_win_streak?: number
           display_name?: string | null
           id?: string
+          longest_win_streak?: number
           rating_elo?: number | null
           season_losses?: number | null
           season_ties?: number | null
@@ -889,10 +901,12 @@ export type Database = {
           created_at: string | null
           damage: number
           defense: number
+          eligible_until: string | null
           hit_points: number
           id: string
           image_url: string
           is_approved: boolean | null
+          last_battled_at: string | null
           level: number
           nickname: string
           owner_id: string
@@ -911,10 +925,12 @@ export type Database = {
           created_at?: string | null
           damage: number
           defense: number
+          eligible_until?: string | null
           hit_points: number
           id?: string
           image_url: string
           is_approved?: boolean | null
+          last_battled_at?: string | null
           level?: number
           nickname: string
           owner_id: string
@@ -933,10 +949,12 @@ export type Database = {
           created_at?: string | null
           damage?: number
           defense?: number
+          eligible_until?: string | null
           hit_points?: number
           id?: string
           image_url?: string
           is_approved?: boolean | null
+          last_battled_at?: string | null
           level?: number
           nickname?: string
           owner_id?: string
