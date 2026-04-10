@@ -1,109 +1,113 @@
 import { useState, useEffect, useCallback } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Bug, Sword, Zap, CircleHelp } from "lucide-react";
-import { SpiderSkirmishCard } from "@/components/SpiderSkirmishCard";
+import { Zap, CircleHelp, Sword, Loader2 } from "lucide-react";
 import ActiveChallengesPreview from "@/components/ActiveChallengesPreview";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 const CombatHub = () => {
   const { user } = useAuth();
-  const [acceptableChallengeCount, setAcceptableChallengeCount] = useState(0);
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const [quickBattleLoading, setQuickBattleLoading] = useState(false);
 
-  const fetchAcceptableChallenges = useCallback(async () => {
-    if (!user) {
-      setAcceptableChallengeCount(0);
-      return;
+  const handleQuickBattle = async () => {
+    if (!user) return;
+    setQuickBattleLoading(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('quick-battle', {
+        body: {}
+      });
+
+      if (error) throw error;
+
+      if (data?.error) {
+        toast({
+          title: "Can't start battle",
+          description: data.error,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      if (data?.battleId) {
+        toast({
+          title: "Battle Complete!",
+          description: "Viewing results...",
+        });
+        navigate(`/battle/${data.battleId}`);
+      }
+    } catch (error: any) {
+      console.error('Quick battle error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to start quick battle",
+        variant: "destructive"
+      });
+    } finally {
+      setQuickBattleLoading(false);
     }
-    const now = new Date().toISOString();
-    const { count } = await supabase
-      .from("battle_challenges")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "OPEN")
-      .neq("challenger_id", user.id)
-      .gt("expires_at", now);
-    setAcceptableChallengeCount(count ?? 0);
-  }, [user]);
-
-  useEffect(() => {
-    fetchAcceptableChallenges();
-
-    const channel = supabase
-      .channel("combat-hub-challenges")
-      .on("postgres_changes", { event: "*", schema: "public", table: "battle_challenges" }, () => {
-        fetchAcceptableChallenges();
-      })
-      .subscribe();
-
-    const handleChallengeEvent = () => fetchAcceptableChallenges();
-    window.addEventListener("challenge:created", handleChallengeEvent);
-    window.addEventListener("challenge:cancelled", handleChallengeEvent);
-    window.addEventListener("challenge:accepted", handleChallengeEvent);
-
-    return () => {
-      supabase.removeChannel(channel);
-      window.removeEventListener("challenge:created", handleChallengeEvent);
-      window.removeEventListener("challenge:cancelled", handleChallengeEvent);
-      window.removeEventListener("challenge:accepted", handleChallengeEvent);
-    };
-  }, [fetchAcceptableChallenges]);
-
-  // Default to battles tab when there are challenges to accept, otherwise skirmish
-  const defaultTab = acceptableChallengeCount > 0 ? "battles" : "skirmish";
+  };
 
   return (
     <Card className="overflow-hidden">
-      <Tabs defaultValue={defaultTab} key={defaultTab}>
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Zap className="h-5 w-5 text-primary" />
-              Combat Hub
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    className="inline-flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    aria-label="Combat Hub info"
-                  >
-                    <CircleHelp className="h-4 w-4" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-xs text-xs leading-relaxed">
-                  <p className="font-semibold mb-1">Skirmishes vs Battles</p>
-                  <p><strong>Skirmishes</strong> are quick, low-stakes practice fights — you earn XP but never lose your spider. Up to 3 per day.</p>
-                  <p className="mt-1"><strong>Battles</strong> are high-stakes challenges — the winner takes ownership of the loser's spider. Only weekly roster spiders can battle.</p>
-                </TooltipContent>
-              </Tooltip>
-            </CardTitle>
-          </div>
-          <TabsList className="w-full mt-2">
-            <TabsTrigger value="skirmish" className="flex-1 gap-1.5 data-[state=active]:text-primary">
-              <Bug className="h-3.5 w-3.5" />
-              Skirmish
-            </TabsTrigger>
-            <TabsTrigger value="battles" className="flex-1 gap-1.5 data-[state=active]:text-destructive relative">
-              <Sword className="h-3.5 w-3.5" />
-              Battles
-              {acceptableChallengeCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground px-1 animate-pulse">
-                  {acceptableChallengeCount}
-                </span>
-              )}
-            </TabsTrigger>
-          </TabsList>
-        </CardHeader>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Zap className="h-5 w-5 text-primary" />
+            Combat Hub
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label="Combat Hub info"
+                >
+                  <CircleHelp className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs text-xs leading-relaxed">
+                <p className="font-semibold mb-1">Unified Battle System</p>
+                <p><strong>Training Battles</strong> are the default — earn XP and stat boosts with no risk of losing your spider.</p>
+                <p className="mt-1"><strong>All-or-Nothing</strong> battles are opt-in — the winner takes the loser's spider. Both players must agree to the stakes.</p>
+              </TooltipContent>
+            </Tooltip>
+          </CardTitle>
+        </div>
 
-        <TabsContent value="skirmish" className="mt-0 px-0">
-          <SpiderSkirmishCard embedded />
-        </TabsContent>
+        {/* Quick Battle button */}
+        {user && (
+          <Button
+            onClick={handleQuickBattle}
+            disabled={quickBattleLoading}
+            className="w-full mt-3 gap-2"
+            size="lg"
+          >
+            {quickBattleLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Finding opponent...
+              </>
+            ) : (
+              <>
+                <Sword className="h-4 w-4" />
+                Quick Battle
+                <Badge variant="secondary" className="ml-1 text-[10px]">Training</Badge>
+              </>
+            )}
+          </Button>
+        )}
+      </CardHeader>
 
-        <TabsContent value="battles" className="mt-0 px-0">
-          <ActiveChallengesPreview embedded />
-        </TabsContent>
-      </Tabs>
+      <div className="mt-0 px-0">
+        <ActiveChallengesPreview embedded />
+      </div>
     </Card>
   );
 };
