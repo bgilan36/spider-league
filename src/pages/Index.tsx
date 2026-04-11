@@ -929,15 +929,9 @@ const Index = () => {
       </Dialog>
 
       <main className="container mx-auto px-3 sm:px-6 py-3 sm:py-6">
-        {/* Above-the-fold focus: weekly roster, skirmish, battle snapshot */}
-        <section className="mb-8 grid gap-6 xl:grid-cols-12">
-          <div className="xl:col-span-7">
-            <ActiveSpiders onSpiderChange={fetchUserSpiders} newSpiderId={newSpiderId} />
-          </div>
-
-          <div className="xl:col-span-5">
-            <CombatHub />
-          </div>
+        {/* Above-the-fold: Your Starting 5 with embedded battle controls */}
+        <section className="mb-8">
+          <ActiveSpiders onSpiderChange={fetchUserSpiders} newSpiderId={newSpiderId} />
         </section>
 
         {/* Below-the-fold content */}
