@@ -3,6 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Zap, CircleHelp, Sword, Loader2 } from "lucide-react";
 import ActiveChallengesPreview from "@/components/ActiveChallengesPreview";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +25,7 @@ const CombatHub = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [quickBattleLoading, setQuickBattleLoading] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const handleQuickBattle = async () => {
     if (!user) return;
@@ -84,7 +95,7 @@ const CombatHub = () => {
         {/* Quick Battle button */}
         {user && (
           <Button
-            onClick={handleQuickBattle}
+            onClick={() => setShowConfirm(true)}
             disabled={quickBattleLoading}
             className="w-full mt-3 gap-2"
             size="lg"
@@ -104,6 +115,34 @@ const CombatHub = () => {
           </Button>
         )}
       </CardHeader>
+
+      {/* Quick Battle Confirmation Dialog */}
+      <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Sword className="h-5 w-5 text-primary" />
+              Start Quick Battle?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>Your strongest eligible spider will be matched against a similarly-powered opponent in a <strong>Training Battle</strong>.</p>
+              <p className="text-xs text-muted-foreground">No spiders will be lost — you'll earn XP and stat boosts regardless of the outcome.</p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowConfirm(false);
+                handleQuickBattle();
+              }}
+            >
+              <Sword className="h-4 w-4 mr-1" />
+              Battle!
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="mt-0 px-0">
         <ActiveChallengesPreview embedded />

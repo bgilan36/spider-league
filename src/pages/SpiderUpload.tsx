@@ -775,6 +775,46 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                   </div>
                 )}
                 
+                {/* Battle Stats Preview */}
+                {spiderStats && !identifying && (
+                  <div className="border rounded-lg p-4 bg-primary/5 space-y-3">
+                    <Label className="text-sm font-semibold flex items-center gap-2">
+                      ⚔️ Battle Attributes
+                      {spiderStats.rarity && (
+                        <Badge className={`text-xs text-white ${
+                          spiderStats.rarity === 'LEGENDARY' ? 'bg-amber-500' :
+                          spiderStats.rarity === 'EPIC' ? 'bg-purple-500' :
+                          spiderStats.rarity === 'RARE' ? 'bg-blue-500' :
+                          spiderStats.rarity === 'UNCOMMON' ? 'bg-green-500' : 'bg-gray-500'
+                        }`}>
+                          {spiderStats.rarity}
+                        </Badge>
+                      )}
+                      {spiderStats.power_score && (
+                        <span className="text-xs font-medium text-muted-foreground ml-auto">⚡ {spiderStats.power_score} Power</span>
+                      )}
+                    </Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {[
+                        { label: 'Hit Points', value: spiderStats.hit_points, icon: '❤️' },
+                        { label: 'Damage', value: spiderStats.damage, icon: '⚔️' },
+                        { label: 'Speed', value: spiderStats.speed, icon: '💨' },
+                        { label: 'Defense', value: spiderStats.defense, icon: '🛡️' },
+                        { label: 'Venom', value: spiderStats.venom, icon: '☠️' },
+                        { label: 'Webcraft', value: spiderStats.webcraft, icon: '🕸️' },
+                      ].map(stat => (
+                        <div key={stat.label} className="flex items-center gap-2 bg-background rounded-md p-2 border">
+                          <span className="text-sm">{stat.icon}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[10px] text-muted-foreground leading-tight">{stat.label}</p>
+                            <p className="text-sm font-bold">{stat.value}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {safetyInfo && (
                   <div className="border rounded-lg p-4 bg-muted/50 space-y-2">
                     <div className="flex items-center gap-2">
