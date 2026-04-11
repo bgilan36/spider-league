@@ -200,13 +200,20 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
   const handleChallengeOpponent = async (opponentSpider: Spider) => {
     if (!user || !opponentBrowserSpider) return;
     try {
-      // Cancel any existing open challenge for this spider
-      await supabase
+      // First, cancel any existing open challenge for this spider and wait for confirmation
+      const { error: cancelError } = await supabase
         .from('battle_challenges')
-        .update({ status: 'CANCELLED' })
+        .delete()
         .eq('challenger_id', user.id)
         .eq('challenger_spider_id', opponentBrowserSpider.id)
         .eq('status', 'OPEN');
+
+      if (cancelError) {
+        console.warn('Error clearing old challenge:', cancelError);
+      }
+
+      // Small delay to ensure the delete is committed before inserting
+      await new Promise(resolve => setTimeout(resolve, 300));
 
       const { error } = await supabase
         .from('battle_challenges')
