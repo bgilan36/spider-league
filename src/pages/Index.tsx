@@ -35,6 +35,7 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { useIsMobile } from "@/hooks/use-mobile";
 import ActiveSpiders from "@/components/ActiveSpiders";
+import DeathBattleFeed from "@/components/DeathBattleFeed";
 interface Spider {
   id: string;
   nickname: string;
@@ -939,6 +940,10 @@ const Index = () => {
           <OnlineUsersBar />
         </div>
 
+        {/* Public Death Battle Challenges */}
+        <section className="mb-6 sm:mb-8">
+          <DeathBattleFeed />
+        </section>
 
         {/* Combat Activity Section */}
         <div className="mb-6 sm:mb-8">
