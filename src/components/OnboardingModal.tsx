@@ -1,16 +1,20 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Camera, Sword, Bug, Zap, Shield, ChevronLeft, ChevronRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Camera, Sword, Skull, Zap, Shield, ChevronLeft, ChevronRight, Loader2, Target, Clock, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
+import { useNavigate } from "react-router-dom";
 import PowerScoreArc from "@/components/PowerScoreArc";
 
 interface StarterSpider {
+  id: string;
   nickname: string;
   species: string;
   image_url: string;
   power_score: number;
+  rarity: string;
   hit_points: number;
   damage: number;
   speed: number;
@@ -24,27 +28,39 @@ interface OnboardingModalProps {
   onComplete: () => void;
 }
 
-const TOTAL_SLIDES = 4;
+const TOTAL_SLIDES = 5;
 
 const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [starterSpider, setStarterSpider] = useState<StarterSpider | null>(null);
+  const [creatingSpider, setCreatingSpider] = useState(false);
+  const [spiderCreated, setSpiderCreated] = useState(false);
 
+  // Create starter spider when reaching slide 3 (reveal slide)
   useEffect(() => {
-    if (open && user) {
-      supabase
-        .from("spiders")
-        .select("nickname, species, image_url, power_score, hit_points, damage, speed, defense, venom, webcraft")
-        .eq("owner_id", user.id)
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .single()
-        .then(({ data }) => {
-          if (data) setStarterSpider(data);
-        });
+    if (open && user && currentSlide === 3 && !starterSpider && !creatingSpider) {
+      createStarterSpider();
     }
-  }, [open, user]);
+  }, [open, user, currentSlide]);
+
+  const createStarterSpider = async () => {
+    if (!user) return;
+    setCreatingSpider(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-starter-spider');
+      if (error) throw error;
+      if (data?.spider) {
+        setStarterSpider(data.spider);
+        setSpiderCreated(!data.alreadyExists);
+      }
+    } catch (err) {
+      console.error('Failed to create starter spider:', err);
+    } finally {
+      setCreatingSpider(false);
+    }
+  };
 
   const markComplete = async () => {
     if (user) {
@@ -55,6 +71,12 @@ const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
     onComplete();
   };
 
+  const handleStartFirstBattle = async () => {
+    await markComplete();
+    // Navigate to home where the Starting 5 has the Battle Now button
+    navigate('/', { replace: true });
+  };
+
   const next = () => {
     if (currentSlide < TOTAL_SLIDES - 1) setCurrentSlide((s) => s + 1);
   };
@@ -62,11 +84,12 @@ const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
     if (currentSlide > 0) setCurrentSlide((s) => s - 1);
   };
 
-  const statBar = (label: string, value: number) => (
+  const statBar = (label: string, icon: string, value: number) => (
     <div className="flex items-center gap-2 text-xs">
-      <span className="w-16 text-muted-foreground">{label}</span>
+      <span className="w-4">{icon}</span>
+      <span className="w-14 text-muted-foreground">{label}</span>
       <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-        <div className="h-full rounded-full bg-primary" style={{ width: `${value}%` }} />
+        <div className="h-full rounded-full bg-primary transition-all duration-700" style={{ width: `${value}%` }} />
       </div>
       <span className="w-6 text-right font-mono text-muted-foreground">{value}</span>
     </div>
@@ -84,55 +107,82 @@ const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
         Welcome to Spider League!
       </h2>
       <p className="text-muted-foreground max-w-sm">
-        Collect real spiders, generate unique fighters, and battle other players for glory and loot.
+        Collect real spiders, build your roster, and battle for glory. Let's show you the ropes.
       </p>
     </div>,
 
-    // Slide 1: Upload & Collect
-    <div key="upload" className="flex flex-col items-center text-center gap-4 py-4">
+    // Slide 1: Your Starting 5
+    <div key="starting5" className="flex flex-col items-center text-center gap-4 py-4">
       <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-        <Camera className="h-8 w-8 text-primary" />
+        <Target className="h-8 w-8 text-primary" />
       </div>
-      <h2 className="text-xl font-bold">Upload & Collect</h2>
-      <p className="text-muted-foreground max-w-sm">
-        Find real spiders in the wild, snap a photo, and upload it. We'll identify the species and generate a unique fighter with randomized stats and rarity.
-      </p>
-      <p className="text-xs text-muted-foreground/70">You can upload up to 3 new spiders per week.</p>
+      <h2 className="text-xl font-bold">Your Starting 5</h2>
+      <div className="text-left max-w-sm space-y-3">
+        <div className="flex gap-2">
+          <Camera className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+          <div>
+            <span className="font-semibold">Upload real spiders</span>
+            <span className="text-muted-foreground text-sm"> — Find spiders in the wild, snap a photo, and we'll create a unique fighter.</span>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Shield className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+          <div>
+            <span className="font-semibold">5 active at a time</span>
+            <span className="text-muted-foreground text-sm"> — Each spider stays active for 30 days. Max 5 in your roster.</span>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Clock className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+          <div>
+            <span className="text-muted-foreground text-sm">Upload up to 3 new spiders per week. Expired spiders can be re-enlisted.</span>
+          </div>
+        </div>
+      </div>
     </div>,
 
-    // Slide 2: Combat
+    // Slide 2: Two ways to fight
     <div key="combat" className="flex flex-col items-center text-center gap-4 py-4">
       <div className="flex gap-3">
-        <div className="h-14 w-14 rounded-2xl bg-blue-500/10 flex items-center justify-center">
-          <Bug className="h-7 w-7 text-blue-400" />
+        <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+          <Sword className="h-7 w-7 text-primary" />
         </div>
-        <div className="h-14 w-14 rounded-2xl bg-red-500/10 flex items-center justify-center">
-          <Sword className="h-7 w-7 text-red-400" />
+        <div className="h-14 w-14 rounded-2xl bg-destructive/10 flex items-center justify-center">
+          <Skull className="h-7 w-7 text-destructive" />
         </div>
       </div>
       <h2 className="text-xl font-bold">Two Ways to Fight</h2>
       <div className="text-left max-w-sm space-y-3">
         <div className="flex gap-2">
-          <Bug className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
+          <Sword className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
           <div>
-            <span className="font-semibold text-blue-400">Skirmishes</span>
-            <span className="text-muted-foreground text-sm"> — Daily practice battles. Earn XP with no risk. 3 per day.</span>
+            <span className="font-semibold text-primary">Battle Now</span>
+            <span className="text-muted-foreground text-sm"> — Training battles. Earn XP and stat boosts with zero risk. 1 hour cooldown per spider.</span>
           </div>
         </div>
         <div className="flex gap-2">
-          <Sword className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+          <Skull className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
           <div>
-            <span className="font-semibold text-red-400">Battles</span>
-            <span className="text-muted-foreground text-sm"> — High stakes! The winner takes the loser's spider.</span>
+            <span className="font-semibold text-destructive">Battle to the Death</span>
+            <span className="text-muted-foreground text-sm"> — Winner takes the loser's spider forever. Both players must agree before it starts.</span>
           </div>
         </div>
       </div>
+      <p className="text-xs text-muted-foreground/70 max-w-sm mt-1">
+        All battles are run from your Starting 5 roster — just click the button on any active spider card.
+      </p>
     </div>,
 
-    // Slide 3: Get Started + Starter Spider
-    <div key="getstarted" className="flex flex-col items-center text-center gap-3 py-2">
-      <h2 className="text-xl font-bold">You're Ready!</h2>
-      {starterSpider ? (
+    // Slide 3: Starter Spider Reveal
+    <div key="starter" className="flex flex-col items-center text-center gap-3 py-2">
+      <Sparkles className="h-6 w-6 text-primary animate-pulse" />
+      <h2 className="text-xl font-bold">Your Starter Spider!</h2>
+      {creatingSpider ? (
+        <div className="flex flex-col items-center gap-3 py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground text-sm">Hatching your starter spider...</p>
+        </div>
+      ) : starterSpider ? (
         <>
           <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-primary/30 bg-muted">
             <img
@@ -141,31 +191,52 @@ const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
               className="w-full h-full object-cover"
             />
           </div>
-          <p className="font-semibold text-sm">{starterSpider.nickname}</p>
-          <p className="text-xs text-muted-foreground">{starterSpider.species}</p>
+          <p className="font-bold text-lg">{starterSpider.nickname}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-xs text-muted-foreground">{starterSpider.species}</p>
+            <Badge variant="secondary" className="text-[10px]">{starterSpider.rarity}</Badge>
+          </div>
           <div className="w-20">
             <PowerScoreArc score={starterSpider.power_score} />
           </div>
-          <div className="w-full max-w-[240px] space-y-1">
-            {statBar("HP", starterSpider.hit_points)}
-            {statBar("Damage", starterSpider.damage)}
-            {statBar("Speed", starterSpider.speed)}
-            {statBar("Defense", starterSpider.defense)}
-            {statBar("Venom", starterSpider.venom)}
-            {statBar("Webcraft", starterSpider.webcraft)}
+          <div className="w-full max-w-[260px] space-y-1.5">
+            {statBar("HP", "❤️", starterSpider.hit_points)}
+            {statBar("Damage", "⚔️", starterSpider.damage)}
+            {statBar("Speed", "💨", starterSpider.speed)}
+            {statBar("Defense", "🛡️", starterSpider.defense)}
+            {statBar("Venom", "☠️", starterSpider.venom)}
+            {statBar("Webcraft", "🕸️", starterSpider.webcraft)}
           </div>
-          <p className="text-muted-foreground text-sm max-w-sm mt-1">
-            You already have your first spider — jump into a Skirmish right now!
+          <p className="text-xs text-muted-foreground mt-1">
+            {spiderCreated
+              ? "This spider has been added to your Starting 5!"
+              : "Your starter spider is ready in your Starting 5!"}
           </p>
         </>
       ) : (
-        <p className="text-muted-foreground text-sm">
-          Your starter spider is being prepared...
+        <p className="text-muted-foreground text-sm py-8">
+          Something went wrong. You can upload your first spider after onboarding.
         </p>
       )}
-      <Button onClick={markComplete} className="mt-2 w-full max-w-[240px]" size="lg">
-        <Zap className="h-4 w-4 mr-2" />
-        Enter the Arena
+    </div>,
+
+    // Slide 4: Go battle!
+    <div key="battle" className="flex flex-col items-center text-center gap-4 py-4">
+      <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+        <Zap className="h-8 w-8 text-primary" />
+      </div>
+      <h2 className="text-xl font-bold">Time for Your First Battle!</h2>
+      <p className="text-muted-foreground max-w-sm">
+        Your starter spider is ready. Hit the button below to jump to your Starting 5 roster and start your first training battle.
+      </p>
+      <div className="bg-muted/50 rounded-lg p-3 max-w-sm text-left text-xs text-muted-foreground space-y-1">
+        <p>💡 <strong>Tip:</strong> Click <strong>"Battle Now"</strong> on your spider card to preview a matchup and fight!</p>
+        <p>💡 Win battles to earn XP and power up your spider's stats.</p>
+        <p>💡 Upload more spiders from the wild to fill your 5 roster slots.</p>
+      </div>
+      <Button onClick={handleStartFirstBattle} className="mt-2 w-full max-w-[260px]" size="lg">
+        <Sword className="h-4 w-4 mr-2" />
+        Go to My Starting 5
       </Button>
     </div>,
   ];
@@ -173,7 +244,7 @@ const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) markComplete(); }}>
       <DialogContent className="max-w-md p-6 gap-0 [&>button]:hidden">
-        <div className="min-h-[340px] flex items-center justify-center">
+        <div className="min-h-[380px] flex items-center justify-center">
           {slides[currentSlide]}
         </div>
 
