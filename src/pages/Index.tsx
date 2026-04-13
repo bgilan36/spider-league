@@ -939,6 +939,10 @@ const Index = () => {
           <OnlineUsersBar />
         </div>
 
+        {/* Public Death Battle Challenges */}
+        <section className="mb-6 sm:mb-8">
+          <DeathBattleFeed />
+        </section>
 
         {/* Combat Activity Section */}
         <div className="mb-6 sm:mb-8">
