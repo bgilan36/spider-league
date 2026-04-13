@@ -59,6 +59,13 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
   const [battleLoadingId, setBattleLoadingId] = useState<string | null>(null);
 
+  // Battle preview state
+  const [showBattlePreview, setShowBattlePreview] = useState(false);
+  const [battlePreviewSpider, setBattlePreviewSpider] = useState<Spider | null>(null);
+  const [battlePreviewOpponent, setBattlePreviewOpponent] = useState<Spider | null>(null);
+  const [battlePreviewLoading, setBattlePreviewLoading] = useState(false);
+  const [battleStarting, setBattleStarting] = useState(false);
+
   // Opponent browser state
   const [showOpponentBrowser, setShowOpponentBrowser] = useState(false);
   const [opponentBrowserSpider, setOpponentBrowserSpider] = useState<Spider | null>(null);
@@ -137,10 +144,57 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
       toast.error(`This spider is on cooldown. Ready in ${cooldown} minutes.`);
       return;
     }
-    setBattleLoadingId(spider.id);
+    // Fetch a preview opponent first
+    setBattlePreviewSpider(spider);
+    setBattlePreviewLoading(true);
+    setBattlePreviewOpponent(null);
+    setShowBattlePreview(true);
+    try {
+      const bands = [0.12, 0.20, 0.35, 0.55, 1.0];
+      let found: Spider | null = null;
+      for (const pct of bands) {
+        const low = Math.floor(spider.power_score * (1.0 - pct));
+        const high = Math.ceil(spider.power_score * (1.0 + pct));
+        const { data } = await supabase
+          .from('spiders')
+          .select('id, nickname, species, image_url, power_score, rarity, hit_points, damage, speed, defense, venom, webcraft, owner_id')
+          .eq('is_approved', true)
+          .neq('owner_id', user.id)
+          .gte('power_score', low)
+          .lte('power_score', high)
+          .limit(10);
+        if (data && data.length > 0) {
+          found = data[Math.floor(Math.random() * data.length)] as Spider;
+          break;
+        }
+      }
+      if (!found) {
+        // Fallback: any spider
+        const { data } = await supabase
+          .from('spiders')
+          .select('id, nickname, species, image_url, power_score, rarity, hit_points, damage, speed, defense, venom, webcraft, owner_id')
+          .eq('is_approved', true)
+          .neq('owner_id', user.id)
+          .order('power_score', { ascending: false })
+          .limit(1);
+        if (data && data.length > 0) found = data[0] as Spider;
+      }
+      setBattlePreviewOpponent(found);
+    } catch (error) {
+      console.error('Error fetching opponent preview:', error);
+      toast.error('Failed to find an opponent');
+      setShowBattlePreview(false);
+    } finally {
+      setBattlePreviewLoading(false);
+    }
+  };
+
+  const handleConfirmBattle = async () => {
+    if (!user || !battlePreviewSpider) return;
+    setBattleStarting(true);
     try {
       const { data, error } = await supabase.functions.invoke('quick-battle', {
-        body: { spiderId: spider.id }
+        body: { spiderId: battlePreviewSpider.id }
       });
       if (error) throw error;
       if (data?.error) {
@@ -148,6 +202,7 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
         return;
       }
       if (data?.battleId) {
+        setShowBattlePreview(false);
         toast.success('Battle Complete! Viewing results...');
         navigate(`/battle/${data.battleId}`);
       }
@@ -155,7 +210,7 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
       console.error('Quick battle error:', error);
       toast.error(error.message || 'Failed to start battle');
     } finally {
-      setBattleLoadingId(null);
+      setBattleStarting(false);
     }
   };
 
@@ -531,6 +586,82 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
               </div>
             )}
           </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      {/* Battle Now Preview Dialog */}
+      <Dialog open={showBattlePreview} onOpenChange={(open) => { if (!battleStarting) setShowBattlePreview(open); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sword className="h-5 w-5 text-primary" />
+              Training Battle — Matchup Preview
+            </DialogTitle>
+            <DialogDescription>
+              Review the matchup below. No spiders are lost — this is a training fight for XP and stat boosts.
+            </DialogDescription>
+          </DialogHeader>
+
+          {battlePreviewLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <span className="ml-2 text-sm text-muted-foreground">Finding opponent...</span>
+            </div>
+          ) : battlePreviewSpider && battlePreviewOpponent ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                {/* Your spider */}
+                <div className="flex flex-col items-center text-center">
+                  <img src={battlePreviewSpider.image_url} alt={battlePreviewSpider.nickname} className="w-20 h-20 rounded-lg object-cover border-2 border-primary/40" />
+                  <p className="font-bold text-sm mt-2 truncate max-w-[100px]">{battlePreviewSpider.nickname}</p>
+                  <p className="text-[10px] text-muted-foreground truncate max-w-[100px]">{battlePreviewSpider.species}</p>
+                  <Badge className="mt-1 text-[10px]">⚡ {battlePreviewSpider.power_score}</Badge>
+                  <div className="mt-2 text-[10px] text-muted-foreground space-y-0.5 text-left">
+                    <p>❤️ {battlePreviewSpider.hit_points} HP</p>
+                    <p>⚔️ {battlePreviewSpider.damage} DMG</p>
+                    <p>🛡️ {battlePreviewSpider.defense} DEF</p>
+                    <p>💨 {battlePreviewSpider.speed} SPD</p>
+                    <p>☠️ {battlePreviewSpider.venom} VNM</p>
+                  </div>
+                </div>
+
+                {/* VS */}
+                <div className="flex flex-col items-center">
+                  <span className="text-2xl font-black text-primary">VS</span>
+                </div>
+
+                {/* Opponent */}
+                <div className="flex flex-col items-center text-center">
+                  <img src={battlePreviewOpponent.image_url} alt={battlePreviewOpponent.nickname} className="w-20 h-20 rounded-lg object-cover border-2 border-destructive/40" />
+                  <p className="font-bold text-sm mt-2 truncate max-w-[100px]">{battlePreviewOpponent.nickname}</p>
+                  <p className="text-[10px] text-muted-foreground truncate max-w-[100px]">{battlePreviewOpponent.species}</p>
+                  <Badge variant="secondary" className="mt-1 text-[10px]">⚡ {battlePreviewOpponent.power_score}</Badge>
+                  <div className="mt-2 text-[10px] text-muted-foreground space-y-0.5 text-left">
+                    <p>❤️ {battlePreviewOpponent.hit_points} HP</p>
+                    <p>⚔️ {battlePreviewOpponent.damage} DMG</p>
+                    <p>🛡️ {battlePreviewOpponent.defense} DEF</p>
+                    <p>💨 {battlePreviewOpponent.speed} SPD</p>
+                    <p>☠️ {battlePreviewOpponent.venom} VNM</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button variant="outline" className="flex-1" onClick={() => setShowBattlePreview(false)} disabled={battleStarting}>
+                  Cancel
+                </Button>
+                <Button className="flex-1 gap-1" onClick={handleConfirmBattle} disabled={battleStarting}>
+                  {battleStarting ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> Starting...</>
+                  ) : (
+                    <><Sword className="h-4 w-4" /> Start Battle</>
+                  )}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-center text-muted-foreground py-8">No opponents found. Try again later.</p>
+          )}
         </DialogContent>
       </Dialog>
 

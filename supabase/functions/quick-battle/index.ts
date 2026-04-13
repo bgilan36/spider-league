@@ -38,22 +38,35 @@ serve(async (req) => {
     const userId = claimsData.user.id;
     const now = new Date().toISOString();
 
-    // Find user's best eligible spider (not on cooldown)
+    // Parse request body for optional spiderId
+    let requestedSpiderId: string | null = null;
+    try {
+      const body = await req.json();
+      requestedSpiderId = body?.spiderId || null;
+    } catch { /* no body */ }
+
+    // Find user's spider (specific or best eligible, not on cooldown)
     const cooldownCutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-    const { data: playerSpiders, error: playerError } = await supabase
+    let playerQuery = supabase
       .from("spiders")
       .select("*")
       .eq("owner_id", userId)
       .eq("is_approved", true)
       .gt("eligible_until", now)
-      .or(`last_battled_at.is.null,last_battled_at.lt.${cooldownCutoff}`)
+      .or(`last_battled_at.is.null,last_battled_at.lt.${cooldownCutoff}`);
+
+    if (requestedSpiderId) {
+      playerQuery = playerQuery.eq("id", requestedSpiderId);
+    }
+
+    const { data: playerSpiders, error: playerError } = await playerQuery
       .order("power_score", { ascending: false })
       .limit(1);
 
     if (playerError) throw playerError;
 
     if (!playerSpiders || playerSpiders.length === 0) {
-      return new Response(JSON.stringify({ error: "No eligible spiders available. All your spiders may be on cooldown or expired." }),
+      return new Response(JSON.stringify({ error: "No eligible spiders available. Your spider may be on cooldown or expired." }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
