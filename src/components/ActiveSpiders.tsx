@@ -144,10 +144,57 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
       toast.error(`This spider is on cooldown. Ready in ${cooldown} minutes.`);
       return;
     }
-    setBattleLoadingId(spider.id);
+    // Fetch a preview opponent first
+    setBattlePreviewSpider(spider);
+    setBattlePreviewLoading(true);
+    setBattlePreviewOpponent(null);
+    setShowBattlePreview(true);
+    try {
+      const bands = [0.12, 0.20, 0.35, 0.55, 1.0];
+      let found: Spider | null = null;
+      for (const pct of bands) {
+        const low = Math.floor(spider.power_score * (1.0 - pct));
+        const high = Math.ceil(spider.power_score * (1.0 + pct));
+        const { data } = await supabase
+          .from('spiders')
+          .select('id, nickname, species, image_url, power_score, rarity, hit_points, damage, speed, defense, venom, webcraft, owner_id')
+          .eq('is_approved', true)
+          .neq('owner_id', user.id)
+          .gte('power_score', low)
+          .lte('power_score', high)
+          .limit(10);
+        if (data && data.length > 0) {
+          found = data[Math.floor(Math.random() * data.length)] as Spider;
+          break;
+        }
+      }
+      if (!found) {
+        // Fallback: any spider
+        const { data } = await supabase
+          .from('spiders')
+          .select('id, nickname, species, image_url, power_score, rarity, hit_points, damage, speed, defense, venom, webcraft, owner_id')
+          .eq('is_approved', true)
+          .neq('owner_id', user.id)
+          .order('power_score', { ascending: false })
+          .limit(1);
+        if (data && data.length > 0) found = data[0] as Spider;
+      }
+      setBattlePreviewOpponent(found);
+    } catch (error) {
+      console.error('Error fetching opponent preview:', error);
+      toast.error('Failed to find an opponent');
+      setShowBattlePreview(false);
+    } finally {
+      setBattlePreviewLoading(false);
+    }
+  };
+
+  const handleConfirmBattle = async () => {
+    if (!user || !battlePreviewSpider) return;
+    setBattleStarting(true);
     try {
       const { data, error } = await supabase.functions.invoke('quick-battle', {
-        body: { spiderId: spider.id }
+        body: { spiderId: battlePreviewSpider.id }
       });
       if (error) throw error;
       if (data?.error) {
@@ -155,6 +202,7 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
         return;
       }
       if (data?.battleId) {
+        setShowBattlePreview(false);
         toast.success('Battle Complete! Viewing results...');
         navigate(`/battle/${data.battleId}`);
       }
@@ -162,7 +210,7 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
       console.error('Quick battle error:', error);
       toast.error(error.message || 'Failed to start battle');
     } finally {
-      setBattleLoadingId(null);
+      setBattleStarting(false);
     }
   };
 
