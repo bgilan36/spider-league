@@ -59,6 +59,13 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
   const [battleLoadingId, setBattleLoadingId] = useState<string | null>(null);
 
+  // Battle preview state
+  const [showBattlePreview, setShowBattlePreview] = useState(false);
+  const [battlePreviewSpider, setBattlePreviewSpider] = useState<Spider | null>(null);
+  const [battlePreviewOpponent, setBattlePreviewOpponent] = useState<Spider | null>(null);
+  const [battlePreviewLoading, setBattlePreviewLoading] = useState(false);
+  const [battleStarting, setBattleStarting] = useState(false);
+
   // Opponent browser state
   const [showOpponentBrowser, setShowOpponentBrowser] = useState(false);
   const [opponentBrowserSpider, setOpponentBrowserSpider] = useState<Spider | null>(null);
