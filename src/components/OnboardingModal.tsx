@@ -184,9 +184,9 @@ const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
         </div>
       ) : starterSpider ? (
         <>
-          <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-primary/30 bg-muted">
+           <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-primary/30 bg-muted">
             <img
-              src={starterSpider.image_url}
+              src="/images/starter-spider.png"
               alt={starterSpider.nickname}
               className="w-full h-full object-cover"
             />

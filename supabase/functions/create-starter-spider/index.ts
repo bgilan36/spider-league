@@ -14,9 +14,6 @@ const STARTER_SPECIES = [
   { species: "Wolf Spider", bias: { speed: 15, damage: 10 } },
 ];
 
-const ADJECTIVES = ["Shadow", "Crimson", "Iron", "Silk", "Night", "Ember", "Storm", "Ghost", "Venom", "Glimmer"];
-const NOUNS = ["Weaver", "Stalker", "Spinner", "Fang", "Crawler", "Prowler", "Skitter", "Bite", "Warden", "Hunter"];
-
 // Single starter spider image for all new users
 const STARTER_IMAGE = "https://spider-league.lovable.app/images/starter-spider.png";
 
@@ -51,6 +48,14 @@ serve(async (req) => {
 
     const userId = claimsData.user.id;
 
+    // Get user's display name for the starter spider nickname
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", userId)
+      .single();
+    const displayName = profileData?.display_name || claimsData.user.email?.split("@")[0] || "Player";
+
     // Check if user already has any spiders (prevent duplicate starters)
     const { count } = await supabase
       .from("spiders")
@@ -73,9 +78,7 @@ serve(async (req) => {
 
     // Pick a random starter species
     const starter = STARTER_SPECIES[Math.floor(Math.random() * STARTER_SPECIES.length)];
-    const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
-    const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
-    const nickname = `${adj}${noun}`;
+    const nickname = `${displayName}'s Starter Spider`;
     const image = STARTER_IMAGE;
 
     // Generate stats targeting ~250 total power score
