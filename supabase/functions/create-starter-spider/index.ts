@@ -76,7 +76,7 @@ serve(async (req) => {
     const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
     const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
     const nickname = `${adj}${noun}`;
-    const image = STARTER_IMAGES[Math.floor(Math.random() * STARTER_IMAGES.length)];
+    const image = STARTER_IMAGE;
 
     // Generate stats targeting ~250 total power score
     const TARGET = 250;
