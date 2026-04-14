@@ -48,6 +48,14 @@ serve(async (req) => {
 
     const userId = claimsData.user.id;
 
+    // Get user's display name for the starter spider nickname
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", userId)
+      .single();
+    const displayName = profileData?.display_name || claimsData.user.email?.split("@")[0] || "Player";
+
     // Check if user already has any spiders (prevent duplicate starters)
     const { count } = await supabase
       .from("spiders")
