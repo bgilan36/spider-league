@@ -73,8 +73,8 @@ const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
 
   const handleStartFirstBattle = async () => {
     await markComplete();
-    // Navigate to home where the Starting 5 has the Battle Now button
-    navigate('/', { replace: true });
+    // Navigate to home with the starter spider ID so the Battle Now button glows
+    navigate('/', { replace: true, state: { newSpiderId: starterSpider?.id } });
   };
 
   const next = () => {
