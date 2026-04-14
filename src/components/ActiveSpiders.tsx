@@ -404,7 +404,7 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
                     <div className="flex flex-col gap-1 mt-1.5 sm:mt-2">
                       <Button
                         size="sm"
-                        className="w-full h-7 text-[10px] sm:text-xs gap-1"
+                        className={`w-full h-7 text-[10px] sm:text-xs gap-1 ${spider.id === newSpiderId ? 'animate-pulse shadow-glow ring-2 ring-primary' : ''}`}
                         disabled={onCooldown || isBattling}
                         onClick={() => handleBattleNow(spider)}
                       >

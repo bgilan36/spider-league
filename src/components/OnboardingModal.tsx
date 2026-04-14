@@ -73,8 +73,8 @@ const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
 
   const handleStartFirstBattle = async () => {
     await markComplete();
-    // Navigate to home where the Starting 5 has the Battle Now button
-    navigate('/', { replace: true });
+    // Navigate to home with the starter spider ID so the Battle Now button glows
+    navigate('/', { replace: true, state: { newSpiderId: starterSpider?.id } });
   };
 
   const next = () => {
@@ -135,7 +135,7 @@ const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
         <div className="flex gap-2">
           <Clock className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
           <div>
-            <span className="text-muted-foreground text-sm">Upload up to 3 new spiders per week. Expired spiders can be re-enlisted.</span>
+            <span className="text-muted-foreground text-sm">Expired spiders can be re-enlisted for another 30 days.</span>
           </div>
         </div>
       </div>
