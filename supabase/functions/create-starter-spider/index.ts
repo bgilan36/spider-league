@@ -14,9 +14,6 @@ const STARTER_SPECIES = [
   { species: "Wolf Spider", bias: { speed: 15, damage: 10 } },
 ];
 
-const ADJECTIVES = ["Shadow", "Crimson", "Iron", "Silk", "Night", "Ember", "Storm", "Ghost", "Venom", "Glimmer"];
-const NOUNS = ["Weaver", "Stalker", "Spinner", "Fang", "Crawler", "Prowler", "Skitter", "Bite", "Warden", "Hunter"];
-
 // Single starter spider image for all new users
 const STARTER_IMAGE = "https://spider-league.lovable.app/images/starter-spider.png";
 

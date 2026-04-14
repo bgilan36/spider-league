@@ -417,7 +417,7 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
                       <Button
                         size="sm"
                         variant="outline"
-                        className="w-full h-7 text-[10px] sm:text-xs gap-1 border-destructive/50 text-destructive hover:bg-destructive/10"
+                        className="w-full h-7 text-[10px] sm:text-xs gap-1 border-red-400/50 text-red-400 hover:bg-red-400/10"
                         disabled={onCooldown || isBattling}
                         onClick={() => handleOpenOpponentBrowser(spider)}
                       >
