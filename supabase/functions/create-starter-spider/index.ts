@@ -78,9 +78,7 @@ serve(async (req) => {
 
     // Pick a random starter species
     const starter = STARTER_SPECIES[Math.floor(Math.random() * STARTER_SPECIES.length)];
-    const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
-    const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
-    const nickname = `${adj}${noun}`;
+    const nickname = `${displayName}'s Starter Spider`;
     const image = STARTER_IMAGE;
 
     // Generate stats targeting ~250 total power score
