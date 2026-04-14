@@ -99,7 +99,7 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
 
   useEffect(() => {
     if (user) fetchSpiders();
-  }, [user]);
+  }, [user, newSpiderId]);
 
   const handleReenlist = async (spiderId: string) => {
     if (!user) return;
