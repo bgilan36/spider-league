@@ -17,12 +17,8 @@ const STARTER_SPECIES = [
 const ADJECTIVES = ["Shadow", "Crimson", "Iron", "Silk", "Night", "Ember", "Storm", "Ghost", "Venom", "Glimmer"];
 const NOUNS = ["Weaver", "Stalker", "Spinner", "Fang", "Crawler", "Prowler", "Skitter", "Bite", "Warden", "Hunter"];
 
-// Starter spider images (public domain spider illustrations)
-const STARTER_IMAGES = [
-  "https://images.unsplash.com/photo-1600697395543-26dedc78b2e4?w=400&h=400&fit=crop",
-  "https://images.unsplash.com/photo-1567847648-d37d8e73c269?w=400&h=400&fit=crop",
-  "https://images.unsplash.com/photo-1601158935942-52255782d322?w=400&h=400&fit=crop",
-];
+// Single starter spider image for all new users
+const STARTER_IMAGE = "https://spider-league.lovable.app/images/starter-spider.png";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
