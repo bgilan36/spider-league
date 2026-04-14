@@ -15,7 +15,7 @@ const STARTER_SPECIES = [
 ];
 
 // Single starter spider image for all new users
-const STARTER_IMAGE = "/images/starter-spider.png";
+const STARTER_IMAGE = "https://spider-league.lovable.app/images/starter-spider.png";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
