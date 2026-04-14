@@ -148,7 +148,7 @@ const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
           <Sword className="h-7 w-7 text-primary" />
         </div>
         <div className="h-14 w-14 rounded-2xl bg-destructive/10 flex items-center justify-center">
-          <Skull className="h-7 w-7 text-destructive" />
+          <Skull className="h-7 w-7 text-red-400" />
         </div>
       </div>
       <h2 className="text-xl font-bold">Two Ways to Fight</h2>
@@ -161,9 +161,9 @@ const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
           </div>
         </div>
         <div className="flex gap-2">
-          <Skull className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+          <Skull className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
           <div>
-            <span className="font-semibold text-destructive">Battle to the Death</span>
+            <span className="font-semibold text-red-400">Battle to the Death</span>
             <span className="text-muted-foreground text-sm"> — Winner takes the loser's spider forever. Both players must agree before it starts.</span>
           </div>
         </div>
