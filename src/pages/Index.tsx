@@ -794,6 +794,26 @@ const Index = () => {
               </li>
             </ul>
           </section>
+
+          <div className="mt-12 text-center">
+            <button
+              type="button"
+              className="text-[10px] text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors"
+              onClick={async () => {
+                setLoading(true);
+                const { error } = await signInAsDemo();
+                if (error) {
+                  toast({ title: "Demo sign-in failed", description: error.message, variant: "destructive" });
+                } else {
+                  toast({ title: "Signed in as Demo User", variant: "default" });
+                }
+                setLoading(false);
+              }}
+              disabled={loading}
+            >
+              demo access
+            </button>
+          </div>
         </div>
       </div>;
   }
