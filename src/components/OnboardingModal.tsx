@@ -135,7 +135,7 @@ const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
         <div className="flex gap-2">
           <Clock className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
           <div>
-            <span className="text-muted-foreground text-sm">Expired spiders can be re-enlisted for another 30 days.</span>
+            <span className="text-muted-foreground text-sm">Retired spiders can be re-enlisted for another 30 days.</span>
           </div>
         </div>
       </div>
