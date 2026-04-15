@@ -562,11 +562,6 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
             </div>
             <h1 className="text-3xl font-bold mb-2">Upload Your Spider</h1>
             <p className="text-muted-foreground">Upload a photo and we'll generate battle stats for your spider</p>
-            <div className="flex items-center justify-center gap-2 mt-4">
-              <Badge variant={weeklyUploadCount >= 3 ? "destructive" : "secondary"} className="text-sm">
-                {weeklyUploadCount}/3 Spiders Uploaded This Week
-              </Badge>
-            </div>
           </div>
 
           <Card>
