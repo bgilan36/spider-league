@@ -549,6 +549,20 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
           </div>
         )}
 
+        {/* Upload button when roster is full */}
+        {!loading && activeSpiders.length >= MAX_ACTIVE && (
+          <div className="flex justify-center mb-4">
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => navigate('/upload')}
+            >
+              <Upload className="h-4 w-4" />
+              Found a New Spider? Upload &amp; Replace
+            </Button>
+          </div>
+        )}
+
         {/* Info Text */}
         <div className="text-center text-xs text-muted-foreground bg-muted/30 rounded-lg p-3">
           <p>
