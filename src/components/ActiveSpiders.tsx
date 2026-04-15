@@ -710,6 +710,51 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
           setSelectedSpiderForStats(null);
         }}
       />
+
+      {/* Retire & Replace Dialog — shown when roster exceeds 5 after a new upload */}
+      <Dialog open={showRetireDialog} onOpenChange={setShowRetireDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RefreshCcw className="h-5 w-5 text-primary" />
+              Retire a Spider to Make Room
+            </DialogTitle>
+            <DialogDescription>
+              Your Starting 5 is full! Choose a spider to retire so your new spider can take its place.
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="max-h-[60vh]">
+            <div className="space-y-2 pr-4">
+              {activeSpiders
+                .filter(s => s.id !== newSpiderId)
+                .map((s) => (
+                  <Card
+                    key={s.id}
+                    className="cursor-pointer hover:ring-2 hover:ring-destructive/50 transition-all"
+                    onClick={() => handleRetireSpider(s.id)}
+                  >
+                    <CardContent className="p-3">
+                      <div className="flex items-center gap-3">
+                        <img src={s.image_url} alt={s.nickname} className="w-12 h-12 rounded object-cover" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{s.nickname}</p>
+                          <p className="text-xs text-muted-foreground truncate">{s.species}</p>
+                        </div>
+                        <div className="text-right">
+                          <Badge className={`${rarityColors[s.rarity]} text-white text-[10px]`}>
+                            {s.rarity}
+                          </Badge>
+                          <p className="text-xs text-muted-foreground mt-1">⚡ {s.power_score}</p>
+                          <p className="text-[10px] text-red-400 mt-0.5">Tap to retire</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
