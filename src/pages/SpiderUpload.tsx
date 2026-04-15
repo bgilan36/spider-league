@@ -468,24 +468,6 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
       // No active spider cap — user can always upload. If Starting 5 is full,
       // they'll be prompted to retire one after returning to the dashboard.
 
-      // Check weekly upload limit
-      const { data: canUpload, error: checkError } = await supabase.rpc('can_user_upload_this_week', { 
-        user_id_param: authUser.id 
-      });
-      
-      if (checkError) {
-        console.error("Error checking upload limit:", checkError);
-        throw new Error("Error checking upload permissions");
-      }
-      
-      if (!canUpload) {
-        toast({ 
-          title: "Weekly limit reached", 
-          description: "You can only upload 3 eligible spiders per week. Week resets on Sunday at 12am PT.", 
-          variant: "destructive" 
-        });
-        return;
-      }
 
       // Upload image to storage
       const fileExt = selectedFile.name.split('.').pop();
