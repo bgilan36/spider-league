@@ -732,27 +732,6 @@ const Index = () => {
                   </svg>
                   Continue with Google
                 </Button>
-                <Button type="button" variant="secondary" className="w-full" onClick={async () => {
-                setLoading(true);
-                const {
-                  error
-                } = await signInAsDemo();
-                if (error) {
-                  toast({
-                    title: "Demo sign-in failed",
-                    description: error.message,
-                    variant: "destructive"
-                  });
-                } else {
-                  toast({
-                    title: "Signed in as Demo User",
-                    variant: "default"
-                  });
-                }
-                setLoading(false);
-              }} disabled={loading}>
-                  🕷️ Sign in as Demo User (Development)
-                </Button>
                 <div className="text-center text-xs text-muted-foreground">or continue with email</div>
               </div>
               <form onSubmit={handleSubmit} className="space-y-4">
