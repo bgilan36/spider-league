@@ -52,7 +52,8 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
   const { user } = useAuth();
   const navigate = useNavigate();
   const [activeSpiders, setActiveSpiders] = useState<Spider[]>([]);
-  const [expiredSpiders, setExpiredSpiders] = useState<Spider[]>([]);
+  const [retiredSpiders, setRetiredSpiders] = useState<Spider[]>([]);
+  const [showRetireDialog, setShowRetireDialog] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isReenlistDialogOpen, setIsReenlistDialogOpen] = useState(false);
   const [selectedSpiderForStats, setSelectedSpiderForStats] = useState<Spider | null>(null);
@@ -87,9 +88,9 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
       if (error) throw error;
       const spiders = (data || []) as Spider[];
       const active = spiders.filter(s => s.eligible_until && new Date(s.eligible_until) > new Date(now));
-      const expired = spiders.filter(s => !s.eligible_until || new Date(s.eligible_until) <= new Date(now));
+      const retired = spiders.filter(s => !s.eligible_until || new Date(s.eligible_until) <= new Date(now));
       setActiveSpiders(active);
-      setExpiredSpiders(expired);
+      setRetiredSpiders(retired);
     } catch (error) {
       console.error('Error fetching spiders:', error);
     } finally {
@@ -100,6 +101,33 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
   useEffect(() => {
     if (user) fetchSpiders();
   }, [user, newSpiderId]);
+
+  // Auto-open retire dialog when roster is over capacity after a new upload
+  useEffect(() => {
+    if (newSpiderId && activeSpiders.length > MAX_ACTIVE && !loading) {
+      setShowRetireDialog(true);
+    }
+  }, [activeSpiders, newSpiderId, loading]);
+
+  const handleRetireSpider = async (spiderId: string) => {
+    if (!user) return;
+    try {
+      // Set eligible_until to now, effectively retiring it
+      const { error } = await supabase
+        .from('spiders')
+        .update({ eligible_until: new Date().toISOString() })
+        .eq('id', spiderId)
+        .eq('owner_id', user.id);
+      if (error) throw error;
+      toast.success('Spider retired! Your new spider is now in the Starting 5.');
+      setShowRetireDialog(false);
+      await fetchSpiders();
+      onSpiderChange?.();
+    } catch (error: any) {
+      console.error('Error retiring spider:', error);
+      toast.error(error.message || 'Failed to retire spider');
+    }
+  };
 
   const handleReenlist = async (spiderId: string) => {
     if (!user) return;
@@ -325,7 +353,7 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
                 </Tooltip>
               </div>
               <p className="text-xs sm:text-sm text-muted-foreground">
-                {activeSpiders.length}/{MAX_ACTIVE} active • {expiredSpiders.length} expired
+                {activeSpiders.length}/{MAX_ACTIVE} active • {retiredSpiders.length} retired
               </p>
             </div>
           </div>
@@ -455,7 +483,7 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
                       <Upload className="h-3 w-3" />
                       Upload
                     </Button>
-                    {expiredSpiders.length > 0 && (
+                    {retiredSpiders.length > 0 && (
                       <Dialog open={isReenlistDialogOpen} onOpenChange={setIsReenlistDialogOpen}>
                         <DialogTrigger asChild>
                           <Button
@@ -475,17 +503,17 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
                               Re-enlist Spider
                             </DialogTitle>
                             <DialogDescription>
-                              Choose an expired spider to re-activate for 30 more days.
+                              Choose a retired spider to re-activate for 30 more days.
                             </DialogDescription>
                           </DialogHeader>
                           <ScrollArea className="max-h-[60vh]">
                             <div className="space-y-2 pr-4">
-                              {expiredSpiders.length === 0 ? (
+                              {retiredSpiders.length === 0 ? (
                                 <p className="text-center text-muted-foreground py-8">
-                                  No expired spiders available.
+                                  No retired spiders available.
                                 </p>
                               ) : (
-                                expiredSpiders.map((s) => (
+                                retiredSpiders.map((s) => (
                                   <Card
                                     key={s.id}
                                     className="cursor-pointer hover:ring-2 hover:ring-primary transition-all"
@@ -682,6 +710,51 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
           setSelectedSpiderForStats(null);
         }}
       />
+
+      {/* Retire & Replace Dialog — shown when roster exceeds 5 after a new upload */}
+      <Dialog open={showRetireDialog} onOpenChange={setShowRetireDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RefreshCcw className="h-5 w-5 text-primary" />
+              Retire a Spider to Make Room
+            </DialogTitle>
+            <DialogDescription>
+              Your Starting 5 is full! Choose a spider to retire so your new spider can take its place.
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="max-h-[60vh]">
+            <div className="space-y-2 pr-4">
+              {activeSpiders
+                .filter(s => s.id !== newSpiderId)
+                .map((s) => (
+                  <Card
+                    key={s.id}
+                    className="cursor-pointer hover:ring-2 hover:ring-destructive/50 transition-all"
+                    onClick={() => handleRetireSpider(s.id)}
+                  >
+                    <CardContent className="p-3">
+                      <div className="flex items-center gap-3">
+                        <img src={s.image_url} alt={s.nickname} className="w-12 h-12 rounded object-cover" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{s.nickname}</p>
+                          <p className="text-xs text-muted-foreground truncate">{s.species}</p>
+                        </div>
+                        <div className="text-right">
+                          <Badge className={`${rarityColors[s.rarity]} text-white text-[10px]`}>
+                            {s.rarity}
+                          </Badge>
+                          <p className="text-xs text-muted-foreground mt-1">⚡ {s.power_score}</p>
+                          <p className="text-[10px] text-red-400 mt-0.5">Tap to retire</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

@@ -465,48 +465,9 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
         throw new Error("You must be logged in to upload spiders");
       }
 
-      // Check active spider cap (max 5)
-      const now = new Date().toISOString();
-      const { count: activeCount, error: countError } = await supabase
-        .from('spiders')
-        .select('id', { count: 'exact', head: true })
-        .eq('owner_id', authUser.id)
-        .eq('is_approved', true)
-        .gt('eligible_until', now);
+      // No active spider cap — user can always upload. If Starting 5 is full,
+      // they'll be prompted to retire one after returning to the dashboard.
 
-      if (countError) {
-        console.error("Error checking active spider count:", countError);
-        throw new Error("Error checking active spider count");
-      }
-
-      if ((activeCount ?? 0) >= 5) {
-        toast({
-          title: "Active spider limit reached",
-          description: "You can only have 5 active spiders at a time. Wait for one to expire or let it time out before uploading a new one.",
-          variant: "destructive"
-        });
-        setUploading(false);
-        return;
-      }
-
-      // Check weekly upload limit
-      const { data: canUpload, error: checkError } = await supabase.rpc('can_user_upload_this_week', { 
-        user_id_param: authUser.id 
-      });
-      
-      if (checkError) {
-        console.error("Error checking upload limit:", checkError);
-        throw new Error("Error checking upload permissions");
-      }
-      
-      if (!canUpload) {
-        toast({ 
-          title: "Weekly limit reached", 
-          description: "You can only upload 3 eligible spiders per week. Week resets on Sunday at 12am PT.", 
-          variant: "destructive" 
-        });
-        return;
-      }
 
       // Upload image to storage
       const fileExt = selectedFile.name.split('.').pop();
@@ -601,11 +562,6 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
             </div>
             <h1 className="text-3xl font-bold mb-2">Upload Your Spider</h1>
             <p className="text-muted-foreground">Upload a photo and we'll generate battle stats for your spider</p>
-            <div className="flex items-center justify-center gap-2 mt-4">
-              <Badge variant={weeklyUploadCount >= 3 ? "destructive" : "secondary"} className="text-sm">
-                {weeklyUploadCount}/3 Spiders Uploaded This Week
-              </Badge>
-            </div>
           </div>
 
           <Card>
