@@ -88,9 +88,9 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
       if (error) throw error;
       const spiders = (data || []) as Spider[];
       const active = spiders.filter(s => s.eligible_until && new Date(s.eligible_until) > new Date(now));
-      const expired = spiders.filter(s => !s.eligible_until || new Date(s.eligible_until) <= new Date(now));
+      const retired = spiders.filter(s => !s.eligible_until || new Date(s.eligible_until) <= new Date(now));
       setActiveSpiders(active);
-      setExpiredSpiders(expired);
+      setRetiredSpiders(retired);
     } catch (error) {
       console.error('Error fetching spiders:', error);
     } finally {
@@ -326,7 +326,7 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
                 </Tooltip>
               </div>
               <p className="text-xs sm:text-sm text-muted-foreground">
-                {activeSpiders.length}/{MAX_ACTIVE} active • {expiredSpiders.length} expired
+                {activeSpiders.length}/{MAX_ACTIVE} active • {retiredSpiders.length} retired
               </p>
             </div>
           </div>
@@ -456,7 +456,7 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
                       <Upload className="h-3 w-3" />
                       Upload
                     </Button>
-                    {expiredSpiders.length > 0 && (
+                    {retiredSpiders.length > 0 && (
                       <Dialog open={isReenlistDialogOpen} onOpenChange={setIsReenlistDialogOpen}>
                         <DialogTrigger asChild>
                           <Button
@@ -476,17 +476,17 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
                               Re-enlist Spider
                             </DialogTitle>
                             <DialogDescription>
-                              Choose an expired spider to re-activate for 30 more days.
+                              Choose a retired spider to re-activate for 30 more days.
                             </DialogDescription>
                           </DialogHeader>
                           <ScrollArea className="max-h-[60vh]">
                             <div className="space-y-2 pr-4">
-                              {expiredSpiders.length === 0 ? (
+                              {retiredSpiders.length === 0 ? (
                                 <p className="text-center text-muted-foreground py-8">
-                                  No expired spiders available.
+                                  No retired spiders available.
                                 </p>
                               ) : (
-                                expiredSpiders.map((s) => (
+                                retiredSpiders.map((s) => (
                                   <Card
                                     key={s.id}
                                     className="cursor-pointer hover:ring-2 hover:ring-primary transition-all"
