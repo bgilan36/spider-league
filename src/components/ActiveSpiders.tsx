@@ -102,6 +102,33 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
     if (user) fetchSpiders();
   }, [user, newSpiderId]);
 
+  // Auto-open retire dialog when roster is over capacity after a new upload
+  useEffect(() => {
+    if (newSpiderId && activeSpiders.length > MAX_ACTIVE && !loading) {
+      setShowRetireDialog(true);
+    }
+  }, [activeSpiders, newSpiderId, loading]);
+
+  const handleRetireSpider = async (spiderId: string) => {
+    if (!user) return;
+    try {
+      // Set eligible_until to now, effectively retiring it
+      const { error } = await supabase
+        .from('spiders')
+        .update({ eligible_until: new Date().toISOString() })
+        .eq('id', spiderId)
+        .eq('owner_id', user.id);
+      if (error) throw error;
+      toast.success('Spider retired! Your new spider is now in the Starting 5.');
+      setShowRetireDialog(false);
+      await fetchSpiders();
+      onSpiderChange?.();
+    } catch (error: any) {
+      console.error('Error retiring spider:', error);
+      toast.error(error.message || 'Failed to retire spider');
+    }
+  };
+
   const handleReenlist = async (spiderId: string) => {
     if (!user) return;
     if (activeSpiders.length >= MAX_ACTIVE) {
