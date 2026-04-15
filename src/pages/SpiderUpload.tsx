@@ -465,29 +465,8 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
         throw new Error("You must be logged in to upload spiders");
       }
 
-      // Check active spider cap (max 5)
-      const now = new Date().toISOString();
-      const { count: activeCount, error: countError } = await supabase
-        .from('spiders')
-        .select('id', { count: 'exact', head: true })
-        .eq('owner_id', authUser.id)
-        .eq('is_approved', true)
-        .gt('eligible_until', now);
-
-      if (countError) {
-        console.error("Error checking active spider count:", countError);
-        throw new Error("Error checking active spider count");
-      }
-
-      if ((activeCount ?? 0) >= 5) {
-        toast({
-          title: "Active spider limit reached",
-          description: "You can only have 5 active spiders at a time. Wait for one to expire or let it time out before uploading a new one.",
-          variant: "destructive"
-        });
-        setUploading(false);
-        return;
-      }
+      // No active spider cap — user can always upload. If Starting 5 is full,
+      // they'll be prompted to retire one after returning to the dashboard.
 
       // Check weekly upload limit
       const { data: canUpload, error: checkError } = await supabase.rpc('can_user_upload_this_week', { 
