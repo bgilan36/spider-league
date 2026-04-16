@@ -249,6 +249,14 @@ const TurnBasedBattle = () => {
                     const isSpecial = turn.action_type === 'special';
                     const dodged = result?.dodged || false;
                     const isCritical = result?.is_critical || false;
+                    // Resolve attacker/defender base stats so we can show quantified totals
+                    const attackerIsMe = turn.actor_user_id === user?.id;
+                    const attackerSpider = attackerIsMe ? mySpider : opponentSpider;
+                    const defenderSpider = attackerIsMe ? opponentSpider : mySpider;
+                    const attackerStat = isSpecial ? (attackerSpider?.venom ?? 0) : (attackerSpider?.damage ?? 0);
+                    const defenderStat = defenderSpider?.defense ?? 0;
+                    const attackTotal = attackerStat + (result?.attacker_dice ?? 0);
+                    const defenseTotal = defenderStat + (result?.defender_dice ?? 0);
                     
                     return (
                       <motion.div
