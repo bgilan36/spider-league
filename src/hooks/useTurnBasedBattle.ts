@@ -123,19 +123,8 @@ export const useTurnBasedBattle = (battleId: string | null) => {
     ? (isTeamA ? battle.p2_current_hp : battle.p1_current_hp) ?? opponentSpiderRaw?.hit_points ?? null
     : null;
 
-  // Get my spider
-  const mySpider = battle
-    ? (battle.team_a as any)?.userId === user?.id
-      ? (battle.team_a as any)?.spider
-      : (battle.team_b as any)?.spider
-    : null;
-
-  // Get opponent spider
-  const opponentSpider = battle
-    ? (battle.team_a as any)?.userId === user?.id
-      ? (battle.team_b as any)?.spider
-      : (battle.team_a as any)?.spider
-    : null;
+  const mySpider = mySpiderRaw;
+  const opponentSpider = opponentSpiderRaw;
 
   useEffect(() => {
     if (!battleId) return;
