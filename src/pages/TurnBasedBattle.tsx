@@ -968,10 +968,10 @@ const TurnBasedBattle = () => {
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">HP</span>
-                  <span className="font-bold">{opponentHp} / {opponentSpider.hit_points}</span>
+                  <span className="font-bold">{displayedOpponentHp} / {opponentSpider.hit_points}</span>
                 </div>
                 <Progress 
-                  value={((opponentHp || 0) / opponentSpider.hit_points) * 100}
+                  value={((displayedOpponentHp || 0) / opponentSpider.hit_points) * 100}
                   className="h-3"
                 />
                 
