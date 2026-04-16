@@ -588,6 +588,9 @@ const TurnBasedBattle = () => {
                                     >
                                       {result.defender_dice}
                                     </motion.div>
+                                    <div className="text-[11px] text-muted-foreground font-mono mt-0.5">
+                                      {defenderStat} DEF + {result.defender_dice} = <span className="font-bold text-foreground">{defenseTotal}</span>
+                                    </div>
                                   </div>
                                 </motion.div>
                               </motion.div>
