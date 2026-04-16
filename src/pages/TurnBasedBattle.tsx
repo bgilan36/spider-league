@@ -32,7 +32,45 @@ const TurnBasedBattle = () => {
   const [showOutcomeReveal, setShowOutcomeReveal] = useState(false);
   const [hasConfirmedPresence, setHasConfirmedPresence] = useState(false);
   const [revealedTurnsCount, setRevealedTurnsCount] = useState(0);
+  const [viewedTurnIndex, setViewedTurnIndex] = useState(0); // 0-based index into turns[]
   const [statImprovements, setStatImprovements] = useState<Record<string, number> | null>(null);
+
+  const playbackComplete = turns.length > 0 && revealedTurnsCount >= turns.length;
+
+  // While playback is running, always show the latest revealed turn.
+  // Once playback completes, let the user scrub via the carousel.
+  useEffect(() => {
+    if (!playbackComplete && revealedTurnsCount > 0) {
+      setViewedTurnIndex(revealedTurnsCount - 1);
+    }
+  }, [revealedTurnsCount, playbackComplete]);
+
+  // When playback finishes, snap to the final turn.
+  useEffect(() => {
+    if (playbackComplete) {
+      setViewedTurnIndex(turns.length - 1);
+    }
+  }, [playbackComplete, turns.length]);
+
+  const visibleTurn = turns[viewedTurnIndex] ?? null;
+
+  // Derive displayed HP from the currently viewed turn so scrubbing rewinds the bars.
+  const { displayedMyHp, displayedOpponentHp } = useMemo(() => {
+    if (!visibleTurn || !mySpider || !opponentSpider) {
+      return { displayedMyHp: myHp, displayedOpponentHp: opponentHp };
+    }
+    let myH = mySpider.hit_points;
+    let opH = opponentSpider.hit_points;
+    for (let i = 0; i <= viewedTurnIndex; i++) {
+      const t: any = turns[i];
+      const r = t?.result_payload;
+      if (!r) continue;
+      const defenderIsMe = t.actor_user_id !== user?.id;
+      if (defenderIsMe) myH = r.new_defender_hp ?? myH;
+      else opH = r.new_defender_hp ?? opH;
+    }
+    return { displayedMyHp: myH, displayedOpponentHp: opH };
+  }, [visibleTurn, viewedTurnIndex, turns, mySpider, opponentSpider, myHp, opponentHp, user?.id]);
 
   // Extract stat improvements from the last turn's result
   useEffect(() => {
