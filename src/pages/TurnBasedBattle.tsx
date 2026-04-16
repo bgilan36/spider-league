@@ -249,6 +249,14 @@ const TurnBasedBattle = () => {
                     const isSpecial = turn.action_type === 'special';
                     const dodged = result?.dodged || false;
                     const isCritical = result?.is_critical || false;
+                    // Resolve attacker/defender base stats so we can show quantified totals
+                    const attackerIsMe = turn.actor_user_id === user?.id;
+                    const attackerSpider = attackerIsMe ? mySpider : opponentSpider;
+                    const defenderSpider = attackerIsMe ? opponentSpider : mySpider;
+                    const attackerStat = isSpecial ? (attackerSpider?.venom ?? 0) : (attackerSpider?.damage ?? 0);
+                    const defenderStat = defenderSpider?.defense ?? 0;
+                    const attackTotal = attackerStat + (result?.attacker_dice ?? 0);
+                    const defenseTotal = defenderStat + (result?.defender_dice ?? 0);
                     
                     return (
                       <motion.div
@@ -535,6 +543,9 @@ const TurnBasedBattle = () => {
                                     >
                                       {result.attacker_dice}
                                     </motion.div>
+                                    <div className="text-[11px] text-muted-foreground font-mono mt-0.5">
+                                      {attackerStat} {isSpecial ? 'VEN' : 'ATK'} + {result.attacker_dice} = <span className="font-bold text-foreground">{attackTotal}</span>
+                                    </div>
                                   </div>
                                 </motion.div>
                                 <div className="h-8 w-px bg-border" />
@@ -577,6 +588,9 @@ const TurnBasedBattle = () => {
                                     >
                                       {result.defender_dice}
                                     </motion.div>
+                                    <div className="text-[11px] text-muted-foreground font-mono mt-0.5">
+                                      {defenderStat} DEF + {result.defender_dice} = <span className="font-bold text-foreground">{defenseTotal}</span>
+                                    </div>
                                   </div>
                                 </motion.div>
                               </motion.div>

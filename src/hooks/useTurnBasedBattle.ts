@@ -108,33 +108,23 @@ export const useTurnBasedBattle = (battleId: string | null) => {
   // Check if it's current user's turn
   const isMyTurn = battle?.current_turn_user_id === user?.id;
 
-  // Get current user's HP
-  const myHp = battle 
-    ? (battle.team_a as any)?.userId === user?.id 
-      ? battle.p1_current_hp 
-      : battle.p2_current_hp
+  // Get my spider/opponent spider first so we can fall back to max HP before turns start
+  const isTeamA = battle ? (battle.team_a as any)?.userId === user?.id : false;
+  const mySpiderRaw = battle ? (isTeamA ? (battle.team_a as any)?.spider : (battle.team_b as any)?.spider) : null;
+  const opponentSpiderRaw = battle ? (isTeamA ? (battle.team_b as any)?.spider : (battle.team_a as any)?.spider) : null;
+
+  // Current HP — fall back to spider's max HP when battle hasn't started yet
+  // (p1_current_hp / p2_current_hp are null until the first turn is processed).
+  const myHp = battle
+    ? (isTeamA ? battle.p1_current_hp : battle.p2_current_hp) ?? mySpiderRaw?.hit_points ?? null
     : null;
 
-  // Get opponent's HP
   const opponentHp = battle
-    ? (battle.team_a as any)?.userId === user?.id
-      ? battle.p2_current_hp
-      : battle.p1_current_hp
+    ? (isTeamA ? battle.p2_current_hp : battle.p1_current_hp) ?? opponentSpiderRaw?.hit_points ?? null
     : null;
 
-  // Get my spider
-  const mySpider = battle
-    ? (battle.team_a as any)?.userId === user?.id
-      ? (battle.team_a as any)?.spider
-      : (battle.team_b as any)?.spider
-    : null;
-
-  // Get opponent spider
-  const opponentSpider = battle
-    ? (battle.team_a as any)?.userId === user?.id
-      ? (battle.team_b as any)?.spider
-      : (battle.team_a as any)?.spider
-    : null;
+  const mySpider = mySpiderRaw;
+  const opponentSpider = opponentSpiderRaw;
 
   useEffect(() => {
     if (!battleId) return;
