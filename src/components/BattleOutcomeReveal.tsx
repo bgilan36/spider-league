@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Trophy, Crown, Sparkles, Share2, X, TrendingUp, Zap, Shield, Target, Droplet, Globe } from 'lucide-react';
+import { Trophy, Crown, Sparkles, Share2, X, TrendingUp, Zap, Shield, Target, Droplet, Globe, Skull } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Spider {
@@ -83,61 +83,56 @@ const BattleOutcomeReveal: React.FC<BattleOutcomeRevealProps> = ({
   isCurrentUserWinner,
 }) => {
   const hasImprovements = statImprovements && Object.keys(statImprovements).length > 0;
+  // Only show celebratory victory UI when the current user actually won.
+  // When the current user lost, show a defeat screen instead.
+  const showVictory = isCurrentUserWinner !== false; // true or undefined => victory view (back-compat)
+  const isDefeat = isCurrentUserWinner === false;
+
   const handleShare = async () => {
-    const shareText = `🕷️ ${winner.nickname} just won an epic battle in Spider League! 🏆\n\nJoin the action and battle your own spiders at https://spiderleague.app/`;
-    const shareUrl = 'https://spiderleague.app/';
+    const shareUrl = 'https://spiderleague.app';
+    const shareText = isDefeat
+      ? `🕷️ My spider ${loser.nickname} was defeated by ${winner.nickname} in Spider League. Join the action at ${shareUrl}`
+      : `🕷️ Check out ${winner.nickname}'s recent victory in Spider League. Join the action at ${shareUrl}`;
+    const shareTitle = isDefeat ? 'Spider League Battle Defeat' : 'Spider League Battle Victory';
+    // Only attach the spider image when celebrating a victory by the current user.
+    const imageSpider = isDefeat ? null : winner;
 
     try {
       if (navigator.share) {
-        // Try to fetch and include the spider image
-        try {
-          const response = await fetch(winner.image_url);
-          const blob = await response.blob();
-          const file = new File([blob], `${winner.nickname}-victory.jpg`, { type: blob.type });
+        if (imageSpider) {
+          try {
+            const response = await fetch(imageSpider.image_url);
+            const blob = await response.blob();
+            const file = new File([blob], `${imageSpider.nickname}-victory.jpg`, { type: blob.type });
 
-          // Check if sharing files is supported
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({
-              title: 'Spider League Battle Victory',
-              text: shareText,
-              url: shareUrl,
-              files: [file],
-            });
-            toast.success('Battle shared successfully!');
-          } else {
-            // Share without image if files not supported
-            await navigator.share({
-              title: 'Spider League Battle Victory',
-              text: shareText,
-              url: shareUrl,
-            });
-            toast.success('Battle shared successfully!');
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                title: shareTitle,
+                text: shareText,
+                url: shareUrl,
+                files: [file],
+              });
+              toast.success('Battle shared successfully!');
+              return;
+            }
+          } catch (imageError) {
+            console.warn('Could not fetch image, sharing without it:', imageError);
           }
-        } catch (imageError) {
-          console.warn('Could not fetch image, sharing without it:', imageError);
-          // Fallback to sharing without image
-          await navigator.share({
-            title: 'Spider League Battle Victory',
-            text: shareText,
-            url: shareUrl,
-          });
-          toast.success('Battle shared successfully!');
         }
+
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl,
+        });
+        toast.success('Battle shared successfully!');
       } else {
-        // Fallback: Copy to clipboard
         await navigator.clipboard.writeText(shareText);
         toast.success('Battle result copied to clipboard! Share it with your friends!');
       }
     } catch (error) {
-      // User cancelled share or clipboard access denied
-      if ((error as Error).name === 'AbortError') {
-        // User cancelled, don't show error
-        return;
-      }
-      
+      if ((error as Error).name === 'AbortError') return;
       console.error('Share error:', error);
-      
-      // Final fallback: create a temporary textarea to copy
       try {
         const textarea = document.createElement('textarea');
         textarea.value = shareText;
@@ -155,6 +150,142 @@ const BattleOutcomeReveal: React.FC<BattleOutcomeRevealProps> = ({
     }
   };
 
+  // ============ DEFEAT VIEW ============
+  if (isDefeat) {
+    // From the current user's perspective: their spider is `loser`, opponent's is `winner`.
+    const myFallen = loser;
+    const victor = winner;
+    return (
+      <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.4 }}
+          className="relative z-10 max-w-3xl w-full"
+        >
+          <Card className="border-4 border-red-500/60 bg-gradient-to-br from-red-500/10 via-background to-background shadow-2xl">
+            <CardContent className="p-8 text-center space-y-6">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-4 right-4"
+                onClick={onComplete}
+              >
+                <X className="h-5 w-5" />
+              </Button>
+
+              <motion.div
+                initial={{ scale: 0, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                transition={{ delay: 0.2, type: 'spring' }}
+              >
+                <Skull className="h-24 w-24 text-red-400 mx-auto" />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <h2 className="text-5xl md:text-6xl font-bold text-red-400 mb-2">
+                  DEFEATED
+                </h2>
+                <Badge variant="outline" className="text-base px-4 py-1 border-red-400/50 text-red-300">
+                  Battle Complete
+                </Badge>
+              </motion.div>
+
+              {/* Your fallen spider */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.6 }}
+                className="max-w-md mx-auto"
+              >
+                <Card className="ring-2 ring-red-400/60 bg-red-500/5">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-4">
+                      <img
+                        src={myFallen.image_url}
+                        alt={myFallen.nickname}
+                        className="w-24 h-24 rounded-full object-cover ring-4 ring-red-400/60 grayscale"
+                      />
+                      <div className="flex-1 text-left">
+                        <h3 className="text-2xl font-bold">{myFallen.nickname}</h3>
+                        <p className="text-sm text-muted-foreground">{myFallen.species}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Owned by <span className="font-semibold text-foreground">You</span>
+                        </p>
+                        <div className="mt-2">
+                          <Badge variant="outline">Power: {myFallen.power_score}</Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.85 }}
+                className="text-xl font-semibold text-red-300"
+              >
+                {myFallen.nickname} was defeated by {victor.nickname}
+              </motion.div>
+
+              {/* Victor */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.85 }}
+                transition={{ delay: 1.0 }}
+                className="text-sm text-muted-foreground"
+              >
+                <p className="mb-2">Defeated by:</p>
+                <div className="flex items-center justify-center gap-2">
+                  <img
+                    src={victor.image_url}
+                    alt={victor.nickname}
+                    className="w-12 h-12 rounded-full object-cover ring-2 ring-foreground/20"
+                  />
+                  <div className="text-left">
+                    <p className="font-semibold text-foreground">{victor.nickname}</p>
+                    <p className="text-xs">Owned by {winnerOwnerName}</p>
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.2 }}
+                className="flex gap-3 justify-center pt-4"
+              >
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={handleShare}
+                  className="gap-2"
+                >
+                  <Share2 className="h-5 w-5" />
+                  Share
+                </Button>
+                <Button
+                  size="lg"
+                  onClick={onComplete}
+                  className="gap-2"
+                >
+                  Close
+                </Button>
+              </motion.div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ============ VICTORY VIEW ============
   return (
     <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
       {/* Animated background particles */}
