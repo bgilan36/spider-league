@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { ArrowLeft, Loader2, Trophy } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Loader2, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -32,7 +32,45 @@ const TurnBasedBattle = () => {
   const [showOutcomeReveal, setShowOutcomeReveal] = useState(false);
   const [hasConfirmedPresence, setHasConfirmedPresence] = useState(false);
   const [revealedTurnsCount, setRevealedTurnsCount] = useState(0);
+  const [viewedTurnIndex, setViewedTurnIndex] = useState(0); // 0-based index into turns[]
   const [statImprovements, setStatImprovements] = useState<Record<string, number> | null>(null);
+
+  const playbackComplete = turns.length > 0 && revealedTurnsCount >= turns.length;
+
+  // While playback is running, always show the latest revealed turn.
+  // Once playback completes, let the user scrub via the carousel.
+  useEffect(() => {
+    if (!playbackComplete && revealedTurnsCount > 0) {
+      setViewedTurnIndex(revealedTurnsCount - 1);
+    }
+  }, [revealedTurnsCount, playbackComplete]);
+
+  // When playback finishes, snap to the final turn.
+  useEffect(() => {
+    if (playbackComplete) {
+      setViewedTurnIndex(turns.length - 1);
+    }
+  }, [playbackComplete, turns.length]);
+
+  const visibleTurn = turns[viewedTurnIndex] ?? null;
+
+  // Derive displayed HP from the currently viewed turn so scrubbing rewinds the bars.
+  const { displayedMyHp, displayedOpponentHp } = useMemo(() => {
+    if (!visibleTurn || !mySpider || !opponentSpider) {
+      return { displayedMyHp: myHp, displayedOpponentHp: opponentHp };
+    }
+    let myH = mySpider.hit_points;
+    let opH = opponentSpider.hit_points;
+    for (let i = 0; i <= viewedTurnIndex; i++) {
+      const t: any = turns[i];
+      const r = t?.result_payload;
+      if (!r) continue;
+      const defenderIsMe = t.actor_user_id !== user?.id;
+      if (defenderIsMe) myH = r.new_defender_hp ?? myH;
+      else opH = r.new_defender_hp ?? opH;
+    }
+    return { displayedMyHp: myH, displayedOpponentHp: opH };
+  }, [visibleTurn, viewedTurnIndex, turns, mySpider, opponentSpider, myHp, opponentHp, user?.id]);
 
   // Extract stat improvements from the last turn's result
   useEffect(() => {
@@ -232,9 +270,40 @@ const TurnBasedBattle = () => {
         {/* Battle Log - Moved to Top */}
         <Card className="mb-6">
           <CardContent className="p-6">
-            <h3 className="text-lg font-bold mb-4">Battle Log</h3>
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {turns.length === 0 ? (
+            <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+              <h3 className="text-lg font-bold">Battle Log</h3>
+              {turns.length > 0 && (
+                <div className="flex items-center gap-2">
+                  {playbackComplete && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setViewedTurnIndex((i) => Math.max(0, i - 1))}
+                      disabled={viewedTurnIndex <= 0}
+                      aria-label="Previous turn"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                  )}
+                  <span className="text-sm font-mono text-muted-foreground min-w-[80px] text-center">
+                    Turn {viewedTurnIndex + 1} / {playbackComplete ? turns.length : revealedTurnsCount}
+                  </span>
+                  {playbackComplete && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setViewedTurnIndex((i) => Math.min(turns.length - 1, i + 1))}
+                      disabled={viewedTurnIndex >= turns.length - 1}
+                      aria-label="Next turn"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="space-y-2">
+              {turns.length === 0 || !visibleTurn ? (
                 <div className="text-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto mb-2" />
                   <p className="text-sm text-muted-foreground">
@@ -242,8 +311,8 @@ const TurnBasedBattle = () => {
                   </p>
                 </div>
               ) : (
-                <AnimatePresence mode="popLayout">
-                  {turns.slice(0, revealedTurnsCount).reverse().map((turn, index) => {
+                <AnimatePresence mode="wait">
+                  {[visibleTurn].map((turn) => {
                     const result = turn.result_payload as any;
                     const isAttack = turn.action_type === 'attack';
                     const isSpecial = turn.action_type === 'special';
@@ -851,10 +920,10 @@ const TurnBasedBattle = () => {
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">HP</span>
-                  <span className="font-bold">{myHp} / {mySpider.hit_points}</span>
+                  <span className="font-bold">{displayedMyHp} / {mySpider.hit_points}</span>
                 </div>
                 <Progress 
-                  value={((myHp || 0) / mySpider.hit_points) * 100}
+                  value={((displayedMyHp || 0) / mySpider.hit_points) * 100}
                   className="h-3"
                 />
                 
@@ -899,10 +968,10 @@ const TurnBasedBattle = () => {
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">HP</span>
-                  <span className="font-bold">{opponentHp} / {opponentSpider.hit_points}</span>
+                  <span className="font-bold">{displayedOpponentHp} / {opponentSpider.hit_points}</span>
                 </div>
                 <Progress 
-                  value={((opponentHp || 0) / opponentSpider.hit_points) * 100}
+                  value={((displayedOpponentHp || 0) / opponentSpider.hit_points) * 100}
                   className="h-3"
                 />
                 
