@@ -543,6 +543,9 @@ const TurnBasedBattle = () => {
                                     >
                                       {result.attacker_dice}
                                     </motion.div>
+                                    <div className="text-[11px] text-muted-foreground font-mono mt-0.5">
+                                      {attackerStat} {isSpecial ? 'VEN' : 'ATK'} + {result.attacker_dice} = <span className="font-bold text-foreground">{attackTotal}</span>
+                                    </div>
                                   </div>
                                 </motion.div>
                                 <div className="h-8 w-px bg-border" />
