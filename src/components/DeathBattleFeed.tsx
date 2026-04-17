@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Skull, Timer, Swords } from 'lucide-react';
+import { Skull, Timer, Swords, ChevronDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import ClickableUsername from './ClickableUsername';
 
 interface DeathChallenge {
@@ -20,7 +21,9 @@ interface DeathChallenge {
 const DeathBattleFeed: React.FC = () => {
   const [challenges, setChallenges] = useState<DeathChallenge[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAll, setShowAll] = useState(false);
   const fetchRef = useRef<() => void>(() => {});
+  const INITIAL_VISIBLE = 3;
 
   const fetchChallenges = useCallback(async () => {
     try {
@@ -119,7 +122,7 @@ const DeathBattleFeed: React.FC = () => {
       </div>
 
       <div className="space-y-3">
-        {challenges.map(challenge => {
+        {(showAll ? challenges : challenges.slice(0, INITIAL_VISIBLE)).map(challenge => {
           const timeLeft = new Date(challenge.expires_at).getTime() - Date.now();
           const hoursLeft = Math.max(0, Math.floor(timeLeft / (1000 * 60 * 60)));
           const spider = challenge.challenger_spider;
@@ -180,6 +183,19 @@ const DeathBattleFeed: React.FC = () => {
           );
         })}
       </div>
+
+      {!showAll && challenges.length > INITIAL_VISIBLE && (
+        <div className="flex justify-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowAll(true)}
+            className="text-xs"
+          >
+            See more ({challenges.length - INITIAL_VISIBLE}) <ChevronDown className="w-3 h-3 ml-1" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
