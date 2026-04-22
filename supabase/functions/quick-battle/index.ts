@@ -38,12 +38,39 @@ serve(async (req) => {
     const userId = claimsData.user.id;
     const now = new Date().toISOString();
 
-    // Parse request body for optional spiderId
+    // Parse request body for optional spiderId and private league scope
     let requestedSpiderId: string | null = null;
+    let leagueId: string | null = null;
     try {
       const body = await req.json();
       requestedSpiderId = body?.spiderId || null;
+      leagueId = body?.leagueId || null;
     } catch { /* no body */ }
+
+    let leagueOpponentOwnerIds: string[] | null = null;
+    if (leagueId) {
+      const { data: membership, error: membershipError } = await supabase
+        .from("private_league_members")
+        .select("user_id")
+        .eq("league_id", leagueId);
+
+      if (membershipError) throw membershipError;
+
+      const isMember = membership?.some((member: any) => member.user_id === userId);
+      if (!isMember) {
+        return new Response(JSON.stringify({ error: "You are not a member of this pod." }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      leagueOpponentOwnerIds = (membership || [])
+        .map((member: any) => member.user_id)
+        .filter((memberId: string) => memberId !== userId);
+
+      if (leagueOpponentOwnerIds.length === 0) {
+        return new Response(JSON.stringify({ error: "Invite at least one friend before starting a pod battle." }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    }
 
     // Find user's spider (specific or best eligible, not on cooldown)
     const cooldownCutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString();
@@ -80,14 +107,21 @@ serve(async (req) => {
       const low = Math.floor(playerSpider.power_score * (1.0 - pct));
       const high = Math.ceil(playerSpider.power_score * (1.0 + pct));
 
-      const { data: opponents } = await supabase
+      let opponentQuery = supabase
         .from("spiders")
         .select("*")
         .eq("is_approved", true)
         .neq("owner_id", userId)
+        .gt("eligible_until", now)
+        .or(`last_battled_at.is.null,last_battled_at.lt.${cooldownCutoff}`)
         .gte("power_score", low)
-        .lte("power_score", high)
-        .limit(10);
+        .lte("power_score", high);
+
+      if (leagueOpponentOwnerIds) {
+        opponentQuery = opponentQuery.in("owner_id", leagueOpponentOwnerIds);
+      }
+
+      const { data: opponents } = await opponentQuery.limit(10);
 
       if (opponents && opponents.length > 0) {
         // Pick random from close matches
@@ -98,11 +132,19 @@ serve(async (req) => {
 
     if (!opponent) {
       // Fallback: any approved spider from another user
-      const { data: fallback } = await supabase
+      let fallbackQuery = supabase
         .from("spiders")
         .select("*")
         .eq("is_approved", true)
         .neq("owner_id", userId)
+        .gt("eligible_until", now)
+        .or(`last_battled_at.is.null,last_battled_at.lt.${cooldownCutoff}`);
+
+      if (leagueOpponentOwnerIds) {
+        fallbackQuery = fallbackQuery.in("owner_id", leagueOpponentOwnerIds);
+      }
+
+      const { data: fallback } = await fallbackQuery
         .order("power_score", { ascending: false })
         .limit(1);
 
@@ -126,7 +168,8 @@ serve(async (req) => {
         accepter_spider_id: opponent.id,
         status: "ACCEPTED",
         is_all_or_nothing: false,
-        challenge_message: "Quick Battle",
+        challenge_message: leagueId ? "Pod Quick Battle" : "Quick Battle",
+        league_id: leagueId,
       })
       .select("id")
       .single();
@@ -146,6 +189,7 @@ serve(async (req) => {
         p2_current_hp: opponent.hit_points,
         is_active: true,
         rng_seed: Math.random().toString(36).substring(7),
+        league_id: leagueId,
       })
       .select("id")
       .single();
@@ -247,6 +291,7 @@ serve(async (req) => {
       battleId: battleData.id,
       winner: winnerUser,
       stakesType: "training",
+      leagueId,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (error: any) {
