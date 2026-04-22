@@ -11,7 +11,7 @@
     "module": "ESNext",
     "moduleDetection": "force",
     "moduleResolution": "bundler",
-    "preserveSymlinks": true,
+    "preserveSymlinks": false,
     "noEmit": true,
     "noFallthroughCasesInSwitch": false,
     "noImplicitAny": false,

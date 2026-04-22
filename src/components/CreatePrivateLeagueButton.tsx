@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Copy, Loader2, MessageCircle, Send, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,15 @@ import { useAuth } from "@/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 
 const buildShareText = (inviteUrl: string) =>
-  `🕷️ Join my Spider League for digital battles with real spiders! 🕷️\n\nJoin my Spider League pod. Let’s see whose spider squad is strongest:\n${inviteUrl}`;
+  `🕷️ Join my Spider League for digital battles with real spiders! 🕷️\n\n${inviteUrl}`;
+
+const getDefaultPodName = (user: ReturnType<typeof useAuth>["user"]) => {
+  const displayName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.user_metadata?.name;
+  const emailName = user?.email?.split("@")[0];
+  const name = String(displayName || emailName || "My").trim();
+
+  return `${name}'s Spider Pod`;
+};
 
 interface CreatePrivateLeagueButtonProps {
   variant?: "default" | "outline" | "secondary" | "ghost";
@@ -28,6 +36,12 @@ const CreatePrivateLeagueButton = ({ variant = "default", size = "default", clas
   const [loading, setLoading] = useState(false);
   const [inviteUrl, setInviteUrl] = useState("");
   const [leagueId, setLeagueId] = useState("");
+
+  useEffect(() => {
+    if (open && user && !inviteUrl) {
+      setName(getDefaultPodName(user));
+    }
+  }, [inviteUrl, open, user]);
 
   const createLeague = async () => {
     if (!user) {
