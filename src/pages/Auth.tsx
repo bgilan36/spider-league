@@ -9,6 +9,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
 
+const PENDING_INVITE_KEY = "pendingPrivateLeagueInvite";
+
 const Auth = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -22,9 +24,23 @@ const Auth = () => {
 
   useEffect(() => {
     if (!loading && user) {
+      const pendingToken = sessionStorage.getItem(PENDING_INVITE_KEY);
+      if (pendingToken) {
+        supabase.rpc("claim_private_league_invite" as any, { token: pendingToken } as any).then(({ data, error }: any) => {
+          sessionStorage.removeItem(PENDING_INVITE_KEY);
+          if (error || data?.success === false) {
+            toast({ title: "Could not join pod", description: error?.message || data?.error, variant: "destructive" });
+            navigate("/", { replace: true });
+            return;
+          }
+          toast({ title: "You joined the league", description: data?.league_name });
+          navigate(`/leagues/${data.league_id}`, { replace: true });
+        });
+        return;
+      }
       navigate("/", { replace: true });
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, toast]);
 
   const handleGoogle = async () => {
     try {

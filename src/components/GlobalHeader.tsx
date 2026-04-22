@@ -54,6 +54,7 @@ const GlobalHeader: React.FC = () => {
       '/battle-history': 'Battle History',
       '/roadmap': 'Roadmap',
       '/shop': 'Shop',
+      '/leagues': 'Friend Pods',
       '/admin': 'Admin Dashboard',
     };
     
@@ -63,6 +64,12 @@ const GlobalHeader: React.FC = () => {
     }
     if (location.pathname.startsWith('/collection/')) {
       return 'User Collection';
+    }
+    if (location.pathname.startsWith('/leagues/')) {
+      return 'Friend Pod';
+    }
+    if (location.pathname.startsWith('/join/')) {
+      return 'Join Pod';
     }
     
     return routes[location.pathname] || 'Spider League';

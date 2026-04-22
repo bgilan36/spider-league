@@ -89,6 +89,7 @@ export type Database = {
           expires_at: string
           id: string
           is_all_or_nothing: boolean
+          league_id: string | null
           loser_spider_id: string | null
           status: string
           winner_id: string | null
@@ -104,6 +105,7 @@ export type Database = {
           expires_at?: string
           id?: string
           is_all_or_nothing?: boolean
+          league_id?: string | null
           loser_spider_id?: string | null
           status?: string
           winner_id?: string | null
@@ -119,6 +121,7 @@ export type Database = {
           expires_at?: string
           id?: string
           is_all_or_nothing?: boolean
+          league_id?: string | null
           loser_spider_id?: string | null
           status?: string
           winner_id?: string | null
@@ -143,6 +146,13 @@ export type Database = {
             columns: ["challenger_spider_id"]
             isOneToOne: false
             referencedRelation: "spiders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "battle_challenges_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "private_leagues"
             referencedColumns: ["id"]
           },
           {
@@ -203,6 +213,7 @@ export type Database = {
           current_turn_user_id: string | null
           id: string
           is_active: boolean | null
+          league_id: string | null
           p1_current_hp: number | null
           p2_current_hp: number | null
           rng_seed: string
@@ -220,6 +231,7 @@ export type Database = {
           current_turn_user_id?: string | null
           id?: string
           is_active?: boolean | null
+          league_id?: string | null
           p1_current_hp?: number | null
           p2_current_hp?: number | null
           rng_seed: string
@@ -237,6 +249,7 @@ export type Database = {
           current_turn_user_id?: string | null
           id?: string
           is_active?: boolean | null
+          league_id?: string | null
           p1_current_hp?: number | null
           p2_current_hp?: number | null
           rng_seed?: string
@@ -253,6 +266,13 @@ export type Database = {
             columns: ["challenge_id"]
             isOneToOne: false
             referencedRelation: "battle_challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "battles_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "private_leagues"
             referencedColumns: ["id"]
           },
         ]
@@ -497,6 +517,134 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      private_league_invites: {
+        Row: {
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          league_id: string
+          max_uses: number | null
+          token: string
+          use_count: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          league_id: string
+          max_uses?: number | null
+          token: string
+          use_count?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          league_id?: string
+          max_uses?: number | null
+          token?: string
+          use_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "private_league_invites_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "private_league_invites_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "private_leagues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      private_league_members: {
+        Row: {
+          id: string
+          joined_at: string
+          league_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          league_id: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          league_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "private_league_members_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "private_leagues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "private_league_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      private_leagues: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          owner_id: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          owner_id: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          owner_id?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "private_leagues_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profile_settings: {
         Row: {
@@ -1262,11 +1410,33 @@ export type Database = {
         Args: { user_id_param: string }
         Returns: boolean
       }
+      claim_private_league_invite: { Args: { token: string }; Returns: Json }
       cleanup_stale_presence: { Args: never; Returns: undefined }
+      create_private_league_with_invite: {
+        Args: { name: string }
+        Returns: Json
+      }
       gen_random_bytes: { Args: { length: number }; Returns: string }
       get_current_pt_week_end: { Args: never; Returns: string }
       get_current_pt_week_start: { Args: never; Returns: string }
       get_current_week: { Args: never; Returns: string }
+      get_private_league_invite_preview: {
+        Args: { token: string }
+        Returns: Json
+      }
+      get_private_league_standings: {
+        Args: { league_id: string }
+        Returns: {
+          avatar_url: string
+          battles: number
+          display_name: string
+          losses: number
+          top_spider: Json
+          user_id: string
+          win_rate: number
+          wins: number
+        }[]
+      }
       get_recent_public_skirmishes: {
         Args: { row_limit?: number }
         Returns: {
@@ -1315,6 +1485,14 @@ export type Database = {
       increment_weekly_upload: {
         Args: { spider_id_param: string; user_id_param: string }
         Returns: undefined
+      }
+      is_private_league_member: {
+        Args: { _league_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_private_league_owner: {
+        Args: { _league_id: string; _user_id: string }
+        Returns: boolean
       }
       process_battle_turn: {
         Args: {
