@@ -22,7 +22,7 @@ const PrivateLeagueDetail = () => {
   const [loading, setLoading] = useState(true);
   const [battleLoading, setBattleLoading] = useState(false);
 
-  const inviteUrl = useMemo(() => invite?.token ? `https://spiderleague.app/join/${invite.token}` : "", [invite]);
+  const inviteUrl = useMemo(() => invite?.token ? `${window.location.origin}/join/${invite.token}` : "", [invite]);
 
   const fetchLeague = useCallback(async () => {
     if (!leagueId || !user) return;
