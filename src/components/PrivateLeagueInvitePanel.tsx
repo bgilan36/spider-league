@@ -24,7 +24,7 @@ const PrivateLeagueInvitePanel = ({ inviteUrl, memberCount }: PrivateLeagueInvit
     }
 
     await navigator.clipboard?.writeText(shareText);
-    toast({ title: "Invite copied", description: "The share sheet was blocked, so the invite was copied instead." });
+    toast({ title: "Invite copied", description: "Paste it into your group chat." });
   };
 
   const copyInvite = async () => {
