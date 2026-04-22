@@ -18,6 +18,9 @@ import AboutUs from "./pages/AboutUs";
 import Shop from "./pages/Shop";
 import UserCollection from "./pages/UserCollection";
 import AdminDashboard from "./pages/AdminDashboard";
+import PrivateLeagues from "./pages/PrivateLeagues";
+import PrivateLeagueDetail from "./pages/PrivateLeagueDetail";
+import JoinLeague from "./pages/JoinLeague";
 import { AuthProvider } from "@/auth/AuthProvider";
 import Layout from "@/components/Layout";
 import NotificationListener from "@/components/NotificationListener";
@@ -56,6 +59,9 @@ const App = () => (
                 <Route path="/roadmap" element={<Roadmap />} />
                 <Route path="/collection/:userId" element={<UserCollection />} />
                 <Route path="/shop" element={<Shop />} />
+                <Route path="/leagues" element={<PrivateLeagues />} />
+                <Route path="/leagues/:leagueId" element={<PrivateLeagueDetail />} />
+                <Route path="/join/:inviteToken" element={<JoinLeague />} />
                 <Route path="/admin" element={<AdminDashboard />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
