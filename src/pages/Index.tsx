@@ -37,6 +37,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import ActiveSpiders from "@/components/ActiveSpiders";
 import DeathBattleFeed from "@/components/DeathBattleFeed";
 import PublishErrorPanel from "@/components/PublishErrorPanel";
+import CreatePrivateLeagueButton from "@/components/CreatePrivateLeagueButton";
 interface Spider {
   id: string;
   nickname: string;
@@ -936,6 +937,27 @@ const Index = () => {
           <ActiveSpiders onSpiderChange={fetchUserSpiders} newSpiderId={newSpiderId} />
         </section>
 
+        <section className="mb-6 sm:mb-8">
+          <Card className="overflow-hidden border-primary/20 bg-card/70">
+            <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+              <div className="min-w-0">
+                <div className="mb-2 flex items-center gap-2 text-primary">
+                  <Users className="h-5 w-5" />
+                  <span className="text-sm font-semibold uppercase tracking-wide">Friend pods</span>
+                </div>
+                <h2 className="text-xl font-bold sm:text-2xl">Compete with your friends</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Create a private league for your group chat and see who rules the pod.</p>
+              </div>
+              <div className="flex flex-col gap-2 sm:min-w-56">
+                <CreatePrivateLeagueButton size="lg" className="w-full" />
+                <Button asChild variant="outline" className="w-full">
+                  <Link to="/leagues">View your pods</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
         {/* Below-the-fold content */}
         <div className="mb-6">
           <OnlineUsersBar />
@@ -1112,11 +1134,11 @@ const Index = () => {
         <div className="mb-6 sm:mb-8">
           <div className="flex flex-col gap-3 sm:gap-4 mb-4 sm:mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <h2 className="text-lg sm:text-xl md:text-2xl font-bold">Leaderboards</h2>
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold">Global Leaderboard</h2>
               <Button asChild variant="outline" size="sm" className="w-full sm:w-auto min-h-[44px]">
                 <Link to="/leaderboard" className="flex items-center justify-center gap-2">
                   <Users className="h-4 w-4" />
-                  <span className="hidden sm:inline">View Full Leaderboard</span>
+                  <span className="hidden sm:inline">View Global Leaderboard</span>
                   <span className="sm:hidden">Leaderboard</span>
                 </Link>
               </Button>
@@ -1145,7 +1167,7 @@ const Index = () => {
             
             <p className="text-xs sm:text-sm text-muted-foreground">
               {leaderboardType === 'weekly' ? 'This week\'s ' : 'All-time '}
-              {leaderboardView === 'spiders' ? 'top 5 most powerful spider fighters' : 'top 5 trainers by power + XP'}
+              {leaderboardView === 'spiders' ? 'global top 5 most powerful spider fighters' : 'global top 5 trainers by power + XP'}
             </p>
           </div>
 

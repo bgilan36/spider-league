@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.export-email-list]
 verify_jwt = true
+
+[functions.quick-battle]
+verify_jwt = false
