@@ -15,11 +15,16 @@ const PrivateLeagueInvitePanel = ({ inviteUrl, memberCount }: PrivateLeagueInvit
 
   const nativeShare = async () => {
     if (navigator.share) {
-      await navigator.share({ title: "Join my Spider League pod", text: shareText, url: inviteUrl });
-    } else {
-      await navigator.clipboard?.writeText(shareText);
-      toast({ title: "Invite copied", description: "Paste it into your group chat." });
+      try {
+        await navigator.share({ title: "Join my Spider League pod", text: shareText, url: inviteUrl });
+        return;
+      } catch (error: any) {
+        if (error?.name === "AbortError") return;
+      }
     }
+
+    await navigator.clipboard?.writeText(shareText);
+    toast({ title: "Invite copied", description: "The share sheet was blocked, so the invite was copied instead." });
   };
 
   const copyInvite = async () => {
