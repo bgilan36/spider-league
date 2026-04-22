@@ -36,6 +36,7 @@ import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { useIsMobile } from "@/hooks/use-mobile";
 import ActiveSpiders from "@/components/ActiveSpiders";
 import DeathBattleFeed from "@/components/DeathBattleFeed";
+import PublishErrorPanel from "@/components/PublishErrorPanel";
 interface Spider {
   id: string;
   nickname: string;
@@ -831,6 +832,7 @@ const Index = () => {
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
         <link rel="canonical" href={`${window.location.origin}/`} />
       </Helmet>
+      <PublishErrorPanel />
       
       {/* Header */}
       <header className="glass-card border-b border-border/30 sticky top-0 z-40 backdrop-blur-xl">
