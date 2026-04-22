@@ -45,10 +45,6 @@ const CreatePrivateLeagueButton = ({ variant = "default", size = "default", clas
       setLeagueId(data?.league_id || "");
       onCreated?.();
 
-      const shareText = buildShareText(url);
-      if (navigator.share) {
-        await navigator.share({ title: "Join my Spider League pod", text: shareText, url });
-      }
       toast({ title: "Pod created", description: "Invite link is ready for the group chat." });
     } catch (error: any) {
       if (error?.name !== "AbortError") {
@@ -62,6 +58,23 @@ const CreatePrivateLeagueButton = ({ variant = "default", size = "default", clas
   const copyInvite = async () => {
     await navigator.clipboard?.writeText(buildShareText(inviteUrl));
     toast({ title: "Invite copied", description: "Paste it into your group chat." });
+  };
+
+  const shareInvite = async () => {
+    const shareText = buildShareText(inviteUrl);
+    if (!navigator.share) {
+      await copyInvite();
+      return;
+    }
+
+    try {
+      await navigator.share({ title: "Join my Spider League pod", text: shareText, url: inviteUrl });
+    } catch (error: any) {
+      if (error?.name !== "AbortError") {
+        await copyInvite();
+        toast({ title: "Share sheet blocked", description: "Invite copied instead. Paste it into your group chat." });
+      }
+    }
   };
 
   const smsUrl = inviteUrl ? `sms:?&body=${encodeURIComponent(buildShareText(inviteUrl))}` : "#";
@@ -97,6 +110,10 @@ const CreatePrivateLeagueButton = ({ variant = "default", size = "default", clas
                 <div className="text-sm font-medium">Invite the group chat</div>
                 <div className="break-all text-xs text-muted-foreground">{inviteUrl}</div>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  <Button type="button" variant="outline" size="sm" onClick={shareInvite}>
+                    <Send className="h-4 w-4" />
+                    Share
+                  </Button>
                   <Button type="button" variant="outline" size="sm" onClick={copyInvite}>
                     <Copy className="h-4 w-4" />
                     Copy
@@ -104,7 +121,7 @@ const CreatePrivateLeagueButton = ({ variant = "default", size = "default", clas
                   <Button type="button" variant="outline" size="sm" asChild>
                     <a href={smsUrl}><MessageCircle className="h-4 w-4" />SMS</a>
                   </Button>
-                  <Button type="button" variant="outline" size="sm" asChild>
+                  <Button type="button" variant="outline" size="sm" className="sm:col-span-3" asChild>
                     <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"><MessageCircle className="h-4 w-4" />WhatsApp</a>
                   </Button>
                 </div>
