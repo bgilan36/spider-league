@@ -12,6 +12,9 @@ import { supabase } from "@/integrations/supabase/client";
 const buildShareText = (inviteUrl: string) =>
   `🕷️ Join my Spider League for digital battles with real spiders! 🕷️\n\n${inviteUrl}`;
 
+const buildInviteUrl = (inviteToken?: string) =>
+  inviteToken ? `${window.location.origin}/join/${inviteToken}` : "";
+
 const getDefaultPodName = (user: ReturnType<typeof useAuth>["user"]) => {
   const displayName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.user_metadata?.name;
   const emailName = user?.email?.split("@")[0];
@@ -54,7 +57,7 @@ const CreatePrivateLeagueButton = ({ variant = "default", size = "default", clas
       const { data, error } = await (supabase as any).rpc("create_private_league_with_invite", { name });
       if (error) throw error;
 
-      const url = data?.invite_url || `https://spiderleague.app/join/${data?.invite_token}`;
+      const url = buildInviteUrl(data?.invite_token) || data?.invite_url || "";
       setInviteUrl(url);
       setLeagueId(data?.league_id || "");
       onCreated?.();
