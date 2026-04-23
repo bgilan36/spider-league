@@ -38,6 +38,7 @@ import ActiveSpiders from "@/components/ActiveSpiders";
 import DeathBattleFeed from "@/components/DeathBattleFeed";
 import PublishErrorPanel from "@/components/PublishErrorPanel";
 import CreatePrivateLeagueButton from "@/components/CreatePrivateLeagueButton";
+import FriendPodsHomeSection from "@/components/FriendPodsHomeSection";
 interface Spider {
   id: string;
   nickname: string;
