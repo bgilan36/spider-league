@@ -932,6 +932,11 @@ const Index = () => {
       </Dialog>
 
       <main className="container mx-auto px-3 sm:px-6 py-3 sm:py-6">
+        {/* Online users bar - top of page */}
+        <div className="mb-6">
+          <OnlineUsersBar />
+        </div>
+
         {/* Above-the-fold: Your Starting 5 with embedded battle controls */}
         <section className="mb-8">
           <ActiveSpiders onSpiderChange={fetchUserSpiders} newSpiderId={newSpiderId} />
@@ -959,10 +964,6 @@ const Index = () => {
         </section>
 
         {/* Below-the-fold content */}
-        <div className="mb-6">
-          <OnlineUsersBar />
-        </div>
-
         {/* Public Death Battle Challenges */}
         <section className="mb-6 sm:mb-8">
           <DeathBattleFeed />
