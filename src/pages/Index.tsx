@@ -943,24 +943,7 @@ const Index = () => {
         </section>
 
         <section className="mb-6 sm:mb-8">
-          <Card className="overflow-hidden border-primary/20 bg-card/70">
-            <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-              <div className="min-w-0">
-                <div className="mb-2 flex items-center gap-2 text-primary">
-                  <Users className="h-5 w-5" />
-                  <span className="text-sm font-semibold uppercase tracking-wide">Friend pods</span>
-                </div>
-                <h2 className="text-xl font-bold sm:text-2xl">Compete with your friends</h2>
-                <p className="mt-1 text-sm text-muted-foreground">Create a private league for your group chat and see who rules the pod.</p>
-              </div>
-              <div className="flex flex-col gap-2 sm:min-w-56">
-                <CreatePrivateLeagueButton size="lg" className="w-full" />
-                <Button asChild variant="outline" className="w-full">
-                  <Link to="/leagues">View your pods</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <FriendPodsHomeSection />
         </section>
 
         {/* Below-the-fold content */}
