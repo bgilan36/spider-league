@@ -41,10 +41,14 @@ serve(async (req) => {
     // Parse request body for optional spiderId and private league scope
     let requestedSpiderId: string | null = null;
     let leagueId: string | null = null;
+    let requestedOpponentSpiderId: string | null = null;
+    let requestedOpponentUserId: string | null = null;
     try {
       const body = await req.json();
       requestedSpiderId = body?.spiderId || null;
       leagueId = body?.leagueId || null;
+      requestedOpponentSpiderId = body?.opponentSpiderId || null;
+      requestedOpponentUserId = body?.opponentUserId || null;
     } catch { /* no body */ }
 
     let leagueOpponentOwnerIds: string[] | null = null;
@@ -101,9 +105,50 @@ serve(async (req) => {
 
     // Find closest-matched opponent from another user
     let opponent = null;
+
+    // If a specific opponent spider was requested, try to load it directly first
+    if (requestedOpponentSpiderId) {
+      let directQuery = supabase
+        .from("spiders")
+        .select("*")
+        .eq("id", requestedOpponentSpiderId)
+        .eq("is_approved", true)
+        .neq("owner_id", userId)
+        .limit(1);
+      if (leagueOpponentOwnerIds) {
+        directQuery = directQuery.in("owner_id", leagueOpponentOwnerIds);
+      }
+      const { data: direct } = await directQuery;
+      if (direct && direct.length > 0) {
+        opponent = direct[0];
+      }
+    }
+
+    // If a specific opponent user was requested (but no specific spider), pick their best eligible spider
+    if (!opponent && requestedOpponentUserId && requestedOpponentUserId !== userId) {
+      let userSpiderQuery = supabase
+        .from("spiders")
+        .select("*")
+        .eq("owner_id", requestedOpponentUserId)
+        .eq("is_approved", true)
+        .gt("eligible_until", now)
+        .or(`last_battled_at.is.null,last_battled_at.lt.${cooldownCutoff}`)
+        .order("power_score", { ascending: false })
+        .limit(1);
+      if (leagueOpponentOwnerIds && !leagueOpponentOwnerIds.includes(requestedOpponentUserId)) {
+        // Reject: requested user is not in this pod
+      } else {
+        const { data: userSpiders } = await userSpiderQuery;
+        if (userSpiders && userSpiders.length > 0) {
+          opponent = userSpiders[0];
+        }
+      }
+    }
+
     const bands = [0.12, 0.20, 0.35, 0.55, 1.0];
-    
+
     for (const pct of bands) {
+      if (opponent) break;
       const low = Math.floor(playerSpider.power_score * (1.0 - pct));
       const high = Math.ceil(playerSpider.power_score * (1.0 + pct));
 
