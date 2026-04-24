@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Camera, Loader2, Users } from "lucide-react";
+import { Camera, Loader2, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +18,10 @@ const PodImageUploader = ({ leagueId, imageUrl, podName, canEdit, onUpdated }: P
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
+  const [removing, setRemoving] = useState(false);
+  const [imgFailed, setImgFailed] = useState(false);
+
+  const showImage = !!imageUrl && !imgFailed;
 
   const handleFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {
@@ -44,6 +48,7 @@ const PodImageUploader = ({ leagueId, imageUrl, podName, canEdit, onUpdated }: P
         .eq("id", leagueId);
       if (updateError) throw updateError;
       onUpdated(publicUrl);
+      setImgFailed(false);
       toast({ title: "Pod image updated" });
     } catch (error: any) {
       toast({ title: "Upload failed", description: error.message, variant: "destructive" });
@@ -53,17 +58,40 @@ const PodImageUploader = ({ leagueId, imageUrl, podName, canEdit, onUpdated }: P
     }
   };
 
+  const handleRemove = async () => {
+    setRemoving(true);
+    try {
+      const { error } = await (supabase as any)
+        .from("private_leagues")
+        .update({ image_url: null })
+        .eq("id", leagueId);
+      if (error) throw error;
+      onUpdated("");
+      setImgFailed(false);
+      toast({ title: "Pod image removed" });
+    } catch (error: any) {
+      toast({ title: "Remove failed", description: error.message, variant: "destructive" });
+    } finally {
+      setRemoving(false);
+    }
+  };
+
   return (
     <div className="flex items-center gap-3">
       <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
-        {imageUrl ? (
-          <img src={imageUrl} alt={`${podName} pod`} className="h-full w-full object-cover" />
+        {showImage ? (
+          <img
+            src={imageUrl!}
+            alt={`${podName} pod`}
+            className="h-full w-full object-cover"
+            onError={() => setImgFailed(true)}
+          />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
             <Users className="h-6 w-6 text-muted-foreground" />
           </div>
         )}
-        {uploading && (
+        {(uploading || removing) && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/70">
             <Loader2 className="h-5 w-5 animate-spin" />
           </div>
@@ -81,10 +109,18 @@ const PodImageUploader = ({ leagueId, imageUrl, podName, canEdit, onUpdated }: P
               if (f) handleFile(f);
             }}
           />
-          <Button variant="outline" size="sm" onClick={() => inputRef.current?.click()} disabled={uploading}>
-            <Camera className="h-4 w-4" />
-            {imageUrl ? "Change image" : "Add pod image"}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={() => inputRef.current?.click()} disabled={uploading || removing}>
+              <Camera className="h-4 w-4" />
+              {showImage ? "Change image" : "Add pod image"}
+            </Button>
+            {showImage && (
+              <Button variant="ghost" size="sm" onClick={handleRemove} disabled={uploading || removing}>
+                <Trash2 className="h-4 w-4" />
+                Remove
+              </Button>
+            )}
+          </div>
         </>
       )}
     </div>

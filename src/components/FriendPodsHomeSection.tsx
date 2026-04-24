@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import CreatePrivateLeagueButton from "@/components/CreatePrivateLeagueButton";
+import PodThumbnail from "@/components/PodThumbnail";
 
 interface PodSummary {
   id: string;
@@ -126,13 +127,7 @@ const FriendPodsHomeSection = () => {
                 className="group flex items-center justify-between gap-3 rounded-lg border border-border bg-background/40 p-3 transition hover:border-primary/60 hover:bg-primary/5"
               >
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-muted">
-                    {pod.image_url ? (
-                      <img src={pod.image_url} alt={`${pod.name} pod`} className="h-full w-full object-cover" />
-                    ) : (
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </div>
+                  <PodThumbnail imageUrl={pod.image_url} podName={pod.name} className="h-10 w-10" />
                   <div className="min-w-0">
                   <div className="truncate font-medium">{pod.name}</div>
                   <div className="text-xs text-muted-foreground">
