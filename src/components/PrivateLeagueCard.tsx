@@ -28,10 +28,10 @@ const PrivateLeagueCard = ({ league, currentUserId }: PrivateLeagueCardProps) =>
         <CardContent className="flex items-center justify-between gap-3 p-4">
           <div className="flex min-w-0 items-center gap-3">
             <PodThumbnail imageUrl={league.image_url} podName={league.name} className="h-12 w-12" iconClassName="h-5 w-5" />
-            <div className="min-w-0">
+          <div className="min-w-0">
             <div className="mb-1 flex items-center gap-2">
               <h3 className="truncate font-semibold group-hover:text-primary">{league.name}</h3>
-              {isOwner && <Badge variant="secondary" className="gap-1"><Crown className="h-3 w-3" />Owner</Badge>}
+              {isOwner && <Badge variant="secondary" className="gap-1"><Crown className="h-3 w-3" />Commissioner</Badge>}
             </div>
             <div className="flex items-center gap-1 text-sm text-muted-foreground">
               <Users className="h-4 w-4" />
