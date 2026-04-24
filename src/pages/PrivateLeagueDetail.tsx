@@ -148,7 +148,7 @@ const PrivateLeagueDetail = () => {
             <DialogTitle>Invite friends to {league.name}</DialogTitle>
             <DialogDescription>Share this link in your group chat. No account needed until they choose to join.</DialogDescription>
           </DialogHeader>
-          {inviteUrl && <PrivateLeagueInvitePanel inviteUrl={inviteUrl} memberCount={members.length} />}
+          {inviteUrl && <PrivateLeagueInvitePanel inviteUrl={inviteUrl} memberCount={members.length} hideHeader />}
         </DialogContent>
       </Dialog>
 
