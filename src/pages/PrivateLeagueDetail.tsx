@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Loader2, Swords, Users } from "lucide-react";
+import { ArrowLeft, Loader2, Share2, Swords, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
@@ -9,6 +9,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import PrivateLeagueInvitePanel from "@/components/PrivateLeagueInvitePanel";
 import PrivateLeagueStandings from "@/components/PrivateLeagueStandings";
+import PodChat from "@/components/PodChat";
 import {
   Dialog,
   DialogContent,
@@ -35,6 +36,8 @@ const PrivateLeagueDetail = () => {
   const [selectedMySpiderId, setSelectedMySpiderId] = useState<string>("");
   const [selectedOpponentSpiderId, setSelectedOpponentSpiderId] = useState<string>("");
   const [pickerLoading, setPickerLoading] = useState(false);
+  const [timeframe, setTimeframe] = useState<"weekly" | "all_time">("weekly");
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   const inviteUrl = useMemo(() => invite?.token ? `${window.location.origin}/join/${invite.token}` : "", [invite]);
 
@@ -45,14 +48,14 @@ const PrivateLeagueDetail = () => {
       (supabase as any).from("private_leagues").select("*").eq("id", leagueId).maybeSingle(),
       (supabase as any).from("private_league_members").select("user_id,role,joined_at,profiles(display_name,avatar_url)").eq("league_id", leagueId).order("joined_at"),
       (supabase as any).from("private_league_invites").select("token").eq("league_id", leagueId).eq("is_active", true).order("created_at", { ascending: false }).limit(1).maybeSingle(),
-      (supabase as any).rpc("get_private_league_standings", { league_id: leagueId }),
+      (supabase as any).rpc("get_private_league_standings", { league_id: leagueId, timeframe }),
     ]);
     setLeague(leagueData);
     setMembers(memberData || []);
     setInvite(inviteData);
     setStandings(standingData || []);
     setLoading(false);
-  }, [leagueId, user]);
+  }, [leagueId, user, timeframe]);
 
   useEffect(() => { fetchLeague(); }, [fetchLeague]);
 
@@ -118,16 +121,36 @@ const PrivateLeagueDetail = () => {
       <Helmet><title>{league.name} — Spider League Pod</title><meta name="description" content="Private Spider League pod standings and battles." /></Helmet>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div><Button asChild variant="ghost" size="sm" className="mb-2"><Link to="/leagues"><ArrowLeft className="h-4 w-4" />Pods</Link></Button><h1 className="text-3xl font-bold">{league.name}</h1><p className="text-muted-foreground">Beat your friends inside this pod.</p></div>
-        <Button onClick={openPicker} disabled={battleLoading || members.length < 2} size="lg">{battleLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Swords className="h-4 w-4" />}Battle a pod member</Button>
+        <div className="flex flex-wrap gap-2">
+          {inviteUrl && (
+            <Button variant="outline" size="lg" onClick={() => setInviteOpen(true)}>
+              <Share2 className="h-4 w-4" />Invite
+            </Button>
+          )}
+          <Button onClick={openPicker} disabled={battleLoading || members.length < 2} size="lg">
+            {battleLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Swords className="h-4 w-4" />}
+            Battle a pod member
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="space-y-6">
-          <PrivateLeagueStandings standings={standings} />
+          <PrivateLeagueStandings standings={standings} timeframe={timeframe} onTimeframeChange={setTimeframe} />
+          <PodChat leagueId={leagueId!} members={members} />
           <Card><CardHeader><CardTitle className="flex items-center gap-2 text-lg"><Users className="h-5 w-5 text-primary" />Members</CardTitle></CardHeader><CardContent className="space-y-2">{members.map((member) => <div key={member.user_id} className="flex items-center gap-3 rounded-md border border-border p-3"><div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-muted">{member.profiles?.avatar_url ? <img src={member.profiles.avatar_url} alt="" className="h-full w-full object-cover" /> : <span>{(member.profiles?.display_name || "P").charAt(0)}</span>}</div><div className="flex-1"><div className="font-medium">{member.profiles?.display_name || `Player ${member.user_id.slice(0, 6)}`}</div><div className="text-xs text-muted-foreground">{member.role}</div></div></div>)}</CardContent></Card>
         </div>
-        {inviteUrl && <PrivateLeagueInvitePanel inviteUrl={inviteUrl} memberCount={members.length} />}
       </div>
+
+      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Invite friends to {league.name}</DialogTitle>
+            <DialogDescription>Share this link in your group chat. No account needed until they choose to join.</DialogDescription>
+          </DialogHeader>
+          {inviteUrl && <PrivateLeagueInvitePanel inviteUrl={inviteUrl} memberCount={members.length} hideHeader />}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
         <DialogContent className="max-w-3xl">
