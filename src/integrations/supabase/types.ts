@@ -461,6 +461,125 @@ export type Database = {
           },
         ]
       }
+      pod_chat_likes: {
+        Row: {
+          created_at: string
+          id: string
+          league_id: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          league_id: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          league_id?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pod_chat_likes_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "private_leagues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pod_chat_likes_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "pod_chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pod_chat_messages: {
+        Row: {
+          created_at: string
+          id: string
+          league_id: string
+          message: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          league_id: string
+          message: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          league_id?: string
+          message?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pod_chat_messages_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "private_leagues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pod_chat_replies: {
+        Row: {
+          created_at: string
+          id: string
+          league_id: string
+          message: string
+          message_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          league_id: string
+          message: string
+          message_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          league_id?: string
+          message?: string
+          message_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pod_chat_replies_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "private_leagues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pod_chat_replies_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "pod_chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pokes: {
         Row: {
           created_at: string
@@ -1424,19 +1543,34 @@ export type Database = {
         Args: { token: string }
         Returns: Json
       }
-      get_private_league_standings: {
-        Args: { league_id: string }
-        Returns: {
-          avatar_url: string
-          battles: number
-          display_name: string
-          losses: number
-          top_spider: Json
-          user_id: string
-          win_rate: number
-          wins: number
-        }[]
-      }
+      get_private_league_standings:
+        | {
+            Args: { league_id: string }
+            Returns: {
+              avatar_url: string
+              battles: number
+              display_name: string
+              losses: number
+              top_spider: Json
+              user_id: string
+              win_rate: number
+              wins: number
+            }[]
+          }
+        | {
+            Args: { league_id: string; timeframe?: string }
+            Returns: {
+              avatar_url: string
+              battles: number
+              display_name: string
+              losses: number
+              streak: number
+              top_spider: Json
+              user_id: string
+              win_rate: number
+              wins: number
+            }[]
+          }
       get_recent_public_skirmishes: {
         Args: { row_limit?: number }
         Returns: {
