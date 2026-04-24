@@ -54,6 +54,11 @@ const TurnBasedBattle = () => {
 
   const visibleTurn = turns[viewedTurnIndex] ?? null;
 
+  const returnPath = useMemo(() => {
+    const leagueId = (battle as any)?.league_id;
+    return leagueId ? `/leagues/${leagueId}` : '/';
+  }, [battle]);
+
   // Derive displayed HP from the currently viewed turn so scrubbing rewinds the bars.
   const { displayedMyHp, displayedOpponentHp } = useMemo(() => {
     if (!visibleTurn || !mySpider || !opponentSpider) {
