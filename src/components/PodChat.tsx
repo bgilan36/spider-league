@@ -109,30 +109,52 @@ const PodChat = ({ leagueId, members }: PodChatProps) => {
   const post = async () => {
     if (!user || !draft.trim()) return;
     setPosting(true);
-    const { error } = await (supabase as any)
+    const text = draft.trim();
+    const { data, error } = await (supabase as any)
       .from("pod_chat_messages")
-      .insert({ league_id: leagueId, user_id: user.id, message: draft.trim() });
+      .insert({ league_id: leagueId, user_id: user.id, message: text })
+      .select("id,user_id,message,created_at")
+      .single();
     setPosting(false);
     if (error) {
       toast({ title: "Couldn't post", description: error.message, variant: "destructive" });
       return;
     }
     setDraft("");
+    if (data) {
+      setMessages((prev) =>
+        prev.some((m) => m.id === data.id)
+          ? prev
+          : [{ id: data.id, user_id: data.user_id, message: data.message, created_at: data.created_at, likes: [], replies: [] }, ...prev],
+      );
+    }
+    fetchAll();
   };
 
   const postReply = async (messageId: string) => {
     if (!user) return;
     const text = (replyDrafts[messageId] || "").trim();
     if (!text) return;
-    const { error } = await (supabase as any)
+    const { data, error } = await (supabase as any)
       .from("pod_chat_replies")
-      .insert({ league_id: leagueId, message_id: messageId, user_id: user.id, message: text });
+      .insert({ league_id: leagueId, message_id: messageId, user_id: user.id, message: text })
+      .select("id,user_id,message,created_at,message_id")
+      .single();
     if (error) {
       toast({ title: "Couldn't reply", description: error.message, variant: "destructive" });
       return;
     }
     setReplyDrafts((p) => ({ ...p, [messageId]: "" }));
     setOpenReplyFor(null);
+    if (data) {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === messageId && !m.replies.some((r) => r.id === data.id)
+            ? { ...m, replies: [...m.replies, { id: data.id, user_id: data.user_id, message: data.message, created_at: data.created_at }] }
+            : m,
+        ),
+      );
+    }
   };
 
   const toggleLike = async (msg: Message) => {
