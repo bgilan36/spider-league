@@ -11,6 +11,7 @@ interface PodSummary {
   id: string;
   name: string;
   member_count: number;
+  image_url?: string | null;
 }
 
 const FriendPodsHomeSection = () => {
@@ -27,12 +28,12 @@ const FriendPodsHomeSection = () => {
     (async () => {
       const { data: memberships } = await (supabase as any)
         .from("private_league_members")
-        .select("league_id, private_leagues!inner(id, name, is_active)")
+        .select("league_id, private_leagues!inner(id, name, is_active, image_url)")
         .eq("user_id", user.id);
       if (cancelled) return;
       const activeLeagues = (memberships || [])
         .filter((m: any) => m.private_leagues?.is_active)
-        .map((m: any) => ({ id: m.private_leagues.id, name: m.private_leagues.name }));
+        .map((m: any) => ({ id: m.private_leagues.id, name: m.private_leagues.name, image_url: m.private_leagues.image_url }));
 
       if (activeLeagues.length === 0) {
         setPods([]);
@@ -57,6 +58,7 @@ const FriendPodsHomeSection = () => {
         activeLeagues.map((l: any) => ({
           id: l.id,
           name: l.name,
+          image_url: l.image_url,
           member_count: countMap.get(l.id) || 1,
         })),
       );
@@ -123,10 +125,19 @@ const FriendPodsHomeSection = () => {
                 to={`/leagues/${pod.id}`}
                 className="group flex items-center justify-between gap-3 rounded-lg border border-border bg-background/40 p-3 transition hover:border-primary/60 hover:bg-primary/5"
               >
-                <div className="min-w-0">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-muted">
+                    {pod.image_url ? (
+                      <img src={pod.image_url} alt={`${pod.name} pod`} className="h-full w-full object-cover" />
+                    ) : (
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
                   <div className="truncate font-medium">{pod.name}</div>
                   <div className="text-xs text-muted-foreground">
                     {pod.member_count} {pod.member_count === 1 ? "member" : "members"}
+                  </div>
                   </div>
                 </div>
                 <ArrowRight className="h-4 w-4 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary" />

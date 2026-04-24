@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import PrivateLeagueInvitePanel from "@/components/PrivateLeagueInvitePanel";
 import PrivateLeagueStandings from "@/components/PrivateLeagueStandings";
 import PodChat from "@/components/PodChat";
+import PodImageUploader from "@/components/PodImageUploader";
 import {
   Dialog,
   DialogContent,
@@ -116,11 +117,28 @@ const PrivateLeagueDetail = () => {
   if (loading) return <main className="container mx-auto px-4 py-10"><div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin" /></div></main>;
   if (!league) return <main className="container mx-auto px-4 py-10"><Card><CardContent className="py-10 text-center"><h1 className="mb-2 text-2xl font-bold">Pod not found</h1><Button asChild><Link to="/leagues">Back to pods</Link></Button></CardContent></Card></main>;
 
+  const isMember = !!user && members.some((m) => m.user_id === user.id);
+
   return (
     <main className="container mx-auto px-4 py-6">
       <Helmet><title>{league.name} — Spider League Pod</title><meta name="description" content="Private Spider League pod standings and battles." /></Helmet>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div><Button asChild variant="ghost" size="sm" className="mb-2"><Link to="/leagues"><ArrowLeft className="h-4 w-4" />Pods</Link></Button><h1 className="text-3xl font-bold">{league.name}</h1><p className="text-muted-foreground">Beat your friends inside this pod.</p></div>
+        <div className="min-w-0">
+          <Button asChild variant="ghost" size="sm" className="mb-2"><Link to="/leagues"><ArrowLeft className="h-4 w-4" />Pods</Link></Button>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <PodImageUploader
+              leagueId={league.id}
+              imageUrl={league.image_url}
+              podName={league.name}
+              canEdit={isMember}
+              onUpdated={(url) => setLeague((prev: any) => ({ ...prev, image_url: url }))}
+            />
+            <div className="min-w-0">
+              <h1 className="text-3xl font-bold">{league.name}</h1>
+              <p className="text-muted-foreground">Beat your friends inside this pod.</p>
+            </div>
+          </div>
+        </div>
         <div className="flex flex-wrap gap-2">
           {inviteUrl && (
             <Button variant="outline" size="lg" onClick={() => setInviteOpen(true)}>

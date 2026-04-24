@@ -19,7 +19,7 @@ const PrivateLeagues = () => {
     setLoading(true);
     const { data } = await (supabase as any)
       .from("private_leagues")
-      .select("id,name,owner_id,private_league_members(count)")
+      .select("id,name,owner_id,image_url,private_league_members(count)")
       .eq("is_active", true)
       .order("created_at", { ascending: false });
     setLeagues(data || []);
