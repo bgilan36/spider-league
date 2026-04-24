@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Loader2, Share2, Swords, Users } from "lucide-react";
+import { ArrowLeft, Loader2, Settings, Share2, Swords, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
@@ -19,6 +19,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const PrivateLeagueDetail = () => {
   const { leagueId } = useParams();
@@ -39,6 +57,8 @@ const PrivateLeagueDetail = () => {
   const [pickerLoading, setPickerLoading] = useState(false);
   const [timeframe, setTimeframe] = useState<"weekly" | "all_time">("weekly");
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const inviteUrl = useMemo(() => invite?.token ? `${window.location.origin}/join/${invite.token}` : "", [invite]);
 
@@ -118,6 +138,26 @@ const PrivateLeagueDetail = () => {
   if (!league) return <main className="container mx-auto px-4 py-10"><Card><CardContent className="py-10 text-center"><h1 className="mb-2 text-2xl font-bold">Pod not found</h1><Button asChild><Link to="/leagues">Back to pods</Link></Button></CardContent></Card></main>;
 
   const isMember = !!user && members.some((m) => m.user_id === user.id);
+  const isCommissioner = !!user && league.owner_id === user.id;
+
+  const handleDeletePod = async () => {
+    if (!leagueId || !isCommissioner) return;
+    setDeleting(true);
+    try {
+      const { error } = await (supabase as any)
+        .from("private_leagues")
+        .update({ is_active: false })
+        .eq("id", leagueId);
+      if (error) throw error;
+      toast({ title: "Pod deleted", description: `${league.name} has been removed.` });
+      navigate("/leagues");
+    } catch (error: any) {
+      toast({ title: "Couldn't delete pod", description: error.message, variant: "destructive" });
+    } finally {
+      setDeleting(false);
+      setConfirmDeleteOpen(false);
+    }
+  };
 
   return (
     <main className="container mx-auto px-4 py-6">
@@ -149,6 +189,27 @@ const PrivateLeagueDetail = () => {
             {battleLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Swords className="h-4 w-4" />}
             Battle a pod member
           </Button>
+          {isCommissioner && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="lg" aria-label="Commissioner settings">
+                  <Settings className="h-4 w-4" />
+                  Settings
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Commissioner settings</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onSelect={(e) => { e.preventDefault(); setConfirmDeleteOpen(true); }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete pod
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 
@@ -156,7 +217,7 @@ const PrivateLeagueDetail = () => {
         <div className="space-y-6">
           <PrivateLeagueStandings standings={standings} timeframe={timeframe} onTimeframeChange={setTimeframe} />
           <PodChat leagueId={leagueId!} members={members} />
-          <Card><CardHeader><CardTitle className="flex items-center gap-2 text-lg"><Users className="h-5 w-5 text-primary" />Members</CardTitle></CardHeader><CardContent className="space-y-2">{members.map((member) => <div key={member.user_id} className="flex items-center gap-3 rounded-md border border-border p-3"><div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-muted">{member.profiles?.avatar_url ? <img src={member.profiles.avatar_url} alt="" className="h-full w-full object-cover" /> : <span>{(member.profiles?.display_name || "P").charAt(0)}</span>}</div><div className="flex-1"><div className="font-medium">{member.profiles?.display_name || `Player ${member.user_id.slice(0, 6)}`}</div><div className="text-xs text-muted-foreground">{member.role}</div></div></div>)}</CardContent></Card>
+          <Card><CardHeader><CardTitle className="flex items-center gap-2 text-lg"><Users className="h-5 w-5 text-primary" />Members</CardTitle></CardHeader><CardContent className="space-y-2">{members.map((member) => <div key={member.user_id} className="flex items-center gap-3 rounded-md border border-border p-3"><div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-muted">{member.profiles?.avatar_url ? <img src={member.profiles.avatar_url} alt="" className="h-full w-full object-cover" /> : <span>{(member.profiles?.display_name || "P").charAt(0)}</span>}</div><div className="flex-1"><div className="font-medium">{member.profiles?.display_name || `Player ${member.user_id.slice(0, 6)}`}</div><div className="text-xs capitalize text-muted-foreground">{member.role === "owner" ? "Commissioner" : member.role}</div></div></div>)}</CardContent></Card>
         </div>
       </div>
 
@@ -240,6 +301,28 @@ const PrivateLeagueDetail = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {league.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This deactivates the pod for everyone. Members will no longer see it in their pod list. This can't be undone from the app.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeletePod}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              Delete pod
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 };
