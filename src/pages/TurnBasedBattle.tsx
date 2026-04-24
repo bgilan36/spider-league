@@ -152,12 +152,12 @@ const TurnBasedBattle = () => {
 
   const handlePresenceCancel = () => {
     setShowPresenceGate(false);
-    navigate('/');
+    navigate(returnPath);
   };
 
   const handleOutcomeComplete = () => {
     setShowOutcomeReveal(false);
-    navigate('/');
+    navigate(returnPath);
   };
 
   if (loading) {
