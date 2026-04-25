@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -18,7 +18,6 @@ import AboutUs from "./pages/AboutUs";
 import Shop from "./pages/Shop";
 import UserCollection from "./pages/UserCollection";
 import AdminDashboard from "./pages/AdminDashboard";
-import PrivateLeagues from "./pages/PrivateLeagues";
 import PrivateLeagueDetail from "./pages/PrivateLeagueDetail";
 import JoinLeague from "./pages/JoinLeague";
 import { AuthProvider } from "@/auth/AuthProvider";
@@ -59,7 +58,7 @@ const App = () => (
                 <Route path="/roadmap" element={<Roadmap />} />
                 <Route path="/collection/:userId" element={<UserCollection />} />
                 <Route path="/shop" element={<Shop />} />
-                <Route path="/leagues" element={<PrivateLeagues />} />
+                <Route path="/leagues" element={<Navigate to="/" replace />} />
                 <Route path="/leagues/:leagueId" element={<PrivateLeagueDetail />} />
                 <Route path="/join/:inviteToken" element={<JoinLeague />} />
                 <Route path="/admin" element={<AdminDashboard />} />
