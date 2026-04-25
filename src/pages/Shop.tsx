@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ShoppingCart } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 
 interface Product {
@@ -70,11 +70,6 @@ const Shop = () => {
   const filteredProducts = selectedCategory === "all" 
     ? products 
     : products.filter(product => product.category === selectedCategory);
-
-  const handleAddToCart = (product: Product) => {
-    // TODO: Implement cart functionality and Stripe integration
-    console.log("Add to cart:", product);
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -177,15 +172,6 @@ const Shop = () => {
                 </CardDescription>
               </CardHeader>
               
-              <CardContent className="pt-0">
-                <Button 
-                  onClick={() => handleAddToCart(product)}
-                  className="w-full flex items-center gap-2"
-                >
-                  <ShoppingCart className="w-4 h-4" />
-                  Add to Cart - ${product.price}
-                </Button>
-              </CardContent>
             </Card>
           ))}
         </div>
