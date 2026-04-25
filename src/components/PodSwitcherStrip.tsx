@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import PodThumbnail from "@/components/PodThumbnail";
@@ -13,10 +14,10 @@ interface PodSwitcherStripProps {
   pods: PodSwitcherItem[];
   selectedId: string | null;
   onSelect: (id: string) => void;
-  onCreate: () => void;
+  createSlot?: ReactNode;
 }
 
-const PodSwitcherStrip = ({ pods, selectedId, onSelect, onCreate }: PodSwitcherStripProps) => {
+const PodSwitcherStrip = ({ pods, selectedId, onSelect, createSlot }: PodSwitcherStripProps) => {
   return (
     <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2">
       {pods.map((pod) => {
@@ -44,16 +45,14 @@ const PodSwitcherStrip = ({ pods, selectedId, onSelect, onCreate }: PodSwitcherS
           </button>
         );
       })}
-      <button
-        type="button"
-        onClick={onCreate}
-        className="flex min-w-[160px] shrink-0 items-center gap-3 rounded-lg border border-dashed border-border p-3 text-left text-muted-foreground transition hover:border-primary hover:text-primary"
-      >
-        <div className="flex h-10 w-10 items-center justify-center rounded-md border border-dashed border-border">
-          <Plus className="h-4 w-4" />
+      {createSlot ?? (
+        <div className="flex min-w-[160px] shrink-0 items-center gap-3 rounded-lg border border-dashed border-border p-3 text-muted-foreground">
+          <div className="flex h-10 w-10 items-center justify-center rounded-md border border-dashed border-border">
+            <Plus className="h-4 w-4" />
+          </div>
+          <div className="text-sm font-medium">New pod</div>
         </div>
-        <div className="text-sm font-medium">New pod</div>
-      </button>
+      )}
     </div>
   );
 };

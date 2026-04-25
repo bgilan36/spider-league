@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Loader2, Users } from "lucide-react";
@@ -22,7 +22,6 @@ const PrivateLeagues = () => {
   const [recentBattles, setRecentBattles] = useState<PodRecentBattle[]>([]);
   const [timeframe, setTimeframe] = useState<"weekly" | "all_time">("weekly");
   const [panelLoading, setPanelLoading] = useState(false);
-  const createTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   const fetchPods = useCallback(async () => {
     if (!user) return;
@@ -156,7 +155,11 @@ const PrivateLeagues = () => {
             pods={pods}
             selectedId={selectedId}
             onSelect={setSelectedId}
-            onCreate={() => createTriggerRef.current?.click()}
+            createSlot={
+              <div className="flex min-w-[180px] shrink-0 items-center justify-center rounded-lg border border-dashed border-border p-2">
+                <CreatePrivateLeagueButton variant="ghost" size="sm" onCreated={fetchPods} />
+              </div>
+            }
           />
           {selectedPod && (
             <PrimaryPodPanel
@@ -169,14 +172,6 @@ const PrivateLeagues = () => {
               loading={panelLoading}
             />
           )}
-          <div className="hidden">
-            {/* Hidden trigger so the "+ New pod" tile can open the create dialog without duplicating logic */}
-            <CreatePrivateLeagueButton onCreated={fetchPods} />
-            <button ref={createTriggerRef} type="button" onClick={() => {
-              const btn = document.querySelector<HTMLButtonElement>('button:has(> svg.lucide-users) + *') ;
-              btn?.click();
-            }} />
-          </div>
         </div>
       )}
     </main>
