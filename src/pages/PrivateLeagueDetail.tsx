@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Loader2, Settings, Share2, Swords, Trash2, Users } from "lucide-react";
+import { ArrowLeft, Loader2, Pencil, Settings, Share2, Swords, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
@@ -59,6 +61,9 @@ const PrivateLeagueDetail = () => {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
+  const [renaming, setRenaming] = useState(false);
 
   const inviteUrl = useMemo(() => invite?.token ? `${window.location.origin}/join/${invite.token}` : "", [invite]);
 
@@ -159,6 +164,39 @@ const PrivateLeagueDetail = () => {
     }
   };
 
+  const openRename = () => {
+    setRenameValue(league?.name || "");
+    setRenameOpen(true);
+  };
+
+  const handleRenamePod = async () => {
+    if (!leagueId || !isCommissioner) return;
+    const trimmed = renameValue.trim();
+    if (!trimmed) {
+      toast({ title: "Name required", description: "Pod name can't be empty.", variant: "destructive" });
+      return;
+    }
+    if (trimmed === league.name) {
+      setRenameOpen(false);
+      return;
+    }
+    setRenaming(true);
+    try {
+      const { error } = await (supabase as any)
+        .from("private_leagues")
+        .update({ name: trimmed })
+        .eq("id", leagueId);
+      if (error) throw error;
+      setLeague((prev: any) => ({ ...prev, name: trimmed }));
+      toast({ title: "Pod renamed", description: `Now called ${trimmed}.` });
+      setRenameOpen(false);
+    } catch (error: any) {
+      toast({ title: "Couldn't rename pod", description: error.message, variant: "destructive" });
+    } finally {
+      setRenaming(false);
+    }
+  };
+
   return (
     <main className="container mx-auto px-4 py-6">
       <Helmet><title>{league.name} — Spider League Pod</title><meta name="description" content="Private Spider League pod standings and battles." /></Helmet>
@@ -200,6 +238,10 @@ const PrivateLeagueDetail = () => {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Commissioner settings</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openRename(); }}>
+                  <Pencil className="h-4 w-4" />
+                  Rename pod
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-destructive focus:text-destructive"
                   onSelect={(e) => { e.preventDefault(); setConfirmDeleteOpen(true); }}
@@ -323,6 +365,33 @@ const PrivateLeagueDetail = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Rename pod</DialogTitle>
+            <DialogDescription>Pick a new name your pod members will see.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="pod-name">Pod name</Label>
+            <Input
+              id="pod-name"
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              maxLength={60}
+              autoFocus
+              onKeyDown={(e) => { if (e.key === "Enter") handleRenamePod(); }}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenameOpen(false)} disabled={renaming}>Cancel</Button>
+            <Button onClick={handleRenamePod} disabled={renaming || !renameValue.trim()}>
+              {renaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Pencil className="h-4 w-4" />}
+              Save name
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 };
