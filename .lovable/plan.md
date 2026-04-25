@@ -1,200 +1,60 @@
-## Goal
+# Expanded Friend Pods page (`/leagues`)
 
-Add private “friend pods” so players compete against a small group from their group chat instead of a giant global ladder. The core viral loop will be:
+Turn `/leagues` from a flat list into an at-a-glance hub for the user's "primary" pod, with one-click switching to other pods — so users see standings, recent battles, and members without drilling in.
 
-```text
-Create Friend League → native share/SMS group-chat link → invitees open link without an account → they preview the league → account/signup only when they choose to join/upload/battle
-```
+## UX
 
-## Product behavior
+- **Pod switcher (top of page)** — horizontal, scrollable strip of all the user's pods rendered as selectable "chips/cards" (image thumbnail + pod name + member count). Single click switches the primary pod shown below. The active pod is visually highlighted (border + background). On mobile this scrolls horizontally; on desktop it wraps if there's room. We'll use a simple flex + `overflow-x-auto` strip (no Embla needed — simpler, snappier, consistent with our hover styles). Includes a "+ New pod" tile at the end.
+- **Primary pod panel (below switcher)** — large card showing the selected pod, with three stacked sections:
+  1. **Header**: pod thumbnail (`PodThumbnail`), name, member count, "Open pod" button (links to `/leagues/:id` for full detail / settings / chat / battle), and a "Battle a pod member" shortcut for members.
+  2. **Standings** (weekly default, with weekly/all-time toggle) — reuse existing `<PrivateLeagueStandings />`.
+  3. **Recent battles in this pod** — new section listing the last ~5 battles where `battles.league_id = selectedPodId`, showing both spider thumbnails, who won, and a relative timestamp. Each row links to `/battle/:id`.
+  4. **Members** — compact horizontal avatar row with display names (reuses the same data we already fetch for the detail page).
+- **Empty state** unchanged: if user has zero pods, show the existing "Compete with your friends" CTA card.
 
-1. **Private leagues become the primary social competition**
-  - Add a “Friend Leagues” / “Private Pods” section on the home dashboard above or near the current leaderboard area.
-  - Reframe the main page away from “global rank” as the primary motivator.
-  - Keep the existing global leaderboard available, but demote it behind a smaller “Global Leaderboard” link.
-2. **One-tap create from group chat**
-  - Add a prominent button such as **Create league from group chat**.
-  - When tapped by a signed-in user:
-    - Create a private league owned by that user.
-    - Generate a reusable invite link.
-    - Immediately open the device share sheet when available, with SMS/WhatsApp/copy fallbacks.
-  - Example share text:
-    ```text
-    🕷️ Join my Spider League for digital battles with real spiders! 🕷️
-    ```
+## Data
 
-Join my Spider League pod. Let’s see whose spider squad is strongest:
-     [https://spiderleague.app/join/{inviteToken}](https://spiderleague.app/join/{inviteToken})
-     ```
+For each user pod (already fetched in `FriendPodsHomeSection` logic, will be reused/lifted into the page):
+- `private_leagues` row (id, name, image_url, owner_id) — already accessible via membership join.
+- Member count — already computed.
 
-3. **Invitees do not need an account at invite/open step**
-  - `/join/:inviteToken` will be publicly viewable.
-  - Unauthenticated invitees can see:
-    - League name
-    - Creator name
-    - Current member count
-    - Recent league activity, if any
-    - A clear CTA: **Join this league**
-  - Only when they tap “Join this league” will they be prompted to sign in/create an account.
-  - The invite token will be saved in session storage during auth, then automatically claimed after login.
-4. **Private pod standings**
-  - Each private league page will show member standings focused on friend-group competition:
-    - Wins
-    - Losses
-    - Win rate
-    - Battles against this pod
-    - Top active spider
-  - Initial standings can be computed from battles tagged with that league.
-  - If no league battles exist yet, show a friendly empty state: “Invite friends, then battle inside this pod.”
-5. **League-scoped battles**
-  - Add a league page where users can:
-    - See pod members
-    - Challenge a specific member
-    - Start a quick training battle against an eligible member spider when possible
-  - Battles started from a private league will be tagged with `league_id`, so pod standings stay separate from global activity.
-6. **Private league invite UX**
-  - Add share controls:
-    - Native share sheet
-    - SMS
-    - WhatsApp
-    - Copy invite link
-  - Show “Invite friends” prominently if the league has fewer than 2 active members.
-  - Group-chat invite link should be reusable, so the creator can paste it into an existing group thread without individually inviting each person.
+For the **selected primary pod only** (lazy fetch on selection change):
+- `members` — `private_league_members` join with `profiles(display_name, avatar_url)`.
+- `standings` — existing RPC `get_private_league_standings({ league_id, timeframe })`.
+- `recentBattles` — `battles` table query: `select id, created_at, winner, team_a, team_b where league_id = :id order by created_at desc limit 5`. `team_a`/`team_b` jsonb already contains spider snapshots used elsewhere in the app (see `Index.tsx` recent battle feed pattern).
 
-## Database plan
+Persist the user's last-selected primary pod in `localStorage` (`spiderleague:primaryPodId`) so revisits land on the same pod. Falls back to first pod if missing/invalid.
 
-Create new Supabase tables with RLS:
+## Files
 
-1. `private_leagues`
-  - `id`
-  - `owner_id`
-  - `name`
-  - `slug`
-  - `created_at`
-  - `updated_at`
-  - `is_active`
-2. `private_league_members`
-  - `id`
-  - `league_id`
-  - `user_id`
-  - `role` (`owner`, `member`)
-  - `joined_at`
-  - Unique constraint on `(league_id, user_id)`
-3. `private_league_invites`
-  - `id`
-  - `league_id`
-  - `token`
-  - `created_by`
-  - `created_at`
-  - `expires_at` nullable
-  - `max_uses` nullable
-  - `use_count`
-  - `is_active`
-4. Add nullable `league_id` columns to:
-  - `battle_challenges`
-  - `battles`
+**Modified — `src/pages/PrivateLeagues.tsx`**
+- Replace the simple list rendering with: pod switcher strip + primary pod panel.
+- Add state: `selectedPodId`, `primaryData` (members, standings, recentBattles), `timeframe`, loading flags.
+- Keep the existing fetch of all user pods (using the `FriendPodsHomeSection` query pattern: memberships → leagues → counts) so the strip and panel share data.
+- When `selectedPodId` changes, fetch the three primary-pod datasets in parallel.
+- Keep existing auth-gated empty state and "create pod" entry points.
 
-RLS rules:
+**New — `src/components/PodSwitcherStrip.tsx`**
+- Horizontal scrollable strip of pod tiles. Props: `pods`, `selectedId`, `onSelect`, `onCreate`.
+- Each tile: `PodThumbnail` + name + member count + active highlight ring.
+- Trailing "+ New pod" tile that triggers `CreatePrivateLeagueButton` (rendered as a tile).
 
-- League members can view their leagues and member lists.
-- League owners can manage invite links.
-- Public users can read only safe invite preview information by token through a security-definer RPC, not by directly reading all private league rows.
-- Authenticated users can claim a valid invite token through an RPC that inserts membership server-side.
+**New — `src/components/PrimaryPodPanel.tsx`**
+- Receives `pod`, `members`, `standings`, `recentBattles`, `timeframe`, `onTimeframeChange`, `currentUserId`, `loading`.
+- Renders header (thumbnail, name, member count, "Open pod" + "Battle a member" buttons), `<PrivateLeagueStandings />`, recent battles list, and members avatar row.
+- Recent battles list reuses styling consistent with `Index.tsx` battle feed (spider images, "X defeated Y", relative time, `Link` to `/battle/:id`).
 
-RPCs / functions:
+**Modified — `src/components/FriendPodsHomeSection.tsx`** (no functional change required for this task) — leave as-is on the home (`/`) page; this task focuses on `/leagues`.
 
-- `create_private_league_with_invite(name text)`  
-Creates league, inserts owner as member, creates invite token, returns invite URL data.
-- `get_private_league_invite_preview(token text)`  
-Public-safe preview for unauthenticated invite landing.
-- `claim_private_league_invite(token text)`  
-Authenticated user joins the league if token is valid.
-- `get_private_league_standings(league_id uuid)`  
-Returns pod standings based on league-tagged battles.
+## Behavior notes
 
-## App routes
+- "Battle a pod member" on the panel deep-links to `/leagues/:id` (the existing detail page already houses the battle picker dialog with eligibility checks). Avoids duplicating that complex picker UI in two places.
+- "Open pod" link goes to `/leagues/:id` for chat, invite, and commissioner settings — preserves existing detail page as the deep workspace.
+- Recent battles query uses RLS-safe public `battles` SELECT (already viewable by authenticated users per current policy).
+- All new components use existing design tokens, `Card`, `Button`, and `PodThumbnail` for visual consistency.
 
-Add routes in `src/App.tsx`:
+## Out of scope
 
-```text
-/leagues
-/leagues/:leagueId
-/join/:inviteToken
-```
-
-Pages/components to add:
-
-- `src/pages/PrivateLeagues.tsx`
-- `src/pages/PrivateLeagueDetail.tsx`
-- `src/pages/JoinLeague.tsx`
-- `src/components/CreatePrivateLeagueButton.tsx`
-- `src/components/PrivateLeagueCard.tsx`
-- `src/components/PrivateLeagueStandings.tsx`
-- `src/components/PrivateLeagueInvitePanel.tsx`
-
-## Home page changes
-
-In `src/pages/Index.tsx`:
-
-- Add a private leagues module after “Your Starting 5” or before the global leaderboard.
-- Replace the main “Leaderboards” emphasis with friend pods:
-  - Primary: “Compete with your friends”
-  - CTA: “Create league from group chat”
-  - Secondary link: “View global leaderboard”
-- Keep the global leaderboard preview but visually reduce its priority.
-
-## Auth flow for invitees
-
-Update auth handling so pending league invites survive signup/login:
-
-1. On `/join/:inviteToken`, if unauthenticated and user taps “Join this league”:
-  - Store token in `sessionStorage`, e.g. `pendingPrivateLeagueInvite`.
-  - Navigate to `/auth`.
-2. After authentication:
-  - Detect `pendingPrivateLeagueInvite`.
-  - Call `claim_private_league_invite`.
-  - Clear the pending token.
-  - Redirect to `/leagues/:leagueId`.
-  - Show toast: “You joined the league.”
-
-This keeps invite opening frictionless while still requiring an account only when the invitee commits.
-
-## Battle integration
-
-Update battle creation paths:
-
-- `quick-battle` edge function accepts optional `leagueId`.
-- If `leagueId` is provided:
-  - Validate the caller is a member.
-  - Select opponents only from other members of that league.
-  - Insert `league_id` into `battle_challenges` and `battles`.
-- Add “Battle a pod member” actions on the league detail page.
-- League standings count only battles with that league’s `league_id`.
-
-## UI tone
-
-Use casual, friend-group language:
-
-- “Your pod”
-- “Beat your friends”
-- “Invite the group chat”
-- “Pod standings”
-- “No one’s battled yet. Start the first fight.”
-
-Avoid making the feature feel like another global ladder.
-
-## Implementation order
-
-1. Add database migration for private league tables, indexes, RLS, and RPCs.
-2. Add `league_id` to battle-related tables and update battle creation paths.
-3. Build invite preview and claim flow.
-4. Build league list/detail pages and standings UI.
-5. Add home dashboard private pod CTA.
-6. Update sharing copy and native share/SMS/WhatsApp fallbacks.
-7. Test:
-  - Signed-in user creates league and gets share sheet/link.
-  - Logged-out invitee can preview invite.
-  - Logged-out invitee signs up and automatically joins.
-  - League battles are tagged correctly.
-  - Pod standings exclude global battles.
-  - Non-members cannot view private league details.
+- No DB migrations needed — `battles.league_id` already exists.
+- No changes to `/leagues/:leagueId` detail page.
+- No changes to home page (`/`) friend-pods section.
