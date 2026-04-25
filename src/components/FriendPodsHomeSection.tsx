@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
-import { ArrowRight, Loader2, Trophy, Users } from "lucide-react";
+import { ArrowRight, Loader2, Sword, Trophy, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 import CreatePrivateLeagueButton from "@/components/CreatePrivateLeagueButton";
 import PodSwitcherStrip, { type PodSwitcherItem } from "@/components/PodSwitcherStrip";
 import PodThumbnail from "@/components/PodThumbnail";
@@ -32,12 +33,15 @@ const getSpider = (team: any) => team?.spider ?? team?.[0] ?? null;
 
 const FriendPodsHomeSection = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [pods, setPods] = useState<PodSwitcherItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [topStanding, setTopStanding] = useState<TopStanding | null>(null);
   const [latestBattle, setLatestBattle] = useState<RecentBattle | null>(null);
   const [panelLoading, setPanelLoading] = useState(false);
+  const [battleLoading, setBattleLoading] = useState(false);
 
   const fetchPods = useCallback(async () => {
     if (!user) {
@@ -152,6 +156,24 @@ const FriendPodsHomeSection = () => {
 
   const selectedPod = pods.find((p) => p.id === selectedId) || null;
 
+  const handlePodBattle = async () => {
+    if (!selectedPod) return;
+    setBattleLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("quick-battle", {
+        body: { leagueId: selectedPod.id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: "Pod battle complete", description: "Opening the replay." });
+      navigate(`/battle/${data.battleId}`);
+    } catch (err: any) {
+      toast({ title: "Can't start pod battle", description: err.message, variant: "destructive" });
+    } finally {
+      setBattleLoading(false);
+    }
+  };
+
   return (
     <Card className="overflow-hidden border-primary/20 bg-card/70">
       <CardContent className="space-y-3 p-5 sm:p-6">
@@ -229,7 +251,20 @@ const FriendPodsHomeSection = () => {
         )}
 
         {selectedPod && (
-          <div className="flex justify-end">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
+            <Button
+              size="sm"
+              onClick={handlePodBattle}
+              disabled={battleLoading}
+              className="gap-1"
+            >
+              {battleLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Sword className="h-4 w-4" />
+              )}
+              Battle a member
+            </Button>
             <Button asChild variant="ghost" size="sm">
               <Link to={`/leagues/${selectedPod.id}`}>Open pod<ArrowRight className="h-4 w-4" /></Link>
             </Button>
