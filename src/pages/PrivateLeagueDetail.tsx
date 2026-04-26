@@ -93,10 +93,21 @@ const PrivateLeagueDetail = () => {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "battles", filter: `league_id=eq.${leagueId}` },
-        () => { fetchLeague(); },
+        (payload: any) => {
+          console.log("[PrivateLeagueDetail] battle change", payload?.eventType);
+          // Small delay so the battle row is fully visible to subsequent SELECTs/RPC calls
+          setTimeout(() => { fetchLeague(); }, 300);
+        },
       )
-      .subscribe();
-    return () => { (supabase as any).removeChannel(channel); };
+      .subscribe((status: string) => {
+        console.log("[PrivateLeagueDetail] realtime status", status);
+      });
+    const onFocus = () => { fetchLeague(); };
+    window.addEventListener("focus", onFocus);
+    return () => {
+      (supabase as any).removeChannel(channel);
+      window.removeEventListener("focus", onFocus);
+    };
   }, [leagueId, fetchLeague]);
 
   const openPicker = async () => {
