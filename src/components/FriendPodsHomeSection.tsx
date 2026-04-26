@@ -110,6 +110,28 @@ const FriendPodsHomeSection = () => {
   }, [fetchPods]);
 
   useEffect(() => {
+    if (mySpiders.length === 0) {
+      if (selectedMySpiderId !== "") setSelectedMySpiderId("");
+      return;
+    }
+    const top = mySpiders[0].id;
+    if (!selectedMySpiderId || !mySpiders.some((s) => s.id === selectedMySpiderId)) {
+      setSelectedMySpiderId(top);
+    }
+  }, [mySpiders, selectedMySpiderId]);
+
+  useEffect(() => {
+    if (opponentSpiders.length === 0) {
+      if (selectedOpponentSpiderId !== "") setSelectedOpponentSpiderId("");
+      return;
+    }
+    const top = opponentSpiders[0].id;
+    if (!selectedOpponentSpiderId || !opponentSpiders.some((s) => s.id === selectedOpponentSpiderId)) {
+      setSelectedOpponentSpiderId(top);
+    }
+  }, [opponentSpiders, selectedOpponentSpiderId]);
+
+  useEffect(() => {
     if (!selectedId) return;
     if (typeof window !== "undefined") window.localStorage.setItem(STORAGE_KEY, selectedId);
     let cancelled = false;
