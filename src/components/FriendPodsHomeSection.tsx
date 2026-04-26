@@ -303,7 +303,11 @@ const FriendPodsHomeSection = () => {
                   {topStanding ? (
                     <span className="truncate">
                       <span className="font-semibold">{topStanding.display_name || "Player"}</span>
-                      <span className="text-muted-foreground"> leads ({topStanding.wins}W–{topStanding.losses}L this week)</span>
+                      <span className="text-muted-foreground">
+                        {topStanding.wins === 0 && topStanding.losses === 0
+                          ? " · 0W–0L this week"
+                          : ` leads (${topStanding.wins}W–${topStanding.losses}L this week)`}
+                      </span>
                     </span>
                   ) : (
                     <span className="text-muted-foreground">Standings update after the first pod battle</span>
