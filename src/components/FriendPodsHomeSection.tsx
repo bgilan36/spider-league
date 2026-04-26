@@ -48,6 +48,7 @@ const FriendPodsHomeSection = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [topStanding, setTopStanding] = useState<TopStanding | null>(null);
   const [latestBattle, setLatestBattle] = useState<RecentBattle | null>(null);
+  const [memberCountForPanel, setMemberCountForPanel] = useState<number>(0);
   const [panelLoading, setPanelLoading] = useState(false);
   const [battleLoading, setBattleLoading] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -137,7 +138,7 @@ const FriendPodsHomeSection = () => {
     let cancelled = false;
     setPanelLoading(true);
     (async () => {
-      const [{ data: standingData }, { data: battleData }] = await Promise.all([
+      const [{ data: standingData }, { data: battleData }, { data: memberRows }] = await Promise.all([
         (supabase as any).rpc("get_private_league_standings", { league_id: selectedId, timeframe: "weekly" }),
         (supabase as any)
           .from("battles")
@@ -147,10 +148,27 @@ const FriendPodsHomeSection = () => {
           .not("winner", "is", null)
           .order("created_at", { ascending: false })
           .limit(1),
+        (supabase as any)
+          .from("private_league_members")
+          .select("user_id,profiles(display_name,avatar_url)")
+          .eq("league_id", selectedId),
       ]);
       if (cancelled) return;
       const standings = (standingData || []) as TopStanding[];
-      setTopStanding(standings[0] || null);
+      let top = standings[0] || null;
+      // Fallback: if no weekly standings yet, surface a pod member with 0-0 so the UI stays informative.
+      if (!top && memberRows && memberRows.length > 0) {
+        const first = memberRows[0] as any;
+        top = {
+          user_id: first.user_id,
+          display_name: first.profiles?.display_name || "Player",
+          avatar_url: first.profiles?.avatar_url || null,
+          wins: 0,
+          losses: 0,
+        };
+      }
+      setTopStanding(top);
+      setMemberCountForPanel((memberRows || []).length);
       setLatestBattle((battleData || [])[0] || null);
       setPanelLoading(false);
     })();
