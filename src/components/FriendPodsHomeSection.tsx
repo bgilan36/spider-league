@@ -4,6 +4,14 @@ import { formatDistanceToNow } from "date-fns";
 import { ArrowRight, Loader2, Sword, Trophy, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useAuth } from "@/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -42,6 +50,13 @@ const FriendPodsHomeSection = () => {
   const [latestBattle, setLatestBattle] = useState<RecentBattle | null>(null);
   const [panelLoading, setPanelLoading] = useState(false);
   const [battleLoading, setBattleLoading] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerLoading, setPickerLoading] = useState(false);
+  const [mySpiders, setMySpiders] = useState<any[]>([]);
+  const [opponentSpiders, setOpponentSpiders] = useState<any[]>([]);
+  const [members, setMembers] = useState<any[]>([]);
+  const [selectedMySpiderId, setSelectedMySpiderId] = useState<string>("");
+  const [selectedOpponentSpiderId, setSelectedOpponentSpiderId] = useState<string>("");
 
   const fetchPods = useCallback(async () => {
     if (!user) {
@@ -156,12 +171,58 @@ const FriendPodsHomeSection = () => {
 
   const selectedPod = pods.find((p) => p.id === selectedId) || null;
 
-  const handlePodBattle = async () => {
-    if (!selectedPod) return;
+  const openPicker = async () => {
+    if (!selectedPod || !user) return;
+    setPickerOpen(true);
+    setPickerLoading(true);
+    try {
+      const now = new Date().toISOString();
+      const { data: memberRows } = await (supabase as any)
+        .from("private_league_members")
+        .select("user_id,profiles(display_name,avatar_url)")
+        .eq("league_id", selectedPod.id);
+      const memberList = memberRows || [];
+      setMembers(memberList);
+      const opponentIds = memberList
+        .map((m: any) => m.user_id)
+        .filter((id: string) => id !== user.id);
+      const [{ data: mine }, { data: theirs }] = await Promise.all([
+        (supabase as any)
+          .from("spiders")
+          .select("id,nickname,image_url,power_score,owner_id,rarity,level")
+          .eq("owner_id", user.id)
+          .eq("is_approved", true)
+          .gt("eligible_until", now)
+          .order("power_score", { ascending: false }),
+        opponentIds.length > 0
+          ? (supabase as any)
+              .from("spiders")
+              .select("id,nickname,image_url,power_score,owner_id,rarity,level")
+              .in("owner_id", opponentIds)
+              .eq("is_approved", true)
+              .gt("eligible_until", now)
+              .order("power_score", { ascending: false })
+          : Promise.resolve({ data: [] }),
+      ]);
+      setMySpiders(mine || []);
+      setOpponentSpiders(theirs || []);
+      setSelectedMySpiderId(mine?.[0]?.id || "");
+      setSelectedOpponentSpiderId(theirs?.[0]?.id || "");
+    } finally {
+      setPickerLoading(false);
+    }
+  };
+
+  const startPodBattle = async () => {
+    if (!selectedPod || !selectedMySpiderId || !selectedOpponentSpiderId) return;
     setBattleLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("quick-battle", {
-        body: { leagueId: selectedPod.id },
+        body: {
+          leagueId: selectedPod.id,
+          spiderId: selectedMySpiderId,
+          opponentSpiderId: selectedOpponentSpiderId,
+        },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -171,6 +232,7 @@ const FriendPodsHomeSection = () => {
       toast({ title: "Can't start pod battle", description: err.message, variant: "destructive" });
     } finally {
       setBattleLoading(false);
+      setPickerOpen(false);
     }
   };
 
@@ -254,7 +316,7 @@ const FriendPodsHomeSection = () => {
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
             <Button
               size="sm"
-              onClick={handlePodBattle}
+              onClick={openPicker}
               disabled={battleLoading}
               className="gap-1"
             >
@@ -271,6 +333,77 @@ const FriendPodsHomeSection = () => {
           </div>
         )}
       </CardContent>
+
+      <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Choose your battle</DialogTitle>
+            <DialogDescription>Pick your spider and the pod member's spider you want to face.</DialogDescription>
+          </DialogHeader>
+          {pickerLoading ? (
+            <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin" /></div>
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2">
+              <div>
+                <h3 className="mb-2 text-sm font-semibold">Your spider</h3>
+                {mySpiders.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No eligible spiders. Upload or re-enlist one to battle.</p>
+                ) : (
+                  <div className="grid max-h-80 gap-2 overflow-y-auto pr-1">
+                    {mySpiders.map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => setSelectedMySpiderId(s.id)}
+                        className={`flex items-center gap-3 rounded-md border p-2 text-left transition ${selectedMySpiderId === s.id ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"}`}
+                      >
+                        <img src={s.image_url} alt={s.nickname} className="h-12 w-12 rounded object-cover" />
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-medium">{s.nickname}</div>
+                          <div className="text-xs text-muted-foreground">PWR {s.power_score} · Lv {s.level}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div>
+                <h3 className="mb-2 text-sm font-semibold">Pod opponent</h3>
+                {opponentSpiders.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No pod members have eligible spiders right now.</p>
+                ) : (
+                  <div className="grid max-h-80 gap-2 overflow-y-auto pr-1">
+                    {opponentSpiders.map((s) => {
+                      const owner = members.find((m) => m.user_id === s.owner_id);
+                      return (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => setSelectedOpponentSpiderId(s.id)}
+                          className={`flex items-center gap-3 rounded-md border p-2 text-left transition ${selectedOpponentSpiderId === s.id ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"}`}
+                        >
+                          <img src={s.image_url} alt={s.nickname} className="h-12 w-12 rounded object-cover" />
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-sm font-medium">{s.nickname}</div>
+                            <div className="truncate text-xs text-muted-foreground">{owner?.profiles?.display_name || "Pod member"} · PWR {s.power_score}</div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPickerOpen(false)} disabled={battleLoading}>Cancel</Button>
+            <Button onClick={startPodBattle} disabled={battleLoading || pickerLoading || !selectedMySpiderId || !selectedOpponentSpiderId} className="gap-1">
+              {battleLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sword className="h-4 w-4" />}
+              Start battle
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
