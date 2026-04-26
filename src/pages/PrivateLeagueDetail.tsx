@@ -85,6 +85,20 @@ const PrivateLeagueDetail = () => {
 
   useEffect(() => { fetchLeague(); }, [fetchLeague]);
 
+  // Live-refresh standings/members when a battle in this pod is inserted or updated
+  useEffect(() => {
+    if (!leagueId) return;
+    const channel = (supabase as any)
+      .channel(`pod-battles-${leagueId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "battles", filter: `league_id=eq.${leagueId}` },
+        () => { fetchLeague(); },
+      )
+      .subscribe();
+    return () => { (supabase as any).removeChannel(channel); };
+  }, [leagueId, fetchLeague]);
+
   const openPicker = async () => {
     if (!leagueId || !user) return;
     setPickerOpen(true);
