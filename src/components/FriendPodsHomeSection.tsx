@@ -137,7 +137,7 @@ const FriendPodsHomeSection = () => {
     if (typeof window !== "undefined") window.localStorage.setItem(STORAGE_KEY, selectedId);
     let cancelled = false;
     setPanelLoading(true);
-    (async () => {
+    const loadPanel = async () => {
       const [{ data: standingData }, { data: battleData }, { data: memberRows }] = await Promise.all([
         (supabase as any).rpc("get_private_league_standings", { league_id: selectedId, timeframe: "weekly" }),
         (supabase as any)
@@ -171,9 +171,19 @@ const FriendPodsHomeSection = () => {
       setMemberCountForPanel((memberRows || []).length);
       setLatestBattle((battleData || [])[0] || null);
       setPanelLoading(false);
-    })();
+    };
+    loadPanel();
+    const channel = (supabase as any)
+      .channel(`home-pod-battles-${selectedId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "battles", filter: `league_id=eq.${selectedId}` },
+        () => { loadPanel(); },
+      )
+      .subscribe();
     return () => {
       cancelled = true;
+      (supabase as any).removeChannel(channel);
     };
   }, [selectedId]);
 
