@@ -277,11 +277,11 @@ const FriendPodsHomeSection = () => {
         />
 
         {selectedPod && (
-          <Link
-            to={`/leagues/${selectedPod.id}`}
-            className="group block rounded-lg border border-border bg-background/40 p-3 transition hover:border-primary/60 hover:bg-primary/5"
-          >
-            <div className="flex items-center gap-3">
+          <div className="rounded-lg border border-primary/40 bg-primary/5 p-3">
+            <Link
+              to={`/leagues/${selectedPod.id}`}
+              className="group flex items-center gap-3"
+            >
               <PodThumbnail imageUrl={selectedPod.image_url} podName={selectedPod.name} className="h-12 w-12" />
               <div className="min-w-0 flex-1">
                 <div className="truncate font-semibold group-hover:text-primary">{selectedPod.name}</div>
@@ -290,7 +290,7 @@ const FriendPodsHomeSection = () => {
                 </div>
               </div>
               <ArrowRight className="h-4 w-4 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary" />
-            </div>
+            </Link>
 
             {panelLoading ? (
               <div className="mt-3 flex justify-center py-2">
@@ -303,10 +303,14 @@ const FriendPodsHomeSection = () => {
                   {topStanding ? (
                     <span className="truncate">
                       <span className="font-semibold">{topStanding.display_name || "Player"}</span>
-                      <span className="text-muted-foreground"> leads ({topStanding.wins}W–{topStanding.losses}L this week)</span>
+                      <span className="text-muted-foreground">
+                        {topStanding.wins === 0 && topStanding.losses === 0
+                          ? " · 0W–0L this week"
+                          : ` leads (${topStanding.wins}W–${topStanding.losses}L this week)`}
+                      </span>
                     </span>
                   ) : (
-                    <span className="text-muted-foreground">No standings yet this week</span>
+                    <span className="text-muted-foreground">Standings update after the first pod battle</span>
                   )}
                 </div>
                 <div className="flex items-center gap-2 rounded-md bg-muted/40 p-2 text-xs">
@@ -331,27 +335,25 @@ const FriendPodsHomeSection = () => {
                 </div>
               </div>
             )}
-          </Link>
-        )}
 
-        {selectedPod && (
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
-            <Button
-              size="sm"
-              onClick={openPicker}
-              disabled={battleLoading}
-              className="gap-1"
-            >
-              {battleLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Sword className="h-4 w-4" />
-              )}
-              Battle a member
-            </Button>
-            <Button asChild variant="ghost" size="sm">
-              <Link to={`/leagues/${selectedPod.id}`}>Open pod<ArrowRight className="h-4 w-4" /></Link>
-            </Button>
+            <div className="mt-3 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
+              <Button
+                size="sm"
+                onClick={openPicker}
+                disabled={battleLoading}
+                className="gap-1"
+              >
+                {battleLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Sword className="h-4 w-4" />
+                )}
+                Battle a member
+              </Button>
+              <Button asChild variant="ghost" size="sm">
+                <Link to={`/leagues/${selectedPod.id}`}>Open pod<ArrowRight className="h-4 w-4" /></Link>
+              </Button>
+            </div>
           </div>
         )}
       </CardContent>
