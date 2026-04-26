@@ -178,12 +178,20 @@ const FriendPodsHomeSection = () => {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "battles", filter: `league_id=eq.${selectedId}` },
-        () => { loadPanel(); },
+        (payload: any) => {
+          console.log("[FriendPodsHome] battle change", payload?.eventType);
+          setTimeout(() => { loadPanel(); }, 300);
+        },
       )
-      .subscribe();
+      .subscribe((status: string) => {
+        console.log("[FriendPodsHome] realtime status", status);
+      });
+    const onFocus = () => { loadPanel(); };
+    window.addEventListener("focus", onFocus);
     return () => {
       cancelled = true;
       (supabase as any).removeChannel(channel);
+      window.removeEventListener("focus", onFocus);
     };
   }, [selectedId]);
 
