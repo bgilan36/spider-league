@@ -13,6 +13,7 @@ import PrivateLeagueInvitePanel from "@/components/PrivateLeagueInvitePanel";
 import PrivateLeagueStandings from "@/components/PrivateLeagueStandings";
 import PodChat from "@/components/PodChat";
 import PodImageUploader from "@/components/PodImageUploader";
+import { usePodStandings, invalidatePodStandings } from "@/hooks/usePodStandings";
 import {
   Dialog,
   DialogContent,
@@ -48,7 +49,6 @@ const PrivateLeagueDetail = () => {
   const [league, setLeague] = useState<any>(null);
   const [members, setMembers] = useState<any[]>([]);
   const [invite, setInvite] = useState<any>(null);
-  const [standings, setStandings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [battleLoading, setBattleLoading] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -65,23 +65,28 @@ const PrivateLeagueDetail = () => {
   const [renameValue, setRenameValue] = useState("");
   const [renaming, setRenaming] = useState(false);
 
+  const {
+    standings,
+    loading: standingsLoading,
+    refreshing: standingsRefreshing,
+    refresh: refreshStandings,
+  } = usePodStandings(leagueId ?? null, timeframe);
+
   const inviteUrl = useMemo(() => invite?.token ? `${window.location.origin}/join/${invite.token}` : "", [invite]);
 
   const fetchLeague = useCallback(async () => {
     if (!leagueId || !user) return;
     setLoading(true);
-    const [{ data: leagueData }, { data: memberData }, { data: inviteData }, { data: standingData }] = await Promise.all([
+    const [{ data: leagueData }, { data: memberData }, { data: inviteData }] = await Promise.all([
       (supabase as any).from("private_leagues").select("*").eq("id", leagueId).maybeSingle(),
       (supabase as any).from("private_league_members").select("user_id,role,joined_at,profiles(display_name,avatar_url)").eq("league_id", leagueId).order("joined_at"),
       (supabase as any).from("private_league_invites").select("token").eq("league_id", leagueId).eq("is_active", true).order("created_at", { ascending: false }).limit(1).maybeSingle(),
-      (supabase as any).rpc("get_private_league_standings", { league_id: leagueId, timeframe }),
     ]);
     setLeague(leagueData);
     setMembers(memberData || []);
     setInvite(inviteData);
-    setStandings(standingData || []);
     setLoading(false);
-  }, [leagueId, user, timeframe]);
+  }, [leagueId, user]);
 
   useEffect(() => { fetchLeague(); }, [fetchLeague]);
 
@@ -96,19 +101,26 @@ const PrivateLeagueDetail = () => {
         (payload: any) => {
           console.log("[PrivateLeagueDetail] battle change", payload?.eventType);
           // Small delay so the battle row is fully visible to subsequent SELECTs/RPC calls
-          setTimeout(() => { fetchLeague(); }, 300);
+          setTimeout(() => {
+            if (leagueId) invalidatePodStandings(leagueId);
+            fetchLeague();
+            refreshStandings();
+          }, 300);
         },
       )
       .subscribe((status: string) => {
         console.log("[PrivateLeagueDetail] realtime status", status);
       });
-    const onFocus = () => { fetchLeague(); };
+    const onFocus = () => {
+      fetchLeague();
+      refreshStandings();
+    };
     window.addEventListener("focus", onFocus);
     return () => {
       (supabase as any).removeChannel(channel);
       window.removeEventListener("focus", onFocus);
     };
-  }, [leagueId, fetchLeague]);
+  }, [leagueId, fetchLeague, refreshStandings]);
 
   const openPicker = async () => {
     if (!leagueId || !user) return;
@@ -282,7 +294,13 @@ const PrivateLeagueDetail = () => {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="space-y-6">
-          <PrivateLeagueStandings standings={standings} timeframe={timeframe} onTimeframeChange={setTimeframe} />
+          <PrivateLeagueStandings
+            standings={standings}
+            timeframe={timeframe}
+            onTimeframeChange={setTimeframe}
+            loading={standingsLoading}
+            refreshing={standingsRefreshing}
+          />
           <PodChat leagueId={leagueId!} members={members} />
           <Card><CardHeader><CardTitle className="flex items-center gap-2 text-lg"><Users className="h-5 w-5 text-primary" />Members</CardTitle></CardHeader><CardContent className="space-y-2">{members.map((member) => <div key={member.user_id} className="flex items-center gap-3 rounded-md border border-border p-3"><div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-muted">{member.profiles?.avatar_url ? <img src={member.profiles.avatar_url} alt="" className="h-full w-full object-cover" /> : <span>{(member.profiles?.display_name || "P").charAt(0)}</span>}</div><div className="flex-1"><div className="font-medium">{member.profiles?.display_name || `Player ${member.user_id.slice(0, 6)}`}</div><div className="text-xs capitalize text-muted-foreground">{member.role === "owner" ? "Commissioner" : member.role}</div></div></div>)}</CardContent></Card>
         </div>

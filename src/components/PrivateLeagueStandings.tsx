@@ -1,6 +1,7 @@
-import { Trophy, Users } from "lucide-react";
+import { Loader2, Trophy, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Standing {
   user_id: string;
@@ -19,9 +20,17 @@ interface PrivateLeagueStandingsProps {
   standings: Standing[];
   timeframe: "weekly" | "all_time";
   onTimeframeChange: (value: "weekly" | "all_time") => void;
+  loading?: boolean;
+  refreshing?: boolean;
 }
 
-const PrivateLeagueStandings = ({ standings, timeframe, onTimeframeChange }: PrivateLeagueStandingsProps) => {
+const PrivateLeagueStandings = ({
+  standings,
+  timeframe,
+  onTimeframeChange,
+  loading = false,
+  refreshing = false,
+}: PrivateLeagueStandingsProps) => {
   const hasBattles = standings.some((standing) => standing.battles > 0);
 
   // PCT in MLB style (e.g. .643), no leading zero
@@ -62,6 +71,9 @@ const PrivateLeagueStandings = ({ standings, timeframe, onTimeframeChange }: Pri
         <CardTitle className="flex items-center gap-2 text-lg">
           <Trophy className="h-5 w-5 text-primary" />
           Pod standings
+          {refreshing && !loading ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" aria-label="Refreshing" />
+          ) : null}
         </CardTitle>
         <Tabs value={timeframe} onValueChange={(v) => onTimeframeChange(v as "weekly" | "all_time")}>
           <TabsList>
@@ -71,7 +83,9 @@ const PrivateLeagueStandings = ({ standings, timeframe, onTimeframeChange }: Pri
         </Tabs>
       </CardHeader>
       <CardContent>
-        {!hasBattles ? (
+        {loading && standings.length === 0 ? (
+          <StandingsSkeleton />
+        ) : !hasBattles ? (
           <div className="py-8 text-center">
             <Users className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
             <h3 className="font-semibold">No {timeframe === "weekly" ? "battles this week" : "battles yet"}.</h3>
@@ -157,3 +171,39 @@ const PrivateLeagueStandings = ({ standings, timeframe, onTimeframeChange }: Pri
 };
 
 export default PrivateLeagueStandings;
+
+const StandingsSkeleton = () => (
+  <div className="overflow-x-auto">
+    <table className="w-full border-collapse text-sm tabular-nums">
+      <thead>
+        <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
+          <th className="px-2 py-2 text-left font-medium">Team</th>
+          <th className="px-2 py-2 text-right font-medium">W</th>
+          <th className="px-2 py-2 text-right font-medium">L</th>
+          <th className="px-2 py-2 text-right font-medium">PCT</th>
+          <th className="px-2 py-2 text-right font-medium">GB</th>
+          <th className="px-2 py-2 text-right font-medium">DIFF</th>
+          <th className="px-2 py-2 text-right font-medium">STRK</th>
+        </tr>
+      </thead>
+      <tbody>
+        {Array.from({ length: 4 }).map((_, i) => (
+          <tr key={i} className="border-b border-border/60 last:border-b-0">
+            <td className="px-2 py-2">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-3 w-3" />
+                <Skeleton className="h-8 w-8 rounded-full" />
+                <Skeleton className="h-4 w-28" />
+              </div>
+            </td>
+            {Array.from({ length: 6 }).map((__, j) => (
+              <td key={j} className="px-2 py-2 text-right">
+                <Skeleton className="ml-auto h-4 w-8" />
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+);
