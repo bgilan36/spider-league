@@ -18,6 +18,10 @@ import { useToast } from "@/components/ui/use-toast";
 import CreatePrivateLeagueButton from "@/components/CreatePrivateLeagueButton";
 import PodSwitcherStrip, { type PodSwitcherItem } from "@/components/PodSwitcherStrip";
 import PodThumbnail from "@/components/PodThumbnail";
+import {
+  getCachedPodStandings,
+  invalidatePodStandings,
+} from "@/hooks/usePodStandings";
 
 const STORAGE_KEY = "spiderleague:primaryPodId";
 
@@ -138,6 +142,11 @@ const FriendPodsHomeSection = () => {
     let cancelled = false;
     setPanelLoading(true);
     const loadPanel = async () => {
+      // Serve cached weekly standings instantly while we refetch in the background.
+      const cachedTop = getCachedPodStandings(selectedId, "weekly");
+      if (cachedTop && cachedTop.length > 0 && !cancelled) {
+        setTopStanding(cachedTop[0] as TopStanding);
+      }
       const [{ data: standingData }, { data: battleData }, { data: memberRows }] = await Promise.all([
         (supabase as any).rpc("get_private_league_standings", { league_id: selectedId, timeframe: "weekly" }),
         (supabase as any)
@@ -180,7 +189,10 @@ const FriendPodsHomeSection = () => {
         { event: "*", schema: "public", table: "battles", filter: `league_id=eq.${selectedId}` },
         (payload: any) => {
           console.log("[FriendPodsHome] battle change", payload?.eventType);
-          setTimeout(() => { loadPanel(); }, 300);
+          setTimeout(() => {
+            invalidatePodStandings(selectedId);
+            loadPanel();
+          }, 300);
         },
       )
       .subscribe((status: string) => {
