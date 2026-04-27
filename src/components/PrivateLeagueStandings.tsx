@@ -1,6 +1,7 @@
-import { Trophy, Users } from "lucide-react";
+import { Loader2, Trophy, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Standing {
   user_id: string;
@@ -19,9 +20,17 @@ interface PrivateLeagueStandingsProps {
   standings: Standing[];
   timeframe: "weekly" | "all_time";
   onTimeframeChange: (value: "weekly" | "all_time") => void;
+  loading?: boolean;
+  refreshing?: boolean;
 }
 
-const PrivateLeagueStandings = ({ standings, timeframe, onTimeframeChange }: PrivateLeagueStandingsProps) => {
+const PrivateLeagueStandings = ({
+  standings,
+  timeframe,
+  onTimeframeChange,
+  loading = false,
+  refreshing = false,
+}: PrivateLeagueStandingsProps) => {
   const hasBattles = standings.some((standing) => standing.battles > 0);
 
   // PCT in MLB style (e.g. .643), no leading zero
@@ -62,6 +71,9 @@ const PrivateLeagueStandings = ({ standings, timeframe, onTimeframeChange }: Pri
         <CardTitle className="flex items-center gap-2 text-lg">
           <Trophy className="h-5 w-5 text-primary" />
           Pod standings
+          {refreshing && !loading ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" aria-label="Refreshing" />
+          ) : null}
         </CardTitle>
         <Tabs value={timeframe} onValueChange={(v) => onTimeframeChange(v as "weekly" | "all_time")}>
           <TabsList>
@@ -71,7 +83,9 @@ const PrivateLeagueStandings = ({ standings, timeframe, onTimeframeChange }: Pri
         </Tabs>
       </CardHeader>
       <CardContent>
-        {!hasBattles ? (
+        {loading && standings.length === 0 ? (
+          <StandingsSkeleton />
+        ) : !hasBattles ? (
           <div className="py-8 text-center">
             <Users className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
             <h3 className="font-semibold">No {timeframe === "weekly" ? "battles this week" : "battles yet"}.</h3>
