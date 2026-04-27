@@ -171,3 +171,39 @@ const PrivateLeagueStandings = ({
 };
 
 export default PrivateLeagueStandings;
+
+const StandingsSkeleton = () => (
+  <div className="overflow-x-auto">
+    <table className="w-full border-collapse text-sm tabular-nums">
+      <thead>
+        <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
+          <th className="px-2 py-2 text-left font-medium">Team</th>
+          <th className="px-2 py-2 text-right font-medium">W</th>
+          <th className="px-2 py-2 text-right font-medium">L</th>
+          <th className="px-2 py-2 text-right font-medium">PCT</th>
+          <th className="px-2 py-2 text-right font-medium">GB</th>
+          <th className="px-2 py-2 text-right font-medium">DIFF</th>
+          <th className="px-2 py-2 text-right font-medium">STRK</th>
+        </tr>
+      </thead>
+      <tbody>
+        {Array.from({ length: 4 }).map((_, i) => (
+          <tr key={i} className="border-b border-border/60 last:border-b-0">
+            <td className="px-2 py-2">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-3 w-3" />
+                <Skeleton className="h-8 w-8 rounded-full" />
+                <Skeleton className="h-4 w-28" />
+              </div>
+            </td>
+            {Array.from({ length: 6 }).map((__, j) => (
+              <td key={j} className="px-2 py-2 text-right">
+                <Skeleton className="ml-auto h-4 w-8" />
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+);
