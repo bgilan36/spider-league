@@ -1,6 +1,5 @@
-import { Flame, Snowflake, Trophy, Users } from "lucide-react";
+import { Trophy, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Standing {
@@ -12,6 +11,7 @@ interface Standing {
   battles: number;
   win_rate: number;
   streak: number;
+  power_diff?: number;
   top_spider: any;
 }
 
@@ -23,6 +23,38 @@ interface PrivateLeagueStandingsProps {
 
 const PrivateLeagueStandings = ({ standings, timeframe, onTimeframeChange }: PrivateLeagueStandingsProps) => {
   const hasBattles = standings.some((standing) => standing.battles > 0);
+
+  // PCT in MLB style (e.g. .643), no leading zero
+  const formatPct = (wins: number, losses: number) => {
+    const total = wins + losses;
+    if (total === 0) return ".000";
+    const pct = wins / total;
+    return pct.toFixed(3).replace(/^0/, "");
+  };
+
+  // Games Behind: ((leaderW - W) + (L - leaderL)) / 2, "—" for the leader
+  const computeGB = (s: Standing, leader: Standing | undefined) => {
+    if (!leader) return "—";
+    if (s.user_id === leader.user_id) return "—";
+    const gb = ((leader.wins - s.wins) + (s.losses - leader.losses)) / 2;
+    if (gb <= 0) return "—";
+    return Number.isInteger(gb) ? gb.toFixed(0) : gb.toFixed(1);
+  };
+
+  // STRK: W3, L2, "—" for none
+  const formatStreak = (streak: number) => {
+    if (!streak) return "—";
+    return `${streak > 0 ? "W" : "L"}${Math.abs(streak)}`;
+  };
+
+  // DIFF: signed integer with sign and color
+  const formatDiff = (diff: number) => {
+    if (!diff) return "0";
+    const sign = diff > 0 ? "+" : "";
+    return `${sign}${diff}`;
+  };
+
+  const leader = standings[0];
 
   return (
     <Card>
@@ -48,36 +80,75 @@ const PrivateLeagueStandings = ({ standings, timeframe, onTimeframeChange }: Pri
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {standings.map((standing, index) => {
-              const topSpider = standing.top_spider && Object.keys(standing.top_spider).length > 0 ? standing.top_spider : null;
-              const streak = standing.streak ?? 0;
-              return (
-                <div key={standing.user_id} className="flex items-center gap-3 rounded-md border border-border p-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm font-bold">#{index + 1}</div>
-                  <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-muted">
-                    {standing.avatar_url ? <img src={standing.avatar_url} alt="" className="h-full w-full object-cover" /> : <span className="font-semibold">{(standing.display_name || "P").charAt(0)}</span>}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate font-medium">{standing.display_name || `Player ${standing.user_id.slice(0, 6)}`}</div>
-                    <div className="truncate text-xs text-muted-foreground">{topSpider ? `Top spider: ${topSpider.nickname} (${topSpider.power_score})` : "No active spider yet"}</div>
-                  </div>
-                  <div className="grid grid-cols-4 gap-2 text-center text-xs sm:gap-4">
-                    <div><div className="font-bold text-foreground">{standing.wins}</div><div className="text-muted-foreground">W</div></div>
-                    <div><div className="font-bold text-foreground">{standing.losses}</div><div className="text-muted-foreground">L</div></div>
-                    <div>
-                      <div className={`flex items-center justify-center gap-1 font-bold ${streak > 0 ? "text-primary" : streak < 0 ? "text-destructive" : "text-foreground"}`}>
-                        {streak > 0 && <Flame className="h-3 w-3" />}
-                        {streak < 0 && <Snowflake className="h-3 w-3" />}
-                        {streak === 0 ? "—" : Math.abs(streak)}
-                      </div>
-                      <div className="text-muted-foreground">Streak</div>
-                    </div>
-                    <div><Badge variant="outline">{standing.win_rate}%</Badge></div>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-sm tabular-nums">
+              <thead>
+                <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
+                  <th className="px-2 py-2 text-left font-medium">Team</th>
+                  <th className="px-2 py-2 text-right font-medium">W</th>
+                  <th className="px-2 py-2 text-right font-medium">L</th>
+                  <th className="px-2 py-2 text-right font-medium">PCT</th>
+                  <th className="px-2 py-2 text-right font-medium">GB</th>
+                  <th className="px-2 py-2 text-right font-medium" title="Power-score differential (sum of your spider power − opponent power across battles)">DIFF</th>
+                  <th className="px-2 py-2 text-right font-medium">STRK</th>
+                </tr>
+              </thead>
+              <tbody>
+                {standings.map((standing, index) => {
+                  const diff = standing.power_diff ?? 0;
+                  return (
+                    <tr
+                      key={standing.user_id}
+                      className="border-b border-border/60 last:border-b-0 hover:bg-muted/40"
+                    >
+                      <td className="px-2 py-2">
+                        <div className="flex items-center gap-3">
+                          <span className="w-5 shrink-0 text-right text-xs font-semibold text-muted-foreground">
+                            {index + 1}
+                          </span>
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted">
+                            {standing.avatar_url ? (
+                              <img src={standing.avatar_url} alt="" className="h-full w-full object-cover" />
+                            ) : (
+                              <span className="text-xs font-semibold">
+                                {(standing.display_name || "P").charAt(0)}
+                              </span>
+                            )}
+                          </div>
+                          <span className="truncate font-medium">
+                            {standing.display_name || `Player ${standing.user_id.slice(0, 6)}`}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-2 py-2 text-right">{standing.wins}</td>
+                      <td className="px-2 py-2 text-right">{standing.losses}</td>
+                      <td className="px-2 py-2 text-right">{formatPct(standing.wins, standing.losses)}</td>
+                      <td className="px-2 py-2 text-right text-muted-foreground">
+                        {computeGB(standing, leader)}
+                      </td>
+                      <td
+                        className={`px-2 py-2 text-right font-medium ${
+                          diff > 0 ? "text-primary" : diff < 0 ? "text-destructive" : "text-foreground"
+                        }`}
+                      >
+                        {formatDiff(diff)}
+                      </td>
+                      <td
+                        className={`px-2 py-2 text-right font-medium ${
+                          standing.streak > 0
+                            ? "text-primary"
+                            : standing.streak < 0
+                            ? "text-destructive"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        {formatStreak(standing.streak ?? 0)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </CardContent>
