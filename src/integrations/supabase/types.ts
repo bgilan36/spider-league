@@ -1567,6 +1567,7 @@ export type Database = {
               battles: number
               display_name: string
               losses: number
+              power_diff: number
               streak: number
               top_spider: Json
               user_id: string
