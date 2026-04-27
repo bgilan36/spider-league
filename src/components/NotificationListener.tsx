@@ -292,94 +292,12 @@ const NotificationListener = () => {
       )
       .subscribe();
 
-    // Subscribe to battle completions where user is involved
-    const battlesChannel = supabase
-      .channel('user-battles')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'battles',
-        },
-        async (payload) => {
-          console.log('Battle updated:', payload);
-          
-          const battle = payload.new;
-          
-          // Only process completed battles
-          if (battle.is_active) return;
-          
-          const teamA = battle.team_a as any;
-          const teamB = battle.team_b as any;
-          
-          // Check if current user is involved
-          if (teamA?.userId === user.id || teamB?.userId === user.id) {
-            const isWinner = battle.winner === 'TEAM_A' 
-              ? teamA?.userId === user.id 
-              : battle.winner === 'TEAM_B' 
-                ? teamB?.userId === user.id 
-                : false;
-
-            if (battle.winner && battle.winner !== 'TIE') {
-              // If user is visible and focused, show presence gate for immediate viewing
-              if (isVisible && document.hasFocus()) {
-                toast.custom((t) => (
-                  <div className="bg-card border border-border rounded-lg p-4 shadow-lg flex items-start gap-3 max-w-md">
-                    <div className="flex-shrink-0">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Swords className="h-5 w-5 text-primary animate-pulse" />
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-sm text-foreground">
-                        A Battle is Ready to Watch
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Your spider just finished an epic battle! Ready to see what happened?
-                      </p>
-                      <div className="flex gap-2 mt-3">
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            navigate(`/battle/${battle.id}?requirePresence=true`);
-                            toast.dismiss(t);
-                          }}
-                        >
-                          Watch Now
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            // Mark as missed for later
-                            localStorage.setItem(`has-missed-battles-${user.id}`, 'true');
-                            toast.dismiss(t);
-                          }}
-                        >
-                          Later
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ), { duration: 30000 });
-              } else {
-                // User is not visible, mark as missed
-                localStorage.setItem(`has-missed-battles-${user.id}`, 'true');
-              }
-            }
-          }
-        }
-      )
-      .subscribe();
-
     // Cleanup
     return () => {
       supabase.removeChannel(challengesChannel);
       supabase.removeChannel(challengeUpdatesChannel);
       supabase.removeChannel(pokesChannel);
       supabase.removeChannel(wallPostsChannel);
-      supabase.removeChannel(battlesChannel);
     };
   }, [user]);
 

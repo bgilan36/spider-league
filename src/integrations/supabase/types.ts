@@ -1546,35 +1546,21 @@ export type Database = {
         Args: { token: string }
         Returns: Json
       }
-      get_private_league_standings:
-        | {
-            Args: { league_id: string }
-            Returns: {
-              avatar_url: string
-              battles: number
-              display_name: string
-              losses: number
-              top_spider: Json
-              user_id: string
-              win_rate: number
-              wins: number
-            }[]
-          }
-        | {
-            Args: { league_id: string; timeframe?: string }
-            Returns: {
-              avatar_url: string
-              battles: number
-              display_name: string
-              losses: number
-              power_diff: number
-              streak: number
-              top_spider: Json
-              user_id: string
-              win_rate: number
-              wins: number
-            }[]
-          }
+      get_private_league_standings: {
+        Args: { league_id: string; timeframe?: string }
+        Returns: {
+          avatar_url: string
+          battles: number
+          display_name: string
+          losses: number
+          power_diff: number
+          streak: number
+          top_spider: Json
+          user_id: string
+          win_rate: number
+          wins: number
+        }[]
+      }
       get_recent_public_skirmishes: {
         Args: { row_limit?: number }
         Returns: {
