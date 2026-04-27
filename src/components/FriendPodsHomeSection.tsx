@@ -140,7 +140,9 @@ const FriendPodsHomeSection = () => {
     if (!selectedId) return;
     if (typeof window !== "undefined") window.localStorage.setItem(STORAGE_KEY, selectedId);
     let cancelled = false;
-    setPanelLoading(true);
+    // Only show the panel spinner when we have nothing to render yet.
+    const cachedTopSync = getCachedPodStandings(selectedId, "weekly");
+    setPanelLoading(!(cachedTopSync && cachedTopSync.length > 0));
     const loadPanel = async () => {
       // Serve cached weekly standings instantly while we refetch in the background.
       const cachedTop = getCachedPodStandings(selectedId, "weekly");
