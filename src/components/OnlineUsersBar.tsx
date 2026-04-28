@@ -24,8 +24,27 @@ const OnlineUsersBar: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
 
-  // Filter out current user from the list
+  // Always include the current user first, then everyone else
+  const currentUserEntry = user
+    ? (() => {
+        const existing = onlineUsers.find(u => u.user_id === user.id);
+        return {
+          user_id: user.id,
+          display_name:
+            existing?.display_name ||
+            (user.user_metadata as any)?.display_name ||
+            (user.user_metadata as any)?.full_name ||
+            (user.email ? user.email.split('@')[0] : 'You'),
+          avatar_url:
+            existing?.avatar_url ||
+            (user.user_metadata as any)?.avatar_url ||
+            null,
+          last_seen: existing?.last_seen || new Date().toISOString(),
+        };
+      })()
+    : null;
   const otherUsers = onlineUsers.filter(u => u.user_id !== user?.id);
+  const displayUsers = currentUserEntry ? [currentUserEntry, ...otherUsers] : otherUsers;
 
   const url = 'https://spiderleague.app';
   const message = 'Come battle with me on Spider League';
