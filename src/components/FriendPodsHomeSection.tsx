@@ -397,6 +397,16 @@ const FriendPodsHomeSection = () => {
               </div>
             )}
 
+            <div className="mt-3">
+              <PrivateLeagueStandings
+                standings={podStandings}
+                timeframe={standingsTimeframe}
+                onTimeframeChange={setStandingsTimeframe}
+                loading={standingsLoading}
+                refreshing={standingsRefreshing}
+              />
+            </div>
+
             <div className="mt-3 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
               <Button
                 size="sm"
