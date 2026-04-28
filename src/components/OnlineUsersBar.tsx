@@ -111,76 +111,6 @@ const OnlineUsersBar: React.FC = () => {
     );
   }
 
-  if (otherUsers.length === 0) {
-    return (
-      <div className="w-full mb-6">
-        <div className="container mx-auto px-4">
-          <div className="bg-gradient-to-r from-muted/30 via-muted/50 to-muted/30 rounded-2xl p-4 shadow-sm border border-border/50">
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-muted-foreground/50" />
-                Online:
-              </span>
-              <span className="text-sm text-muted-foreground">No other players online</span>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 gap-2 text-xs ml-auto"
-                  >
-                    <UserPlus className="h-4 w-4" />
-                    Invite
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48">
-                  {navigator.share && (
-                    <>
-                      <DropdownMenuItem onClick={handleNativeShare}>
-                        <UserPlus className="mr-2 h-4 w-4" />
-                        Share via device
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
-                  <DropdownMenuItem onClick={() => openShareUrl(shareUrls.sms)}>
-                    <span className="mr-2">💬</span>
-                    Share via SMS
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => openShareUrl(shareUrls.whatsapp)}>
-                    <span className="mr-2">💚</span>
-                    Share on WhatsApp
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => openShareUrl(shareUrls.telegram)}>
-                    <span className="mr-2">✈️</span>
-                    Share on Telegram
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => openShareUrl(shareUrls.twitter)}>
-                    <span className="mr-2">🐦</span>
-                    Share on Twitter
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => openShareUrl(shareUrls.facebook)}>
-                    <span className="mr-2">👍</span>
-                    Share on Facebook
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleCopyLink}>
-                    {copied ? (
-                      <Check className="mr-2 h-4 w-4 text-green-500" />
-                    ) : (
-                      <Copy className="mr-2 h-4 w-4" />
-                    )}
-                    {copied ? 'Copied!' : 'Copy message'}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
       <div className="w-full mb-6">
@@ -189,7 +119,7 @@ const OnlineUsersBar: React.FC = () => {
             <div className="flex items-center gap-3">
               <span className="text-sm font-semibold text-foreground flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                Online: <span className="text-primary font-bold">{otherUsers.length}</span>
+                Online: <span className="text-primary font-bold">{displayUsers.length}</span>
               </span>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -245,7 +175,9 @@ const OnlineUsersBar: React.FC = () => {
               </DropdownMenu>
               <ScrollArea className="w-full whitespace-nowrap">
                 <div className="flex gap-2">
-                  {otherUsers.map((onlineUser) => (
+                  {displayUsers.map((onlineUser) => {
+                    const isSelf = onlineUser.user_id === user?.id;
+                    return (
                     <TooltipProvider key={onlineUser.user_id}>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -253,7 +185,7 @@ const OnlineUsersBar: React.FC = () => {
                             onClick={() => setSelectedUserId(onlineUser.user_id)}
                             className="relative group flex-shrink-0 transition-all duration-200 hover:scale-110"
                           >
-                            <Avatar className="h-10 w-10 ring-2 ring-primary/20 group-hover:ring-primary/60 transition-all duration-200">
+                            <Avatar className={`h-10 w-10 ring-2 ${isSelf ? 'ring-primary/70' : 'ring-primary/20'} group-hover:ring-primary/60 transition-all duration-200`}>
                               <AvatarImage 
                                 src={onlineUser.avatar_url || undefined} 
                                 alt={onlineUser.display_name || 'User'} 
@@ -266,12 +198,15 @@ const OnlineUsersBar: React.FC = () => {
                           </button>
                         </TooltipTrigger>
                         <TooltipContent className="bg-card/95 backdrop-blur-sm">
-                          <p className="font-medium">{onlineUser.display_name || 'Unknown Player'}</p>
+                          <p className="font-medium">
+                            {onlineUser.display_name || 'Unknown Player'}{isSelf ? ' (You)' : ''}
+                          </p>
                           <p className="text-xs text-muted-foreground">Click to view profile</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                  ))}
+                    );
+                  })}
                 </div>
                 <ScrollBar orientation="horizontal" />
               </ScrollArea>
