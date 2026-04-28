@@ -18,9 +18,11 @@ import { useToast } from "@/components/ui/use-toast";
 import CreatePrivateLeagueButton from "@/components/CreatePrivateLeagueButton";
 import PodSwitcherStrip, { type PodSwitcherItem } from "@/components/PodSwitcherStrip";
 import PodThumbnail from "@/components/PodThumbnail";
+import PrivateLeagueStandings from "@/components/PrivateLeagueStandings";
 import {
   getCachedPodStandings,
   invalidatePodStandings,
+  usePodStandings,
 } from "@/hooks/usePodStandings";
 
 const STORAGE_KEY = "spiderleague:primaryPodId";
@@ -54,6 +56,7 @@ const FriendPodsHomeSection = () => {
   const [latestBattle, setLatestBattle] = useState<RecentBattle | null>(null);
   const [memberCountForPanel, setMemberCountForPanel] = useState<number>(0);
   const [panelLoading, setPanelLoading] = useState(false);
+  const [standingsTimeframe, setStandingsTimeframe] = useState<"weekly" | "all_time">("weekly");
   const [battleLoading, setBattleLoading] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerLoading, setPickerLoading] = useState(false);
@@ -62,6 +65,13 @@ const FriendPodsHomeSection = () => {
   const [members, setMembers] = useState<any[]>([]);
   const [selectedMySpiderId, setSelectedMySpiderId] = useState<string>("");
   const [selectedOpponentSpiderId, setSelectedOpponentSpiderId] = useState<string>("");
+
+  const {
+    standings: podStandings,
+    loading: standingsLoading,
+    refreshing: standingsRefreshing,
+    refresh: refreshStandings,
+  } = usePodStandings(selectedId, standingsTimeframe);
 
   const fetchPods = useCallback(async () => {
     if (!user) {
@@ -194,6 +204,7 @@ const FriendPodsHomeSection = () => {
           setTimeout(() => {
             invalidatePodStandings(selectedId);
             loadPanel();
+            refreshStandings();
           }, 300);
         },
       )
@@ -385,6 +396,16 @@ const FriendPodsHomeSection = () => {
                 </div>
               </div>
             )}
+
+            <div className="mt-3">
+              <PrivateLeagueStandings
+                standings={podStandings}
+                timeframe={standingsTimeframe}
+                onTimeframeChange={setStandingsTimeframe}
+                loading={standingsLoading}
+                refreshing={standingsRefreshing}
+              />
+            </div>
 
             <div className="mt-3 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
               <Button
