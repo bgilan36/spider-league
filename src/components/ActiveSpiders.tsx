@@ -346,9 +346,8 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
                   </TooltipTrigger>
                   <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
                     <p className="font-semibold mb-1">Your Starting 5</p>
-                    <p>Each spider stays active for <strong>30 days</strong> from upload. You can have up to {MAX_ACTIVE} active spiders.</p>
-                    <p className="mt-1"><strong>Battle Now</strong> — Training battle for XP (no risk).</p>
-                    <p><strong>Battle to Death</strong> — Winner takes the loser's spider. Both sides must agree.</p>
+                    <p>Your active battle roster — up to <strong>{MAX_ACTIVE} spiders</strong> ready to compete. Each spider stays eligible for <strong>30 days</strong> from upload, then retires to your collection.</p>
+                    <p className="mt-1">Use this lineup to launch battles, accept challenges, and climb the leaderboard.</p>
                   </TooltipContent>
                 </Tooltip>
               </div>
