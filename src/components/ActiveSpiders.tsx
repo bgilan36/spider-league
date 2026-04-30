@@ -344,7 +344,11 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
                       <CircleHelp className="h-4 w-4" />
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
+                  <TooltipContent
+                    side="top"
+                    collisionPadding={12}
+                    className="max-w-[min(20rem,calc(100vw-2rem))] text-xs leading-relaxed whitespace-normal break-words"
+                  >
                     <p className="font-semibold mb-1">Your Starting 5</p>
                     <p>Your active battle roster — up to <strong>{MAX_ACTIVE} spiders</strong> ready to compete. Each spider stays eligible for <strong>30 days</strong> from upload, then retires to your collection.</p>
                     <p className="mt-1">Use this lineup to launch battles, accept challenges, and climb the leaderboard.</p>
