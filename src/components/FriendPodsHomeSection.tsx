@@ -325,7 +325,7 @@ const FriendPodsHomeSection = () => {
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-primary">
             <Users className="h-5 w-5" />
-            <span className="text-sm font-semibold uppercase tracking-wide">Your friend pods</span>
+            <span className="text-sm font-semibold uppercase tracking-wide">Your pods</span>
           </div>
           <CreatePrivateLeagueButton size="sm" variant="outline" onCreated={fetchPods} />
         </div>
@@ -407,7 +407,7 @@ const FriendPodsHomeSection = () => {
               />
             </div>
 
-            <div className="mt-3 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
+            <div className="mt-3 flex justify-end">
               <Button
                 size="sm"
                 onClick={openPicker}
@@ -419,10 +419,7 @@ const FriendPodsHomeSection = () => {
                 ) : (
                   <Sword className="h-4 w-4" />
                 )}
-                Battle a member
-              </Button>
-              <Button asChild variant="ghost" size="sm">
-                <Link to={`/leagues/${selectedPod.id}`}>Open pod<ArrowRight className="h-4 w-4" /></Link>
+                Battle
               </Button>
             </div>
           </div>
