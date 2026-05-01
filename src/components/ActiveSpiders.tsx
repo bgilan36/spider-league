@@ -11,6 +11,7 @@ import { useAuth } from '@/auth/AuthProvider';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import SpiderDetailsModal from '@/components/SpiderDetailsModal';
+import { useStartSkillBattle } from '@/components/battle/useStartSkillBattle';
 
 interface Spider {
   id: string;
@@ -51,6 +52,7 @@ const COOLDOWN_MINUTES = 60;
 const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpiderId }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { open: openStancePicker, picker: skillBattlePicker } = useStartSkillBattle();
   const [activeSpiders, setActiveSpiders] = useState<Spider[]>([]);
   const [retiredSpiders, setRetiredSpiders] = useState<Spider[]>([]);
   const [showRetireDialog, setShowRetireDialog] = useState(false);
@@ -219,27 +221,8 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
 
   const handleConfirmBattle = async () => {
     if (!user || !battlePreviewSpider) return;
-    setBattleStarting(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('quick-battle', {
-        body: { spiderId: battlePreviewSpider.id }
-      });
-      if (error) throw error;
-      if (data?.error) {
-        toast.error(data.error);
-        return;
-      }
-      if (data?.battleId) {
-        setShowBattlePreview(false);
-        toast.success('Battle Complete! Viewing results...');
-        navigate(`/battle/${data.battleId}`);
-      }
-    } catch (error: any) {
-      console.error('Quick battle error:', error);
-      toast.error(error.message || 'Failed to start battle');
-    } finally {
-      setBattleStarting(false);
-    }
+    setShowBattlePreview(false);
+    openStancePicker({ spiderId: battlePreviewSpider.id });
   };
 
   const handleOpenOpponentBrowser = async (spider: Spider) => {
@@ -323,6 +306,8 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
   const emptySlots = Math.max(0, MAX_ACTIVE - activeSpiders.length);
 
   return (
+    <>
+    {skillBattlePicker}
     <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-background to-primary/5 relative overflow-hidden">
       <CardContent className="p-4 sm:p-6 relative z-1">
         {/* Header */}
@@ -773,6 +758,7 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
         </DialogContent>
       </Dialog>
     </Card>
+    </>
   );
 };
 

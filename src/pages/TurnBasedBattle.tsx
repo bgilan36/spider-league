@@ -13,8 +13,34 @@ import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import BattleOutcomeReveal from '@/components/BattleOutcomeReveal';
 import PresenceGateDialog from '@/components/PresenceGateDialog';
+import InteractiveBattleArena from '@/components/battle/InteractiveBattleArena';
 
 const TurnBasedBattle = () => {
+  const { battleId } = useParams<{ battleId: string }>();
+  const [mode, setMode] = useState<'interactive' | 'auto' | null>(null);
+
+  // Cheap one-shot fetch of just the mode column so we can dispatch.
+  useEffect(() => {
+    if (!battleId) { setMode('auto'); return; }
+    let cancelled = false;
+    supabase.from('battles').select('mode').eq('id', battleId).single()
+      .then(({ data }) => {
+        if (cancelled) return;
+        setMode(((data as any)?.mode as 'interactive' | 'auto') || 'auto');
+      });
+    return () => { cancelled = true; };
+  }, [battleId]);
+
+  if (mode === null) {
+    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  }
+  if (mode === 'interactive' && battleId) {
+    return <InteractiveBattleArena battleId={battleId} />;
+  }
+  return <LegacyTurnBasedBattle />;
+};
+
+const LegacyTurnBasedBattle = () => {
   const { battleId } = useParams<{ battleId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -27,6 +53,7 @@ const TurnBasedBattle = () => {
     mySpider,
     opponentSpider,
   } = useTurnBasedBattle(battleId || null);
+
   const [started, setStarted] = useState(false);
   const [showPresenceGate, setShowPresenceGate] = useState(false);
   const [showOutcomeReveal, setShowOutcomeReveal] = useState(false);

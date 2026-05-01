@@ -19,6 +19,7 @@ import CreatePrivateLeagueButton from "@/components/CreatePrivateLeagueButton";
 import PodSwitcherStrip, { type PodSwitcherItem } from "@/components/PodSwitcherStrip";
 import PodThumbnail from "@/components/PodThumbnail";
 import PrivateLeagueStandings from "@/components/PrivateLeagueStandings";
+import { useStartSkillBattle } from "@/components/battle/useStartSkillBattle";
 import {
   getCachedPodStandings,
   invalidatePodStandings,
@@ -49,6 +50,7 @@ const FriendPodsHomeSection = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { open: openSkillBattle, picker: skillBattlePicker } = useStartSkillBattle();
   const [pods, setPods] = useState<PodSwitcherItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -298,25 +300,12 @@ const FriendPodsHomeSection = () => {
 
   const startPodBattle = async () => {
     if (!selectedPod || !selectedMySpiderId || !selectedOpponentSpiderId) return;
-    setBattleLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("quick-battle", {
-        body: {
-          leagueId: selectedPod.id,
-          spiderId: selectedMySpiderId,
-          opponentSpiderId: selectedOpponentSpiderId,
-        },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      toast({ title: "Pod battle complete", description: "Opening the replay." });
-      navigate(`/battle/${data.battleId}`);
-    } catch (err: any) {
-      toast({ title: "Can't start pod battle", description: err.message, variant: "destructive" });
-    } finally {
-      setBattleLoading(false);
-      setPickerOpen(false);
-    }
+    setPickerOpen(false);
+    openSkillBattle({
+      leagueId: selectedPod.id,
+      spiderId: selectedMySpiderId,
+      opponentSpiderId: selectedOpponentSpiderId,
+    });
   };
 
   return (
@@ -496,6 +485,7 @@ const FriendPodsHomeSection = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {skillBattlePicker}
     </Card>
   );
 };

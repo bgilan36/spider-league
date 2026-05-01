@@ -13,6 +13,7 @@ import PrivateLeagueInvitePanel from "@/components/PrivateLeagueInvitePanel";
 import PrivateLeagueStandings from "@/components/PrivateLeagueStandings";
 import PodChat from "@/components/PodChat";
 import PodImageUploader from "@/components/PodImageUploader";
+import { useStartSkillBattle } from "@/components/battle/useStartSkillBattle";
 import { usePodStandings, invalidatePodStandings } from "@/hooks/usePodStandings";
 import {
   Dialog,
@@ -46,6 +47,7 @@ const PrivateLeagueDetail = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { open: openSkillBattle, picker: skillBattlePicker } = useStartSkillBattle();
   const [league, setLeague] = useState<any>(null);
   const [members, setMembers] = useState<any[]>([]);
   const [invite, setInvite] = useState<any>(null);
@@ -155,25 +157,12 @@ const PrivateLeagueDetail = () => {
 
   const startPodBattle = async () => {
     if (!leagueId || !selectedMySpiderId || !selectedOpponentSpiderId) return;
-    setBattleLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("quick-battle", {
-        body: {
-          leagueId,
-          spiderId: selectedMySpiderId,
-          opponentSpiderId: selectedOpponentSpiderId,
-        },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      toast({ title: "Pod battle complete", description: "Opening the replay." });
-      navigate(`/battle/${data.battleId}`);
-    } catch (error: any) {
-      toast({ title: "Can't start pod battle", description: error.message, variant: "destructive" });
-    } finally {
-      setBattleLoading(false);
-      setPickerOpen(false);
-    }
+    setPickerOpen(false);
+    openSkillBattle({
+      leagueId,
+      spiderId: selectedMySpiderId,
+      opponentSpiderId: selectedOpponentSpiderId,
+    });
   };
 
   if (loading) return <main className="container mx-auto px-4 py-10"><div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin" /></div></main>;
@@ -444,6 +433,7 @@ const PrivateLeagueDetail = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {skillBattlePicker}
     </main>
   );
 };
