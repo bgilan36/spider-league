@@ -1,8 +1,14 @@
 import { useRef, useState } from "react";
-import { Camera, Loader2, Trash2, Users } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Camera, Loader2, Pencil, Trash2, Users } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 interface PodImageUploaderProps {
   leagueId: string;
@@ -22,6 +28,7 @@ const PodImageUploader = ({ leagueId, imageUrl, podName, canEdit, onUpdated }: P
   const [imgFailed, setImgFailed] = useState(false);
 
   const showImage = !!imageUrl && !imgFailed;
+  const busy = uploading || removing;
 
   const handleFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {
@@ -76,52 +83,95 @@ const PodImageUploader = ({ leagueId, imageUrl, podName, canEdit, onUpdated }: P
     }
   };
 
+  const thumb = (
+    <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-border bg-muted group">
+      {showImage ? (
+        <img
+          src={imageUrl!}
+          alt={`${podName} pod`}
+          className="h-full w-full object-cover"
+          onError={() => setImgFailed(true)}
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center">
+          <Users className="h-6 w-6 text-muted-foreground" />
+        </div>
+      )}
+      {canEdit && !busy && (
+        <div
+          className={cn(
+            "pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-0.5",
+            "bg-background/70 opacity-0 transition-opacity duration-150",
+            "group-hover:opacity-100 group-focus-within:opacity-100 group-data-[state=open]:opacity-100",
+          )}
+        >
+          {showImage ? (
+            <>
+              <Pencil className="h-4 w-4 text-foreground" />
+              <span className="text-[10px] font-medium leading-none text-foreground">Edit</span>
+            </>
+          ) : (
+            <>
+              <Camera className="h-4 w-4 text-foreground" />
+              <span className="text-[10px] font-medium leading-none text-foreground">Add</span>
+            </>
+          )}
+        </div>
+      )}
+      {busy && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/70">
+          <Loader2 className="h-5 w-5 animate-spin" />
+        </div>
+      )}
+    </div>
+  );
+
+  if (!canEdit) {
+    return <div className="flex items-center gap-3">{thumb}</div>;
+  }
+
   return (
     <div className="flex items-center gap-3">
-      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
-        {showImage ? (
-          <img
-            src={imageUrl!}
-            alt={`${podName} pod`}
-            className="h-full w-full object-cover"
-            onError={() => setImgFailed(true)}
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <Users className="h-6 w-6 text-muted-foreground" />
-          </div>
-        )}
-        {(uploading || removing) && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/70">
-            <Loader2 className="h-5 w-5 animate-spin" />
-          </div>
-        )}
-      </div>
-      {canEdit && (
-        <>
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) handleFile(f);
-            }}
-          />
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={() => inputRef.current?.click()} disabled={uploading || removing}>
-              <Camera className="h-4 w-4" />
-              {showImage ? "Change image" : "Add pod image"}
-            </Button>
-            {showImage && (
-              <Button variant="ghost" size="sm" onClick={handleRemove} disabled={uploading || removing}>
-                <Trash2 className="h-4 w-4" />
-                Remove
-              </Button>
-            )}
-          </div>
-        </>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) handleFile(f);
+        }}
+      />
+      {showImage ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            disabled={busy}
+            aria-label="Edit pod image"
+            className="rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            {thumb}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem onSelect={() => inputRef.current?.click()}>
+              <Camera className="mr-2 h-4 w-4" />
+              Change image
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={handleRemove} className="text-destructive focus:text-destructive">
+              <Trash2 className="mr-2 h-4 w-4" />
+              Remove
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : (
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={busy}
+          aria-label="Add pod image"
+          className="rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          {thumb}
+        </button>
       )}
     </div>
   );
