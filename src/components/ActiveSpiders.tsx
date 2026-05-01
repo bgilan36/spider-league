@@ -11,6 +11,7 @@ import { useAuth } from '@/auth/AuthProvider';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import SpiderDetailsModal from '@/components/SpiderDetailsModal';
+import { useStartSkillBattle } from '@/components/battle/useStartSkillBattle';
 
 interface Spider {
   id: string;
@@ -51,6 +52,7 @@ const COOLDOWN_MINUTES = 60;
 const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpiderId }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { open: openStancePicker, picker: skillBattlePicker } = useStartSkillBattle();
   const [activeSpiders, setActiveSpiders] = useState<Spider[]>([]);
   const [retiredSpiders, setRetiredSpiders] = useState<Spider[]>([]);
   const [showRetireDialog, setShowRetireDialog] = useState(false);
