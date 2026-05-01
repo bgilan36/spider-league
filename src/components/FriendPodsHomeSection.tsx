@@ -49,6 +49,7 @@ const FriendPodsHomeSection = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { open: openSkillBattle, picker: skillBattlePicker } = useStartSkillBattle();
   const [pods, setPods] = useState<PodSwitcherItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
