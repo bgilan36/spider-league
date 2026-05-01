@@ -19,6 +19,7 @@ import CreatePrivateLeagueButton from "@/components/CreatePrivateLeagueButton";
 import PodSwitcherStrip, { type PodSwitcherItem } from "@/components/PodSwitcherStrip";
 import PodThumbnail from "@/components/PodThumbnail";
 import PrivateLeagueStandings from "@/components/PrivateLeagueStandings";
+import { useStartSkillBattle } from "@/components/battle/useStartSkillBattle";
 import {
   getCachedPodStandings,
   invalidatePodStandings,
