@@ -485,6 +485,7 @@ const FriendPodsHomeSection = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {skillBattlePicker}
     </Card>
   );
 };
