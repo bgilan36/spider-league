@@ -260,10 +260,6 @@ const PrivateLeagueDetail = () => {
               <Share2 className="h-4 w-4" />Invite
             </Button>
           )}
-          <Button onClick={openPicker} disabled={battleLoading || members.length < 2} size="lg">
-            {battleLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Swords className="h-4 w-4" />}
-            Battle a pod member
-          </Button>
           {isCommissioner && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -290,6 +286,19 @@ const PrivateLeagueDetail = () => {
             </DropdownMenu>
           )}
         </div>
+      </div>
+
+      {/* Primary action: prominent, centered Battle CTA */}
+      <div className="mb-6 flex justify-center">
+        <Button
+          onClick={openPicker}
+          disabled={battleLoading || members.length < 2}
+          size="lg"
+          className="w-full sm:w-auto sm:min-w-[280px] h-14 text-base shadow-glow"
+        >
+          {battleLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Swords className="h-5 w-5" />}
+          Battle Now
+        </Button>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
