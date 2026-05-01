@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useStartSkillBattle } from "@/components/battle/useStartSkillBattle";
 
 const CombatHub = () => {
   const { user } = useAuth();
@@ -26,44 +27,11 @@ const CombatHub = () => {
   const navigate = useNavigate();
   const [quickBattleLoading, setQuickBattleLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const { open: openStancePicker, picker } = useStartSkillBattle();
 
   const handleQuickBattle = async () => {
     if (!user) return;
-    setQuickBattleLoading(true);
-
-    try {
-      const { data, error } = await supabase.functions.invoke('quick-battle', {
-        body: {}
-      });
-
-      if (error) throw error;
-
-      if (data?.error) {
-        toast({
-          title: "Can't start battle",
-          description: data.error,
-          variant: "destructive"
-        });
-        return;
-      }
-
-      if (data?.battleId) {
-        toast({
-          title: "Battle Complete!",
-          description: "Viewing results...",
-        });
-        navigate(`/battle/${data.battleId}`);
-      }
-    } catch (error: any) {
-      console.error('Quick battle error:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to start quick battle",
-        variant: "destructive"
-      });
-    } finally {
-      setQuickBattleLoading(false);
-    }
+    openStancePicker({});
   };
 
   return (
