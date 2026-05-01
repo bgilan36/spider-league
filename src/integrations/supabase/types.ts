@@ -207,6 +207,8 @@ export type Database = {
       }
       battles: {
         Row: {
+          awaiting_action: string | null
+          awaiting_user_id: string | null
           battle_log: Json | null
           challenge_id: string | null
           created_at: string | null
@@ -214,10 +216,12 @@ export type Database = {
           id: string
           is_active: boolean | null
           league_id: string | null
+          mode: string
           p1_current_hp: number | null
           p2_current_hp: number | null
           rng_seed: string
           stakes_type: string
+          stances: Json
           team_a: Json
           team_b: Json
           turn_count: number | null
@@ -225,6 +229,8 @@ export type Database = {
           winner: Database["public"]["Enums"]["battle_winner"] | null
         }
         Insert: {
+          awaiting_action?: string | null
+          awaiting_user_id?: string | null
           battle_log?: Json | null
           challenge_id?: string | null
           created_at?: string | null
@@ -232,10 +238,12 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           league_id?: string | null
+          mode?: string
           p1_current_hp?: number | null
           p2_current_hp?: number | null
           rng_seed: string
           stakes_type?: string
+          stances?: Json
           team_a: Json
           team_b: Json
           turn_count?: number | null
@@ -243,6 +251,8 @@ export type Database = {
           winner?: Database["public"]["Enums"]["battle_winner"] | null
         }
         Update: {
+          awaiting_action?: string | null
+          awaiting_user_id?: string | null
           battle_log?: Json | null
           challenge_id?: string | null
           created_at?: string | null
@@ -250,10 +260,12 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           league_id?: string | null
+          mode?: string
           p1_current_hp?: number | null
           p2_current_hp?: number | null
           rng_seed?: string
           stakes_type?: string
+          stances?: Json
           team_a?: Json
           team_b?: Json
           turn_count?: number | null
