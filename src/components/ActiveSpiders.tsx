@@ -758,6 +758,7 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
         </DialogContent>
       </Dialog>
     </Card>
+    </>
   );
 };
 
