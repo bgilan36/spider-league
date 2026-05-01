@@ -115,6 +115,7 @@ const CombatHub = () => {
       <div className="mt-0 px-0">
         <ActiveChallengesPreview embedded />
       </div>
+      {picker}
     </Card>
   );
 };
