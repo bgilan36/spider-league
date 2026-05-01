@@ -306,6 +306,8 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
   const emptySlots = Math.max(0, MAX_ACTIVE - activeSpiders.length);
 
   return (
+    <>
+    {skillBattlePicker}
     <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-background to-primary/5 relative overflow-hidden">
       <CardContent className="p-4 sm:p-6 relative z-1">
         {/* Header */}
