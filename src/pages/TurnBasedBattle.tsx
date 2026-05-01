@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import BattleOutcomeReveal from '@/components/BattleOutcomeReveal';
 import PresenceGateDialog from '@/components/PresenceGateDialog';
+import InteractiveBattleArena from '@/components/battle/InteractiveBattleArena';
 
 const TurnBasedBattle = () => {
   const { battleId } = useParams<{ battleId: string }>();
@@ -27,6 +28,13 @@ const TurnBasedBattle = () => {
     mySpider,
     opponentSpider,
   } = useTurnBasedBattle(battleId || null);
+
+  // Interactive (skill-based) battles use a completely different UI flow.
+  // Auto-resolved battles fall through to the legacy playback below.
+  if (battleId && (battle as any)?.mode === 'interactive') {
+    return <InteractiveBattleArena battleId={battleId} />;
+  }
+
   const [started, setStarted] = useState(false);
   const [showPresenceGate, setShowPresenceGate] = useState(false);
   const [showOutcomeReveal, setShowOutcomeReveal] = useState(false);
