@@ -219,27 +219,8 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
 
   const handleConfirmBattle = async () => {
     if (!user || !battlePreviewSpider) return;
-    setBattleStarting(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('quick-battle', {
-        body: { spiderId: battlePreviewSpider.id }
-      });
-      if (error) throw error;
-      if (data?.error) {
-        toast.error(data.error);
-        return;
-      }
-      if (data?.battleId) {
-        setShowBattlePreview(false);
-        toast.success('Battle Complete! Viewing results...');
-        navigate(`/battle/${data.battleId}`);
-      }
-    } catch (error: any) {
-      console.error('Quick battle error:', error);
-      toast.error(error.message || 'Failed to start battle');
-    } finally {
-      setBattleStarting(false);
-    }
+    setShowBattlePreview(false);
+    openStancePicker({ spiderId: battlePreviewSpider.id });
   };
 
   const handleOpenOpponentBrowser = async (spider: Spider) => {
