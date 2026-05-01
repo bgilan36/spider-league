@@ -15,7 +15,7 @@ import BattleButton from "@/components/BattleButton";
 import BattleDetailsModal from "@/components/BattleDetailsModal";
 import SpiderDetailsModal from "@/components/SpiderDetailsModal";
 import ClickableUsername from "@/components/ClickableUsername";
-import WeeklyRosterManager from "@/components/WeeklyRosterManager";
+import ActiveSpiders from "@/components/ActiveSpiders";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -140,41 +140,6 @@ const SpiderCollection = () => {
 
       if (userError) throw userError;
 
-      // Get current week start in Pacific Time (same as Index.tsx)
-      const ptNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-      const dayOfWeek = ptNow.getDay(); // 0 = Sunday
-      
-      // Calculate Sunday of current week in PT (week starts on Sunday)
-      const weekStart = new Date(ptNow);
-      weekStart.setDate(ptNow.getDate() - dayOfWeek);
-      weekStart.setHours(0, 0, 0, 0);
-      const weekStartStr = weekStart.toISOString().split('T')[0];
-      const weekStartISO = weekStart.toISOString();
-
-      // Fetch activated spider from weekly_roster
-      const { data: rosterData, error: rosterError } = await (supabase as any)
-        .from('weekly_roster')
-        .select('spider_id')
-        .eq('user_id', user.id)
-        .eq('week_start', weekStartStr)
-        .maybeSingle();
-
-      if (rosterError && rosterError.code !== 'PGRST116') {
-        console.error('Error fetching roster:', rosterError);
-      }
-
-      const activatedSpiderId = rosterData?.spider_id || null;
-
-      // Identify spiders uploaded this week (up to 3, or 2 if one is activated)
-      const uploadedThisWeek = (userSpiders || [])
-        .filter(spider => spider.created_at && new Date(spider.created_at) >= weekStart)
-        .filter(spider => spider.id !== activatedSpiderId); // Exclude activated spider from upload count
-
-      const maxUploadsEligible = activatedSpiderId ? 2 : 3;
-      const eligibleUploadedIds = new Set(
-        uploadedThisWeek.slice(0, maxUploadsEligible).map(spider => spider.id)
-      );
-
       // Fetch battle information for spiders won through battles
       const { data: battleChallenges, error: battleError } = await supabase
         .from('battle_challenges')
@@ -196,19 +161,14 @@ const SpiderCollection = () => {
         .select('id, display_name')
         .in('id', challengerIds);
 
+      // Eligibility is now driven by Starting 5 (eligible_until > now)
+      const nowIso = new Date().toISOString();
+
       // Combine spider data with battle attribution and eligibility status
       const spidersWithAttribution = (userSpiders || []).map(spider => {
         const battleInfo = battleChallenges?.find(bc => bc.loser_spider_id === spider.id);
-        const isActivated = spider.id === activatedSpiderId;
-        const isUploadedEligible = eligibleUploadedIds.has(spider.id);
-        const isEligible = isActivated || isUploadedEligible;
-        
-        let eligibilityType: 'activated' | 'uploaded' | undefined;
-        if (isActivated) {
-          eligibilityType = 'activated';
-        } else if (isUploadedEligible) {
-          eligibilityType = 'uploaded';
-        }
+        const isEligible = !!spider.eligible_until && new Date(spider.eligible_until) > new Date(nowIso);
+        const eligibilityType: 'activated' | 'uploaded' | undefined = isEligible ? 'activated' : undefined;
         
         if (battleInfo) {
           const challengerProfile = challengerProfiles?.find(p => p.id === battleInfo.challenger_id);
@@ -563,51 +523,24 @@ const SpiderCollection = () => {
           </Card>
         ) : (
           <>
-            {/* Weekly Roster Manager */}
+            {/* Starting 5 — active battle roster (upload or re-enlist retired spiders here) */}
             <div className="mb-8">
-              <WeeklyRosterManager onRosterChange={fetchSpiders} />
+              <ActiveSpiders onSpiderChange={fetchSpiders} />
             </div>
 
-            {/* Eligible Spiders Section */}
-            <div className="mb-12">
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold mb-2">Eligible Spiders</h2>
-                <p className="text-muted-foreground text-sm">These spiders can compete in battles this week</p>
-              </div>
-              {spiders.filter(s => s.is_eligible).length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                  {getSortedSpiders().filter(s => s.is_eligible).map((spider) => (
-                    <SpiderCard key={spider.id} spider={spider} isFallenHero={false} />
-                  ))}
-                </div>
-              ) : (
-                <Card>
-                  <CardContent className="pt-6 text-center">
-                    <p className="text-muted-foreground mb-4">
-                      You don't have any eligible spiders this week. Upload a new spider to start battling!
-                    </p>
-                    <Button asChild>
-                      <Link to="/upload">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Upload Spider to Battle
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-
-            {/* Ineligible Spiders Section */}
+            {/* Retired Spiders Section */}
             {spiders.filter(s => !s.is_eligible).length > 0 && (
               <div className="mb-12">
                 <div className="mb-6">
-                  <h2 className="text-2xl font-bold mb-2">Ineligible Spiders</h2>
-                  <p className="text-muted-foreground text-sm">These spiders cannot compete this week</p>
+                  <h2 className="text-2xl font-bold mb-2">Retired Spiders</h2>
+                  <p className="text-muted-foreground text-sm">
+                    Not in your Starting 5. Re-enlist them from the Starting 5 above to make them battle-eligible for 30 days.
+                  </p>
                 </div>
                 {sortBy === "recent" && getSortedSpiders().filter(s => !s.is_eligible).length === 0 ? (
                   <Card>
                     <CardContent className="pt-6 text-center">
-                      <p className="text-muted-foreground">No ineligible spiders from the past week.</p>
+                      <p className="text-muted-foreground">No retired spiders from the past week.</p>
                     </CardContent>
                   </Card>
                 ) : (
