@@ -133,7 +133,7 @@ serve(async (req: Request) => {
   } catch (error: any) {
     console.error("Error in export-email-list function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: 'An internal error occurred. Please try again.' }),
       {
         status: 500,
         headers: { 
