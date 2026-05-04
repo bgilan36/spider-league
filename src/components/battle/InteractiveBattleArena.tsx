@@ -194,6 +194,7 @@ export default function InteractiveBattleArena({ battleId }: Props) {
               {isMyMove ? (
                 awaitingAction === "attack" ? (
                   <SkillMeter
+                    key={`atk-${battle.turn_count}-${awaitingUser}`}
                     label="Your attack"
                     helper="Lock inside the green Skill Zone to bias your dice high. Yellow center = Perfect."
                     zoneBoost={myZoneBoost}
@@ -202,6 +203,7 @@ export default function InteractiveBattleArena({ battleId }: Props) {
                   />
                 ) : (
                   <SkillMeter
+                    key={`def-${battle.turn_count}-${awaitingUser}`}
                     label="Defend the incoming hit"
                     helper={
                       pending
