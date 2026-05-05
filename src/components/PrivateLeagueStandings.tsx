@@ -178,11 +178,11 @@ const StandingsSkeleton = () => (
       <thead>
         <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
           <th className="px-2 py-2 text-left font-medium">Team</th>
+          <th className="px-2 py-2 text-right font-medium">WPD</th>
           <th className="px-2 py-2 text-right font-medium">W</th>
           <th className="px-2 py-2 text-right font-medium">L</th>
           <th className="px-2 py-2 text-right font-medium">PCT</th>
           <th className="px-2 py-2 text-right font-medium">GB</th>
-          <th className="px-2 py-2 text-right font-medium">DIFF</th>
           <th className="px-2 py-2 text-right font-medium">STRK</th>
         </tr>
       </thead>
