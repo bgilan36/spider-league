@@ -1,78 +1,87 @@
-# Interactive Battles: Manual Dice Rolls + Skill Mechanics
+## Goal
 
-Today, every battle is fully simulated on the server (`quick-battle` / `auto-battle`) and the client just animates a finished log. We will make battles interactive: the player taps to roll their own dice on offense and defense, and skill (timing + a pre-battle ability pick) measurably tilts outcomes — so a smart player can beat a higher-power spider more often than today.
+Make scoring rewards reflect the **power gap** between spiders, and rank pod standings by **Win Point Differential (WPD)** instead of pure W-L.
 
-## Goals
+Two rules:
+1. **XP gain scales with the opponent's relative power.** If you beat a much weaker opponent, you earn little/no XP. Beating a stronger opponent earns more.
+2. **Win Point Differential** is the primary standings metric. You only *gain* WPD when beating a stronger opponent (the power gap is your reward). Beating a weaker opponent gives **0 WPD** (no penalty, no reward). Losing to a stronger opponent costs **0 WPD**. Losing to a weaker opponent costs WPD equal to the gap.
 
-- Player manually triggers each dice roll and immediately sees how the number affects damage / defense.
-- Add real skill levers (timing and ability selection) so wins aren't pure RNG.
-- Higher-power opponents still favored, but a skilled underdog wins meaningfully more than the current ~chance baseline.
-- Keep server authoritative (no client-trusted damage) to prevent cheating.
+---
 
-## Player Experience
+## Scoring formulas
 
-Pre-battle (10s screen):
-- Choose 1 of 3 Attack Stances and 1 of 3 Defense Stances per battle. Each is a tradeoff (e.g., Power Strike: +crit window, smaller hit window). Choices are part of the matchup preview.
+Let `winner_power` and `loser_power` be the spider power scores at battle time, and `gap = loser_power - winner_power` (positive when winner beat a stronger opponent).
 
-Each turn (alternating, you start if your spider is faster):
-1. Your offense — tap "Roll Attack". A 0–20 meter sweeps left↔right; tap "Lock" inside a highlighted Skill Zone to bias the roll high. Damage is shown immediately, with a breakdown (base + dice mod + stance + crit).
-2. Opponent offense — tap "Roll Defense". Same meter; a good lock raises your defense for that incoming hit and can trigger a dodge. The hit lands with a clear damage popup.
-3. Repeat until one spider hits 0 HP or max turns reached.
+### Win Point Differential (per battle, per user)
+- Winner: `wpd = max(0, gap)` — only rewarded for upsets.
+- Loser:  `wpd = min(0, gap)` — only penalized when they were the favorite (gap > 0 for the winner means the loser was stronger... so loser's wpd uses `loser_power - winner_power` from their own perspective: penalty when they were stronger).
+  - Concretely: if loser was stronger (loser_power > winner_power), loser loses `loser_power - winner_power` WPD. If loser was weaker, loser loses 0.
+- Net effect: WPD is symmetric — winner gains exactly what loser loses, but both are 0 when the favorite wins.
 
-Opponents (PvE quick battle): the server plays the opponent with average-skill timing so matches feel like a real opponent.
+### XP gain (battle winner)
+Compute a **power ratio** `r = winner_power / max(1, loser_power)`:
+- `r >= 1.5` (winner ≥1.5× stronger): **0 XP** (trivial win).
+- `1.2 <= r < 1.5`: **25%** of base XP.
+- `0.9 <= r < 1.2` (even match): **100%** of base XP.
+- `r < 0.9` (upset, winner weaker): **150%** of base XP.
 
-## Skill Mechanics (how skill beats luck)
+Base XP stays at the existing `v_battle_xp` (12 training / 25 all-or-nothing). Spider XP awards (`v_winner_spider_xp`, `v_loser_spider_xp`) are scaled by the same multiplier to keep stat progression aligned. Streak bonus XP unchanged.
 
-Per-roll timing meter:
-- Skill Zone covers ~25% of the bar; perfect center sub-zone is ~6%.
-- Hit Skill Zone: dice min raised from 1 to 8 (offense) / 6 (defense).
-- Hit Perfect: roll forced to 18–20 range, and crit window widens by +1.
-- Miss zone: dice rerolled with a -2 penalty applied.
+---
 
-Stance picks (tradeoffs, not strictly better):
-- Attack: Power Strike (+30% crit damage, narrower Skill Zone), Quick Strike (+1 extra attack roll on a Perfect, no crit bonus), Venom Bite (uses venom stat instead of damage, ignores 30% defense).
-- Defense: Iron Web (+25% defense vs normal hits, can't dodge), Evasive (dodge chance scales with defender dice ≥17), Counter-Sting (taking damage stores +20% damage on next attack roll).
+## Implementation
 
-Underdog catch-up:
-- If opponent power_score is higher, defender's Skill Zone is widened slightly (caps at +50% width vs power gap), so a focused player gets more "windows" to swing the fight. This is the main lever that lets skill overcome stat gaps.
+### 1. New migration — update `resolve_battle_challenge`
 
-Approximate impact: in internal math, a player consistently hitting the Skill Zone (~70%+) beats an opponent ~25% stronger ~55–60% of the time, vs ~30% in pure RNG today.
+In `supabase/migrations/<new-timestamp>_power_aware_scoring.sql`:
 
-## Anti-Cheat / Server Authority
+- Read `power_score` for `winner_spider` and `loser_spider` from `public.spiders`.
+- Compute `r` and a `v_xp_multiplier numeric`.
+- Apply multiplier to `v_battle_xp`, `v_winner_spider_xp`, `v_loser_spider_xp` (round to int, floor at 0).
+- Return additional fields in the JSONB result: `winner_power`, `loser_power`, `power_ratio`, `xp_multiplier`, `wpd_awarded`.
 
-- All randomness uses a server-seeded PRNG (`battles.rng_seed`). The server precomputes the dice roll *for that turn index* before the player taps; the player's input only chooses the timing-zone bucket (`miss | zone | perfect`), and the server applies the matching modifier.
-- Each turn submission goes through a new edge function `battle-turn` which:
-  - Validates auth, that the user owns the current turn, and turn index = current.
-  - Recomputes the dice + damage from seed + stance + zoneBucket.
-  - Writes the canonical `battle_turns` row and updates `battles` HP / current_turn_user_id.
-- Client-displayed damage matches the server response; if there's a mismatch the client snaps to server state.
+No schema change needed — power scores live on the existing `spiders` row.
 
-## Technical Plan
+### 2. New migration — update `get_private_league_standings`
 
-Database (migration):
-- `battles`: add `mode TEXT NOT NULL DEFAULT 'interactive'` ('interactive' | 'auto'), `attacker_stance TEXT`, `defender_stance TEXT` (current player stances by user id stored in a JSON column `stances jsonb` keyed by user id), `awaiting_action TEXT` ('attack' | 'defense' | null), `awaiting_user_id UUID`.
-- Use existing `battle_turns.action_payload` to store `{ zoneBucket, stance }` per turn, and `result_payload` for damage breakdown so the UI can show the math.
+In the same migration file, replace the function so:
+- `power_diff` (renamed conceptually to **win_point_diff** but kept as `power_diff` column for type-stability with the frontend) is computed as:
+  ```sql
+  SUM(CASE
+    WHEN br.winner_user = m.user_id THEN GREATEST(0, br.loser_power - br.winner_power)
+    WHEN br.loser_user  = m.user_id THEN LEAST(0, br.winner_power - br.loser_power)
+    ELSE 0
+  END)
+  ```
+  (Winner gets `max(0, gap)`, loser gets `min(0, -gap)` = penalty only when they were the stronger side.)
+- `ORDER BY pu.power_diff DESC, pu.wins DESC, pu.win_rate DESC, pu.battles DESC` — **WPD becomes the primary sort key**.
 
-Edge functions:
-- New `battle-start` (or extend `quick-battle`): pre-battle stance pick screen calls this with `{ playerStance: { attack, defense }, opponentSpiderId? }`. It creates the battle in `interactive` mode with `is_active=true`, `awaiting_action='attack'`, and returns `battleId`. No turns are precomputed.
-- New `battle-turn`: body `{ battleId, zoneBucket: 'miss'|'zone'|'perfect' }`. Validates ownership of `awaiting_user_id`, derives dice from `rng_seed + turn_index`, applies stance + zoneBucket, writes the turn row, flips `awaiting_user_id`/`awaiting_action`, and on KO calls existing `resolve_battle_challenge` + badges.
-- New `battle-opponent-turn`: invoked by client after a defense step or when it's the AI's offensive turn (PvE). Server picks an AI `zoneBucket` (weighted by a configurable difficulty curve based on opponent power), then runs the same logic as `battle-turn`. For PvP we instead wait on realtime for the other player's call.
-- Keep `auto-battle` as fallback when `mode='auto'` (timeouts, missed presence).
+Battle row CTE already extracts `a_power` and `b_power` from `team_a/team_b->>'{spider,power_score}'`; we add named `winner_power` / `loser_power` for clarity.
 
-Client:
-- `src/pages/TurnBasedBattle.tsx`: split into `PreBattleStancePicker` + `InteractiveBattleArena`. Replace auto-playback with an interactive flow driven by realtime subscription to `battles` + `battle_turns`. Show damage breakdown and stance icons each turn.
-- New `SkillMeter` component (reusable for offense + defense): animated bar with Skill Zone + Perfect sub-zone, "Roll" then "Lock" buttons, accessibility (keyboard/space to lock), reduced-motion fallback.
-- Update entry points that call `quick-battle` (`ActiveSpiders.handleConfirmBattle`, `CombatHub`, `FriendPodsHomeSection`, `PrivateLeagueDetail`) to first show the stance picker, then call `battle-start`.
-- Add a "Skip / Auto-resolve" link on the stance picker for users who prefer the old flow → routes through `auto-battle`.
+### 3. Frontend — `src/components/PrivateLeagueStandings.tsx`
 
-Tuning + safety:
-- Cap turns at 12 to keep duration reasonable; per-action timeout 15s — server auto-picks `miss` if exceeded so battles can't stall.
-- Difficulty curve for AI zoneBucket lives in one helper so it's easy to retune.
-- Add unit tests for the damage formula and the underdog widening.
+- Rename the **DIFF** column to **WPD** (header text + tooltip).
+- Update tooltip: "Win Point Differential — points earned by beating higher-power opponents minus points lost when stronger opponents lose to weaker ones. Primary standings sort."
+- Move the WPD column to be the **first stat column** (left of W/L) so it visually anchors as primary.
+- Keep formatting/coloring (`+`/`-`, primary/destructive).
 
-## Out of Scope (for this change)
+### 4. Frontend — `src/hooks/usePodStandings.ts`
 
-- True realtime PvP matchmaking UI (we'll support PvP if both players are present, but no new matchmaking lobby).
-- Cosmetic spider abilities tied to species (kept generic per stance for now).
+No type changes (still returns `power_diff`); add a JSDoc note that this represents WPD per the new formula.
 
-After approval I'll implement the migration, the two new edge functions, the SkillMeter component, the stance picker, the rewired battle page, and update all callers.
+### 5. Optional: surface XP-multiplier in battle result
+
+`InteractiveBattleArena` / `BattleOutcomeReveal` already display battle XP. If `xp_multiplier !== 1`, append a small label like "Even match +25%" / "Upset +50%" / "Mismatch — no XP" near the XP awarded line, sourced from the new `xp_multiplier` field returned by `resolve_battle_challenge`. (Plumbing-only; non-blocking if any consumer doesn't read it.)
+
+---
+
+## Files
+
+- **New**: `supabase/migrations/<ts>_power_aware_scoring.sql` (recreates `resolve_battle_challenge` and `get_private_league_standings`).
+- **Edited**: `src/components/PrivateLeagueStandings.tsx` (column rename, reorder, tooltip).
+- **Edited (optional, small)**: `src/components/BattleOutcomeReveal.tsx` to show multiplier label when present.
+
+## Out of scope
+
+- Historical recalculation of past battles' XP (cannot retroactively un-award profile XP). Standings recompute automatically since they read from `battles` rows.
+- Changes to the public Leaderboard page sorting (only pod standings are explicitly requested).
