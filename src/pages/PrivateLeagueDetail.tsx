@@ -133,7 +133,7 @@ const PrivateLeagueDetail = () => {
     const [{ data: mine }, { data: theirs }] = await Promise.all([
       (supabase as any)
         .from("spiders")
-        .select("id,nickname,image_url,power_score,owner_id,rarity,level")
+        .select("id,nickname,image_url,power_score,owner_id,rarity,level,last_battled_at")
         .eq("owner_id", user.id)
         .eq("is_approved", true)
         .gt("eligible_until", now)
@@ -141,17 +141,29 @@ const PrivateLeagueDetail = () => {
       opponentIds.length > 0
         ? (supabase as any)
             .from("spiders")
-            .select("id,nickname,image_url,power_score,owner_id,rarity,level")
+            .select("id,nickname,image_url,power_score,owner_id,rarity,level,last_battled_at")
             .in("owner_id", opponentIds)
             .eq("is_approved", true)
             .gt("eligible_until", now)
             .order("power_score", { ascending: false })
         : Promise.resolve({ data: [] }),
     ]);
-    setMySpiders(mine || []);
-    setOpponentSpiders(theirs || []);
-    setSelectedMySpiderId(mine?.[0]?.id || "");
-    setSelectedOpponentSpiderId(theirs?.[0]?.id || "");
+    const cutoff = Date.now() - 60 * 60 * 1000;
+    const decorate = (s: any) => {
+      const last = s.last_battled_at ? new Date(s.last_battled_at).getTime() : 0;
+      const onCooldown = last > cutoff;
+      const cooldownRemainingMs = onCooldown ? last + 60 * 60 * 1000 - Date.now() : 0;
+      return { ...s, onCooldown, cooldownRemainingMs };
+    };
+    const mineDecorated = (mine || []).map(decorate);
+    const theirsDecorated = (theirs || []).map(decorate);
+    // Sort eligible first
+    mineDecorated.sort((a: any, b: any) => Number(a.onCooldown) - Number(b.onCooldown));
+    theirsDecorated.sort((a: any, b: any) => Number(a.onCooldown) - Number(b.onCooldown));
+    setMySpiders(mineDecorated);
+    setOpponentSpiders(theirsDecorated);
+    setSelectedMySpiderId(mineDecorated.find((s: any) => !s.onCooldown)?.id || "");
+    setSelectedOpponentSpiderId(theirsDecorated.find((s: any) => !s.onCooldown)?.id || "");
     setPickerLoading(false);
   };
 
