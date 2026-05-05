@@ -99,11 +99,11 @@ const PrivateLeagueStandings = ({
               <thead>
                 <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
                   <th className="px-2 py-2 text-left font-medium">Team</th>
+                  <th className="px-2 py-2 text-right font-medium" title="Win Point Differential — earn points only by beating higher-power opponents; lose points only when a stronger spider of yours loses to a weaker one. Primary standings sort.">WPD</th>
                   <th className="px-2 py-2 text-right font-medium">W</th>
                   <th className="px-2 py-2 text-right font-medium">L</th>
                   <th className="px-2 py-2 text-right font-medium">PCT</th>
                   <th className="px-2 py-2 text-right font-medium">GB</th>
-                  <th className="px-2 py-2 text-right font-medium" title="Power-score differential (sum of your spider power − opponent power across battles)">DIFF</th>
                   <th className="px-2 py-2 text-right font-medium">STRK</th>
                 </tr>
               </thead>
@@ -134,18 +134,18 @@ const PrivateLeagueStandings = ({
                           </span>
                         </div>
                       </td>
+                      <td
+                        className={`px-2 py-2 text-right font-semibold ${
+                          diff > 0 ? "text-primary" : diff < 0 ? "text-destructive" : "text-foreground"
+                        }`}
+                      >
+                        {formatDiff(diff)}
+                      </td>
                       <td className="px-2 py-2 text-right">{standing.wins}</td>
                       <td className="px-2 py-2 text-right">{standing.losses}</td>
                       <td className="px-2 py-2 text-right">{formatPct(standing.wins, standing.losses)}</td>
                       <td className="px-2 py-2 text-right text-muted-foreground">
                         {computeGB(standing, leader)}
-                      </td>
-                      <td
-                        className={`px-2 py-2 text-right font-medium ${
-                          diff > 0 ? "text-primary" : diff < 0 ? "text-destructive" : "text-foreground"
-                        }`}
-                      >
-                        {formatDiff(diff)}
                       </td>
                       <td
                         className={`px-2 py-2 text-right font-medium ${
