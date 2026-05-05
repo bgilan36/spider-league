@@ -148,7 +148,7 @@ const FriendPodsHomeSection = () => {
       return;
     }
     const top = eligibleOpp[0].id;
-    if (!selectedOpponentSpiderId || !opponentSpiders.some((s) => s.id === selectedOpponentSpiderId)) {
+    if (!selectedOpponentSpiderId || !eligibleOpp.some((s: any) => s.id === selectedOpponentSpiderId)) {
       setSelectedOpponentSpiderId(top);
     }
   }, [opponentSpiders, selectedOpponentSpiderId]);
