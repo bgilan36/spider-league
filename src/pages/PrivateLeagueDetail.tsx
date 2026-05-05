@@ -380,13 +380,22 @@ const PrivateLeagueDetail = () => {
                         <button
                           key={s.id}
                           type="button"
-                          onClick={() => setSelectedOpponentSpiderId(s.id)}
-                          className={`flex items-center gap-3 rounded-md border p-2 text-left transition ${selectedOpponentSpiderId === s.id ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"}`}
+                          onClick={() => !s.onCooldown && setSelectedOpponentSpiderId(s.id)}
+                          disabled={s.onCooldown}
+                          title={s.onCooldown ? "On cooldown" : undefined}
+                          className={`flex items-center gap-3 rounded-md border p-2 text-left transition ${s.onCooldown ? "cursor-not-allowed opacity-50 border-border" : selectedOpponentSpiderId === s.id ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"}`}
                         >
                           <img src={s.image_url} alt={s.nickname} className="h-12 w-12 rounded object-cover" />
                           <div className="min-w-0 flex-1">
                             <div className="truncate text-sm font-medium">{s.nickname}</div>
-                            <div className="truncate text-xs text-muted-foreground">{owner?.profiles?.display_name || "Pod member"} · PWR {s.power_score}</div>
+                            <div className="truncate text-xs text-muted-foreground">
+                              {owner?.profiles?.display_name || "Pod member"} · PWR {s.power_score}
+                              {s.onCooldown && (
+                                <span className="ml-2 text-amber-500">
+                                  · Cooldown {Math.max(1, Math.ceil(s.cooldownRemainingMs / 60000))}m
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </button>
                       );
