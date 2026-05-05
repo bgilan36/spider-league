@@ -127,13 +127,13 @@ const FriendPodsHomeSection = () => {
   }, [fetchPods]);
 
   useEffect(() => {
-    if (mySpiders.length === 0) {
+    const eligible = mySpiders.filter((s: any) => !s.onCooldown);
+    if (eligible.length === 0) {
       if (selectedMySpiderId !== "") setSelectedMySpiderId("");
       return;
     }
-    const top = mySpiders[0].id;
-    if (!selectedMySpiderId || !mySpiders.some((s) => s.id === selectedMySpiderId)) {
-      setSelectedMySpiderId(top);
+    if (!selectedMySpiderId || !eligible.some((s: any) => s.id === selectedMySpiderId)) {
+      setSelectedMySpiderId(eligible[0].id);
     }
   }, [mySpiders, selectedMySpiderId]);
 
@@ -142,7 +142,12 @@ const FriendPodsHomeSection = () => {
       if (selectedOpponentSpiderId !== "") setSelectedOpponentSpiderId("");
       return;
     }
-    const top = opponentSpiders[0].id;
+    const eligibleOpp = opponentSpiders.filter((s: any) => !s.onCooldown);
+    if (eligibleOpp.length === 0) {
+      if (selectedOpponentSpiderId !== "") setSelectedOpponentSpiderId("");
+      return;
+    }
+    const top = eligibleOpp[0].id;
     if (!selectedOpponentSpiderId || !opponentSpiders.some((s) => s.id === selectedOpponentSpiderId)) {
       setSelectedOpponentSpiderId(top);
     }
