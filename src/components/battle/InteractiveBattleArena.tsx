@@ -11,6 +11,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import SkillMeter from "./SkillMeter";
+import DiceDisplay from "./DiceDisplay";
 import {
   ATTACK_STANCE_META, DEFENSE_STANCE_META,
   type ZoneBucket, type AttackStance, type DefenseStance, BUCKET_LABEL,
@@ -166,11 +167,30 @@ export default function InteractiveBattleArena({ battleId }: Props) {
               <div className="font-semibold mb-1">
                 Turn {lastTurn.turn_index} — {lastResult.attacker_name} → {lastResult.defender_name}
               </div>
-              <div className="text-xs text-muted-foreground">
-                Attack die {lastResult.attacker_dice} ({BUCKET_LABEL[lastResult.attacker_bucket as ZoneBucket]}) ·
-                Defense die {lastResult.defender_dice} ({BUCKET_LABEL[lastResult.defender_bucket as ZoneBucket]})
+              <div className="flex items-center justify-center gap-6 my-3">
+                <div className="flex flex-col items-center">
+                  <DiceDisplay
+                    value={lastResult.attacker_dice}
+                    label={`${lastResult.attacker_name} attack`}
+                    variant="attack"
+                  />
+                  <span className="text-[10px] text-muted-foreground mt-1">
+                    {BUCKET_LABEL[lastResult.attacker_bucket as ZoneBucket]}
+                  </span>
+                </div>
+                <span className="text-xl font-bold text-muted-foreground">vs</span>
+                <div className="flex flex-col items-center">
+                  <DiceDisplay
+                    value={lastResult.defender_dice}
+                    label={`${lastResult.defender_name} defense`}
+                    variant="defense"
+                  />
+                  <span className="text-[10px] text-muted-foreground mt-1">
+                    {BUCKET_LABEL[lastResult.defender_bucket as ZoneBucket]}
+                  </span>
+                </div>
               </div>
-              <div className="mt-1">
+              <div className="mt-1 text-center">
                 {lastResult.dodged
                   ? <span className="text-emerald-400 font-semibold">Dodged!</span>
                   : <span>
