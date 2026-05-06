@@ -47,7 +47,7 @@ const rarityColors: Record<string, string> = {
 };
 
 const MAX_ACTIVE = 5;
-const COOLDOWN_MINUTES = 60;
+const COOLDOWN_MINUTES = 24 * 60;
 
 const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpiderId }) => {
   const { user } = useAuth();
@@ -171,7 +171,8 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
     if (!user) return;
     const cooldown = getCooldownMinutes(spider.last_battled_at);
     if (cooldown > 0) {
-      toast.error(`This spider is on cooldown. Ready in ${cooldown} minutes.`);
+      const hrs = Math.ceil(cooldown / 60);
+      toast.error(`This spider is on cooldown. Ready in ${hrs}h.`);
       return;
     }
     // Fetch a preview opponent first
@@ -412,7 +413,7 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
                       <div className="flex items-center gap-1 mt-0.5">
                         <Clock className="h-3 w-3 text-amber-500" />
                         <span className="text-[10px] text-amber-500 font-medium">
-                          Ready in {cooldown}m
+                          Ready in {Math.ceil(cooldown / 60)}h
                         </span>
                       </div>
                     )}
