@@ -497,7 +497,7 @@ const FriendPodsHomeSection = () => {
                               {owner?.profiles?.display_name || "Pod member"} · PWR {s.power_score}
                               {s.onCooldown && (
                                 <span className="ml-2 text-amber-500">
-                                  · Cooldown {Math.max(1, Math.ceil(s.cooldownRemainingMs / 60000))}m
+                                  · Cooldown {Math.max(1, Math.ceil(s.cooldownRemainingMs / 3600000))}h
                                 </span>
                               )}
                             </div>
