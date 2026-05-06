@@ -95,6 +95,10 @@ const PrivateLeagueDetail = () => {
   // Live-refresh standings/members when a battle in this pod is inserted or updated
   useEffect(() => {
     if (!leagueId) return;
+    // On mount / league change, always bust cache and refetch so a battle that
+    // finished while we were away (e.g. on the battle screen) is reflected.
+    invalidatePodStandings(leagueId);
+    refreshStandings();
     const channel = (supabase as any)
       .channel(`pod-battles-${leagueId}`)
       .on(
