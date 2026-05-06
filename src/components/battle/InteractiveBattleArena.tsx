@@ -61,6 +61,17 @@ export default function InteractiveBattleArena({ battleId }: Props) {
       .catch((e) => console.error("opponent turn error", e));
   }, [battle?.is_active, battle?.turn_count, awaitingUser, awaitingAction, user, battleId, aiTriggered]);
 
+  // When the battle finishes inside a pod, bust the standings cache so the
+  // pod page shows fresh numbers as soon as the user navigates back.
+  useEffect(() => {
+    if (!battle) return;
+    const leagueId = (battle as any)?.league_id;
+    if (!leagueId) return;
+    if (battle.is_active === false) {
+      invalidatePodStandings(leagueId);
+    }
+  }, [battle?.is_active, (battle as any)?.league_id]);
+
   const submitBucket = async (bucket: ZoneBucket) => {
     if (!battle || submitting) return;
     setSubmitting(true);
