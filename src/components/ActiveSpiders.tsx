@@ -339,6 +339,7 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
                     <p>These are the up to <strong>{MAX_ACTIVE} spiders</strong> you can battle with at any given time — every challenge, training match, and pod battle pulls from this roster.</p>
                     <p className="mt-1">Each spider is eligible for <strong>30 days</strong> from when it's added. After that it retires to your collection, but you can <strong>re-enlist</strong> a retired spider any time to swap it back in for another 30-day stretch.</p>
                     <p className="mt-1">If your Starting 5 has an open slot, <strong>upload a new spider</strong> to fill it. When all 5 are active, retire one first to make room for an upload or a re-enlist.</p>
+                    <p className="mt-1">After a spider battles, it enters a <strong>1-day cooldown</strong> before it can battle again. The other spiders in your Starting 5 stay ready, so keeping a full roster means you'll always have someone fresh to send into the next match.</p>
                   </TooltipContent>
                 </Tooltip>
               </div>
