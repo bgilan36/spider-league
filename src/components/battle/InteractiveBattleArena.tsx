@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import SkillMeter from "./SkillMeter";
 import DiceDisplay from "./DiceDisplay";
+import { invalidatePodStandings } from "@/hooks/usePodStandings";
 import {
   ATTACK_STANCE_META, DEFENSE_STANCE_META,
   type ZoneBucket, type AttackStance, type DefenseStance, BUCKET_LABEL,
@@ -59,6 +60,17 @@ export default function InteractiveBattleArena({ battleId }: Props) {
     supabase.functions.invoke("battle-opponent-turn", { body: { battleId } })
       .catch((e) => console.error("opponent turn error", e));
   }, [battle?.is_active, battle?.turn_count, awaitingUser, awaitingAction, user, battleId, aiTriggered]);
+
+  // When the battle finishes inside a pod, bust the standings cache so the
+  // pod page shows fresh numbers as soon as the user navigates back.
+  useEffect(() => {
+    if (!battle) return;
+    const leagueId = (battle as any)?.league_id;
+    if (!leagueId) return;
+    if (battle.is_active === false) {
+      invalidatePodStandings(leagueId);
+    }
+  }, [battle?.is_active, (battle as any)?.league_id]);
 
   const submitBucket = async (bucket: ZoneBucket) => {
     if (!battle || submitting) return;
