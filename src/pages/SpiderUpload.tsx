@@ -838,6 +838,7 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
           previewUrl={previewUrl}
           nickname={nickname}
           species={species}
+          onNicknameChange={setNickname}
           stats={spiderStats}
           safety={safetyInfo}
           uploading={uploading}

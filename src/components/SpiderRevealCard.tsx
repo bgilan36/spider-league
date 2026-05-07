@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Sword, Users, Plus, Loader2, ShieldAlert, Heart } from "lucide-react";
+import { Sparkles, Sword, Users, Plus, Loader2, ShieldAlert, Heart, Pencil, Check, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import PowerScoreArc from "@/components/PowerScoreArc";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
@@ -32,6 +33,7 @@ interface SpiderRevealCardProps {
   previewUrl: string | null;
   nickname: string;
   species: string;
+  onNicknameChange?: (next: string) => void;
   stats: Stats;
   safety: SafetyInfo | null;
   uploading: boolean;
@@ -84,6 +86,7 @@ const SpiderRevealCard = ({
   previewUrl,
   nickname,
   species,
+  onNicknameChange,
   stats,
   safety,
   uploading,
@@ -93,6 +96,22 @@ const SpiderRevealCard = ({
   const { user } = useAuth();
   const { toast } = useToast();
   const [sharing, setSharing] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(nickname);
+
+  const startEdit = () => {
+    setDraft(nickname);
+    setEditing(true);
+  };
+  const saveEdit = () => {
+    const next = draft.trim();
+    if (next && onNicknameChange) onNicknameChange(next);
+    setEditing(false);
+  };
+  const cancelEdit = () => {
+    setDraft(nickname);
+    setEditing(false);
+  };
 
   const strongest = useMemo(() => {
     const entries = Object.entries(STAT_META).map(([k, meta]) => ({
@@ -186,7 +205,39 @@ const SpiderRevealCard = ({
 
             {/* Identity */}
             <div className="text-center space-y-1 pt-2">
-              <h2 className="text-2xl font-bold leading-tight">{nickname}</h2>
+              {editing ? (
+                <div className="flex items-center justify-center gap-1">
+                  <Input
+                    autoFocus
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") saveEdit();
+                      if (e.key === "Escape") cancelEdit();
+                    }}
+                    maxLength={32}
+                    className="h-9 text-center text-lg font-bold max-w-[220px]"
+                  />
+                  <Button size="icon" variant="ghost" className="h-9 w-9" onClick={saveEdit} aria-label="Save nickname">
+                    <Check className="h-4 w-4" />
+                  </Button>
+                  <Button size="icon" variant="ghost" className="h-9 w-9" onClick={cancelEdit} aria-label="Cancel">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onNicknameChange ? startEdit : undefined}
+                  className={`group inline-flex items-center justify-center gap-2 ${onNicknameChange ? "cursor-pointer" : "cursor-default"}`}
+                  aria-label={onNicknameChange ? "Edit nickname" : undefined}
+                >
+                  <h2 className="text-2xl font-bold leading-tight">{nickname}</h2>
+                  {onNicknameChange && (
+                    <Pencil className="h-3.5 w-3.5 text-muted-foreground opacity-60 group-hover:opacity-100 transition-opacity" />
+                  )}
+                </button>
+              )}
               <p className="text-sm italic text-muted-foreground">{species}</p>
             </div>
 
