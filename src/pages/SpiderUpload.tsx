@@ -830,6 +830,21 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
           </Card>
         </div>
       </main>
+
+      {spiderStats && (
+        <SpiderRevealCard
+          open={revealOpen}
+          onOpenChange={setRevealOpen}
+          previewUrl={previewUrl}
+          nickname={nickname}
+          species={species}
+          stats={spiderStats}
+          safety={safetyInfo}
+          uploading={uploading}
+          onAddToStarting5={() => handleUpload()}
+          onBattleNow={() => handleUpload(undefined, { afterBattle: true })}
+        />
+      )}
     </div>
   );
 };
