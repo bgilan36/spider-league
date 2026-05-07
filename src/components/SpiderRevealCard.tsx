@@ -256,27 +256,22 @@ const SpiderRevealCard = ({
                 )}
                 Battle Now
               </Button>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="flex gap-2">
                 <Button
                   variant="outline"
                   onClick={onAddToStarting5}
                   disabled={uploading}
+                  className="flex-1"
                 >
                   <Plus className="h-4 w-4" />
                   Add to Starting 5
                 </Button>
-                <Button
+                <ShareButton
+                  title={`${nickname} — ${stats.rarity} Spider`}
+                  text={`🕷️ Just recruited ${nickname} (${species}) — ${stats.rarity} • ${stats.power_score} Power. Strongest stat: ${strongest.label} ${strongest.value}. Join me on Spider League!`}
                   variant="outline"
-                  onClick={shareToPod}
-                  disabled={sharing || uploading}
-                >
-                  {sharing ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Users className="h-4 w-4" />
-                  )}
-                  Share to Pod
-                </Button>
+                  size="default"
+                />
               </div>
             </div>
           </div>
