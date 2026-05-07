@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Sparkles, Sword, Users, Plus, Loader2, ShieldAlert, Heart, Pencil, Check, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import PowerScoreArc from "@/components/PowerScoreArc";
-import { supabase } from "@/integrations/supabase/client";
+import ShareButton from "@/components/ShareButton";
 import { useAuth } from "@/auth/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -95,7 +95,6 @@ const SpiderRevealCard = ({
 }: SpiderRevealCardProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [sharing, setSharing] = useState(false);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(nickname);
 
@@ -124,45 +123,6 @@ const SpiderRevealCard = ({
   }, [stats]);
 
   const harmful = (safety?.harmfulToHumans || "").toLowerCase().startsWith("yes");
-
-  const shareToPod = async () => {
-    if (!user) {
-      toast({ title: "Sign in required", variant: "destructive" });
-      return;
-    }
-    setSharing(true);
-    try {
-      const stored = typeof window !== "undefined" ? window.localStorage.getItem("spiderleague:primaryPodId") : null;
-      let leagueId: string | null = stored;
-      if (!leagueId) {
-        const { data } = await (supabase as any)
-          .from("private_league_members")
-          .select("league_id, private_leagues!inner(is_active)")
-          .eq("user_id", user.id)
-          .limit(5);
-        const first = (data || []).find((m: any) => m.private_leagues?.is_active);
-        leagueId = first?.league_id || null;
-      }
-      if (!leagueId) {
-        toast({
-          title: "No pod yet",
-          description: "Join or create a private pod to share your spider with friends.",
-        });
-        setSharing(false);
-        return;
-      }
-      const message = `🕷️ Just recruited ${nickname} (${species}) — ${stats.rarity} • ${stats.power_score} Power. Strongest stat: ${strongest.label} ${strongest.value}. Who's next?`;
-      const { error } = await (supabase as any)
-        .from("pod_chat_messages")
-        .insert({ league_id: leagueId, user_id: user.id, message });
-      if (error) throw error;
-      toast({ title: "Shared to your pod!", description: "Your pod can see your new fighter." });
-    } catch (e: any) {
-      toast({ title: "Couldn't share", description: e.message, variant: "destructive" });
-    } finally {
-      setSharing(false);
-    }
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -296,27 +256,22 @@ const SpiderRevealCard = ({
                 )}
                 Battle Now
               </Button>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="flex gap-2">
                 <Button
                   variant="outline"
                   onClick={onAddToStarting5}
                   disabled={uploading}
+                  className="flex-1"
                 >
                   <Plus className="h-4 w-4" />
                   Add to Starting 5
                 </Button>
-                <Button
+                <ShareButton
+                  title={`${nickname} — ${stats.rarity} Spider`}
+                  text={`🕷️ Just recruited ${nickname} (${species}) — ${stats.rarity} • ${stats.power_score} Power. Strongest stat: ${strongest.label} ${strongest.value}. Join me on Spider League!`}
                   variant="outline"
-                  onClick={shareToPod}
-                  disabled={sharing || uploading}
-                >
-                  {sharing ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Users className="h-4 w-4" />
-                  )}
-                  Share to Pod
-                </Button>
+                  size="default"
+                />
               </div>
             </div>
           </div>
