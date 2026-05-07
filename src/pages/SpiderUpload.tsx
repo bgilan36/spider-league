@@ -13,6 +13,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import { classifyImage } from "@/hooks/useImageClassifier";
 import { useBadgeSystem } from "@/hooks/useBadgeSystem";
 import heic2any from "heic2any";
+import SpiderRevealCard from "@/components/SpiderRevealCard";
 
 const titleCase = (str: string) =>
   str
@@ -98,6 +99,7 @@ const SpiderUpload = () => {
     specialAbilities: string[];
   } | null>(null);
   const [weeklyUploadCount, setWeeklyUploadCount] = useState<number>(0);
+  const [revealOpen, setRevealOpen] = useState(false);
 
   useEffect(() => {
     const fetchWeeklyUploadCount = async () => {
@@ -251,6 +253,8 @@ const { data, error } = await supabase.functions.invoke('spider-identify', {
           title: `Spider identified! (${confidenceText})`, 
           description: `Meet ${data.nickname} - ${data.species}!` 
         });
+        // Trigger the magical card reveal
+        setRevealOpen(true);
       }
     } catch (err: any) {
       console.error('AI identification failed:', err);
@@ -292,6 +296,7 @@ const { data, error } = await supabase.functions.invoke('spider-identify', {
             title: 'Spider analyzed!',
             description: `Meet ${nick} — ${speciesLocal}! (Local backup method)`,
           });
+          setRevealOpen(true);
         } else {
           throw new Error('No results from on-device classifier');
         }
@@ -450,8 +455,8 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
     };
   };
 
-  const handleUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleUpload = async (e?: React.FormEvent, opts?: { afterBattle?: boolean }) => {
+    if (e) e.preventDefault();
     if (!user || !selectedFile || !nickname.trim() || !species.trim()) {
       toast({ title: "Missing information", description: "Please fill all fields and select an image.", variant: "destructive" });
       return;
@@ -523,7 +528,12 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
       // Check for new badges after successful upload
       await checkAndAwardBadges(authUser.id);
       
-      navigate("/", { state: { newSpiderId: insertData.id } });
+      setRevealOpen(false);
+      if (opts?.afterBattle) {
+        navigate("/", { state: { newSpiderId: insertData.id, autoBattle: true } });
+      } else {
+        navigate("/", { state: { newSpiderId: insertData.id } });
+      }
     } catch (error: any) {
       console.error("Upload error:", error);
       toast({ title: "Upload failed", description: error.message, variant: "destructive" });
@@ -820,6 +830,21 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
           </Card>
         </div>
       </main>
+
+      {spiderStats && (
+        <SpiderRevealCard
+          open={revealOpen}
+          onOpenChange={setRevealOpen}
+          previewUrl={previewUrl}
+          nickname={nickname}
+          species={species}
+          stats={spiderStats}
+          safety={safetyInfo}
+          uploading={uploading}
+          onAddToStarting5={() => handleUpload()}
+          onBattleNow={() => handleUpload(undefined, { afterBattle: true })}
+        />
+      )}
     </div>
   );
 };
