@@ -47,7 +47,7 @@ const rarityColors: Record<string, string> = {
 };
 
 const MAX_ACTIVE = 5;
-const COOLDOWN_MINUTES = 24 * 60;
+const COOLDOWN_MINUTES = 4 * 60;
 
 const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpiderId }) => {
   const { user } = useAuth();
