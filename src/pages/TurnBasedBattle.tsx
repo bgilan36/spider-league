@@ -956,7 +956,7 @@ const LegacyTurnBasedBattle = () => {
         </Card>
 
         <AnimatePresence>
-          {battleEnded && revealedTurnsCount >= turns.length && (
+          {battleEnded && revealedTurnsCount >= displayTurns.length && (
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -1006,7 +1006,7 @@ const LegacyTurnBasedBattle = () => {
               <div className="text-center mb-4">
                 <h3 className="text-xl font-bold">{mySpider.nickname}</h3>
                 <p className="text-sm text-muted-foreground">{mySpider.species}</p>
-                {battleEnded && iWon && revealedTurnsCount >= turns.length && (
+                {battleEnded && iWon && revealedTurnsCount >= displayTurns.length && (
                   <Badge variant="default" className="mt-2">
                     <Trophy className="w-3 h-3 mr-1" />
                     Winner!
@@ -1071,7 +1071,7 @@ const LegacyTurnBasedBattle = () => {
               <div className="text-center mb-4">
                 <h3 className="text-xl font-bold">{opponentSpider.nickname}</h3>
                 <p className="text-sm text-muted-foreground">{opponentSpider.species}</p>
-                {battleEnded && !iWon && revealedTurnsCount >= turns.length && (
+                {battleEnded && !iWon && revealedTurnsCount >= displayTurns.length && (
                   <Badge variant="default" className="mt-2">
                     <Trophy className="w-3 h-3 mr-1" />
                     Winner!
