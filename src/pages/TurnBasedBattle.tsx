@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { AnimatedHpBar, getRoundedHp } from '@/components/AnimatedHpBar';
 import { useTurnBasedBattle } from '@/hooks/useTurnBasedBattle';
 import { useAuth } from '@/auth/AuthProvider';
 import { toast } from 'sonner';
@@ -974,16 +975,26 @@ const LegacyTurnBasedBattle = () => {
                   <span className="text-sm font-medium">HP</span>
                   <div className="flex items-center gap-2">
                     {myDamageThisTurn > 0 && (
-                      <span className="text-xs font-bold text-red-500 animate-in fade-in slide-in-from-right-2">
+                      <motion.span
+                        key={`my-dmg-${viewedTurnIndex}`}
+                        initial={{ opacity: 0, y: -6, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="text-xs font-bold text-red-500"
+                      >
                         −{myDamageThisTurn}
-                      </span>
+                      </motion.span>
                     )}
-                    <span className="font-bold">{displayedMyHp} / {mySpider.hit_points}</span>
+                    <span className="font-bold tabular-nums">
+                      {getRoundedHp(myTweenedHp)} / {mySpider.hit_points}
+                    </span>
                   </div>
                 </div>
-                <Progress 
-                  value={((displayedMyHp || 0) / mySpider.hit_points) * 100}
-                  className="h-3"
+                <AnimatedHpBar
+                  current={displayedMyHp || 0}
+                  max={mySpider.hit_points}
+                  damageThisTurn={myDamageThisTurn}
+                  onTweenValueChange={setMyTweenedHp}
                 />
                 
                 <div className="grid grid-cols-3 gap-2 mt-4 text-xs">
@@ -1029,16 +1040,26 @@ const LegacyTurnBasedBattle = () => {
                   <span className="text-sm font-medium">HP</span>
                   <div className="flex items-center gap-2">
                     {opponentDamageThisTurn > 0 && (
-                      <span className="text-xs font-bold text-red-500 animate-in fade-in slide-in-from-right-2">
+                      <motion.span
+                        key={`op-dmg-${viewedTurnIndex}`}
+                        initial={{ opacity: 0, y: -6, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="text-xs font-bold text-red-500"
+                      >
                         −{opponentDamageThisTurn}
-                      </span>
+                      </motion.span>
                     )}
-                    <span className="font-bold">{displayedOpponentHp} / {opponentSpider.hit_points}</span>
+                    <span className="font-bold tabular-nums">
+                      {getRoundedHp(opponentTweenedHp)} / {opponentSpider.hit_points}
+                    </span>
                   </div>
                 </div>
-                <Progress 
-                  value={((displayedOpponentHp || 0) / opponentSpider.hit_points) * 100}
-                  className="h-3"
+                <AnimatedHpBar
+                  current={displayedOpponentHp || 0}
+                  max={opponentSpider.hit_points}
+                  damageThisTurn={opponentDamageThisTurn}
+                  onTweenValueChange={setOpponentTweenedHp}
                 />
                 
                 <div className="grid grid-cols-3 gap-2 mt-4 text-xs">
