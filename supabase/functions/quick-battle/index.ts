@@ -77,7 +77,7 @@ serve(async (req) => {
     }
 
     // Find user's spider (specific or best eligible, not on cooldown)
-    const cooldownCutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const cooldownCutoff = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
     let playerQuery = supabase
       .from("spiders")
       .select("*")
