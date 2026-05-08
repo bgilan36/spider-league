@@ -86,22 +86,42 @@ const LegacyTurnBasedBattle = () => {
     return leagueId ? `/leagues/${leagueId}` : '/';
   }, [battle]);
 
-  // Derive displayed HP from the currently viewed turn so scrubbing rewinds the bars.
-  const { displayedMyHp, displayedOpponentHp } = useMemo(() => {
+  // Derive displayed HP (and the damage dealt on the currently viewed turn)
+  // so the HP bar delta exactly matches the logged damage value.
+  const { displayedMyHp, displayedOpponentHp, myDamageThisTurn, opponentDamageThisTurn } = useMemo(() => {
     if (!visibleTurn || !mySpider || !opponentSpider) {
-      return { displayedMyHp: myHp, displayedOpponentHp: opponentHp };
+      return {
+        displayedMyHp: myHp,
+        displayedOpponentHp: opponentHp,
+        myDamageThisTurn: 0,
+        opponentDamageThisTurn: 0,
+      };
     }
     let myH = mySpider.hit_points;
     let opH = opponentSpider.hit_points;
+    let myDmg = 0;
+    let opDmg = 0;
     for (let i = 0; i <= viewedTurnIndex; i++) {
       const t: any = turns[i];
       const r = t?.result_payload;
       if (!r) continue;
       const defenderIsMe = t.actor_user_id !== user?.id;
-      if (defenderIsMe) myH = r.new_defender_hp ?? myH;
-      else opH = r.new_defender_hp ?? opH;
+      const dmg = typeof r.damage === 'number' ? r.damage : 0;
+      if (defenderIsMe) {
+        // On the currently viewed turn, capture the damage the defender (me) took.
+        if (i === viewedTurnIndex) myDmg = dmg;
+        myH = r.new_defender_hp ?? Math.max(0, myH - dmg);
+      } else {
+        if (i === viewedTurnIndex) opDmg = dmg;
+        opH = r.new_defender_hp ?? Math.max(0, opH - dmg);
+      }
     }
-    return { displayedMyHp: myH, displayedOpponentHp: opH };
+    return {
+      displayedMyHp: myH,
+      displayedOpponentHp: opH,
+      myDamageThisTurn: myDmg,
+      opponentDamageThisTurn: opDmg,
+    };
   }, [visibleTurn, viewedTurnIndex, turns, mySpider, opponentSpider, myHp, opponentHp, user?.id]);
 
   // Extract stat improvements from the last turn's result
@@ -952,7 +972,14 @@ const LegacyTurnBasedBattle = () => {
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">HP</span>
-                  <span className="font-bold">{displayedMyHp} / {mySpider.hit_points}</span>
+                  <div className="flex items-center gap-2">
+                    {myDamageThisTurn > 0 && (
+                      <span className="text-xs font-bold text-red-500 animate-in fade-in slide-in-from-right-2">
+                        −{myDamageThisTurn}
+                      </span>
+                    )}
+                    <span className="font-bold">{displayedMyHp} / {mySpider.hit_points}</span>
+                  </div>
                 </div>
                 <Progress 
                   value={((displayedMyHp || 0) / mySpider.hit_points) * 100}
@@ -1000,7 +1027,14 @@ const LegacyTurnBasedBattle = () => {
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">HP</span>
-                  <span className="font-bold">{displayedOpponentHp} / {opponentSpider.hit_points}</span>
+                  <div className="flex items-center gap-2">
+                    {opponentDamageThisTurn > 0 && (
+                      <span className="text-xs font-bold text-red-500 animate-in fade-in slide-in-from-right-2">
+                        −{opponentDamageThisTurn}
+                      </span>
+                    )}
+                    <span className="font-bold">{displayedOpponentHp} / {opponentSpider.hit_points}</span>
+                  </div>
                 </div>
                 <Progress 
                   value={((displayedOpponentHp || 0) / opponentSpider.hit_points) * 100}
