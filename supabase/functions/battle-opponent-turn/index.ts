@@ -5,6 +5,13 @@ import {
   type ZoneBucket, type AttackStance, type DefenseStance, type SpiderLite,
 } from "../_shared/battle-math.ts";
 
+function capDamageForTurn(damage: number, defenderHp: number, turnIndex: number, isFinalTurn: boolean): number {
+  if (defenderHp <= 0 || damage <= 0) return 0;
+  if (isFinalTurn) return Math.min(damage, defenderHp);
+  const maxChunk = Math.max(1, Math.floor(defenderHp * (turnIndex <= MIN_TURNS ? 0.35 : 0.55)));
+  return Math.min(damage, maxChunk, Math.max(1, defenderHp - 1));
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -133,8 +140,11 @@ serve(async (req) => {
 
       let p1 = battle.p1_current_hp ?? (battle.team_a as any).spider.hit_points;
       let p2 = battle.p2_current_hp ?? (battle.team_b as any).spider.hit_points;
-      if (attackerIsP1) p2 = Math.max(0, p2 - result.damage);
-      else p1 = Math.max(0, p1 - result.damage);
+      const nextTurnIndex = turnIndex + 1;
+      const defenderHp = attackerIsP1 ? p2 : p1;
+      const damage = capDamageForTurn(result.damage, defenderHp, turnIndex, nextTurnIndex > MIN_TURNS);
+      if (attackerIsP1) p2 = Math.max(0, p2 - damage);
+      else p1 = Math.max(0, p1 - damage);
 
       await supabase.from("battle_turns").insert({
         battle_id: battle.id,
@@ -149,7 +159,7 @@ serve(async (req) => {
         },
         result_payload: {
           action: attackerStance === "venom_bite" ? "special" : "attack",
-          damage: result.damage,
+          damage,
           bonus_damage: result.bonusDamage,
           new_defender_hp: attackerIsP1 ? p2 : p1,
           attacker_name: attacker.nickname,
@@ -166,7 +176,6 @@ serve(async (req) => {
         },
       });
 
-      const nextTurnIndex = turnIndex + 1;
       const someoneKO = (p1 <= 0 || p2 <= 0);
       const reachedMin = nextTurnIndex > MIN_TURNS;
       const reachedMax = nextTurnIndex > MAX_TURNS;
