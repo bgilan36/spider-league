@@ -103,7 +103,13 @@ const LegacyTurnBasedBattle = () => {
   const [viewedTurnIndex, setViewedTurnIndex] = useState(0); // 0-based index into turns[]
   const [statImprovements, setStatImprovements] = useState<Record<string, number> | null>(null);
 
-  const playbackComplete = turns.length > 0 && revealedTurnsCount >= turns.length;
+  const battleEnded = battle ? !battle.is_active : false;
+  const displayTurns = useMemo(
+    () => buildDisplayedTurns(turns, mySpider, opponentSpider, user?.id, battleEnded),
+    [turns, mySpider, opponentSpider, user?.id, battleEnded]
+  );
+
+  const playbackComplete = displayTurns.length > 0 && revealedTurnsCount >= displayTurns.length;
 
   // While playback is running, always show the latest revealed turn.
   // Once playback completes, let the user scrub via the carousel.
@@ -116,11 +122,11 @@ const LegacyTurnBasedBattle = () => {
   // When playback finishes, snap to the final turn.
   useEffect(() => {
     if (playbackComplete) {
-      setViewedTurnIndex(turns.length - 1);
+      setViewedTurnIndex(displayTurns.length - 1);
     }
-  }, [playbackComplete, turns.length]);
+  }, [playbackComplete, displayTurns.length]);
 
-  const visibleTurn = turns[viewedTurnIndex] ?? null;
+  const visibleTurn = displayTurns[viewedTurnIndex] ?? null;
 
   // Live tweened HP values driven by AnimatedHpBar so the displayed number
   // animates in lockstep with the bar.
@@ -148,7 +154,7 @@ const LegacyTurnBasedBattle = () => {
     let myDmg = 0;
     let opDmg = 0;
     for (let i = 0; i <= viewedTurnIndex; i++) {
-      const t: any = turns[i];
+      const t: any = displayTurns[i];
       const r = t?.result_payload;
       if (!r) continue;
       const defenderIsMe = t.actor_user_id !== user?.id;
@@ -168,7 +174,7 @@ const LegacyTurnBasedBattle = () => {
       myDamageThisTurn: myDmg,
       opponentDamageThisTurn: opDmg,
     };
-  }, [visibleTurn, viewedTurnIndex, turns, mySpider, opponentSpider, myHp, opponentHp, user?.id]);
+  }, [visibleTurn, viewedTurnIndex, displayTurns, mySpider, opponentSpider, myHp, opponentHp, user?.id]);
 
   // Extract stat improvements from the last turn's result
   useEffect(() => {
