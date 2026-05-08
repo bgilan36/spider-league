@@ -82,6 +82,11 @@ const LegacyTurnBasedBattle = () => {
 
   const visibleTurn = turns[viewedTurnIndex] ?? null;
 
+  // Live tweened HP values driven by AnimatedHpBar so the displayed number
+  // animates in lockstep with the bar.
+  const [myTweenedHp, setMyTweenedHp] = useState<number>(0);
+  const [opponentTweenedHp, setOpponentTweenedHp] = useState<number>(0);
+
   const returnPath = useMemo(() => {
     const leagueId = (battle as any)?.league_id;
     return leagueId ? `/leagues/${leagueId}` : '/';
