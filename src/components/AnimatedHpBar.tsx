@@ -7,6 +7,7 @@ interface AnimatedHpBarProps {
   damageThisTurn?: number;
   className?: string;
   duration?: number; // ms
+  onTweenValueChange?: (value: number) => void;
 }
 
 /**
@@ -20,6 +21,7 @@ export function AnimatedHpBar({
   damageThisTurn = 0,
   className,
   duration = 900,
+  onTweenValueChange,
 }: AnimatedHpBarProps) {
   const [tweenedHp, setTweenedHp] = useState(current);
   const fromRef = useRef(current);
@@ -30,6 +32,7 @@ export function AnimatedHpBar({
     const to = current;
     if (from === to) {
       setTweenedHp(to);
+      onTweenValueChange?.(to);
       return;
     }
 
@@ -40,6 +43,7 @@ export function AnimatedHpBar({
       const eased = 1 - Math.pow(1 - t, 3);
       const value = from + (to - from) * eased;
       setTweenedHp(value);
+      onTweenValueChange?.(value);
       if (t < 1) {
         rafRef.current = requestAnimationFrame(tick);
       } else {
@@ -52,7 +56,7 @@ export function AnimatedHpBar({
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       fromRef.current = to;
     };
-  }, [current, duration]);
+  }, [current, duration, onTweenValueChange]);
 
   const safeMax = Math.max(1, max);
   const pct = Math.max(0, Math.min(100, (tweenedHp / safeMax) * 100));
