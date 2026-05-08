@@ -178,14 +178,14 @@ const LegacyTurnBasedBattle = () => {
 
   // Extract stat improvements from the last turn's result
   useEffect(() => {
-    if (turns.length > 0) {
-      const lastTurn = turns[turns.length - 1];
+    if (displayTurns.length > 0) {
+      const lastTurn = displayTurns[displayTurns.length - 1];
       const result = lastTurn?.result_payload as any;
       if (result?.stat_improvements && Object.keys(result.stat_improvements).length > 0) {
         setStatImprovements(result.stat_improvements);
       }
     }
-  }, [turns]);
+  }, [displayTurns]);
 
   // Check if coming from query param (direct notification link)
   useEffect(() => {
@@ -208,19 +208,19 @@ const LegacyTurnBasedBattle = () => {
 
   // Progressive turn reveal system - shows one turn every 6 seconds
   useEffect(() => {
-    if (turns.length === 0 || revealedTurnsCount >= turns.length) return;
+    if (displayTurns.length === 0 || revealedTurnsCount >= displayTurns.length) return;
 
     const timer = setTimeout(() => {
       setRevealedTurnsCount(prev => prev + 1);
     }, 6000);
 
     return () => clearTimeout(timer);
-  }, [turns.length, revealedTurnsCount]);
+  }, [displayTurns.length, revealedTurnsCount]);
 
   useEffect(() => {
     // Battle ended, show outcome reveal then redirect
     // Wait until all turns are revealed
-    if (battle && !battle.is_active && !showOutcomeReveal && hasConfirmedPresence && revealedTurnsCount >= turns.length) {
+    if (battle && !battle.is_active && !showOutcomeReveal && hasConfirmedPresence && revealedTurnsCount >= displayTurns.length) {
       // Small delay to ensure all turns are visible first
       const revealTimer = setTimeout(() => {
         setShowOutcomeReveal(true);
@@ -228,7 +228,7 @@ const LegacyTurnBasedBattle = () => {
 
       return () => clearTimeout(revealTimer);
     }
-  }, [battle, showOutcomeReveal, hasConfirmedPresence, revealedTurnsCount, turns.length]);
+  }, [battle, showOutcomeReveal, hasConfirmedPresence, revealedTurnsCount, displayTurns.length]);
 
   // Kick off auto-battle if it hasn't started (fallback) - only after presence confirmed
   useEffect(() => {
