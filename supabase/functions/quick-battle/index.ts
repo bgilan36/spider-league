@@ -6,6 +6,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function capDamageForTurn(damage: number, defenderHp: number, turnCount: number, maxTurns: number): number {
+  if (defenderHp <= 0 || damage <= 0) return 0;
+  if (turnCount >= maxTurns) return Math.min(damage, defenderHp);
+  const maxChunk = Math.max(1, Math.floor(defenderHp * (turnCount <= 4 ? 0.35 : 0.55)));
+  return Math.min(damage, maxChunk, Math.max(1, defenderHp - 1));
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -270,33 +277,30 @@ serve(async (req) => {
       let isCritical = false;
       let dodged = false;
 
-      // Scale damage to defender HP so bar drops in proportional steps.
-      const hpScale = Math.max(0.25, Math.min(1.25, defender.hit_points / 200));
-
       if (rand < 0.75) {
         actionType = "attack";
-        const baseDamage = Math.floor(attacker.damage * 1.8 * hpScale) + (attackerDice - 10);
-        const defense = Math.floor(defender.defense / 18) + (defenderDice > 17 ? 2 : 0);
+        const baseDamage = Math.floor(attacker.damage * 0.26) + Math.floor(attackerDice / 4);
+        const defense = Math.floor(defender.defense / 10) + (defenderDice > 17 ? 2 : 0);
         if (defenderDice >= 19 && attackerDice < 20) { damage = 0; dodged = true; }
         else {
           const minDmg = Math.max(1, Math.floor(defender.hit_points * 0.06));
           damage = Math.max(minDmg, baseDamage - defense);
-          if (attackerDice === 20) { damage = Math.floor(damage * 2.5); isCritical = true; }
+          if (attackerDice === 20) { damage = Math.floor(damage * 1.6); isCritical = true; }
         }
       } else {
         actionType = "special";
-        const baseDamage = Math.floor(attacker.venom * 2.0 * hpScale) + (attackerDice - 8);
-        const defense = Math.floor(defender.defense / 15) + (defenderDice > 18 ? 2 : 0);
+        const baseDamage = Math.floor(attacker.venom * 0.3) + Math.floor(attackerDice / 4);
+        const defense = Math.floor(defender.defense / 11) + (defenderDice > 18 ? 2 : 0);
         if (defenderDice === 20 && attackerDice < 19) { damage = 0; dodged = true; }
         else {
           const minDmg = Math.max(1, Math.floor(defender.hit_points * 0.09));
           damage = Math.max(minDmg, baseDamage - defense);
-          if (attackerDice >= 19) { damage = Math.floor(damage * 3.0); isCritical = true; }
+          if (attackerDice >= 19) { damage = Math.floor(damage * 1.45); isCritical = true; }
         }
       }
 
       // Cap damage to remaining HP so the displayed damage equals the bar delta.
-      damage = Math.min(damage, defenderHp);
+      damage = capDamageForTurn(damage, defenderHp, turnCount, maxTurns);
       const newDefenderHp = defenderHp - damage;
       if (isP1Turn) state.p2_hp = newDefenderHp; else state.p1_hp = newDefenderHp;
 
