@@ -16,6 +16,46 @@ import BattleOutcomeReveal from '@/components/BattleOutcomeReveal';
 import PresenceGateDialog from '@/components/PresenceGateDialog';
 import InteractiveBattleArena from '@/components/battle/InteractiveBattleArena';
 
+const capDamageForDisplay = (damage: number, defenderHp: number, turnIndex: number, isFinalTurn: boolean) => {
+  if (defenderHp <= 0 || damage <= 0) return 0;
+  if (isFinalTurn) return Math.min(damage, defenderHp);
+  const maxChunk = Math.max(1, Math.floor(defenderHp * (turnIndex <= 4 ? 0.35 : 0.55)));
+  return Math.min(damage, maxChunk, Math.max(1, defenderHp - 1));
+};
+
+const buildDisplayedTurns = (turns: any[], mySpider: any, opponentSpider: any, userId?: string, battleEnded = false) => {
+  if (!mySpider || !opponentSpider) return turns;
+  let myHp = mySpider.hit_points;
+  let opponentHp = opponentSpider.hit_points;
+
+  return turns.map((turn, index) => {
+    const result = turn?.result_payload || {};
+    const defenderIsMe = turn.actor_user_id !== userId;
+    const oldDefenderHp = defenderIsMe ? myHp : opponentHp;
+    const rawDamage = typeof result.damage === 'number' ? result.damage : 0;
+    const loggedNewHp = typeof result.new_defender_hp === 'number' ? result.new_defender_hp : null;
+    const turnIndex = Number(turn.turn_index) || index + 1;
+    const isFinalTurn = battleEnded && index === turns.length - 1;
+    const loggedDelta = loggedNewHp === null ? null : oldDefenderHp - loggedNewHp;
+    const canTrustLoggedHp = loggedNewHp !== null && loggedNewHp >= 0 && loggedDelta === rawDamage && (loggedNewHp > 0 || isFinalTurn);
+    const damage = canTrustLoggedHp ? rawDamage : capDamageForDisplay(rawDamage, oldDefenderHp, turnIndex, isFinalTurn);
+    const newDefenderHp = Math.max(0, oldDefenderHp - damage);
+
+    if (defenderIsMe) myHp = newDefenderHp;
+    else opponentHp = newDefenderHp;
+
+    return {
+      ...turn,
+      result_payload: {
+        ...result,
+        damage,
+        old_defender_hp: oldDefenderHp,
+        new_defender_hp: newDefenderHp,
+      },
+    };
+  });
+};
+
 const TurnBasedBattle = () => {
   const { battleId } = useParams<{ battleId: string }>();
   const [mode, setMode] = useState<'interactive' | 'auto' | null>(null);
