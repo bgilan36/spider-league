@@ -86,22 +86,42 @@ const LegacyTurnBasedBattle = () => {
     return leagueId ? `/leagues/${leagueId}` : '/';
   }, [battle]);
 
-  // Derive displayed HP from the currently viewed turn so scrubbing rewinds the bars.
-  const { displayedMyHp, displayedOpponentHp } = useMemo(() => {
+  // Derive displayed HP (and the damage dealt on the currently viewed turn)
+  // so the HP bar delta exactly matches the logged damage value.
+  const { displayedMyHp, displayedOpponentHp, myDamageThisTurn, opponentDamageThisTurn } = useMemo(() => {
     if (!visibleTurn || !mySpider || !opponentSpider) {
-      return { displayedMyHp: myHp, displayedOpponentHp: opponentHp };
+      return {
+        displayedMyHp: myHp,
+        displayedOpponentHp: opponentHp,
+        myDamageThisTurn: 0,
+        opponentDamageThisTurn: 0,
+      };
     }
     let myH = mySpider.hit_points;
     let opH = opponentSpider.hit_points;
+    let myDmg = 0;
+    let opDmg = 0;
     for (let i = 0; i <= viewedTurnIndex; i++) {
       const t: any = turns[i];
       const r = t?.result_payload;
       if (!r) continue;
       const defenderIsMe = t.actor_user_id !== user?.id;
-      if (defenderIsMe) myH = r.new_defender_hp ?? myH;
-      else opH = r.new_defender_hp ?? opH;
+      const dmg = typeof r.damage === 'number' ? r.damage : 0;
+      if (defenderIsMe) {
+        // On the currently viewed turn, capture the damage the defender (me) took.
+        if (i === viewedTurnIndex) myDmg = dmg;
+        myH = r.new_defender_hp ?? Math.max(0, myH - dmg);
+      } else {
+        if (i === viewedTurnIndex) opDmg = dmg;
+        opH = r.new_defender_hp ?? Math.max(0, opH - dmg);
+      }
     }
-    return { displayedMyHp: myH, displayedOpponentHp: opH };
+    return {
+      displayedMyHp: myH,
+      displayedOpponentHp: opH,
+      myDamageThisTurn: myDmg,
+      opponentDamageThisTurn: opDmg,
+    };
   }, [visibleTurn, viewedTurnIndex, turns, mySpider, opponentSpider, myHp, opponentHp, user?.id]);
 
   // Extract stat improvements from the last turn's result
