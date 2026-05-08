@@ -100,17 +100,17 @@ export function resolveTurn(input: TurnInputs): TurnResult {
 
   const useVenom = input.attackStance === "venom_bite";
   const atkStat = useVenom ? input.attacker.venom : input.attacker.damage;
-  const statMultiplier = useVenom ? 2.0 : 1.8;
-  const baseDamage = Math.floor(atkStat * statMultiplier) + (attackerDice - 10);
+  const statMultiplier = useVenom ? 0.3 : input.attackStance === "quick_strike" ? 0.2 : 0.26;
+  const baseDamage = Math.floor(atkStat * statMultiplier) + Math.floor(attackerDice / 4);
   breakdown.push(`Base from ${useVenom ? "venom" : "damage"}: ${baseDamage}`);
 
-  let defense = Math.floor(input.defender.defense / (useVenom ? 15 : 18));
+  let defense = Math.floor(input.defender.defense / (useVenom ? 11 : 10));
   if (input.defenseStance === "iron_web") {
     defense = Math.floor(defense * 1.25);
     breakdown.push(`Iron Web defense +25%`);
   }
   if (defenderDice >= 18) defense += 2;
-  if (useVenom) defense = Math.floor(defense * 0.7);
+  if (useVenom) defense = Math.floor(defense * 0.75);
 
   let dodged = false;
   if (input.defenseStance === "evasive" && defenderDice >= 17 && attackerDice < 19) {
@@ -122,9 +122,10 @@ export function resolveTurn(input: TurnInputs): TurnResult {
   let isCritical = false;
   let damage = 0;
   if (!dodged) {
-    damage = Math.max(useVenom ? 8 : 5, baseDamage - defense);
+    const minimumDamage = Math.max(1, Math.floor(input.defender.hit_points * (useVenom ? 0.06 : 0.04)));
+    damage = Math.max(minimumDamage, baseDamage - defense);
     if (attackerDice >= critThreshold) {
-      const critMult = input.attackStance === "power_strike" ? 2.8 : 2.3;
+      const critMult = input.attackStance === "power_strike" ? 1.6 : 1.45;
       damage = Math.floor(damage * critMult);
       isCritical = true;
       breakdown.push(`Critical hit x${critMult}`);
@@ -132,8 +133,8 @@ export function resolveTurn(input: TurnInputs): TurnResult {
   }
 
   if (!dodged && input.attackerHasCounterRider) {
-    damage = Math.floor(damage * 1.2);
-    breakdown.push(`Counter-Sting rider +20%`);
+    damage = Math.floor(damage * 1.15);
+    breakdown.push(`Counter-Sting rider +15%`);
   }
 
   let bonusDamage = 0;
@@ -142,7 +143,7 @@ export function resolveTurn(input: TurnInputs): TurnResult {
     && input.attackStance === "quick_strike"
     && input.attackerBucket === "perfect"
   ) {
-    bonusDamage = Math.floor((useVenom ? input.attacker.venom : input.attacker.damage) * 0.6);
+    bonusDamage = Math.max(1, Math.floor((useVenom ? input.attacker.venom : input.attacker.damage) * 0.08));
     breakdown.push(`Quick Strike follow-up +${bonusDamage}`);
   }
 
