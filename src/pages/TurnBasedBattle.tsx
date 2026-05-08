@@ -972,7 +972,14 @@ const LegacyTurnBasedBattle = () => {
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">HP</span>
-                  <span className="font-bold">{displayedMyHp} / {mySpider.hit_points}</span>
+                  <div className="flex items-center gap-2">
+                    {myDamageThisTurn > 0 && (
+                      <span className="text-xs font-bold text-red-500 animate-in fade-in slide-in-from-right-2">
+                        −{myDamageThisTurn}
+                      </span>
+                    )}
+                    <span className="font-bold">{displayedMyHp} / {mySpider.hit_points}</span>
+                  </div>
                 </div>
                 <Progress 
                   value={((displayedMyHp || 0) / mySpider.hit_points) * 100}
@@ -1020,7 +1027,14 @@ const LegacyTurnBasedBattle = () => {
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">HP</span>
-                  <span className="font-bold">{displayedOpponentHp} / {opponentSpider.hit_points}</span>
+                  <div className="flex items-center gap-2">
+                    {opponentDamageThisTurn > 0 && (
+                      <span className="text-xs font-bold text-red-500 animate-in fade-in slide-in-from-right-2">
+                        −{opponentDamageThisTurn}
+                      </span>
+                    )}
+                    <span className="font-bold">{displayedOpponentHp} / {opponentSpider.hit_points}</span>
+                  </div>
                 </div>
                 <Progress 
                   value={((displayedOpponentHp || 0) / opponentSpider.hit_points) * 100}
