@@ -107,14 +107,15 @@ serve(async (req) => {
 
     let turnCount = 0;
     let currentTurnUser = user1;
-    const minTurns = 4; // Minimum 4 turns for excitement
-    const maxTurns = 12; // Max 12 turns to ensure battle doesn't drag
+    const maxTurns = 12; // Hard cap so a battle can never drag forever
 
     // Dice roll function (1-20)
     const rollDice = () => Math.floor(Math.random() * 20) + 1;
 
-    // Run battle simulation
-    while ((state.p1_hp > 0 && state.p2_hp > 0 && turnCount < maxTurns) || turnCount < minTurns) {
+    // Run battle simulation — stop the moment one spider is KO'd so we never
+    // end with BOTH spiders at 0 HP. Only one spider can reach 0, and only on
+    // the final, decisive turn.
+    while (state.p1_hp > 0 && state.p2_hp > 0 && turnCount < maxTurns) {
       turnCount++;
       const isP1Turn = currentTurnUser === user1;
       const attacker = isP1Turn ? spider1 : spider2;
@@ -133,11 +134,14 @@ serve(async (req) => {
       let isCritical = false;
       let dodged = false;
 
+      // Scale damage to the defender's HP so the bar moves in visible,
+      // proportional steps regardless of spider tier. Targets ~4-6 turns
+      // of meaningful damage before a KO.
+      const hpScale = Math.max(0.25, Math.min(1.25, defender.hit_points / 200));
+
       if (rand < 0.75) {
         actionType = "attack";
-        // Scale damage based on turn count to ensure minimum turns
-        const turnModifier = turnCount < minTurns ? 0.5 : 1.0;
-        const baseDamage = Math.floor(attacker.damage * 1.8 * turnModifier) + (attackerDice - 10);
+        const baseDamage = Math.floor(attacker.damage * 1.8 * hpScale) + (attackerDice - 10);
         const defense = Math.floor(defender.defense / 18) + (defenderDice > 17 ? 2 : 0);
         
         // Dodge on defender rolling 19-20 and attacker not rolling 20
@@ -145,7 +149,8 @@ serve(async (req) => {
           damage = 0;
           dodged = true;
         } else {
-          damage = Math.max(5, baseDamage - defense); // Minimum 5 damage
+          const minDmg = Math.max(1, Math.floor(defender.hit_points * 0.06));
+          damage = Math.max(minDmg, baseDamage - defense);
           
           // Critical hit on natural 20
           if (attackerDice === 20) {
@@ -155,9 +160,7 @@ serve(async (req) => {
         }
       } else {
         actionType = "special";
-        // Special attacks - more powerful
-        const turnModifier = turnCount < minTurns ? 0.6 : 1.0;
-        const baseDamage = Math.floor(attacker.venom * 2.0 * turnModifier) + (attackerDice - 8);
+        const baseDamage = Math.floor(attacker.venom * 2.0 * hpScale) + (attackerDice - 8);
         const defense = Math.floor(defender.defense / 15) + (defenderDice > 18 ? 2 : 0);
         
         // Dodge on defender rolling 20
@@ -165,7 +168,8 @@ serve(async (req) => {
           damage = 0;
           dodged = true;
         } else {
-          damage = Math.max(8, baseDamage - defense); // Minimum 8 damage
+          const minDmg = Math.max(1, Math.floor(defender.hit_points * 0.09));
+          damage = Math.max(minDmg, baseDamage - defense);
           
           // Critical on 19-20 for special
           if (attackerDice >= 19) {
@@ -175,7 +179,10 @@ serve(async (req) => {
         }
       }
 
-      const newDefenderHp = Math.max(0, defenderHp - damage);
+      // Never overshoot the displayed HP — damage shown in the log always
+      // equals the HP delta on the bar.
+      damage = Math.min(damage, defenderHp);
+      const newDefenderHp = defenderHp - damage;
 
       // Update state
       if (isP1Turn) {
