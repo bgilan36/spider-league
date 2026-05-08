@@ -291,7 +291,6 @@ const LegacyTurnBasedBattle = () => {
     );
   }
 
-  const battleEnded = !battle.is_active;
   const iWon = battle.winner === 'A' 
     ? (battle.team_a as any)?.userId === user?.id 
     : battle.winner === 'B'
