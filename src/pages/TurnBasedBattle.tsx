@@ -16,6 +16,46 @@ import BattleOutcomeReveal from '@/components/BattleOutcomeReveal';
 import PresenceGateDialog from '@/components/PresenceGateDialog';
 import InteractiveBattleArena from '@/components/battle/InteractiveBattleArena';
 
+const capDamageForDisplay = (damage: number, defenderHp: number, turnIndex: number, isFinalTurn: boolean) => {
+  if (defenderHp <= 0 || damage <= 0) return 0;
+  if (isFinalTurn) return Math.min(damage, defenderHp);
+  const maxChunk = Math.max(1, Math.floor(defenderHp * (turnIndex <= 4 ? 0.35 : 0.55)));
+  return Math.min(damage, maxChunk, Math.max(1, defenderHp - 1));
+};
+
+const buildDisplayedTurns = (turns: any[], mySpider: any, opponentSpider: any, userId?: string, battleEnded = false) => {
+  if (!mySpider || !opponentSpider) return turns;
+  let myHp = mySpider.hit_points;
+  let opponentHp = opponentSpider.hit_points;
+
+  return turns.map((turn, index) => {
+    const result = turn?.result_payload || {};
+    const defenderIsMe = turn.actor_user_id !== userId;
+    const oldDefenderHp = defenderIsMe ? myHp : opponentHp;
+    const rawDamage = typeof result.damage === 'number' ? result.damage : 0;
+    const loggedNewHp = typeof result.new_defender_hp === 'number' ? result.new_defender_hp : null;
+    const turnIndex = Number(turn.turn_index) || index + 1;
+    const isFinalTurn = battleEnded && index === turns.length - 1;
+    const loggedDelta = loggedNewHp === null ? null : oldDefenderHp - loggedNewHp;
+    const canTrustLoggedHp = loggedNewHp !== null && loggedNewHp >= 0 && loggedDelta === rawDamage && (loggedNewHp > 0 || isFinalTurn);
+    const damage = canTrustLoggedHp ? rawDamage : capDamageForDisplay(rawDamage, oldDefenderHp, turnIndex, isFinalTurn);
+    const newDefenderHp = Math.max(0, oldDefenderHp - damage);
+
+    if (defenderIsMe) myHp = newDefenderHp;
+    else opponentHp = newDefenderHp;
+
+    return {
+      ...turn,
+      result_payload: {
+        ...result,
+        damage,
+        old_defender_hp: oldDefenderHp,
+        new_defender_hp: newDefenderHp,
+      },
+    };
+  });
+};
+
 const TurnBasedBattle = () => {
   const { battleId } = useParams<{ battleId: string }>();
   const [mode, setMode] = useState<'interactive' | 'auto' | null>(null);
@@ -63,7 +103,13 @@ const LegacyTurnBasedBattle = () => {
   const [viewedTurnIndex, setViewedTurnIndex] = useState(0); // 0-based index into turns[]
   const [statImprovements, setStatImprovements] = useState<Record<string, number> | null>(null);
 
-  const playbackComplete = turns.length > 0 && revealedTurnsCount >= turns.length;
+  const battleEnded = battle ? !battle.is_active : false;
+  const displayTurns = useMemo(
+    () => buildDisplayedTurns(turns, mySpider, opponentSpider, user?.id, battleEnded),
+    [turns, mySpider, opponentSpider, user?.id, battleEnded]
+  );
+
+  const playbackComplete = displayTurns.length > 0 && revealedTurnsCount >= displayTurns.length;
 
   // While playback is running, always show the latest revealed turn.
   // Once playback completes, let the user scrub via the carousel.
@@ -76,11 +122,11 @@ const LegacyTurnBasedBattle = () => {
   // When playback finishes, snap to the final turn.
   useEffect(() => {
     if (playbackComplete) {
-      setViewedTurnIndex(turns.length - 1);
+      setViewedTurnIndex(displayTurns.length - 1);
     }
-  }, [playbackComplete, turns.length]);
+  }, [playbackComplete, displayTurns.length]);
 
-  const visibleTurn = turns[viewedTurnIndex] ?? null;
+  const visibleTurn = displayTurns[viewedTurnIndex] ?? null;
 
   // Live tweened HP values driven by AnimatedHpBar so the displayed number
   // animates in lockstep with the bar.
@@ -108,7 +154,7 @@ const LegacyTurnBasedBattle = () => {
     let myDmg = 0;
     let opDmg = 0;
     for (let i = 0; i <= viewedTurnIndex; i++) {
-      const t: any = turns[i];
+      const t: any = displayTurns[i];
       const r = t?.result_payload;
       if (!r) continue;
       const defenderIsMe = t.actor_user_id !== user?.id;
@@ -128,18 +174,18 @@ const LegacyTurnBasedBattle = () => {
       myDamageThisTurn: myDmg,
       opponentDamageThisTurn: opDmg,
     };
-  }, [visibleTurn, viewedTurnIndex, turns, mySpider, opponentSpider, myHp, opponentHp, user?.id]);
+  }, [visibleTurn, viewedTurnIndex, displayTurns, mySpider, opponentSpider, myHp, opponentHp, user?.id]);
 
   // Extract stat improvements from the last turn's result
   useEffect(() => {
-    if (turns.length > 0) {
-      const lastTurn = turns[turns.length - 1];
+    if (displayTurns.length > 0) {
+      const lastTurn = displayTurns[displayTurns.length - 1];
       const result = lastTurn?.result_payload as any;
       if (result?.stat_improvements && Object.keys(result.stat_improvements).length > 0) {
         setStatImprovements(result.stat_improvements);
       }
     }
-  }, [turns]);
+  }, [displayTurns]);
 
   // Check if coming from query param (direct notification link)
   useEffect(() => {
@@ -162,19 +208,19 @@ const LegacyTurnBasedBattle = () => {
 
   // Progressive turn reveal system - shows one turn every 6 seconds
   useEffect(() => {
-    if (turns.length === 0 || revealedTurnsCount >= turns.length) return;
+    if (displayTurns.length === 0 || revealedTurnsCount >= displayTurns.length) return;
 
     const timer = setTimeout(() => {
       setRevealedTurnsCount(prev => prev + 1);
     }, 6000);
 
     return () => clearTimeout(timer);
-  }, [turns.length, revealedTurnsCount]);
+  }, [displayTurns.length, revealedTurnsCount]);
 
   useEffect(() => {
     // Battle ended, show outcome reveal then redirect
     // Wait until all turns are revealed
-    if (battle && !battle.is_active && !showOutcomeReveal && hasConfirmedPresence && revealedTurnsCount >= turns.length) {
+    if (battle && !battle.is_active && !showOutcomeReveal && hasConfirmedPresence && revealedTurnsCount >= displayTurns.length) {
       // Small delay to ensure all turns are visible first
       const revealTimer = setTimeout(() => {
         setShowOutcomeReveal(true);
@@ -182,7 +228,7 @@ const LegacyTurnBasedBattle = () => {
 
       return () => clearTimeout(revealTimer);
     }
-  }, [battle, showOutcomeReveal, hasConfirmedPresence, revealedTurnsCount, turns.length]);
+  }, [battle, showOutcomeReveal, hasConfirmedPresence, revealedTurnsCount, displayTurns.length]);
 
   // Kick off auto-battle if it hasn't started (fallback) - only after presence confirmed
   useEffect(() => {
@@ -245,7 +291,6 @@ const LegacyTurnBasedBattle = () => {
     );
   }
 
-  const battleEnded = !battle.is_active;
   const iWon = battle.winner === 'A' 
     ? (battle.team_a as any)?.userId === user?.id 
     : battle.winner === 'B'
@@ -330,7 +375,7 @@ const LegacyTurnBasedBattle = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
               <h3 className="text-lg font-bold">Battle Log</h3>
-              {turns.length > 0 && (
+              {displayTurns.length > 0 && (
                 <div className="flex items-center gap-2">
                   {playbackComplete && (
                     <Button
@@ -344,14 +389,14 @@ const LegacyTurnBasedBattle = () => {
                     </Button>
                   )}
                   <span className="text-sm font-mono text-muted-foreground min-w-[80px] text-center">
-                    Turn {viewedTurnIndex + 1} / {playbackComplete ? turns.length : revealedTurnsCount}
+                    Turn {viewedTurnIndex + 1} / {playbackComplete ? displayTurns.length : revealedTurnsCount}
                   </span>
                   {playbackComplete && (
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => setViewedTurnIndex((i) => Math.min(turns.length - 1, i + 1))}
-                      disabled={viewedTurnIndex >= turns.length - 1}
+                      onClick={() => setViewedTurnIndex((i) => Math.min(displayTurns.length - 1, i + 1))}
+                      disabled={viewedTurnIndex >= displayTurns.length - 1}
                       aria-label="Next turn"
                     >
                       <ChevronRight className="h-4 w-4" />
@@ -361,7 +406,7 @@ const LegacyTurnBasedBattle = () => {
               )}
             </div>
             <div className="space-y-2">
-              {turns.length === 0 || !visibleTurn ? (
+              {displayTurns.length === 0 || !visibleTurn ? (
                 <div className="text-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto mb-2" />
                   <p className="text-sm text-muted-foreground">
@@ -911,7 +956,7 @@ const LegacyTurnBasedBattle = () => {
         </Card>
 
         <AnimatePresence>
-          {battleEnded && revealedTurnsCount >= turns.length && (
+          {battleEnded && revealedTurnsCount >= displayTurns.length && (
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -961,7 +1006,7 @@ const LegacyTurnBasedBattle = () => {
               <div className="text-center mb-4">
                 <h3 className="text-xl font-bold">{mySpider.nickname}</h3>
                 <p className="text-sm text-muted-foreground">{mySpider.species}</p>
-                {battleEnded && iWon && revealedTurnsCount >= turns.length && (
+                {battleEnded && iWon && revealedTurnsCount >= displayTurns.length && (
                   <Badge variant="default" className="mt-2">
                     <Trophy className="w-3 h-3 mr-1" />
                     Winner!
@@ -1026,7 +1071,7 @@ const LegacyTurnBasedBattle = () => {
               <div className="text-center mb-4">
                 <h3 className="text-xl font-bold">{opponentSpider.nickname}</h3>
                 <p className="text-sm text-muted-foreground">{opponentSpider.species}</p>
-                {battleEnded && !iWon && revealedTurnsCount >= turns.length && (
+                {battleEnded && !iWon && revealedTurnsCount >= displayTurns.length && (
                   <Badge variant="default" className="mt-2">
                     <Trophy className="w-3 h-3 mr-1" />
                     Winner!

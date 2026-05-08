@@ -5,6 +5,13 @@ import {
   type ZoneBucket, type AttackStance, type DefenseStance, type SpiderLite,
 } from "../_shared/battle-math.ts";
 
+function capDamageForTurn(damage: number, defenderHp: number, turnIndex: number, isFinalTurn: boolean): number {
+  if (defenderHp <= 0 || damage <= 0) return 0;
+  if (isFinalTurn) return Math.min(damage, defenderHp);
+  const maxChunk = Math.max(1, Math.floor(defenderHp * (turnIndex <= MIN_TURNS ? 0.35 : 0.55)));
+  return Math.min(damage, maxChunk, Math.max(1, defenderHp - 1));
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -57,10 +64,14 @@ async function maybeResolveTurn(
     attackerHasCounterRider,
   });
 
-  // Apply damage.
+  // Apply damage. Before the battle is allowed to finish, always leave the
+  // defender with at least 1 HP so only the final decisive turn can show a KO.
   let p1 = battle.p1_current_hp, p2 = battle.p2_current_hp;
-  if (attackerIsP1) p2 = Math.max(0, p2 - result.damage);
-  else p1 = Math.max(0, p1 - result.damage);
+  const defenderHp = attackerIsP1 ? p2 : p1;
+  const nextTurnIndex = pending.turnIndex + 1;
+  const damage = capDamageForTurn(result.damage, defenderHp, pending.turnIndex, nextTurnIndex > MIN_TURNS);
+  if (attackerIsP1) p2 = Math.max(0, p2 - damage);
+  else p1 = Math.max(0, p1 - damage);
 
   // Persist the turn row.
   await supabase.from("battle_turns").insert({
@@ -76,7 +87,7 @@ async function maybeResolveTurn(
     },
     result_payload: {
       action: attackerStance === "venom_bite" ? "special" : "attack",
-      damage: result.damage,
+      damage,
       bonus_damage: result.bonusDamage,
       new_defender_hp: attackerIsP1 ? p2 : p1,
       attacker_name: attacker.nickname,
@@ -94,7 +105,6 @@ async function maybeResolveTurn(
   });
 
   // Decide next turn or finish.
-  const nextTurnIndex = pending.turnIndex + 1;
   const someoneKO = (p1 <= 0 || p2 <= 0);
   const reachedMin = nextTurnIndex > MIN_TURNS;
   const reachedMax = nextTurnIndex > MAX_TURNS;
