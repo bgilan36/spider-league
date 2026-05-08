@@ -375,7 +375,7 @@ const LegacyTurnBasedBattle = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
               <h3 className="text-lg font-bold">Battle Log</h3>
-              {turns.length > 0 && (
+              {displayTurns.length > 0 && (
                 <div className="flex items-center gap-2">
                   {playbackComplete && (
                     <Button
@@ -389,14 +389,14 @@ const LegacyTurnBasedBattle = () => {
                     </Button>
                   )}
                   <span className="text-sm font-mono text-muted-foreground min-w-[80px] text-center">
-                    Turn {viewedTurnIndex + 1} / {playbackComplete ? turns.length : revealedTurnsCount}
+                    Turn {viewedTurnIndex + 1} / {playbackComplete ? displayTurns.length : revealedTurnsCount}
                   </span>
                   {playbackComplete && (
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => setViewedTurnIndex((i) => Math.min(turns.length - 1, i + 1))}
-                      disabled={viewedTurnIndex >= turns.length - 1}
+                      onClick={() => setViewedTurnIndex((i) => Math.min(displayTurns.length - 1, i + 1))}
+                      disabled={viewedTurnIndex >= displayTurns.length - 1}
                       aria-label="Next turn"
                     >
                       <ChevronRight className="h-4 w-4" />
@@ -406,7 +406,7 @@ const LegacyTurnBasedBattle = () => {
               )}
             </div>
             <div className="space-y-2">
-              {turns.length === 0 || !visibleTurn ? (
+              {displayTurns.length === 0 || !visibleTurn ? (
                 <div className="text-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto mb-2" />
                   <p className="text-sm text-muted-foreground">
