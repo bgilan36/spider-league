@@ -102,7 +102,6 @@ serve(async (req) => {
         const { data } = await supabase.from("spiders").select("*")
           .eq("owner_id", requestedOpponentUserId).eq("is_approved", true)
           .gt("eligible_until", now)
-          .or(`last_battled_at.is.null,last_battled_at.lt.${cooldownCutoff}`)
           .order("power_score", { ascending: false }).limit(1);
         if (data && data.length > 0) opponent = data[0];
       }
@@ -115,7 +114,6 @@ serve(async (req) => {
       let q = supabase.from("spiders").select("*")
         .eq("is_approved", true).neq("owner_id", userId)
         .gt("eligible_until", now)
-        .or(`last_battled_at.is.null,last_battled_at.lt.${cooldownCutoff}`)
         .gte("power_score", low).lte("power_score", high);
       if (leagueOpponentOwnerIds) q = q.in("owner_id", leagueOpponentOwnerIds);
       const { data } = await q.limit(10);
@@ -123,8 +121,7 @@ serve(async (req) => {
     }
     if (!opponent) {
       let q = supabase.from("spiders").select("*").eq("is_approved", true).neq("owner_id", userId)
-        .gt("eligible_until", now)
-        .or(`last_battled_at.is.null,last_battled_at.lt.${cooldownCutoff}`);
+        .gt("eligible_until", now);
       if (leagueOpponentOwnerIds) q = q.in("owner_id", leagueOpponentOwnerIds);
       const { data } = await q.order("power_score", { ascending: false }).limit(1);
       if (data && data.length > 0) opponent = data[0];
