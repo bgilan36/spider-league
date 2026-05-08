@@ -294,11 +294,11 @@ const FriendPodsHomeSection = () => {
               .order("power_score", { ascending: false })
           : Promise.resolve({ data: [] }),
       ]);
-      const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+      const cutoff = Date.now() - 4 * 60 * 60 * 1000;
       const decorate = (s: any) => {
         const last = s.last_battled_at ? new Date(s.last_battled_at).getTime() : 0;
         const onCooldown = last > cutoff;
-        const cooldownRemainingMs = onCooldown ? last + 24 * 60 * 60 * 1000 - Date.now() : 0;
+        const cooldownRemainingMs = onCooldown ? last + 4 * 60 * 60 * 1000 - Date.now() : 0;
         return { ...s, onCooldown, cooldownRemainingMs };
       };
       const mineDecorated = (mine || []).map(decorate);
