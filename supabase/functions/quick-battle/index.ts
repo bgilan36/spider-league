@@ -247,15 +247,15 @@ serve(async (req) => {
       .update({ battle_id: battleData.id })
       .eq("id", challengeData.id);
 
-    // Run the battle simulation inline (similar to auto-battle)
+    // Run the battle simulation inline (similar to auto-battle).
+    // Stop the moment one spider is KO'd so we never end with both at 0 HP.
     const state = { p1_hp: playerSpider.hit_points, p2_hp: opponent.hit_points, turns: [] as any[] };
     let turnCount = 0;
     let currentTurnUser = userId;
-    const minTurns = 4;
     const maxTurns = 12;
     const rollDice = () => Math.floor(Math.random() * 20) + 1;
 
-    while ((state.p1_hp > 0 && state.p2_hp > 0 && turnCount < maxTurns) || turnCount < minTurns) {
+    while (state.p1_hp > 0 && state.p2_hp > 0 && turnCount < maxTurns) {
       turnCount++;
       const isP1Turn = currentTurnUser === userId;
       const attacker = isP1Turn ? playerSpider : opponent;
@@ -270,23 +270,34 @@ serve(async (req) => {
       let isCritical = false;
       let dodged = false;
 
+      // Scale damage to defender HP so bar drops in proportional steps.
+      const hpScale = Math.max(0.25, Math.min(1.25, defender.hit_points / 200));
+
       if (rand < 0.75) {
         actionType = "attack";
-        const turnModifier = turnCount < minTurns ? 0.5 : 1.0;
-        const baseDamage = Math.floor(attacker.damage * 1.8 * turnModifier) + (attackerDice - 10);
+        const baseDamage = Math.floor(attacker.damage * 1.8 * hpScale) + (attackerDice - 10);
         const defense = Math.floor(defender.defense / 18) + (defenderDice > 17 ? 2 : 0);
         if (defenderDice >= 19 && attackerDice < 20) { damage = 0; dodged = true; }
-        else { damage = Math.max(5, baseDamage - defense); if (attackerDice === 20) { damage = Math.floor(damage * 2.5); isCritical = true; } }
+        else {
+          const minDmg = Math.max(1, Math.floor(defender.hit_points * 0.06));
+          damage = Math.max(minDmg, baseDamage - defense);
+          if (attackerDice === 20) { damage = Math.floor(damage * 2.5); isCritical = true; }
+        }
       } else {
         actionType = "special";
-        const turnModifier = turnCount < minTurns ? 0.6 : 1.0;
-        const baseDamage = Math.floor(attacker.venom * 2.0 * turnModifier) + (attackerDice - 8);
+        const baseDamage = Math.floor(attacker.venom * 2.0 * hpScale) + (attackerDice - 8);
         const defense = Math.floor(defender.defense / 15) + (defenderDice > 18 ? 2 : 0);
         if (defenderDice === 20 && attackerDice < 19) { damage = 0; dodged = true; }
-        else { damage = Math.max(8, baseDamage - defense); if (attackerDice >= 19) { damage = Math.floor(damage * 3.0); isCritical = true; } }
+        else {
+          const minDmg = Math.max(1, Math.floor(defender.hit_points * 0.09));
+          damage = Math.max(minDmg, baseDamage - defense);
+          if (attackerDice >= 19) { damage = Math.floor(damage * 3.0); isCritical = true; }
+        }
       }
 
-      const newDefenderHp = Math.max(0, defenderHp - damage);
+      // Cap damage to remaining HP so the displayed damage equals the bar delta.
+      damage = Math.min(damage, defenderHp);
+      const newDefenderHp = defenderHp - damage;
       if (isP1Turn) state.p2_hp = newDefenderHp; else state.p1_hp = newDefenderHp;
 
       await supabase.from("battle_turns").insert({
