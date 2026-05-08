@@ -12,6 +12,13 @@ interface BattleState {
   turns: any[];
 }
 
+function capDamageForTurn(damage: number, defenderHp: number, turnCount: number, maxTurns: number): number {
+  if (defenderHp <= 0 || damage <= 0) return 0;
+  if (turnCount >= maxTurns) return Math.min(damage, defenderHp);
+  const maxChunk = Math.max(1, Math.floor(defenderHp * (turnCount <= 4 ? 0.35 : 0.55)));
+  return Math.min(damage, maxChunk, Math.max(1, defenderHp - 1));
+}
+
 // UUID validation regex
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -134,15 +141,10 @@ serve(async (req) => {
       let isCritical = false;
       let dodged = false;
 
-      // Scale damage to the defender's HP so the bar moves in visible,
-      // proportional steps regardless of spider tier. Targets ~4-6 turns
-      // of meaningful damage before a KO.
-      const hpScale = Math.max(0.25, Math.min(1.25, defender.hit_points / 200));
-
       if (rand < 0.75) {
         actionType = "attack";
-        const baseDamage = Math.floor(attacker.damage * 1.8 * hpScale) + (attackerDice - 10);
-        const defense = Math.floor(defender.defense / 18) + (defenderDice > 17 ? 2 : 0);
+        const baseDamage = Math.floor(attacker.damage * 0.26) + Math.floor(attackerDice / 4);
+        const defense = Math.floor(defender.defense / 10) + (defenderDice > 17 ? 2 : 0);
         
         // Dodge on defender rolling 19-20 and attacker not rolling 20
         if (defenderDice >= 19 && attackerDice < 20) {
@@ -154,14 +156,14 @@ serve(async (req) => {
           
           // Critical hit on natural 20
           if (attackerDice === 20) {
-            damage = Math.floor(damage * 2.5);
+            damage = Math.floor(damage * 1.6);
             isCritical = true;
           }
         }
       } else {
         actionType = "special";
-        const baseDamage = Math.floor(attacker.venom * 2.0 * hpScale) + (attackerDice - 8);
-        const defense = Math.floor(defender.defense / 15) + (defenderDice > 18 ? 2 : 0);
+        const baseDamage = Math.floor(attacker.venom * 0.3) + Math.floor(attackerDice / 4);
+        const defense = Math.floor(defender.defense / 11) + (defenderDice > 18 ? 2 : 0);
         
         // Dodge on defender rolling 20
         if (defenderDice === 20 && attackerDice < 19) {
@@ -173,7 +175,7 @@ serve(async (req) => {
           
           // Critical on 19-20 for special
           if (attackerDice >= 19) {
-            damage = Math.floor(damage * 3.0);
+            damage = Math.floor(damage * 1.45);
             isCritical = true;
           }
         }
@@ -181,7 +183,7 @@ serve(async (req) => {
 
       // Never overshoot the displayed HP — damage shown in the log always
       // equals the HP delta on the bar.
-      damage = Math.min(damage, defenderHp);
+      damage = capDamageForTurn(damage, defenderHp, turnCount, maxTurns);
       const newDefenderHp = defenderHp - damage;
 
       // Update state
