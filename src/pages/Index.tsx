@@ -690,18 +690,18 @@ const Index = () => {
         <Helmet>
           <title>Spider League — Spider Battling & Weekly Matchups</title>
           <meta name="description" content="Upload spiders, generate AI battle stats, and compete in weekly Spider League matchups with friends." />
-          <link rel="canonical" href="https://spider-league.lovable.app/" />
+          <link rel="canonical" href="https://www.spiderleague.app/" />
           <meta property="og:title" content="Spider League — Spider Battling & Weekly Matchups" />
           <meta property="og:description" content="Upload spiders, generate AI battle stats, and compete in weekly Spider League matchups with friends." />
-          <meta property="og:url" content="https://spider-league.lovable.app/" />
+          <meta property="og:url" content="https://www.spiderleague.app/" />
           <script type="application/ld+json">{JSON.stringify({
             "@context": "https://schema.org",
             "@type": "WebSite",
             name: "Spider League",
-            url: "https://spider-league.lovable.app/",
+            url: "https://www.spiderleague.app/",
             potentialAction: {
               "@type": "SearchAction",
-              target: "https://spider-league.lovable.app/leaderboard"
+              target: "https://www.spiderleague.app/leaderboard"
             }
           })}</script>
         </Helmet>
@@ -845,10 +845,10 @@ const Index = () => {
         <title>Dashboard — Spider League</title>
         <meta name="description" content="Manage your spider fighters, accept challenges, and track weekly Spider League matchups from your dashboard." />
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-        <link rel="canonical" href="https://spider-league.lovable.app/" />
+        <link rel="canonical" href="https://www.spiderleague.app/" />
         <meta property="og:title" content="Spider League Dashboard" />
         <meta property="og:description" content="Manage your spider fighters, accept challenges, and track weekly Spider League matchups." />
-        <meta property="og:url" content="https://spider-league.lovable.app/" />
+        <meta property="og:url" content="https://www.spiderleague.app/" />
       </Helmet>
       <PublishErrorPanel />
       

@@ -396,10 +396,10 @@ const Leaderboard = () => {
         <title>User Leaderboard — Spider League</title>
         <meta name="description" content="See the top-ranked Spider League trainers, ordered by Power Score and XP. Climb the global leaderboard with your best fighters." />
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-        <link rel="canonical" href="https://spider-league.lovable.app/leaderboard" />
+        <link rel="canonical" href="https://www.spiderleague.app/leaderboard" />
         <meta property="og:title" content="Spider League Leaderboard" />
         <meta property="og:description" content="See the top-ranked Spider League trainers, ordered by Power Score and XP." />
-        <meta property="og:url" content="https://spider-league.lovable.app/leaderboard" />
+        <meta property="og:url" content="https://www.spiderleague.app/leaderboard" />
       </Helmet>
       
       <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 pb-safe">
