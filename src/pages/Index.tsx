@@ -688,9 +688,22 @@ const Index = () => {
   if (!user) {
     return <div className="min-h-screen flex items-center justify-center bg-background">
         <Helmet>
-          <title>Spider League</title>
-          <meta name="description" content="Upload spiders, generate stats, and battle in weekly matchups on Spider League." />
-          <link rel="canonical" href={`${window.location.origin}/`} />
+          <title>Spider League — Spider Battling & Weekly Matchups</title>
+          <meta name="description" content="Upload spiders, generate AI battle stats, and compete in weekly Spider League matchups with friends." />
+          <link rel="canonical" href="https://spider-league.lovable.app/" />
+          <meta property="og:title" content="Spider League — Spider Battling & Weekly Matchups" />
+          <meta property="og:description" content="Upload spiders, generate AI battle stats, and compete in weekly Spider League matchups with friends." />
+          <meta property="og:url" content="https://spider-league.lovable.app/" />
+          <script type="application/ld+json">{JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: "Spider League",
+            url: "https://spider-league.lovable.app/",
+            potentialAction: {
+              "@type": "SearchAction",
+              target: "https://spider-league.lovable.app/leaderboard"
+            }
+          })}</script>
         </Helmet>
         <div className="w-full max-w-md px-6">
           <div className="text-center mb-8">
