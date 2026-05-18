@@ -76,15 +76,15 @@ const Shop = () => {
       <Helmet>
         <title>Shop — Spider League</title>
         <meta name="description" content="Get official Spider League merchandise including t-shirts, hoodies, koozies, and stickers." />
-        <link rel="canonical" href="https://spider-league.lovable.app/shop" />
+        <link rel="canonical" href="https://www.spiderleague.app/shop" />
         <meta property="og:title" content="Spider League Shop" />
         <meta property="og:description" content="Official Spider League merchandise: t-shirts, long sleeves, hoodies, koozies, and sticker packs." />
-        <meta property="og:url" content="https://spider-league.lovable.app/shop" />
+        <meta property="og:url" content="https://www.spiderleague.app/shop" />
         <script type="application/ld+json">{JSON.stringify({
           "@context": "https://schema.org",
           "@type": "CollectionPage",
           name: "Spider League Shop",
-          url: "https://spider-league.lovable.app/shop",
+          url: "https://www.spiderleague.app/shop",
           hasPart: products.map((p) => ({
             "@type": "Product",
             name: p.name,
