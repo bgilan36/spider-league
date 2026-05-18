@@ -76,7 +76,28 @@ const Shop = () => {
       <Helmet>
         <title>Shop — Spider League</title>
         <meta name="description" content="Get official Spider League merchandise including t-shirts, hoodies, koozies, and stickers." />
-        <link rel="canonical" href={`${window.location.origin}/shop`} />
+        <link rel="canonical" href="https://spider-league.lovable.app/shop" />
+        <meta property="og:title" content="Spider League Shop" />
+        <meta property="og:description" content="Official Spider League merchandise: t-shirts, long sleeves, hoodies, koozies, and sticker packs." />
+        <meta property="og:url" content="https://spider-league.lovable.app/shop" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "Spider League Shop",
+          url: "https://spider-league.lovable.app/shop",
+          hasPart: products.map((p) => ({
+            "@type": "Product",
+            name: p.name,
+            description: p.description,
+            category: p.category,
+            offers: {
+              "@type": "Offer",
+              price: p.price.toFixed(2),
+              priceCurrency: "USD",
+              availability: "https://schema.org/InStock"
+            }
+          }))
+        })}</script>
       </Helmet>
       
       {/* Header */}
