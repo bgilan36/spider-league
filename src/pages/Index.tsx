@@ -843,9 +843,12 @@ const Index = () => {
       />
       <Helmet>
         <title>Dashboard — Spider League</title>
-        <meta name="description" content="Manage your spider fighters and compete in Spider League battles." />
+        <meta name="description" content="Manage your spider fighters, accept challenges, and track weekly Spider League matchups from your dashboard." />
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-        <link rel="canonical" href={`${window.location.origin}/`} />
+        <link rel="canonical" href="https://spider-league.lovable.app/" />
+        <meta property="og:title" content="Spider League Dashboard" />
+        <meta property="og:description" content="Manage your spider fighters, accept challenges, and track weekly Spider League matchups." />
+        <meta property="og:url" content="https://spider-league.lovable.app/" />
       </Helmet>
       <PublishErrorPanel />
       
