@@ -52,7 +52,12 @@ const JoinLeague = () => {
 
   return (
     <main className="min-h-screen bg-background px-4 py-10">
-      <Helmet><title>Join Spider League Pod</title><meta name="description" content="Preview and join a private Spider League pod." /></Helmet>
+      <Helmet>
+        <title>Join a Friend Pod — Spider League</title>
+        <meta name="description" content="Preview a private Spider League friend pod, see its members, and join the mini-league to battle alongside friends." />
+        <meta property="og:title" content="Join a Spider League Friend Pod" />
+        <meta property="og:description" content="Preview a private Spider League friend pod and join the mini-league to battle alongside friends." />
+      </Helmet>
       <div className="mx-auto max-w-2xl">
         {loading || authLoading ? (
           <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin" /></div>

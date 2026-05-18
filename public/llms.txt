@@ -1,0 +1,19 @@
+# Spider League
+
+> Snap a photo of any spider, get AI-generated battle stats, build a collection, and compete in weekly Spider League matchups with friends.
+
+Spider League is a web app where players photograph real spiders, get them identified and statted by AI, then battle them in turn-based matches and weekly rankings. Players can also form private "friend pods" to compete in their own mini-leagues.
+
+## Pages
+
+- [Home](/): Overview of Spider League, recent battles, and weekly rankings.
+- [Upload a Spider](/upload): Photograph and submit a new spider to your collection.
+- [My Collection](/collection): Manage your roster of spider fighters.
+- [Leaderboard](/leaderboard): Top-ranked trainers by Power and XP.
+- [Battle History](/battle-history): Past battles, statistics, and challenge records.
+- [Roadmap](/roadmap): Upcoming features and ideas under consideration.
+- [Shop](/shop): Official Spider League merchandise.
+
+## Optional
+
+- [Sign In](/auth): Sign in or create an account.
