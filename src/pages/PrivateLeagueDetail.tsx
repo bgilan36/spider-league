@@ -241,7 +241,12 @@ const PrivateLeagueDetail = () => {
 
   return (
     <main className="container mx-auto px-4 py-6">
-      <Helmet><title>{league.name} — Spider League Pod</title><meta name="description" content="Private Spider League pod standings and battles." /></Helmet>
+      <Helmet>
+        <title>{league.name} — Spider League Pod</title>
+        <meta name="description" content={`Standings, chat, and battles for ${league.name}, a private Spider League friend pod.`} />
+        <meta property="og:title" content={`${league.name} — Spider League Pod`} />
+        <meta property="og:description" content={`Standings, chat, and battles for ${league.name}, a private Spider League friend pod.`} />
+      </Helmet>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <Button asChild variant="ghost" size="sm" className="mb-2"><Link to="/leagues"><ArrowLeft className="h-4 w-4" />Pods</Link></Button>

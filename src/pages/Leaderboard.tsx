@@ -394,9 +394,12 @@ const Leaderboard = () => {
       />
       <Helmet>
         <title>User Leaderboard — Spider League</title>
-        <meta name="description" content="View the top-ranked spider trainers by Power + XP." />
+        <meta name="description" content="See the top-ranked Spider League trainers, ordered by Power Score and XP. Climb the global leaderboard with your best fighters." />
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-        <link rel="canonical" href={`${window.location.origin}/leaderboard`} />
+        <link rel="canonical" href="https://spider-league.lovable.app/leaderboard" />
+        <meta property="og:title" content="Spider League Leaderboard" />
+        <meta property="og:description" content="See the top-ranked Spider League trainers, ordered by Power Score and XP." />
+        <meta property="og:url" content="https://spider-league.lovable.app/leaderboard" />
       </Helmet>
       
       <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 pb-safe">

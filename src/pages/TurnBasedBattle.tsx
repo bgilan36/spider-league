@@ -335,8 +335,10 @@ const LegacyTurnBasedBattle = () => {
         />
       )}
       <Helmet>
-        <title>Battle Results — Spider League</title>
-        <meta name="description" content="View your automated spider battle results" />
+        <title>Battle Arena — Spider League</title>
+        <meta name="description" content="Watch a live Spider League battle play out turn-by-turn, with full damage logs, stat breakdowns, and the final result." />
+        <meta property="og:title" content="Spider League Battle Arena" />
+        <meta property="og:description" content="Watch a live Spider League battle play out turn-by-turn with full damage logs and the final result." />
       </Helmet>
 
       {/* Header */}
