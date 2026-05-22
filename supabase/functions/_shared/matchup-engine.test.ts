@@ -45,13 +45,13 @@ Deno.test("buildPairings: odd count gives bye to least-active player", () => {
 });
 
 Deno.test("buildPairings: swap pass beats naive greedy on adversarial input", () => {
-  // Players: 100,101,200,201. Greedy by power pairs (100-101)+(200-201) — optimal.
-  // But with a rematch on (100,101), the engine should swap.
+  // Four similarly-skilled players; greedy by power would pair (a-b)+(c-d).
+  // Both pairs played last week, so the engine should swap to avoid double rematch.
   const players = [
     mk({ userId: "a", power: 100, elo: 1000 }),
-    mk({ userId: "b", power: 101, elo: 1000 }),
-    mk({ userId: "c", power: 200, elo: 1800 }),
-    mk({ userId: "d", power: 201, elo: 1800 }),
+    mk({ userId: "b", power: 102, elo: 1010 }),
+    mk({ userId: "c", power: 105, elo: 1020 }),
+    mk({ userId: "d", power: 108, elo: 1030 }),
   ];
   const result = buildPairings(players, [
     { userA: "a", userB: "b", weeksAgo: 1 },
