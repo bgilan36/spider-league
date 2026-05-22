@@ -414,6 +414,7 @@ export type Database = {
           battle_id: string | null
           created_at: string | null
           id: string
+          pod_league_id: string | null
           result: Database["public"]["Enums"]["matchup_result"] | null
           season_id: string
           team_a: Json | null
@@ -427,6 +428,7 @@ export type Database = {
           battle_id?: string | null
           created_at?: string | null
           id?: string
+          pod_league_id?: string | null
           result?: Database["public"]["Enums"]["matchup_result"] | null
           season_id: string
           team_a?: Json | null
@@ -440,6 +442,7 @@ export type Database = {
           battle_id?: string | null
           created_at?: string | null
           id?: string
+          pod_league_id?: string | null
           result?: Database["public"]["Enums"]["matchup_result"] | null
           season_id?: string
           team_a?: Json | null
