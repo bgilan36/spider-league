@@ -39,6 +39,7 @@ import DeathBattleFeed from "@/components/DeathBattleFeed";
 import PublishErrorPanel from "@/components/PublishErrorPanel";
 import CreatePrivateLeagueButton from "@/components/CreatePrivateLeagueButton";
 import FriendPodsHomeSection from "@/components/FriendPodsHomeSection";
+import WeeklyMatchupCard from "@/components/WeeklyMatchupCard";
 interface Spider {
   id: string;
   nickname: string;
@@ -957,6 +958,10 @@ const Index = () => {
         {/* Above-the-fold: Your Starting 5 with embedded battle controls */}
         <section className="mb-8">
           <ActiveSpiders onSpiderChange={fetchUserSpiders} newSpiderId={newSpiderId} />
+        </section>
+
+        <section className="mb-6 sm:mb-8">
+          <WeeklyMatchupCard />
         </section>
 
         <section className="mb-6 sm:mb-8">
