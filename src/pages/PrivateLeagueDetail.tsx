@@ -11,6 +11,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import PrivateLeagueInvitePanel from "@/components/PrivateLeagueInvitePanel";
 import PrivateLeagueStandings from "@/components/PrivateLeagueStandings";
+import WeeklyMatchupCard from "@/components/WeeklyMatchupCard";
 import PodChat from "@/components/PodChat";
 import PodImageUploader from "@/components/PodImageUploader";
 import { useStartSkillBattle } from "@/components/battle/useStartSkillBattle";
@@ -313,6 +314,7 @@ const PrivateLeagueDetail = () => {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="space-y-6">
+          <WeeklyMatchupCard podLeagueId={league.id} />
           <PrivateLeagueStandings
             standings={standings}
             timeframe={timeframe}
