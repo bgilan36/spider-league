@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
-import { ArrowRight, Loader2, Sword, Trophy, Users } from "lucide-react";
+import { ArrowRight, Loader2, Share2, Sword, Trophy, UserPlus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -19,6 +19,7 @@ import CreatePrivateLeagueButton from "@/components/CreatePrivateLeagueButton";
 import PodSwitcherStrip, { type PodSwitcherItem } from "@/components/PodSwitcherStrip";
 import PodThumbnail from "@/components/PodThumbnail";
 import PrivateLeagueStandings from "@/components/PrivateLeagueStandings";
+import PrivateLeagueInvitePanel from "@/components/PrivateLeagueInvitePanel";
 import { useStartSkillBattle } from "@/components/battle/useStartSkillBattle";
 import {
   getCachedPodStandings,
@@ -67,6 +68,8 @@ const FriendPodsHomeSection = () => {
   const [members, setMembers] = useState<any[]>([]);
   const [selectedMySpiderId, setSelectedMySpiderId] = useState<string>("");
   const [selectedOpponentSpiderId, setSelectedOpponentSpiderId] = useState<string>("");
+  const [inviteToken, setInviteToken] = useState<string | null>(null);
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
 
   const {
     standings: podStandings,
@@ -201,6 +204,19 @@ const FriendPodsHomeSection = () => {
       setPanelLoading(false);
     };
     loadPanel();
+    // Fetch the active invite token for this pod so we can surface invite controls inline.
+    setInviteToken(null);
+    (supabase as any)
+      .from("private_league_invites")
+      .select("token")
+      .eq("league_id", selectedId)
+      .eq("is_active", true)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }: any) => {
+        if (!cancelled) setInviteToken(data?.token || null);
+      });
     const channel = (supabase as any)
       .channel(`home-pod-battles-${selectedId}`)
       .on(
@@ -260,6 +276,8 @@ const FriendPodsHomeSection = () => {
   }
 
   const selectedPod = pods.find((p) => p.id === selectedId) || null;
+  const isSolo = (selectedPod?.member_count ?? memberCountForPanel) <= 1;
+  const inviteUrl = inviteToken ? `${window.location.origin}/join/${inviteToken}` : "";
 
   const openPicker = async () => {
     if (!selectedPod || !user) return;
@@ -362,6 +380,23 @@ const FriendPodsHomeSection = () => {
               <div className="mt-3 flex justify-center py-2">
                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
               </div>
+            ) : isSolo ? (
+              <div className="mt-3 rounded-lg border border-primary/40 bg-primary/10 p-4">
+                <div className="mb-1 flex items-center gap-2 text-primary">
+                  <UserPlus className="h-5 w-5" />
+                  <span className="text-sm font-semibold">You're flying solo</span>
+                </div>
+                <p className="mb-3 text-sm text-muted-foreground">
+                  Pods are way more fun with friends. Invite someone to join and start battling.
+                </p>
+                {inviteUrl ? (
+                  <PrivateLeagueInvitePanel inviteUrl={inviteUrl} memberCount={1} hideHeader />
+                ) : (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Preparing invite link…
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 <div className="flex items-center gap-2 rounded-md bg-muted/40 p-2 text-xs">
@@ -402,31 +437,45 @@ const FriendPodsHomeSection = () => {
               </div>
             )}
 
-            <div className="mt-3">
-              <PrivateLeagueStandings
-                standings={podStandings}
-                timeframe={standingsTimeframe}
-                onTimeframeChange={setStandingsTimeframe}
-                loading={standingsLoading}
-                refreshing={standingsRefreshing}
-              />
-            </div>
+            {!isSolo && (
+              <>
+                <div className="mt-3">
+                  <PrivateLeagueStandings
+                    standings={podStandings}
+                    timeframe={standingsTimeframe}
+                    onTimeframeChange={setStandingsTimeframe}
+                    loading={standingsLoading}
+                    refreshing={standingsRefreshing}
+                  />
+                </div>
 
-            <div className="mt-3 flex justify-end">
-              <Button
-                size="sm"
-                onClick={openPicker}
-                disabled={battleLoading}
-                className="gap-1"
-              >
-                {battleLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Sword className="h-4 w-4" />
-                )}
-                Battle
-              </Button>
-            </div>
+                <div className="mt-3 flex justify-end gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setInviteDialogOpen(true)}
+                    disabled={!inviteUrl}
+                    className="gap-1"
+                  >
+                    <Share2 className="h-4 w-4" />
+                    Invite
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={openPicker}
+                    disabled={battleLoading}
+                    className="gap-1"
+                  >
+                    {battleLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Sword className="h-4 w-4" />
+                    )}
+                    Battle
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </CardContent>
@@ -520,6 +569,26 @@ const FriendPodsHomeSection = () => {
         </DialogContent>
       </Dialog>
       {skillBattlePicker}
+
+      <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Invite to {selectedPod?.name ?? "your pod"}</DialogTitle>
+            <DialogDescription>Share this link with friends to add them to the pod.</DialogDescription>
+          </DialogHeader>
+          {inviteUrl ? (
+            <PrivateLeagueInvitePanel
+              inviteUrl={inviteUrl}
+              memberCount={selectedPod?.member_count ?? memberCountForPanel}
+              hideHeader
+            />
+          ) : (
+            <div className="flex justify-center py-6">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
