@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Sparkles, Sword, Users, Plus, Loader2, ShieldAlert, Heart, Pencil, Check, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import PowerScoreArc from "@/components/PowerScoreArc";
+import { Progress } from "@/components/ui/progress";
 import ShareButton from "@/components/ShareButton";
 import { useAuth } from "@/auth/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
@@ -122,6 +123,21 @@ const SpiderRevealCard = ({
     return entries.reduce((best, cur) => (cur.value > best.value ? cur : best), entries[0]);
   }, [stats]);
 
+  const statEntries = useMemo(
+    () =>
+      Object.entries(STAT_META).map(([k, meta]) => ({
+        key: k,
+        label: meta.label,
+        icon: meta.icon,
+        value: (stats as any)[k] as number,
+      })),
+    [stats],
+  );
+  const maxStat = useMemo(
+    () => Math.max(100, ...statEntries.map((s) => s.value)),
+    [statEntries],
+  );
+
   const harmful = (safety?.harmfulToHumans || "").toLowerCase().startsWith("yes");
 
   return (
@@ -212,6 +228,34 @@ const SpiderRevealCard = ({
                 <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">
                   Strongest · {strongest.label}
                 </div>
+              </div>
+            </div>
+
+            {/* All attributes */}
+            <div className="rounded-xl border border-border bg-background/50 p-3 space-y-2">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                Attributes
+              </div>
+              <div className="space-y-1.5">
+                {statEntries.map((s) => {
+                  const isMax = s.key === strongest.key;
+                  return (
+                    <div key={s.key} className="space-y-0.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="flex items-center gap-1.5">
+                          <span aria-hidden>{s.icon}</span>
+                          <span className={isMax ? "font-semibold text-foreground" : "text-muted-foreground"}>
+                            {s.label}
+                          </span>
+                        </span>
+                        <span className={`font-mono tabular-nums ${isMax ? "font-bold text-primary" : "text-foreground"}`}>
+                          {s.value}
+                        </span>
+                      </div>
+                      <Progress value={(s.value / maxStat) * 100} className="h-1.5" />
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
