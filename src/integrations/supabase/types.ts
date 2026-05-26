@@ -1192,7 +1192,11 @@ export type Database = {
           image_url: string
           is_approved: boolean | null
           last_battled_at: string | null
+          latitude: number | null
           level: number
+          location_accuracy_m: number | null
+          location_name: string | null
+          longitude: number | null
           nickname: string
           owner_id: string
           power_score: number
@@ -1216,7 +1220,11 @@ export type Database = {
           image_url: string
           is_approved?: boolean | null
           last_battled_at?: string | null
+          latitude?: number | null
           level?: number
+          location_accuracy_m?: number | null
+          location_name?: string | null
+          longitude?: number | null
           nickname: string
           owner_id: string
           power_score?: number
@@ -1240,7 +1248,11 @@ export type Database = {
           image_url?: string
           is_approved?: boolean | null
           last_battled_at?: string | null
+          latitude?: number | null
           level?: number
+          location_accuracy_m?: number | null
+          location_name?: string | null
+          longitude?: number | null
           nickname?: string
           owner_id?: string
           power_score?: number

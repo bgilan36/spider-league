@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { Upload, Camera, Loader2, ArrowLeft } from "lucide-react";
+import { Upload, Camera, Loader2, ArrowLeft, MapPin, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
 import { classifyImage } from "@/hooks/useImageClassifier";
@@ -100,6 +100,87 @@ const SpiderUpload = () => {
   } | null>(null);
   const [weeklyUploadCount, setWeeklyUploadCount] = useState<number>(0);
   const [revealOpen, setRevealOpen] = useState(false);
+
+  // Location tagging
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [locationName, setLocationName] = useState<string>("");
+  const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationOptIn, setLocationOptIn] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("spider_location_optin") === "true";
+  });
+
+  const reverseGeocode = async (lat: number, lng: number): Promise<string> => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=12&addressdetails=1`,
+        { headers: { Accept: "application/json" } }
+      );
+      if (!res.ok) throw new Error("reverse geocode failed");
+      const data = await res.json();
+      const a = data.address || {};
+      const parts = [
+        a.city || a.town || a.village || a.hamlet || a.suburb || a.county,
+        a.state || a.region,
+        a.country,
+      ].filter(Boolean);
+      return parts.join(", ") || data.display_name || `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
+    } catch {
+      return `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
+    }
+  };
+
+  const useMyLocation = async () => {
+    if (!("geolocation" in navigator)) {
+      toast({
+        title: "Location unavailable",
+        description: "Your device doesn't support geolocation.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setLocationLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude: lat, longitude: lng, accuracy } = pos.coords;
+        setLatitude(lat);
+        setLongitude(lng);
+        setLocationAccuracy(accuracy);
+        setLocationOptIn(true);
+        localStorage.setItem("spider_location_optin", "true");
+        const name = await reverseGeocode(lat, lng);
+        setLocationName(name);
+        setLocationLoading(false);
+        toast({ title: "Location captured", description: name });
+      },
+      (err) => {
+        setLocationLoading(false);
+        toast({
+          title: "Couldn't get location",
+          description: err.message || "Permission denied.",
+          variant: "destructive",
+        });
+      },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+    );
+  };
+
+  const clearLocation = () => {
+    setLatitude(null);
+    setLongitude(null);
+    setLocationName("");
+    setLocationAccuracy(null);
+  };
+
+  // Auto-prompt for location once the user has opted in previously
+  useEffect(() => {
+    if (locationOptIn && latitude === null && !locationLoading && selectedFile) {
+      useMyLocation();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedFile]);
 
   useEffect(() => {
     const fetchWeeklyUploadCount = async () => {
@@ -502,6 +583,10 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
           image_url: publicUrl,
           rng_seed: Math.random().toString(36).substring(7),
           is_approved: true,
+          latitude: latitude,
+          longitude: longitude,
+          location_name: locationName.trim() || null,
+          location_accuracy_m: locationAccuracy,
           ...finalStats,
         })
         .select('id')
@@ -811,6 +896,64 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                     </div>
                   </div>
                 )}
+
+                {/* Location tagging */}
+                <div className="border rounded-lg p-4 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <Label className="text-sm font-semibold flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      Where did you find this spider?
+                    </Label>
+                    {(latitude !== null || locationName) && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={clearLocation}
+                        className="h-7 px-2 text-xs"
+                      >
+                        <X className="h-3 w-3 mr-1" /> Clear
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Optional. Tagging a location helps power local discovery and recommendations.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={useMyLocation}
+                      disabled={locationLoading}
+                      className="sm:w-auto"
+                    >
+                      {locationLoading ? (
+                        <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                      ) : (
+                        <MapPin className="h-3 w-3 mr-2" />
+                      )}
+                      Use my location
+                    </Button>
+                    <Input
+                      placeholder="Or type a place (e.g., Austin, TX)"
+                      value={locationName}
+                      onChange={(e) => setLocationName(e.target.value)}
+                      className="flex-1"
+                    />
+                  </div>
+                  {latitude !== null && longitude !== null && (
+                    <p className="text-xs text-muted-foreground">
+                      📍 {latitude.toFixed(4)}, {longitude.toFixed(4)}
+                      {locationAccuracy ? ` · ±${Math.round(locationAccuracy)}m` : ""}
+                    </p>
+                  )}
+                  {!locationOptIn && (
+                    <p className="text-[11px] text-muted-foreground leading-snug">
+                      We only request your location when you tap the button, and only store it on this spider.
+                    </p>
+                  )}
+                </div>
 
                 <Button type="submit" className="w-full" disabled={uploading || identifying}>
                   {uploading ? (
