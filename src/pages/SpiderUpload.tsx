@@ -897,6 +897,64 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                   </div>
                 )}
 
+                {/* Location tagging */}
+                <div className="border rounded-lg p-4 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <Label className="text-sm font-semibold flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      Where did you find this spider?
+                    </Label>
+                    {(latitude !== null || locationName) && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={clearLocation}
+                        className="h-7 px-2 text-xs"
+                      >
+                        <X className="h-3 w-3 mr-1" /> Clear
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Optional. Tagging a location helps power local discovery and recommendations.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={useMyLocation}
+                      disabled={locationLoading}
+                      className="sm:w-auto"
+                    >
+                      {locationLoading ? (
+                        <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                      ) : (
+                        <MapPin className="h-3 w-3 mr-2" />
+                      )}
+                      Use my location
+                    </Button>
+                    <Input
+                      placeholder="Or type a place (e.g., Austin, TX)"
+                      value={locationName}
+                      onChange={(e) => setLocationName(e.target.value)}
+                      className="flex-1"
+                    />
+                  </div>
+                  {latitude !== null && longitude !== null && (
+                    <p className="text-xs text-muted-foreground">
+                      📍 {latitude.toFixed(4)}, {longitude.toFixed(4)}
+                      {locationAccuracy ? ` · ±${Math.round(locationAccuracy)}m` : ""}
+                    </p>
+                  )}
+                  {!locationOptIn && (
+                    <p className="text-[11px] text-muted-foreground leading-snug">
+                      We only request your location when you tap the button, and only store it on this spider.
+                    </p>
+                  )}
+                </div>
+
                 <Button type="submit" className="w-full" disabled={uploading || identifying}>
                   {uploading ? (
                     <>
