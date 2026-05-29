@@ -100,8 +100,9 @@ export function resolveTurn(input: TurnInputs): TurnResult {
 
   const useVenom = input.attackStance === "venom_bite";
   const atkStat = useVenom ? input.attacker.venom : input.attacker.damage;
-  const statMultiplier = useVenom ? 0.3 : input.attackStance === "quick_strike" ? 0.2 : 0.26;
-  const baseDamage = Math.floor(atkStat * statMultiplier) + Math.floor(attackerDice / 4);
+  // Tuned so the average battle resolves in ~5 turns (range 4–12 still possible).
+  const statMultiplier = useVenom ? 0.48 : input.attackStance === "quick_strike" ? 0.32 : 0.42;
+  const baseDamage = Math.floor(atkStat * statMultiplier) + Math.floor(attackerDice / 3);
   breakdown.push(`Base from ${useVenom ? "venom" : "damage"}: ${baseDamage}`);
 
   let defense = Math.floor(input.defender.defense / (useVenom ? 11 : 10));
@@ -122,7 +123,8 @@ export function resolveTurn(input: TurnInputs): TurnResult {
   let isCritical = false;
   let damage = 0;
   if (!dodged) {
-    const minimumDamage = Math.max(1, Math.floor(input.defender.hit_points * (useVenom ? 0.06 : 0.04)));
+    // Higher floor keeps battles from dragging beyond ~5 turns on average.
+    const minimumDamage = Math.max(1, Math.floor(input.defender.hit_points * (useVenom ? 0.10 : 0.07)));
     damage = Math.max(minimumDamage, baseDamage - defense);
     if (attackerDice >= critThreshold) {
       const critMult = input.attackStance === "power_strike" ? 1.6 : 1.45;

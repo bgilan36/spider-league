@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import SkillMeter from "./SkillMeter";
 import DiceDisplay from "./DiceDisplay";
+import { useConfetti } from "@/hooks/useConfetti";
 import { invalidatePodStandings } from "@/hooks/usePodStandings";
 import {
   ATTACK_STANCE_META, DEFENSE_STANCE_META,
@@ -34,6 +35,8 @@ export default function InteractiveBattleArena({ battleId }: Props) {
     useTurnBasedBattle(battleId);
   const [submitting, setSubmitting] = useState(false);
   const [aiTriggered, setAiTriggered] = useState<string>("");
+  const { fireConfetti } = useConfetti();
+  const [celebrated, setCelebrated] = useState(false);
 
   const awaitingAction = (battle as any)?.awaiting_action as "attack" | "defense" | null;
   const awaitingUser = (battle as any)?.awaiting_user_id as string | null;
@@ -102,6 +105,13 @@ export default function InteractiveBattleArena({ battleId }: Props) {
       ? (battle.team_b as any).userId
       : null;
   const iWon = !!winnerId && winnerId === user?.id;
+
+  useEffect(() => {
+    if (finished && iWon && !celebrated) {
+      setCelebrated(true);
+      fireConfetti("victory");
+    }
+  }, [finished, iWon, celebrated, fireConfetti]);
 
   const lastTurn = turns[turns.length - 1];
   const lastResult = (lastTurn?.result_payload || {}) as any;
@@ -172,6 +182,49 @@ export default function InteractiveBattleArena({ battleId }: Props) {
           </Card>
         </div>
 
+        {/* Action area — kept close to the HP meters for quick rolling */}
+        {!finished && (
+          <Card className="mb-4">
+            <CardContent className="p-4">
+              {isMyMove ? (
+                awaitingAction === "attack" ? (
+                  <SkillMeter
+                    key={`atk-${battle.turn_count}-${awaitingUser}`}
+                    label="Your attack"
+                    helper="Lock inside the green Skill Zone to bias your dice high. Yellow center = Perfect."
+                    zoneBoost={myZoneBoost}
+                    disabled={submitting}
+                    onLock={submitBucket}
+                  />
+                ) : (
+                  <SkillMeter
+                    key={`def-${battle.turn_count}-${awaitingUser}`}
+                    label="Defend the incoming hit"
+                    helper={
+                      pending
+                        ? `${opponentSpider.nickname} attacked with ${BUCKET_LABEL[pending.attackerBucket as ZoneBucket]}. Time your defense!`
+                        : "Time your defense!"
+                    }
+                    zoneBoost={myZoneBoost}
+                    disabled={submitting}
+                    onLock={submitBucket}
+                  />
+                )
+              ) : (
+                <div className="flex items-center justify-center py-6 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  {awaitingAction === "attack"
+                    ? `${opponentSpider.nickname} is choosing an attack…`
+                    : `${opponentSpider.nickname} is bracing for your hit…`}
+                </div>
+              )}
+              <div className="text-xs text-muted-foreground text-center mt-3">
+                Round {(battle.turn_count || 0) + (awaitingAction ? 1 : 0)} · max 12
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Last turn recap */}
         {lastTurn && (
           <Card className="mb-4">
@@ -215,49 +268,6 @@ export default function InteractiveBattleArena({ battleId }: Props) {
                   {lastResult.breakdown.map((b: string, i: number) => <li key={i}>{b}</li>)}
                 </ul>
               )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Action area */}
-        {!finished && (
-          <Card>
-            <CardContent className="p-4">
-              {isMyMove ? (
-                awaitingAction === "attack" ? (
-                  <SkillMeter
-                    key={`atk-${battle.turn_count}-${awaitingUser}`}
-                    label="Your attack"
-                    helper="Lock inside the green Skill Zone to bias your dice high. Yellow center = Perfect."
-                    zoneBoost={myZoneBoost}
-                    disabled={submitting}
-                    onLock={submitBucket}
-                  />
-                ) : (
-                  <SkillMeter
-                    key={`def-${battle.turn_count}-${awaitingUser}`}
-                    label="Defend the incoming hit"
-                    helper={
-                      pending
-                        ? `${opponentSpider.nickname} attacked with ${BUCKET_LABEL[pending.attackerBucket as ZoneBucket]}. Time your defense!`
-                        : "Time your defense!"
-                    }
-                    zoneBoost={myZoneBoost}
-                    disabled={submitting}
-                    onLock={submitBucket}
-                  />
-                )
-              ) : (
-                <div className="flex items-center justify-center py-6 text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  {awaitingAction === "attack"
-                    ? `${opponentSpider.nickname} is choosing an attack…`
-                    : `${opponentSpider.nickname} is bracing for your hit…`}
-                </div>
-              )}
-              <div className="text-xs text-muted-foreground text-center mt-3">
-                Round {(battle.turn_count || 0) + (awaitingAction ? 1 : 0)} · max 12
-              </div>
             </CardContent>
           </Card>
         )}
