@@ -30,6 +30,7 @@ interface BattleButtonProps {
   variant?: "default" | "outline" | "ghost";
   className?: string;
   context?: "leaderboard" | "collection"; // Add context prop
+  onPickerOpen?: () => void;
 }
 
 const BattleButton: React.FC<BattleButtonProps> = ({ 
@@ -37,7 +38,8 @@ const BattleButton: React.FC<BattleButtonProps> = ({
   size = "sm", 
   variant = "outline",
   className = "",
-  context = "collection"
+  context = "collection",
+  onPickerOpen,
 }) => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -393,6 +395,7 @@ const BattleButton: React.FC<BattleButtonProps> = ({
               handleDirectChallenge();
             }
           } else {
+            onPickerOpen?.();
             setShowDialog(true);
           }
         }}
@@ -407,7 +410,7 @@ const BattleButton: React.FC<BattleButtonProps> = ({
       </Button>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent>
+        <DialogContent className="w-[95vw] max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {isOwnSpider ? `Offer ${targetSpider.nickname} for Battle` : `Challenge ${targetSpider.nickname}`}
@@ -432,7 +435,11 @@ const BattleButton: React.FC<BattleButtonProps> = ({
                       key={userSpider.id}
                       variant="outline"
                       className="w-full justify-between h-auto p-3"
-                      onClick={() => handleBattleAction(userSpider)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        handleBattleAction(userSpider);
+                      }}
                       disabled={loading}
                     >
                       <div className="flex items-center gap-3">
@@ -446,9 +453,12 @@ const BattleButton: React.FC<BattleButtonProps> = ({
                           <div className="text-xs text-muted-foreground">{userSpider.species}</div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="font-bold">{userSpider.power_score}</div>
-                        <div className="text-xs text-muted-foreground">Power</div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <div className="font-bold">{userSpider.power_score}</div>
+                          <div className="text-xs text-muted-foreground">Power</div>
+                        </div>
+                        <Sword className="h-4 w-4 text-primary" />
                       </div>
                     </Button>
                   ))}
