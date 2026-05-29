@@ -30,6 +30,7 @@ interface BattleButtonProps {
   variant?: "default" | "outline" | "ghost";
   className?: string;
   context?: "leaderboard" | "collection"; // Add context prop
+  onPickerOpen?: () => void;
 }
 
 const BattleButton: React.FC<BattleButtonProps> = ({ 
@@ -37,7 +38,8 @@ const BattleButton: React.FC<BattleButtonProps> = ({
   size = "sm", 
   variant = "outline",
   className = "",
-  context = "collection"
+  context = "collection",
+  onPickerOpen,
 }) => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -393,6 +395,7 @@ const BattleButton: React.FC<BattleButtonProps> = ({
               handleDirectChallenge();
             }
           } else {
+            onPickerOpen?.();
             setShowDialog(true);
           }
         }}
