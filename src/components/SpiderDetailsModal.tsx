@@ -223,6 +223,7 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
                 size="default" 
                 variant="default"
                 className="w-full"
+                onPickerOpen={onClose}
               />
               <div className="flex justify-center">
                 <ShareButton
