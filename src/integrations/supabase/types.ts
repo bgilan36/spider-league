@@ -812,6 +812,7 @@ export type Database = {
           has_completed_first_skirmish: boolean | null
           has_completed_onboarding: boolean | null
           id: string
+          share_spider_locations: boolean
           updated_at: string
         }
         Insert: {
@@ -821,6 +822,7 @@ export type Database = {
           has_completed_first_skirmish?: boolean | null
           has_completed_onboarding?: boolean | null
           id: string
+          share_spider_locations?: boolean
           updated_at?: string
         }
         Update: {
@@ -830,6 +832,7 @@ export type Database = {
           has_completed_first_skirmish?: boolean | null
           has_completed_onboarding?: boolean | null
           id?: string
+          share_spider_locations?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -1631,6 +1634,13 @@ export type Database = {
         }[]
       }
       get_spider_skirmish_suggestion: { Args: never; Returns: Json }
+      get_spider_upload_heatmap: {
+        Args: { days_back?: number }
+        Returns: {
+          latitude: number
+          longitude: number
+        }[]
+      }
       get_user_rankings_all_time: {
         Args: never
         Returns: {
