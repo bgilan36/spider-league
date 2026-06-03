@@ -430,18 +430,52 @@ function getBestSpeciesMatch(label: string): {
   };
 }
 
-function generateNickname(species: string) {
-  const adjectives = [
-    "Shadow", "Crimson", "Iron", "Silk", "Night", "Ember", "Storm", 
-    "Ghost", "Venom", "Glimmer", "Swift", "Steel", "Dark", "Thunder"
-  ];
-  const nouns = [
-    "Weaver", "Stalker", "Spinner", "Fang", "Crawler", "Prowler", 
-    "Skitter", "Bite", "Warden", "Hunter", "Striker", "Whisper"
-  ];
-  const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
-  const noun = nouns[Math.floor(Math.random() * nouns.length)];
-  return `${adj}${noun}`;
+const NICKNAME_ADJECTIVES = [
+  "Shadow","Crimson","Iron","Silk","Night","Ember","Storm","Ghost","Venom","Glimmer",
+  "Swift","Steel","Dark","Thunder","Frost","Cinder","Obsidian","Velvet","Rogue","Mystic",
+  "Savage","Lunar","Solar","Phantom","Wicked","Onyx","Scarlet","Ivory","Jade","Cobalt",
+  "Amber","Hollow","Wild","Feral","Silent","Brutal","Toxic","Arcane","Hex","Rune",
+  "Vex","Grim","Bone","Ash","Blood","Twilight","Midnight","Eclipse","Nebula","Quantum",
+  "Razor","Spectral","Hexed","Cursed","Sable","Crystal","Plasma","Neon","Chrome","Rust",
+  "Bramble","Thistle","Nettle","Moss","Fern","Bog","Dune","Tundra","Marble","Granite",
+  "Whisper","Echo","Pulse","Riot","Havoc","Doom","Fury","Wrath","Mercy","Grace",
+], NICKNAME_NOUNS = [
+  "Weaver","Stalker","Spinner","Fang","Crawler","Prowler","Skitter","Bite","Warden","Hunter",
+  "Striker","Whisper","Reaper","Shade","Specter","Wraith","Drifter","Maven","Sentinel","Marauder",
+  "Talon","Claw","Sting","Veil","Knot","Thread","Loom","Snare","Tangle","Vortex",
+  "Husk","Shroud","Glyph","Sigil","Oracle","Herald","Pilgrim","Nomad","Voyager","Vagabond",
+  "Jester","Knight","Baron","Duchess","Empress","Witch","Sorceress","Mage","Druid","Shaman",
+  "Banshee","Goblin","Imp","Gremlin","Pixie","Sprite","Faun","Wisp","Mote","Cinder",
+], MYTHIC_NAMES = [
+  "Anansi","Arachne","Atropos","Charlotte","Morrigan","Nyx","Hecate","Lilith","Medusa","Selene",
+  "Persephone","Banshee","Mothra","Shelob","Aragog","Ungoliant","Cthulhu","Loki","Hades","Cerberus",
+  "Nidhogg","Tiamat","Echidna","Scylla","Charybdis","Mab","Titania","Morgana","Circe","Calypso",
+], SINGLE_WORDS = [
+  "Inkwell","Pepper","Domino","Pumpkin","Biscuit","Mocha","Cricket","Pebble","Marble","Truffle",
+  "Hazel","Saffron","Clover","Juniper","Sage","Cypress","Onyx","Indigo","Cobweb","Bramble",
+  "Twitch","Wiggle","Scuttle","Tippy","Boots","Mittens","Pickle","Noodle","Beanie","Sprout",
+];
+
+function pick<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function generateNickname(usedNames: Set<string> = new Set()): string {
+  const isUsed = (n: string) => usedNames.has(n.toLowerCase());
+  for (let i = 0; i < 60; i++) {
+    let candidate: string;
+    const r = Math.random();
+    if (r < 0.55) candidate = `${pick(NICKNAME_ADJECTIVES)}${pick(NICKNAME_NOUNS)}`;
+    else if (r < 0.75) candidate = pick(SINGLE_WORDS);
+    else if (r < 0.9) candidate = pick(MYTHIC_NAMES);
+    else candidate = `${pick(NICKNAME_ADJECTIVES)} ${pick(MYTHIC_NAMES)}`;
+    if (!isUsed(candidate)) return candidate;
+  }
+  // Fallback: append a number until unique
+  const base = `${pick(NICKNAME_ADJECTIVES)}${pick(NICKNAME_NOUNS)}`;
+  for (let n = 2; n < 9999; n++) {
+    const candidate = `${base}${n}`;
+    if (!isUsed(candidate)) return candidate;
+  }
+  return `${base}${Date.now()}`;
 }
 
 // Generate biology-based attributes
