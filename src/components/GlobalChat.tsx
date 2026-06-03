@@ -185,8 +185,8 @@ const GlobalChat = () => {
                     <div className="flex items-baseline gap-2 flex-wrap">
                       <ClickableUsername
                         userId={m.user_id}
-                        username={name}
-                        className="text-sm font-medium hover:underline"
+                        displayName={name}
+                        className="text-sm"
                       />
                       <span className="text-[10px] text-muted-foreground">
                         {formatDistanceToNow(new Date(m.created_at), { addSuffix: true })}
