@@ -42,6 +42,7 @@ import FriendPodsHomeSection from "@/components/FriendPodsHomeSection";
 import WeeklyMatchupCard from "@/components/WeeklyMatchupCard";
 import GlobalChat from "@/components/GlobalChat";
 import ActivePodsLeaderboard from "@/components/ActivePodsLeaderboard";
+import SpiderUploadHeatmap from "@/components/SpiderUploadHeatmap";
 interface Spider {
   id: string;
   nickname: string;
@@ -972,6 +973,10 @@ const Index = () => {
 
         <section className="mb-6 sm:mb-8">
           <ActivePodsLeaderboard />
+        </section>
+
+        <section className="mb-6 sm:mb-8">
+          <SpiderUploadHeatmap />
         </section>
 
         <section className="mb-6 sm:mb-8">
