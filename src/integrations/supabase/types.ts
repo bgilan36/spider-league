@@ -1590,6 +1590,17 @@ export type Database = {
       get_current_pt_week_end: { Args: never; Returns: string }
       get_current_pt_week_start: { Args: never; Returns: string }
       get_current_week: { Args: never; Returns: string }
+      get_most_active_pods: {
+        Args: { limit_count?: number }
+        Returns: {
+          battle_count: number
+          image_url: string
+          league_id: string
+          member_count: number
+          name: string
+          slug: string
+        }[]
+      }
       get_private_league_invite_preview: {
         Args: { token: string }
         Returns: Json
