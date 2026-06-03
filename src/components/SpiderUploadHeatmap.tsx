@@ -51,21 +51,10 @@ export default function SpiderUploadHeatmap() {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      let query = supabase
-        .from("spiders")
-        .select("latitude, longitude, created_at")
-        .eq("is_approved", true)
-        .not("latitude", "is", null)
-        .not("longitude", "is", null)
-        .limit(1000);
-
-      if (range !== "all") {
-        const days = range === "week" ? 7 : 30;
-        const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
-        query = query.gte("created_at", since);
-      }
-
-      const { data, error } = await query;
+      const daysBack = range === "week" ? 7 : range === "month" ? 30 : null;
+      const { data, error } = await supabase.rpc("get_spider_upload_heatmap", {
+        days_back: daysBack,
+      });
       if (cancelled) return;
       if (error) {
         console.error("Heatmap fetch error", error);

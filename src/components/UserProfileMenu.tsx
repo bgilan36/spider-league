@@ -20,6 +20,7 @@ interface Profile {
   avatar_url: string | null;
   bio: string | null;
   email_communications_enabled: boolean;
+  share_spider_locations: boolean;
 }
 
 interface WallPost {
@@ -46,7 +47,7 @@ interface Bite {
 export const UserProfileMenu = () => {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
-  const [profile, setProfile] = useState<Profile>({ display_name: null, avatar_url: null, bio: null, email_communications_enabled: true });
+  const [profile, setProfile] = useState<Profile>({ display_name: null, avatar_url: null, bio: null, email_communications_enabled: true, share_spider_locations: false });
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -82,7 +83,7 @@ export const UserProfileMenu = () => {
       // Fetch settings data
       const { data: settingsData, error: settingsError } = await supabase
         .from('profile_settings')
-        .select('email_communications_enabled')
+        .select('email_communications_enabled, share_spider_locations')
         .eq('id', user.id)
         .single();
 
@@ -94,7 +95,8 @@ export const UserProfileMenu = () => {
         display_name: profileData?.display_name || null,
         avatar_url: profileData?.avatar_url || null,
         bio: profileData?.bio || null,
-        email_communications_enabled: settingsData?.email_communications_enabled ?? true
+        email_communications_enabled: settingsData?.email_communications_enabled ?? true,
+        share_spider_locations: settingsData?.share_spider_locations ?? false,
       });
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -125,6 +127,7 @@ export const UserProfileMenu = () => {
         .upsert({
           id: user.id,
           email_communications_enabled: profile.email_communications_enabled,
+          share_spider_locations: profile.share_spider_locations,
           updated_at: new Date().toISOString()
         });
 
@@ -377,6 +380,25 @@ export const UserProfileMenu = () => {
                   checked={profile.email_communications_enabled}
                   onCheckedChange={(checked) => 
                     setProfile(prev => ({ ...prev, email_communications_enabled: checked }))
+                  }
+                />
+              </div>
+
+              {/* Share Spider Locations */}
+              <div className="flex items-center justify-between space-x-2">
+                <div className="space-y-1">
+                  <Label htmlFor="share-spider-locations" className="text-sm font-medium">
+                    Show My Spiders on the Heat Map
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    When off, your spider upload locations are never shown on the public heat map.
+                  </p>
+                </div>
+                <Switch
+                  id="share-spider-locations"
+                  checked={profile.share_spider_locations}
+                  onCheckedChange={(checked) =>
+                    setProfile(prev => ({ ...prev, share_spider_locations: checked }))
                   }
                 />
               </div>
