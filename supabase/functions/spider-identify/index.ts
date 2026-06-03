@@ -684,9 +684,22 @@ serve(async (req) => {
     console.log(`Top match: ${species.scientificName} (${species.commonNames[0]})`);
     console.log(`Confidence: ${Math.round(topCandidate.combinedScore * 100)}%`);
 
-    // Generate stats and nickname
+    // Generate stats and nickname (unique per user)
     const statsCore = generateBiologyBasedStats(species);
-    const nickname = generateNickname(species.scientificName);
+    const userId = claimsData.claims.sub;
+    const usedNames = new Set<string>();
+    try {
+      const { data: existing } = await supabase
+        .from('spiders')
+        .select('nickname')
+        .eq('owner_id', userId);
+      for (const row of existing ?? []) {
+        if (row?.nickname) usedNames.add(String(row.nickname).toLowerCase());
+      }
+    } catch (e) {
+      console.warn('Could not load existing nicknames for uniqueness check', e);
+    }
+    const nickname = generateNickname(usedNames);
     
     // Calculate power score with danger bonus
     const basePowerScore = Object.values(statsCore).reduce((sum, v) => sum + Number(v), 0);
