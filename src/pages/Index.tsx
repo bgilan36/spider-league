@@ -976,10 +976,6 @@ const Index = () => {
         </section>
 
         <section className="mb-6 sm:mb-8">
-          <SpiderUploadHeatmap />
-        </section>
-
-        <section className="mb-6 sm:mb-8">
           <GlobalChat />
         </section>
 
@@ -1311,6 +1307,10 @@ const Index = () => {
           })}
               </div>}
         </div>
+
+        <section className="mb-6 sm:mb-8">
+          <SpiderUploadHeatmap />
+        </section>
 
       </main>
       
