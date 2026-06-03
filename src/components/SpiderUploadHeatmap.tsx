@@ -1,0 +1,148 @@
+import { useEffect, useRef, useState } from "react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import "leaflet.heat";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { MapPin, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
+type Range = "week" | "month" | "all";
+
+const RANGE_LABELS: Record<Range, string> = {
+  week: "Past week",
+  month: "Past month",
+  all: "All time",
+};
+
+export default function SpiderUploadHeatmap() {
+  const mapEl = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const heatRef = useRef<any>(null);
+  const [range, setRange] = useState<Range>("all");
+  const [loading, setLoading] = useState(true);
+  const [count, setCount] = useState(0);
+
+  // Init map once
+  useEffect(() => {
+    if (!mapEl.current || mapRef.current) return;
+    const map = L.map(mapEl.current, {
+      worldCopyJump: true,
+      zoomControl: true,
+      scrollWheelZoom: false,
+    }).setView([20, 0], 2);
+    L.tileLayer(
+      "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+      {
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
+        maxZoom: 19,
+      }
+    ).addTo(map);
+    mapRef.current = map;
+    return () => {
+      map.remove();
+      mapRef.current = null;
+      heatRef.current = null;
+    };
+  }, []);
+
+  // Fetch and render heat data
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      let query = supabase
+        .from("spiders")
+        .select("latitude, longitude, created_at")
+        .eq("is_approved", true)
+        .not("latitude", "is", null)
+        .not("longitude", "is", null)
+        .limit(1000);
+
+      if (range !== "all") {
+        const days = range === "week" ? 7 : 30;
+        const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+        query = query.gte("created_at", since);
+      }
+
+      const { data, error } = await query;
+      if (cancelled) return;
+      if (error) {
+        console.error("Heatmap fetch error", error);
+        setLoading(false);
+        return;
+      }
+
+      const points: [number, number, number][] = (data || [])
+        .filter((s) => typeof s.latitude === "number" && typeof s.longitude === "number")
+        .map((s) => [s.latitude as number, s.longitude as number, 0.6]);
+
+      setCount(points.length);
+
+      if (mapRef.current) {
+        if (heatRef.current) {
+          mapRef.current.removeLayer(heatRef.current);
+          heatRef.current = null;
+        }
+        if (points.length > 0) {
+          // @ts-ignore - heatLayer added by leaflet.heat
+          heatRef.current = L.heatLayer(points, {
+            radius: 25,
+            blur: 20,
+            maxZoom: 10,
+            gradient: {
+              0.2: "#22d3ee",
+              0.4: "#a3e635",
+              0.6: "#facc15",
+              0.8: "#fb923c",
+              1.0: "#ef4444",
+            },
+          }).addTo(mapRef.current);
+        }
+      }
+      setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [range]);
+
+  return (
+    <Card>
+      <CardHeader className="pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <CardTitle className="flex items-center gap-2 text-xl">
+            <MapPin className="h-5 w-5 text-primary" />
+            Spider Upload Heat Map
+          </CardTitle>
+          <div className="flex gap-1 rounded-lg bg-muted p-1">
+            {(Object.keys(RANGE_LABELS) as Range[]).map((r) => (
+              <Button
+                key={r}
+                variant={range === r ? "default" : "ghost"}
+                size="sm"
+                className="h-8 px-3 text-xs"
+                onClick={() => setRange(r)}
+              >
+                {RANGE_LABELS[r]}
+              </Button>
+            ))}
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {loading ? "Loading sightings…" : `${count} spider${count === 1 ? "" : "s"} mapped`}
+        </p>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="relative overflow-hidden rounded-xl border border-border/50">
+          <div ref={mapEl} className="h-[360px] w-full bg-muted" />
+          {loading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-background/40 backdrop-blur-sm">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
