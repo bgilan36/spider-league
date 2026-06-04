@@ -413,6 +413,8 @@ const NotificationsDropdown = () => {
         return <Bug className="h-4 w-4 text-emerald-500" />;
       case 'skirmish_loss':
         return <Bug className="h-4 w-4 text-rose-500" />;
+      case 'chat_mention':
+        return <AtSign className="h-4 w-4 text-primary" />;
       default:
         return <Bell className="h-4 w-4" />;
     }
