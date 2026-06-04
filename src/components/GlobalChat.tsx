@@ -85,6 +85,9 @@ const GlobalChat = () => {
 
   useEffect(() => {
     fetchAll();
+    if (user?.id) {
+      loadProfiles([user.id]);
+    }
     const channel = supabase
       .channel("global-chat")
       .on(
