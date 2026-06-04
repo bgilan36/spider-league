@@ -154,12 +154,30 @@ const NotificationsDropdown = () => {
       )
       .subscribe();
 
+    // Subscribe to global chat mentions
+    const mentionsChannel = supabase
+      .channel('chat-mention-notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_mentions',
+          filter: `mentioned_user_id=eq.${user.id}`,
+        },
+        () => {
+          fetchNotifications();
+        },
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(wallPostsChannel);
       supabase.removeChannel(bitesChannel);
       supabase.removeChannel(battlesChannel);
       supabase.removeChannel(challengesChannel);
       supabase.removeChannel(skirmishChannel);
+      supabase.removeChannel(mentionsChannel);
     };
   };
 
