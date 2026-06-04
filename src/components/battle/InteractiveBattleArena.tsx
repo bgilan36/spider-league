@@ -53,6 +53,23 @@ export default function InteractiveBattleArena({ battleId }: Props) {
     return user.id === a ? b : a;
   }, [battle, user]);
 
+  const finished = !!battle && !battle.is_active;
+  const winnerId = battle
+    ? (battle.winner as string | null) === "A"
+      ? (battle.team_a as any).userId
+      : (battle.winner as string | null) === "B"
+        ? (battle.team_b as any).userId
+        : null
+    : null;
+  const iWon = !!winnerId && winnerId === user?.id;
+
+  useEffect(() => {
+    if (finished && iWon && !celebrated) {
+      setCelebrated(true);
+      fireConfetti("victory");
+    }
+  }, [finished, iWon, celebrated, fireConfetti]);
+
   // If it's the AI's move, ask the server to play it.
   useEffect(() => {
     if (!battle?.is_active || !awaitingUser || !user) return;
@@ -97,21 +114,6 @@ export default function InteractiveBattleArena({ battleId }: Props) {
       </div>
     );
   }
-
-  const finished = !battle.is_active;
-  const winnerId = (battle.winner as string | null) === "A"
-    ? (battle.team_a as any).userId
-    : (battle.winner as string | null) === "B"
-      ? (battle.team_b as any).userId
-      : null;
-  const iWon = !!winnerId && winnerId === user?.id;
-
-  useEffect(() => {
-    if (finished && iWon && !celebrated) {
-      setCelebrated(true);
-      fireConfetti("victory");
-    }
-  }, [finished, iWon, celebrated, fireConfetti]);
 
   const lastTurn = turns[turns.length - 1];
   const lastResult = (lastTurn?.result_payload || {}) as any;
