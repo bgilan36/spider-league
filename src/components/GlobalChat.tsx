@@ -368,10 +368,31 @@ const GlobalChat = () => {
 
         {user ? (
           <div className="space-y-1">
-            <div className="flex items-end gap-2">
+            <div className="relative flex items-end gap-2">
+              {mentionQuery !== null && mentionResults.length > 0 && (
+                <div className="absolute bottom-full left-0 mb-1 w-64 max-h-56 overflow-y-auto rounded-md border bg-popover text-popover-foreground shadow-lg z-50">
+                  {mentionResults.map((c, i) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        selectMention(c);
+                      }}
+                      className={`w-full text-left px-3 py-2 text-sm hover:bg-accent ${
+                        i === mentionIndex ? "bg-accent" : ""
+                      }`}
+                    >
+                      <span className="text-primary">@</span>
+                      {c.display_name}
+                    </button>
+                  ))}
+                </div>
+              )}
               <Textarea
+                ref={textareaRef}
                 value={draft}
-                onChange={(e) => setDraft(e.target.value.slice(0, MAX_LEN))}
+                onChange={handleDraftChange}
                 onKeyDown={onKeyDown}
                 placeholder="Message the league…"
                 rows={2}
@@ -382,7 +403,7 @@ const GlobalChat = () => {
               </Button>
             </div>
             <div className="flex justify-between text-[10px] text-muted-foreground px-1">
-              <span>Enter to send · Shift+Enter for newline</span>
+              <span>Enter to send · Shift+Enter for newline · @ to tag</span>
               <span className={remaining < 40 ? "text-destructive" : ""}>{remaining}</span>
             </div>
           </div>
