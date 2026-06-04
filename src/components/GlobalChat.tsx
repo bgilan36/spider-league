@@ -273,6 +273,36 @@ const GlobalChat = () => {
 
   const items = useMemo(() => messages, [messages]);
 
+  const renderMessageBody = (text: string) => {
+    const myName = user ? profiles[user.id]?.display_name : null;
+    const myToken = myName ? toMentionToken(myName).toLowerCase() : null;
+    const parts: React.ReactNode[] = [];
+    const regex = /@([A-Za-z0-9_]+)/g;
+    let last = 0;
+    let m: RegExpExecArray | null;
+    let key = 0;
+    while ((m = regex.exec(text)) !== null) {
+      if (m.index > last) parts.push(text.slice(last, m.index));
+      const token = m[1];
+      const isMe = myToken && token.toLowerCase() === myToken;
+      parts.push(
+        <span
+          key={`men-${key++}`}
+          className={
+            isMe
+              ? "bg-primary/20 text-primary font-semibold rounded px-1"
+              : "text-primary font-medium"
+          }
+        >
+          @{token}
+        </span>,
+      );
+      last = m.index + m[0].length;
+    }
+    if (last < text.length) parts.push(text.slice(last));
+    return parts;
+  };
+
   return (
     <Card className="border-primary/20">
       <CardHeader className="pb-3">
