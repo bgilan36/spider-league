@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import BattleOutcomeReveal from '@/components/BattleOutcomeReveal';
 import PresenceGateDialog from '@/components/PresenceGateDialog';
 import InteractiveBattleArena from '@/components/battle/InteractiveBattleArena';
+import BattleErrorBoundary from '@/components/battle/BattleErrorBoundary';
 
 const capDamageForDisplay = (damage: number, defenderHp: number, turnIndex: number, isFinalTurn: boolean) => {
   if (defenderHp <= 0 || damage <= 0) return 0;
@@ -76,9 +77,17 @@ const TurnBasedBattle = () => {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
   if (mode === 'interactive' && battleId) {
-    return <InteractiveBattleArena battleId={battleId} />;
+    return (
+      <BattleErrorBoundary>
+        <InteractiveBattleArena battleId={battleId} />
+      </BattleErrorBoundary>
+    );
   }
-  return <LegacyTurnBasedBattle />;
+  return (
+    <BattleErrorBoundary>
+      <LegacyTurnBasedBattle />
+    </BattleErrorBoundary>
+  );
 };
 
 const LegacyTurnBasedBattle = () => {
