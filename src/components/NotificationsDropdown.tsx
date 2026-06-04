@@ -453,6 +453,9 @@ const NotificationsDropdown = () => {
       case 'challenge':
         navigate('/');
         break;
+      case 'chat_mention':
+        navigate('/');
+        break;
     }
   };
 
