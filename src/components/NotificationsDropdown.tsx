@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, MessageSquare, Zap, Trophy, Skull, Swords, Bug } from 'lucide-react';
+import { Bell, MessageSquare, Zap, Trophy, Skull, Swords, Bug, AtSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -16,7 +16,7 @@ import ClickableUsername from './ClickableUsername';
 
 interface Notification {
   id: string;
-  type: 'wall_post' | 'bite' | 'battle_win' | 'battle_loss' | 'challenge' | 'skirmish_win' | 'skirmish_loss';
+  type: 'wall_post' | 'bite' | 'battle_win' | 'battle_loss' | 'challenge' | 'skirmish_win' | 'skirmish_loss' | 'chat_mention';
   message: string;
   created_at: string;
   from_user_id?: string;
