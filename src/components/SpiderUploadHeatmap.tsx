@@ -104,7 +104,7 @@ export default function SpiderUploadHeatmap() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <CardTitle className="flex items-center gap-2 text-xl">
             <MapPin className="h-5 w-5 text-primary" />
-            Spider Upload Heat Map
+            Spider Upload Heat Map <span className="text-xs font-normal text-muted-foreground ml-1">beta</span>
           </CardTitle>
           <div className="flex gap-1 rounded-lg bg-muted p-1">
             {(Object.keys(RANGE_LABELS) as Range[]).map((r) => (
