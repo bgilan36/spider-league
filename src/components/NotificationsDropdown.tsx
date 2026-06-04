@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, MessageSquare, Zap, Trophy, Skull, Swords, Bug } from 'lucide-react';
+import { Bell, MessageSquare, Zap, Trophy, Skull, Swords, Bug, AtSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -16,7 +16,7 @@ import ClickableUsername from './ClickableUsername';
 
 interface Notification {
   id: string;
-  type: 'wall_post' | 'bite' | 'battle_win' | 'battle_loss' | 'challenge' | 'skirmish_win' | 'skirmish_loss';
+  type: 'wall_post' | 'bite' | 'battle_win' | 'battle_loss' | 'challenge' | 'skirmish_win' | 'skirmish_loss' | 'chat_mention';
   message: string;
   created_at: string;
   from_user_id?: string;
@@ -154,12 +154,30 @@ const NotificationsDropdown = () => {
       )
       .subscribe();
 
+    // Subscribe to global chat mentions
+    const mentionsChannel = supabase
+      .channel('chat-mention-notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_mentions',
+          filter: `mentioned_user_id=eq.${user.id}`,
+        },
+        () => {
+          fetchNotifications();
+        },
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(wallPostsChannel);
       supabase.removeChannel(bitesChannel);
       supabase.removeChannel(battlesChannel);
       supabase.removeChannel(challengesChannel);
       supabase.removeChannel(skirmishChannel);
+      supabase.removeChannel(mentionsChannel);
     };
   };
 
@@ -337,6 +355,36 @@ const NotificationsDropdown = () => {
         });
       }
 
+      // Fetch recent global chat mentions (last 24 hours)
+      const { data: mentions } = await supabase
+        .from('chat_mentions')
+        .select('id, mentioner_user_id, message_preview, created_at')
+        .eq('mentioned_user_id', user.id)
+        .gte('created_at', oneDayAgo)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (mentions && mentions.length > 0) {
+        const mentionerIds = [...new Set(mentions.map((m: any) => m.mentioner_user_id))];
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, display_name')
+          .in('id', mentionerIds);
+        const profileMap = new Map(profiles?.map((p: any) => [p.id, p.display_name]) || []);
+
+        mentions.forEach((m: any) => {
+          notifications.push({
+            id: `mention-${m.id}`,
+            type: 'chat_mention',
+            message: `tagged you in chat: "${m.message_preview}"`,
+            created_at: m.created_at,
+            from_user_id: m.mentioner_user_id,
+            from_user_name: profileMap.get(m.mentioner_user_id) || 'Someone',
+            read: false,
+          });
+        });
+      }
+
       // Sort by created_at
       notifications.sort((a, b) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -365,6 +413,8 @@ const NotificationsDropdown = () => {
         return <Bug className="h-4 w-4 text-emerald-500" />;
       case 'skirmish_loss':
         return <Bug className="h-4 w-4 text-rose-500" />;
+      case 'chat_mention':
+        return <AtSign className="h-4 w-4 text-primary" />;
       default:
         return <Bell className="h-4 w-4" />;
     }
@@ -401,6 +451,9 @@ const NotificationsDropdown = () => {
         }
         break;
       case 'challenge':
+        navigate('/');
+        break;
+      case 'chat_mention':
         navigate('/');
         break;
     }
