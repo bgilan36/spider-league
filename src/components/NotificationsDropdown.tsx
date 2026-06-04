@@ -355,6 +355,36 @@ const NotificationsDropdown = () => {
         });
       }
 
+      // Fetch recent global chat mentions (last 24 hours)
+      const { data: mentions } = await supabase
+        .from('chat_mentions')
+        .select('id, mentioner_user_id, message_preview, created_at')
+        .eq('mentioned_user_id', user.id)
+        .gte('created_at', oneDayAgo)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (mentions && mentions.length > 0) {
+        const mentionerIds = [...new Set(mentions.map((m: any) => m.mentioner_user_id))];
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, display_name')
+          .in('id', mentionerIds);
+        const profileMap = new Map(profiles?.map((p: any) => [p.id, p.display_name]) || []);
+
+        mentions.forEach((m: any) => {
+          notifications.push({
+            id: `mention-${m.id}`,
+            type: 'chat_mention',
+            message: `tagged you in chat: "${m.message_preview}"`,
+            created_at: m.created_at,
+            from_user_id: m.mentioner_user_id,
+            from_user_name: profileMap.get(m.mentioner_user_id) || 'Someone',
+            read: false,
+          });
+        });
+      }
+
       // Sort by created_at
       notifications.sort((a, b) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
