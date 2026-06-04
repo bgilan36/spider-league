@@ -64,7 +64,7 @@ export default function SpiderUploadHeatmap() {
 
       const points: [number, number, number][] = (data || [])
         .filter((s) => typeof s.latitude === "number" && typeof s.longitude === "number")
-        .map((s) => [s.latitude as number, s.longitude as number, 0.6]);
+        .map((s) => [s.latitude as number, s.longitude as number, 1]);
 
       setCount(points.length);
 
@@ -76,15 +76,17 @@ export default function SpiderUploadHeatmap() {
         if (points.length > 0) {
           // @ts-ignore - heatLayer added by leaflet.heat
           heatRef.current = L.heatLayer(points, {
-            radius: 25,
-            blur: 20,
-            maxZoom: 10,
+            radius: 30,
+            blur: 18,
+            minOpacity: 0.55,
+            maxZoom: 12,
             gradient: {
-              0.2: "#22d3ee",
-              0.4: "#a3e635",
-              0.6: "#facc15",
-              0.8: "#fb923c",
-              1.0: "#ef4444",
+              0.1: "#1e3a8a",
+              0.3: "#2563eb",
+              0.5: "#10b981",
+              0.7: "#facc15",
+              0.85: "#f97316",
+              1.0: "#dc2626",
             },
           }).addTo(mapRef.current);
         }
