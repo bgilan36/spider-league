@@ -357,7 +357,7 @@ const GlobalChat = () => {
                       )}
                     </div>
                     <p className="text-sm whitespace-pre-wrap break-words leading-snug">
-                      {m.message}
+                      {renderMessageBody(m.message)}
                     </p>
                   </div>
                 </div>
