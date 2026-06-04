@@ -25,6 +25,14 @@ interface ProfileLite {
 const MAX_LEN = 500;
 const PAGE_SIZE = 50;
 
+interface MentionCandidate {
+  id: string;
+  display_name: string;
+}
+
+// Convert a display name into a mention token (no spaces, preserves case-insensitive match).
+const toMentionToken = (name: string) => name.replace(/\s+/g, "_");
+
 const GlobalChat = () => {
   const { user } = useAuth();
   const { toast } = useToast();

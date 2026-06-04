@@ -289,6 +289,44 @@ export type Database = {
           },
         ]
       }
+      chat_mentions: {
+        Row: {
+          created_at: string
+          id: string
+          mentioned_user_id: string
+          mentioner_user_id: string
+          message_id: string
+          message_preview: string
+          read_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mentioned_user_id: string
+          mentioner_user_id: string
+          message_id: string
+          message_preview?: string
+          read_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mentioned_user_id?: string
+          mentioner_user_id?: string
+          message_id?: string
+          message_preview?: string
+          read_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_mentions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "global_chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comments: {
         Row: {
           content: string
