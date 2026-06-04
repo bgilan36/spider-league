@@ -46,6 +46,8 @@ const GlobalChat = () => {
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionResults, setMentionResults] = useState<MentionCandidate[]>([]);
   const [mentionIndex, setMentionIndex] = useState(0);
+  // Tokens (lowercased) that have been resolved to user ids via the picker.
+  const mentionMapRef = useRef<Record<string, string>>({});
 
   const loadProfiles = useCallback(async (userIds: string[]) => {
     const missing = Array.from(new Set(userIds)).filter((id) => !profiles[id]);
