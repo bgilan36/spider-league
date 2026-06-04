@@ -42,6 +42,10 @@ const GlobalChat = () => {
   const [draft, setDraft] = useState("");
   const [posting, setPosting] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const [mentionResults, setMentionResults] = useState<MentionCandidate[]>([]);
+  const [mentionIndex, setMentionIndex] = useState(0);
 
   const loadProfiles = useCallback(async (userIds: string[]) => {
     const missing = Array.from(new Set(userIds)).filter((id) => !profiles[id]);
