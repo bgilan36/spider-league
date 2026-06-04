@@ -121,6 +121,70 @@ const GlobalChat = () => {
     el.scrollTop = el.scrollHeight;
   }, [messages.length]);
 
+  // Mention autocomplete: search profiles when an @query is active.
+  useEffect(() => {
+    if (mentionQuery === null) {
+      setMentionResults([]);
+      return;
+    }
+    let cancelled = false;
+    const run = async () => {
+      const q = mentionQuery.trim();
+      let query = supabase
+        .from("profiles")
+        .select("id, display_name")
+        .not("display_name", "is", null)
+        .order("display_name", { ascending: true })
+        .limit(6);
+      if (q.length > 0) {
+        query = query.ilike("display_name", `${q}%`);
+      }
+      const { data } = await query;
+      if (cancelled) return;
+      const list = (data || [])
+        .filter((p: any) => p.id !== user?.id && p.display_name)
+        .map((p: any) => ({ id: p.id as string, display_name: p.display_name as string }));
+      setMentionResults(list);
+      setMentionIndex(0);
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [mentionQuery, user?.id]);
+
+  const handleDraftChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value.slice(0, MAX_LEN);
+    setDraft(value);
+    const caret = e.target.selectionStart ?? value.length;
+    const upto = value.slice(0, caret);
+    const match = upto.match(/(?:^|\s)@([A-Za-z0-9_]*)$/);
+    if (match) {
+      setMentionQuery(match[1]);
+    } else {
+      setMentionQuery(null);
+    }
+  };
+
+  const selectMention = (candidate: MentionCandidate) => {
+    const el = textareaRef.current;
+    if (!el) return;
+    const caret = el.selectionStart ?? draft.length;
+    const before = draft.slice(0, caret);
+    const after = draft.slice(caret);
+    const replaced = before.replace(/@([A-Za-z0-9_]*)$/, "");
+    const token = toMentionToken(candidate.display_name);
+    mentionMapRef.current[token.toLowerCase()] = candidate.id;
+    const next = `${replaced}@${token} ${after}`;
+    setDraft(next.slice(0, MAX_LEN));
+    setMentionQuery(null);
+    requestAnimationFrame(() => {
+      const pos = (replaced + `@${token} `).length;
+      el.focus();
+      el.setSelectionRange(pos, pos);
+    });
+  };
+
   const post = async () => {
     if (!user) {
       toast({ title: "Sign in to chat", description: "You need to be signed in to post." });
@@ -133,15 +197,40 @@ const GlobalChat = () => {
       return;
     }
     setPosting(true);
-    const { error } = await supabase
+    const { data: inserted, error } = await supabase
       .from("global_chat_messages")
-      .insert({ user_id: user.id, message: text });
+      .insert({ user_id: user.id, message: text })
+      .select("id")
+      .single();
     setPosting(false);
     if (error) {
       toast({ title: "Couldn't post", description: error.message, variant: "destructive" });
       return;
     }
+    // Parse mentions and insert rows for any resolved tokens.
+    if (inserted?.id) {
+      const tokens = Array.from(text.matchAll(/@([A-Za-z0-9_]+)/g)).map((m) => m[1].toLowerCase());
+      const uniqueIds = Array.from(
+        new Set(
+          tokens
+            .map((t) => mentionMapRef.current[t])
+            .filter((id): id is string => Boolean(id) && id !== user.id),
+        ),
+      );
+      if (uniqueIds.length > 0) {
+        const preview = text.slice(0, 140);
+        await supabase.from("chat_mentions").insert(
+          uniqueIds.map((mentionedId) => ({
+            message_id: inserted.id,
+            mentioner_user_id: user.id,
+            mentioned_user_id: mentionedId,
+            message_preview: preview,
+          })),
+        );
+      }
+    }
     setDraft("");
+    mentionMapRef.current = {};
   };
 
   const remove = async (id: string) => {
@@ -152,6 +241,28 @@ const GlobalChat = () => {
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (mentionQuery !== null && mentionResults.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setMentionIndex((i) => (i + 1) % mentionResults.length);
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setMentionIndex((i) => (i - 1 + mentionResults.length) % mentionResults.length);
+        return;
+      }
+      if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        selectMention(mentionResults[mentionIndex]);
+        return;
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setMentionQuery(null);
+        return;
+      }
+    }
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       post();
