@@ -100,7 +100,16 @@ const PrivateLeagueStandings = ({
               <thead>
                 <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
                   <th className="px-2 py-2 text-left font-medium">Team</th>
-                  <th className="px-2 py-2 text-right font-medium" title="Win Point Differential — earn points only by beating higher-power opponents; lose points only when a stronger spider of yours loses to a weaker one. Primary standings sort.">WPD</th>
+                  <th className="px-2 py-2 text-right font-medium">
+                    <Tooltip>
+                      <TooltipTrigger className="inline-flex items-center gap-1 cursor-help">
+                        WPD <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-xs text-center">
+                        Win Point Differential — earn points only by beating higher-power opponents; lose points only when a stronger spider of yours loses to a weaker one. Primary standings sort.
+                      </TooltipContent>
+                    </Tooltip>
+                  </th>
                   <th className="px-2 py-2 text-right font-medium">W</th>
                   <th className="px-2 py-2 text-right font-medium">L</th>
                   <th className="px-2 py-2 text-right font-medium">PCT</th>
