@@ -693,10 +693,10 @@ const Index = () => {
     return <div className="min-h-screen flex items-center justify-center bg-background">
         <Helmet>
           <title>Spider League — Spider Battling & Weekly Matchups</title>
-          <meta name="description" content="Upload spiders, generate AI battle stats, and compete in weekly Spider League matchups with friends." />
+          <meta name="description" content="Upload spiders, generate battle stats, and compete in weekly Spider League matchups with friends." />
           <link rel="canonical" href="https://www.spiderleague.app/" />
           <meta property="og:title" content="Spider League — Spider Battling & Weekly Matchups" />
-          <meta property="og:description" content="Upload spiders, generate AI battle stats, and compete in weekly Spider League matchups with friends." />
+          <meta property="og:description" content="Upload spiders, generate battle stats, and compete in weekly Spider League matchups with friends." />
           <meta property="og:url" content="https://www.spiderleague.app/" />
           <script type="application/ld+json">{JSON.stringify({
             "@context": "https://schema.org",
@@ -1350,7 +1350,7 @@ const Index = () => {
       <footer className="border-t mt-12 sm:mt-16 py-6 sm:py-8 bg-card/30">
         <div className="container mx-auto px-3 sm:px-6 text-center">
           <p className="text-muted-foreground text-xs sm:text-sm mb-3 sm:mb-4">
-            © 2025 Spider League. Share spiders for friendly battles.
+            © 2026 Spider League. Share spiders for friendly battles.
           </p>
           <div className="flex items-center justify-center gap-4">
             <Link to="/shop" className="text-primary hover:text-primary/80 transition-colors underline text-sm">
