@@ -72,6 +72,14 @@ const PrivateLeagueStandings = ({
         <CardTitle className="flex items-center gap-2 text-lg">
           <Trophy className="h-5 w-5 text-primary" />
           Pod standings
+          <Tooltip>
+            <TooltipTrigger className="inline-flex cursor-help">
+              <Info className="h-4 w-4 text-muted-foreground" />
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-xs text-center">
+              Win Point Differential — earn points only by beating higher-power opponents; lose points only when a stronger spider of yours loses to a weaker one. Primary standings sort.
+            </TooltipContent>
+          </Tooltip>
           {refreshing && !loading ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" aria-label="Refreshing" />
           ) : null}
