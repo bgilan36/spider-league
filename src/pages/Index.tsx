@@ -23,6 +23,7 @@ import PowerScoreArc from "@/components/PowerScoreArc";
 import SpiderDetailsModal from "@/components/SpiderDetailsModal";
 import BattleMode from "@/components/BattleMode";
 import BattleButton from "@/components/BattleButton";
+import InstantBattleButton from "@/components/InstantBattleButton";
 
 import BattleDetailsModal from "@/components/BattleDetailsModal";
 import ClickableUsername from "@/components/ClickableUsername";
