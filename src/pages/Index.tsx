@@ -1239,7 +1239,13 @@ const Index = () => {
                           <div className="text-base sm:text-lg md:text-xl font-bold">{spider.power_score}</div>
                           <div className="text-[10px] sm:text-xs text-muted-foreground">Power</div>
                         </div>
-                        <BattleButton targetSpider={spider} size="sm" variant="outline" context="leaderboard" className="hidden sm:flex" />
+                        <InstantBattleButton
+                          opponentSpiderId={spider.id}
+                          opponentUserId={spider.owner_id}
+                          size="sm"
+                          variant="default"
+                          className="hidden sm:flex"
+                        />
                       </div>
                     </CardContent>
                   </Card>;
