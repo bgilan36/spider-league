@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import SkillMeter from "./SkillMeter";
 import DiceDisplay from "./DiceDisplay";
+import ShareButton from "@/components/ShareButton";
 import { useConfetti } from "@/hooks/useConfetti";
 import { invalidatePodStandings } from "@/hooks/usePodStandings";
 import {
@@ -282,9 +283,20 @@ export default function InteractiveBattleArena({ battleId }: Props) {
               <div className="text-sm text-muted-foreground">
                 {iWon ? mySpider.nickname : opponentSpider.nickname} wins after {battle.turn_count} rounds.
               </div>
-              <div className="flex gap-2 justify-center pt-2">
+              <div className="flex flex-wrap gap-2 justify-center pt-2">
                 <Button onClick={() => navigate(returnPath)} variant="default">Done</Button>
                 <Button onClick={() => navigate("/battle-history")} variant="outline">Battle history</Button>
+                <ShareButton
+                  variant="outline"
+                  size="default"
+                  title={iWon ? "I won my Spider League battle!" : "My Spider League battle just ended"}
+                  text={
+                    iWon
+                      ? `🏆 ${mySpider.nickname} defeated ${opponentSpider.nickname} in ${battle.turn_count} rounds on Spider League!`
+                      : `🕷️ ${opponentSpider.nickname} beat my ${mySpider.nickname} in ${battle.turn_count} rounds on Spider League. Time for a rematch!`
+                  }
+                  url={`${window.location.origin}/battle/${battle.id}`}
+                />
               </div>
             </CardContent>
           </Card>
