@@ -6,7 +6,7 @@ import PowerScoreArc from "@/components/PowerScoreArc";
 import ClickableUsername from "@/components/ClickableUsername";
 import SpiderDetailsModal from "@/components/SpiderDetailsModal";
 import { Sparkles } from "lucide-react";
-import BattleButton from "@/components/BattleButton";
+import InstantBattleButton from "@/components/InstantBattleButton";
 
 interface Spider {
   id: string;
@@ -168,13 +168,15 @@ const NewSpiderSpotlight = () => {
                 </p>
               </div>
 
-              {/* Quick Battle CTA */}
+              {/* Quick Battle CTA — starts a real battle immediately */}
               <div onClick={(e) => e.stopPropagation()} className="w-full pt-1">
-                <BattleButton
-                  targetSpider={newestSpider}
+                <InstantBattleButton
+                  opponentSpiderId={newestSpider.id}
+                  opponentUserId={newestSpider.owner_id}
                   size="default"
                   variant="default"
                   className="w-full"
+                  label="Battle this spider"
                 />
               </div>
             </div>

@@ -23,6 +23,7 @@ import PowerScoreArc from "@/components/PowerScoreArc";
 import SpiderDetailsModal from "@/components/SpiderDetailsModal";
 import BattleMode from "@/components/BattleMode";
 import BattleButton from "@/components/BattleButton";
+import InstantBattleButton from "@/components/InstantBattleButton";
 
 import BattleDetailsModal from "@/components/BattleDetailsModal";
 import ClickableUsername from "@/components/ClickableUsername";
@@ -1238,7 +1239,13 @@ const Index = () => {
                           <div className="text-base sm:text-lg md:text-xl font-bold">{spider.power_score}</div>
                           <div className="text-[10px] sm:text-xs text-muted-foreground">Power</div>
                         </div>
-                        <BattleButton targetSpider={spider} size="sm" variant="outline" context="leaderboard" className="hidden sm:flex" />
+                        <InstantBattleButton
+                          opponentSpiderId={spider.id}
+                          opponentUserId={spider.owner_id}
+                          size="sm"
+                          variant="default"
+                          className="hidden sm:flex"
+                        />
                       </div>
                     </CardContent>
                   </Card>;
