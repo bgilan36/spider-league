@@ -31,6 +31,9 @@ interface Spider {
   webcraft?: number;
   is_approved?: boolean;
   owner_id?: string;
+  xp?: number;
+  level?: number;
+  level_power_bonus?: number;
 }
 
 interface ActiveSpidersProps {
@@ -395,7 +398,18 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
                   </div>
 
                   <div className="p-2 sm:p-3">
-                    <p className="font-bold text-[11px] sm:text-sm truncate leading-tight">{spider.nickname}</p>
+                    <div className="flex items-center justify-between gap-1">
+                      <p className="font-bold text-[11px] sm:text-sm truncate leading-tight">{spider.nickname}</p>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="shrink-0 inline-flex items-center gap-0.5 text-[9px] sm:text-[10px] font-medium text-muted-foreground border border-border/60 rounded px-1 py-0.5 leading-none">
+                            <Sparkles className="h-2.5 w-2.5 text-amber-500" />
+                            Lv {spider.level ?? 1}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>XP {spider.xp ?? 0}</TooltipContent>
+                      </Tooltip>
+                    </div>
                     <div className="flex items-center justify-between mt-0.5">
                       <p className="text-[10px] sm:text-xs text-muted-foreground truncate flex-1 min-w-0">{spider.species}</p>
                       <span className="text-[10px] sm:text-xs font-medium ml-1 shrink-0">⚡{spider.power_score}</span>
