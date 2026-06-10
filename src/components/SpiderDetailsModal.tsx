@@ -121,12 +121,14 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
 
   const spiderLevel = spider.level ?? 1;
   const spiderXp = spider.xp ?? 0;
-  const XP_THRESHOLDS = [0, 50, 120, 220, 360, 550, 800, 1100, 1500, 2000];
+  const XP_THRESHOLDS = [0, 50, 120, 250, 450, 700];
+  const MAX_LEVEL = 6;
   const currentLevelXp = XP_THRESHOLDS[spiderLevel - 1] ?? 0;
-  const nextLevelXp = spiderLevel < 10 ? XP_THRESHOLDS[spiderLevel] : XP_THRESHOLDS[9];
+  const nextLevelXp = spiderLevel < MAX_LEVEL ? XP_THRESHOLDS[spiderLevel] : XP_THRESHOLDS[MAX_LEVEL - 1];
   const xpInLevel = spiderXp - currentLevelXp;
-  const xpNeeded = nextLevelXp - currentLevelXp;
-  const xpProgress = spiderLevel >= 10 ? 100 : (xpInLevel / xpNeeded) * 100;
+  const xpNeeded = Math.max(1, nextLevelXp - currentLevelXp);
+  const xpProgress = spiderLevel >= MAX_LEVEL ? 100 : (xpInLevel / xpNeeded) * 100;
+  const levelPowerBonus = (spider as any).level_power_bonus ?? Math.max(0, (spiderLevel - 1) * 5);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -165,7 +167,14 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
               <PowerScoreArc score={spider.power_score} size="large" />
               <div className="mt-2">
                 <div className="text-3xl font-bold">{spider.power_score}</div>
-                <div className="text-sm text-muted-foreground">Total Power Score</div>
+                <div className="text-sm text-muted-foreground">
+                  Total Power Score
+                  {levelPowerBonus > 0 && (
+                    <span className="ml-1 text-primary font-medium">
+                      (+{levelPowerBonus} from Level {spiderLevel})
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -177,11 +186,11 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
                   Level {spiderLevel}
                 </span>
                 <span className="text-muted-foreground">
-                  {spiderLevel >= 10 ? 'MAX' : `${spiderXp} / ${nextLevelXp} XP`}
+                  {spiderLevel >= MAX_LEVEL ? 'MAX' : `${spiderXp} / ${nextLevelXp} XP`}
                 </span>
               </div>
               <Progress value={xpProgress} className="h-2" />
-              {spiderLevel < 10 && (
+              {spiderLevel < MAX_LEVEL && (
                 <p className="text-xs text-muted-foreground text-center">
                   {nextLevelXp - spiderXp} XP to next level
                 </p>
