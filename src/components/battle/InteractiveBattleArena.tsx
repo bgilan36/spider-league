@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import SkillMeter from "./SkillMeter";
 import DiceDisplay from "./DiceDisplay";
+import ShareButton from "@/components/ShareButton";
 import { useConfetti } from "@/hooks/useConfetti";
 import { invalidatePodStandings } from "@/hooks/usePodStandings";
 import {
