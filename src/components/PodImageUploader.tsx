@@ -49,10 +49,10 @@ const PodImageUploader = ({ leagueId, imageUrl, podName, canEdit, onUpdated }: P
       if (uploadError) throw uploadError;
       const { data: pub } = supabase.storage.from("pod-images").getPublicUrl(path);
       const publicUrl = pub.publicUrl;
-      const { error: updateError } = await (supabase as any)
-        .from("private_leagues")
-        .update({ image_url: publicUrl })
-        .eq("id", leagueId);
+      const { error: updateError } = await (supabase as any).rpc(
+        "update_private_league_image",
+        { p_league_id: leagueId, p_image_url: publicUrl }
+      );
       if (updateError) throw updateError;
       onUpdated(publicUrl);
       setImgFailed(false);
@@ -68,10 +68,10 @@ const PodImageUploader = ({ leagueId, imageUrl, podName, canEdit, onUpdated }: P
   const handleRemove = async () => {
     setRemoving(true);
     try {
-      const { error } = await (supabase as any)
-        .from("private_leagues")
-        .update({ image_url: null })
-        .eq("id", leagueId);
+      const { error } = await (supabase as any).rpc(
+        "update_private_league_image",
+        { p_league_id: leagueId, p_image_url: null }
+      );
       if (error) throw error;
       onUpdated("");
       setImgFailed(false);

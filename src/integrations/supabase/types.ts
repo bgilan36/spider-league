@@ -1642,6 +1642,15 @@ export type Database = {
           slug: string
         }[]
       }
+      get_my_spider_location: {
+        Args: { p_spider_id: string }
+        Returns: {
+          latitude: number
+          location_accuracy_m: number
+          location_name: string
+          longitude: number
+        }[]
+      }
       get_private_league_invite_preview: {
         Args: { token: string }
         Returns: Json
@@ -1750,6 +1759,10 @@ export type Database = {
       }
       transfer_spider_ownership: {
         Args: { new_owner_id: string; spider_id: string }
+        Returns: undefined
+      }
+      update_private_league_image: {
+        Args: { p_image_url: string; p_league_id: string }
         Returns: undefined
       }
       update_weekly_rankings: { Args: never; Returns: undefined }
