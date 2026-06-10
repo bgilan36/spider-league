@@ -16,6 +16,7 @@ import BattleOutcomeReveal from '@/components/BattleOutcomeReveal';
 import PresenceGateDialog from '@/components/PresenceGateDialog';
 import InteractiveBattleArena from '@/components/battle/InteractiveBattleArena';
 import BattleErrorBoundary from '@/components/battle/BattleErrorBoundary';
+import { useConfetti } from '@/hooks/useConfetti';
 
 const capDamageForDisplay = (damage: number, defenderHp: number, turnIndex: number, isFinalTurn: boolean) => {
   if (defenderHp <= 0 || damage <= 0) return 0;
