@@ -13,7 +13,9 @@ import {
   MessageCircle, 
   Mail, 
   ExternalLink,
-  Check
+  Check,
+  Image as ImageIcon,
+  Download
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -24,6 +26,15 @@ interface ShareButtonProps {
   hashtags?: string[];
   variant?: "default" | "outline" | "ghost";
   size?: "default" | "sm" | "lg";
+  /**
+   * Optional async generator that returns a PNG/JPEG Blob summarizing the
+   * thing being shared (e.g. a battle result card). When provided, the
+   * dropdown exposes "Share image" (native share w/ file) and "Download
+   * image" actions so users can quickly post the visual on iMessage,
+   * Instagram, X, etc.
+   */
+  getShareImage?: () => Promise<Blob | null>;
+  imageFileName?: string;
 }
 
 const ShareButton: React.FC<ShareButtonProps> = ({
@@ -32,9 +43,12 @@ const ShareButton: React.FC<ShareButtonProps> = ({
   url = "https://spiderleague.app",
   hashtags = ["SpiderLeague", "WebWarriors"],
   variant = "outline",
-  size = "default"
+  size = "default",
+  getShareImage,
+  imageFileName = "spider-league.png",
 }) => {
   const [copied, setCopied] = useState(false);
+  const [busyImage, setBusyImage] = useState(false);
   const { toast } = useToast();
 
   const shareData = {
@@ -59,6 +73,61 @@ const ShareButton: React.FC<ShareButtonProps> = ({
       } catch (error) {
         // User cancelled or error occurred
       }
+    }
+  };
+
+  const handleShareImage = async () => {
+    if (!getShareImage) return;
+    setBusyImage(true);
+    try {
+      const blob = await getShareImage();
+      if (!blob) throw new Error("Could not generate image");
+      const file = new File([blob], imageFileName, { type: blob.type || "image/png" });
+      const nav: any = navigator;
+      if (nav.canShare && nav.canShare({ files: [file] }) && nav.share) {
+        await nav.share({ files: [file], title, text: `${text}\n\n${url}` });
+        toast({ title: "Shared!", description: "Battle card on its way 🕷️" });
+      } else {
+        // Fallback: trigger download so the user can post it manually.
+        const u = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = u;
+        a.download = imageFileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(u);
+        toast({
+          title: "Image downloaded",
+          description: "Attach it to a text or post it anywhere!",
+        });
+      }
+    } catch (e: any) {
+      toast({ title: "Couldn't share image", description: e.message, variant: "destructive" });
+    } finally {
+      setBusyImage(false);
+    }
+  };
+
+  const handleDownloadImage = async () => {
+    if (!getShareImage) return;
+    setBusyImage(true);
+    try {
+      const blob = await getShareImage();
+      if (!blob) throw new Error("Could not generate image");
+      const u = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = u;
+      a.download = imageFileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(u);
+      toast({ title: "Image downloaded", description: "Share it anywhere 🚀" });
+    } catch (e: any) {
+      toast({ title: "Download failed", description: e.message, variant: "destructive" });
+    } finally {
+      setBusyImage(false);
     }
   };
 
@@ -107,6 +176,19 @@ const ShareButton: React.FC<ShareButtonProps> = ({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
+        {getShareImage && (
+          <>
+            <DropdownMenuItem onClick={handleShareImage} disabled={busyImage} className="gap-2">
+              <ImageIcon className="h-4 w-4" />
+              {busyImage ? "Preparing image…" : "Share battle image"}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleDownloadImage} disabled={busyImage} className="gap-2">
+              <Download className="h-4 w-4" />
+              Download image
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
         {navigator.share && (
           <>
             <DropdownMenuItem onClick={handleNativeShare} className="gap-2">
