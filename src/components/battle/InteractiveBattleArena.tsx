@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import SkillMeter from "./SkillMeter";
 import DiceDisplay from "./DiceDisplay";
 import ShareButton from "@/components/ShareButton";
+import { generateBattleShareImage } from "@/lib/battleShareImage";
 import { useConfetti } from "@/hooks/useConfetti";
 import { invalidatePodStandings } from "@/hooks/usePodStandings";
 import {
@@ -235,29 +236,34 @@ export default function InteractiveBattleArena({ battleId }: Props) {
               <div className="font-semibold mb-1">
                 Turn {lastTurn.turn_index} — {lastResult.attacker_name} → {lastResult.defender_name}
               </div>
-              <div className="flex items-center justify-center gap-6 my-3">
-                <div className="flex flex-col items-center">
-                  <DiceDisplay
-                    value={lastResult.attacker_dice}
-                    label={`${lastResult.attacker_name} attack`}
-                    variant="attack"
-                  />
-                  <span className="text-[10px] text-muted-foreground mt-1">
-                    {BUCKET_LABEL[lastResult.attacker_bucket as ZoneBucket]}
-                  </span>
-                </div>
-                <span className="text-xl font-bold text-muted-foreground">vs</span>
-                <div className="flex flex-col items-center">
-                  <DiceDisplay
-                    value={lastResult.defender_dice}
-                    label={`${lastResult.defender_name} defense`}
-                    variant="defense"
-                  />
-                  <span className="text-[10px] text-muted-foreground mt-1">
-                    {BUCKET_LABEL[lastResult.defender_bucket as ZoneBucket]}
-                  </span>
-                </div>
-              </div>
+              {(() => {
+                // Spider headers above are laid out as [mine | opponent].
+                // Align each dice column to its matching spider so HP and
+                // dice for the same spider live in the same vertical stack.
+                const myIsAttacker = lastResult.attacker_name === mySpider.nickname;
+                const mineDice = myIsAttacker
+                  ? { value: lastResult.attacker_dice, label: `${mySpider.nickname} attack`, variant: "attack" as const, bucket: lastResult.attacker_bucket }
+                  : { value: lastResult.defender_dice, label: `${mySpider.nickname} defense`, variant: "defense" as const, bucket: lastResult.defender_bucket };
+                const oppDice = myIsAttacker
+                  ? { value: lastResult.defender_dice, label: `${opponentSpider.nickname} defense`, variant: "defense" as const, bucket: lastResult.defender_bucket }
+                  : { value: lastResult.attacker_dice, label: `${opponentSpider.nickname} attack`, variant: "attack" as const, bucket: lastResult.attacker_bucket };
+                return (
+                  <div className="grid grid-cols-2 gap-3 my-3 items-start">
+                    <div className="flex flex-col items-center">
+                      <DiceDisplay value={mineDice.value} label={mineDice.label} variant={mineDice.variant} />
+                      <span className="text-[10px] text-muted-foreground mt-1">
+                        {BUCKET_LABEL[mineDice.bucket as ZoneBucket]}
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <DiceDisplay value={oppDice.value} label={oppDice.label} variant={oppDice.variant} />
+                      <span className="text-[10px] text-muted-foreground mt-1">
+                        {BUCKET_LABEL[oppDice.bucket as ZoneBucket]}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
               <div className="mt-1 text-center">
                 {lastResult.dodged
                   ? <span className="text-emerald-400 font-semibold">Dodged!</span>
@@ -296,6 +302,18 @@ export default function InteractiveBattleArena({ battleId }: Props) {
                       : `🕷️ ${opponentSpider.nickname} beat my ${mySpider.nickname} in ${battle.turn_count} rounds on Spider League. Time for a rematch!`
                   }
                   url={`${window.location.origin}/battle/${battle.id}`}
+                  imageFileName={`spider-league-${iWon ? "win" : "loss"}-${battle.id.slice(0, 8)}.png`}
+                  getShareImage={() =>
+                    generateBattleShareImage({
+                      iWon,
+                      rounds: battle.turn_count || 0,
+                      winnerName: iWon ? mySpider.nickname : opponentSpider.nickname,
+                      winnerImageUrl: iWon ? mySpider.image_url : opponentSpider.image_url,
+                      loserName: iWon ? opponentSpider.nickname : mySpider.nickname,
+                      loserImageUrl: iWon ? opponentSpider.image_url : mySpider.image_url,
+                      tagline: "Upload your spider. Battle for glory. spiderleague.app",
+                    })
+                  }
                 />
               </div>
             </CardContent>
