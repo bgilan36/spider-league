@@ -197,6 +197,31 @@ const LegacyTurnBasedBattle = () => {
     }
   }, [displayTurns]);
 
+  // Celebrate spider level-ups after the battle resolves
+  const { fireConfetti } = useConfetti();
+  const [levelUpAnnounced, setLevelUpAnnounced] = useState(false);
+  useEffect(() => {
+    if (levelUpAnnounced) return;
+    if (!battle || battle.is_active) return;
+    if (displayTurns.length === 0) return;
+    const lastTurn: any = displayTurns[displayTurns.length - 1];
+    const sx = lastTurn?.result_payload?.stat_improvements?.spider_xp;
+    if (!sx) return;
+    const myIsTeamA = (battle.team_a as any)?.userId === user?.id;
+    const iWonBattle = (battle.winner === 'A' && myIsTeamA) || (battle.winner === 'B' && !myIsTeamA);
+    const mine = iWonBattle ? sx.winner : sx.loser;
+    if (mine?.leveled_up) {
+      const newLevel = mine.new_level;
+      const bonus = mine.power_bonus_gained ?? mine.levels_gained * 5;
+      fireConfetti('milestone');
+      toast.success(`Level up! Your spider reached Level ${newLevel}`, {
+        description: `+${bonus} Power Score from leveling up`,
+        duration: 6000,
+      });
+    }
+    setLevelUpAnnounced(true);
+  }, [battle, displayTurns, user?.id, levelUpAnnounced, fireConfetti]);
+
   // Check if coming from query param (direct notification link)
   useEffect(() => {
     if (!battleId) {
