@@ -115,7 +115,7 @@ const WeeklyRosterManager: React.FC<WeeklyRosterManagerProps> = ({ onRosterChang
     try {
       const { data, error } = await supabase
         .from('spiders')
-        .select('id, nickname, species, image_url, power_score, rarity, created_at')
+        .select('id, nickname, species, image_url, power_score, rarity, xp, level, level_power_bonus, created_at')
         .eq('owner_id', user.id)
         .eq('is_approved', true)
         .order('power_score', { ascending: false });

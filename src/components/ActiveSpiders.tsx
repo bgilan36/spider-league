@@ -82,7 +82,7 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
       const now = new Date().toISOString();
       const { data, error } = await supabase
         .from('spiders')
-        .select('id, nickname, species, image_url, power_score, rarity, created_at, eligible_until, last_battled_at, hit_points, damage, speed, defense, venom, webcraft, is_approved, owner_id')
+        .select('id, nickname, species, image_url, power_score, rarity, xp, level, level_power_bonus, created_at, eligible_until, last_battled_at, hit_points, damage, speed, defense, venom, webcraft, is_approved, owner_id')
         .eq('owner_id', user.id)
         .eq('is_approved', true)
         .order('power_score', { ascending: false });
@@ -188,7 +188,7 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
         const high = Math.ceil(spider.power_score * (1.0 + pct));
         const { data } = await supabase
           .from('spiders')
-          .select('id, nickname, species, image_url, power_score, rarity, hit_points, damage, speed, defense, venom, webcraft, owner_id')
+          .select('id, nickname, species, image_url, power_score, rarity, xp, level, level_power_bonus, hit_points, damage, speed, defense, venom, webcraft, owner_id')
           .eq('is_approved', true)
           .neq('owner_id', user.id)
           .gte('power_score', low)
@@ -203,7 +203,7 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
         // Fallback: any spider
         const { data } = await supabase
           .from('spiders')
-          .select('id, nickname, species, image_url, power_score, rarity, hit_points, damage, speed, defense, venom, webcraft, owner_id')
+          .select('id, nickname, species, image_url, power_score, rarity, xp, level, level_power_bonus, hit_points, damage, speed, defense, venom, webcraft, owner_id')
           .eq('is_approved', true)
           .neq('owner_id', user.id)
           .order('power_score', { ascending: false })
@@ -235,7 +235,7 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
       const upperBound = Math.ceil(spider.power_score * 1.3);
       const { data, error } = await supabase
         .from('spiders')
-        .select('id, nickname, species, image_url, power_score, rarity, hit_points, damage, speed, defense, venom, webcraft, is_approved, owner_id, eligible_until')
+        .select('id, nickname, species, image_url, power_score, rarity, xp, level, level_power_bonus, hit_points, damage, speed, defense, venom, webcraft, is_approved, owner_id, eligible_until')
         .eq('is_approved', true)
         .neq('owner_id', user!.id)
         .gte('power_score', lowerBound)

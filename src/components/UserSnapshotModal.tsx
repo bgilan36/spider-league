@@ -183,7 +183,7 @@ const UserSnapshotModal: React.FC<UserSnapshotModalProps> = ({
       // Fetch user's spiders
       const { data: spidersData, error: spidersError } = await supabase
         .from('spiders')
-        .select('id, nickname, species, image_url, power_score, rarity')
+        .select('id, nickname, species, image_url, power_score, rarity, xp, level, level_power_bonus')
         .eq('owner_id', userId)
         .eq('is_approved', true)
         .order('power_score', { ascending: false })
