@@ -176,7 +176,7 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
       // Fetch spiders uploaded this week
       const { data: uploadedData, error: uploadedError } = await supabase
         .from('spiders')
-        .select('id, nickname, species, image_url, power_score, rarity, created_at, hit_points, damage, speed, defense, venom, webcraft, is_approved, owner_id')
+        .select('id, nickname, species, image_url, power_score, rarity, xp, level, level_power_bonus, created_at, hit_points, damage, speed, defense, venom, webcraft, is_approved, owner_id')
         .eq('owner_id', user.id)
         .eq('is_approved', true)
         .gte('created_at', weekStartISO)
@@ -209,7 +209,7 @@ const WeeklyEligibleSpiders: React.FC<WeeklyEligibleSpidersProps> = ({ onSpiderC
       // Fetch spiders from BEFORE this week (for activation)
       const { data, error } = await supabase
         .from('spiders')
-        .select('id, nickname, species, image_url, power_score, rarity, created_at, hit_points, damage, speed, defense, venom, webcraft, is_approved, owner_id')
+        .select('id, nickname, species, image_url, power_score, rarity, xp, level, level_power_bonus, created_at, hit_points, damage, speed, defense, venom, webcraft, is_approved, owner_id')
         .eq('owner_id', user.id)
         .eq('is_approved', true)
         .lt('created_at', weekStartISO)

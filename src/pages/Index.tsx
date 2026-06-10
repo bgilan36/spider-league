@@ -283,7 +283,7 @@ const Index = () => {
       const {
         data: spidersThisWeek,
         error: spidersError
-      } = await supabase.from('spiders').select('id, nickname, species, image_url, rarity, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved, created_at, owner_id').eq('owner_id', user.id).eq('is_approved', true).gte('created_at', weekStartISO).order('created_at', {
+      } = await supabase.from('spiders').select('id, nickname, species, image_url, rarity, power_score, xp, level, level_power_bonus, hit_points, damage, speed, defense, venom, webcraft, is_approved, created_at, owner_id').eq('owner_id', user.id).eq('is_approved', true).gte('created_at', weekStartISO).order('created_at', {
         ascending: true
       });
       if (spidersError) throw spidersError;
@@ -308,7 +308,7 @@ const Index = () => {
         const {
           data: spidersWithChallenges,
           error: spidersWithChallengesError
-        } = await supabase.from('spiders').select('id, nickname, species, image_url, rarity, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved, created_at, owner_id').in('id', Array.from(challengeSpiderIds)).eq('is_approved', true).eq('owner_id', user.id);
+        } = await supabase.from('spiders').select('id, nickname, species, image_url, rarity, power_score, xp, level, level_power_bonus, hit_points, damage, speed, defense, venom, webcraft, is_approved, created_at, owner_id').in('id', Array.from(challengeSpiderIds)).eq('is_approved', true).eq('owner_id', user.id);
         if (!spidersWithChallengesError && spidersWithChallenges) {
           challengeSpiders = spidersWithChallenges;
         }
@@ -430,7 +430,7 @@ const Index = () => {
         const { data, error } = await supabase
           .from('spiders')
           .select(`
-            id, nickname, species, image_url, rarity, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved, owner_id, created_at,
+            id, nickname, species, image_url, rarity, power_score, xp, level, level_power_bonus, hit_points, damage, speed, defense, venom, webcraft, is_approved, owner_id, created_at,
             profiles (
               display_name
             )
@@ -447,7 +447,7 @@ const Index = () => {
         const { data, error } = await supabase
           .from('spiders')
           .select(`
-            id, nickname, species, image_url, rarity, power_score, hit_points, damage, speed, defense, venom, webcraft, is_approved, owner_id, created_at,
+            id, nickname, species, image_url, rarity, power_score, xp, level, level_power_bonus, hit_points, damage, speed, defense, venom, webcraft, is_approved, owner_id, created_at,
             profiles (
               display_name
             )
