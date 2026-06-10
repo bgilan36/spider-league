@@ -1124,7 +1124,9 @@ const Index = () => {
                               {format(new Date(combat.created_at), 'MMM d')}
                             </p>
                             <p className="text-[10px] text-muted-foreground/70 whitespace-nowrap hidden sm:block">
-                              {isBattle ? 'Stakes: Spider Transfer' : 'Stakes: XP Only'}
+                              {isBattle && (combat.battle as any)?.stakes_type === 'all_or_nothing'
+                                ? 'Stakes: Spider Transfer'
+                                : 'Stakes: XP'}
                             </p>
                           </div>
                         </div>
