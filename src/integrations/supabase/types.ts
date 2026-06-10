@@ -1256,6 +1256,7 @@ export type Database = {
           last_battled_at: string | null
           latitude: number | null
           level: number
+          level_power_bonus: number
           location_accuracy_m: number | null
           location_name: string | null
           longitude: number | null
@@ -1284,6 +1285,7 @@ export type Database = {
           last_battled_at?: string | null
           latitude?: number | null
           level?: number
+          level_power_bonus?: number
           location_accuracy_m?: number | null
           location_name?: string | null
           longitude?: number | null
@@ -1312,6 +1314,7 @@ export type Database = {
           last_battled_at?: string | null
           latitude?: number | null
           level?: number
+          level_power_bonus?: number
           location_accuracy_m?: number | null
           location_name?: string | null
           longitude?: number | null
@@ -1693,6 +1696,8 @@ export type Database = {
         Returns: {
           avatar_url: string
           display_name: string
+          experience_points: number
+          ranking_score: number
           spider_count: number
           top_spider: Json
           total_power_score: number
@@ -1704,6 +1709,8 @@ export type Database = {
         Returns: {
           avatar_url: string
           display_name: string
+          experience_points: number
+          ranking_score: number
           spiders_acquired_in_battle: number
           top_spider: Json
           user_id: string
