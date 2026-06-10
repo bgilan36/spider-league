@@ -6,6 +6,7 @@ import PowerScoreArc from "@/components/PowerScoreArc";
 import ClickableUsername from "@/components/ClickableUsername";
 import SpiderDetailsModal from "@/components/SpiderDetailsModal";
 import { Sparkles } from "lucide-react";
+import BattleButton from "@/components/BattleButton";
 
 interface Spider {
   id: string;
@@ -165,6 +166,16 @@ const NewSpiderSpotlight = () => {
                 <p className="text-xs text-center text-muted-foreground">
                   Joined {new Date(newestSpider.created_at).toLocaleDateString()}
                 </p>
+              </div>
+
+              {/* Quick Battle CTA */}
+              <div onClick={(e) => e.stopPropagation()} className="w-full pt-1">
+                <BattleButton
+                  targetSpider={newestSpider}
+                  size="default"
+                  variant="default"
+                  className="w-full"
+                />
               </div>
             </div>
           </CardContent>
