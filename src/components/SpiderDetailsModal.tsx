@@ -11,6 +11,8 @@ import { Progress } from "@/components/ui/progress";
 import PowerScoreArc from "@/components/PowerScoreArc";
 import BattleButton from "@/components/BattleButton";
 import ShareButton from "@/components/ShareButton";
+import { generateSpiderShareImage } from "@/lib/spiderShareImage";
+import { ensureShareCard } from "@/lib/ensureShareCard";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, ChevronRight, Star } from "lucide-react";
 import { format } from "date-fns";
@@ -34,6 +36,7 @@ interface Spider {
   created_at?: string;
   xp?: number;
   level?: number;
+  share_image_url?: string | null;
 }
 
 interface SpiderDetailsModalProps {
@@ -241,6 +244,32 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
                   hashtags={["SpiderLeague", "WebWarriors", spider.rarity, "SpiderCollection"]}
                   variant="outline"
                   size="default"
+                  imageFileName={`spider-league-${spider.nickname.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.png`}
+                  getShareImage={() =>
+                    generateSpiderShareImage({
+                      nickname: spider.nickname,
+                      species: spider.species,
+                      rarity: spider.rarity,
+                      powerScore: spider.power_score,
+                      imageUrl: spider.image_url,
+                    })
+                  }
+                  prepareShareUrl={async () => {
+                    const { shareUrl } = await ensureShareCard({
+                      kind: "spider",
+                      id: spider.id,
+                      existingImageUrl: spider.share_image_url ?? null,
+                      generate: () =>
+                        generateSpiderShareImage({
+                          nickname: spider.nickname,
+                          species: spider.species,
+                          rarity: spider.rarity,
+                          powerScore: spider.power_score,
+                          imageUrl: spider.image_url,
+                        }),
+                    });
+                    return shareUrl;
+                  }}
                 />
               </div>
             </div>
