@@ -83,11 +83,11 @@ const UserSnapshotModal: React.FC<UserSnapshotModalProps> = ({
   };
 
   const rarityColors = {
-    COMMON: "bg-gray-500",
-    UNCOMMON: "bg-green-500", 
-    RARE: "bg-blue-500",
-    EPIC: "bg-purple-500",
-    LEGENDARY: "bg-amber-500"
+    COMMON: "bg-rarity-common",
+    UNCOMMON: "bg-rarity-uncommon",
+    RARE: "bg-rarity-rare",
+    EPIC: "bg-rarity-epic",
+    LEGENDARY: "bg-rarity-legendary",
   };
 
   useEffect(() => {

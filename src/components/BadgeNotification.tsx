@@ -24,10 +24,10 @@ interface BadgeNotificationProps {
 
 
 const rarityColors = {
-  common: 'bg-gray-500',
-  rare: 'bg-blue-500', 
-  epic: 'bg-purple-500',
-  legendary: 'bg-amber-500'
+  common: 'bg-rarity-common',
+  rare: 'bg-rarity-rare',
+  epic: 'bg-rarity-epic',
+  legendary: 'bg-rarity-legendary',
 };
 
 export const BadgeNotification = ({ badge, isVisible, onDismiss }: BadgeNotificationProps) => {
