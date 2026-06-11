@@ -1,13 +1,15 @@
 import React from 'react';
 import BattleResultsNotification from '@/components/BattleResultsNotification';
 import GlobalHeader from '@/components/GlobalHeader';
-import FloatingHomeButton from '@/components/FloatingHomeButton';
+import AppTabs from '@/components/nav/AppTabs';
+import { useLocation } from 'react-router-dom';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const { pathname } = useLocation();
   return (
     <>
       <a
@@ -18,8 +20,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </a>
       <BattleResultsNotification />
       <GlobalHeader />
-      <main id="main-content">{children}</main>
-      <FloatingHomeButton />
+      <AppTabs pathname={pathname} />
+      <main id="main-content" className="pb-20 md:pb-0">{children}</main>
     </>
   );
 };
