@@ -8,6 +8,7 @@ export interface PodSwitcherItem {
   name: string;
   image_url?: string | null;
   member_count: number;
+  owner_id?: string;
 }
 
 interface PodSwitcherStripProps {

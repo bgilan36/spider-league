@@ -266,7 +266,7 @@ const PrivateLeagueDetail = () => {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          {inviteUrl && (
+          {(inviteUrl || isCommissioner) && (
             <Button variant="outline" size="lg" onClick={() => setInviteOpen(true)}>
               <Share2 className="h-4 w-4" />Invite
             </Button>
@@ -333,7 +333,14 @@ const PrivateLeagueDetail = () => {
             <DialogTitle>Invite friends to {league.name}</DialogTitle>
             <DialogDescription>Share this link in your group chat. No account needed until they choose to join.</DialogDescription>
           </DialogHeader>
-          {inviteUrl && <PrivateLeagueInvitePanel inviteUrl={inviteUrl} memberCount={members.length} hideHeader />}
+          <PrivateLeagueInvitePanel
+            inviteUrl={inviteUrl}
+            memberCount={members.length}
+            hideHeader
+            leagueId={leagueId}
+            canManage={isCommissioner}
+            onInviteGenerated={(token) => setInvite({ token })}
+          />
         </DialogContent>
       </Dialog>
 
