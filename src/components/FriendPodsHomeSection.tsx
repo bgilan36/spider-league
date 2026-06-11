@@ -308,6 +308,7 @@ const FriendPodsHomeSection = () => {
   const selectedPod = pods.find((p) => p.id === selectedId) || null;
   const isSolo = (selectedPod?.member_count ?? memberCountForPanel) <= 1;
   const inviteUrl = inviteToken ? `${window.location.origin}/join/${inviteToken}` : "";
+  const isOwner = !!user && !!selectedPod && selectedPod.owner_id === user.id;
 
   const openPicker = async () => {
     if (!selectedPod || !user) return;
@@ -419,13 +420,14 @@ const FriendPodsHomeSection = () => {
                 <p className="mb-3 text-sm text-muted-foreground">
                   Pods are way more fun with friends. Invite someone to join and start battling.
                 </p>
-                {inviteUrl ? (
-                  <PrivateLeagueInvitePanel inviteUrl={inviteUrl} memberCount={1} hideHeader />
-                ) : (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Loader2 className="h-3 w-3 animate-spin" /> Preparing invite link…
-                  </div>
-                )}
+                <PrivateLeagueInvitePanel
+                  inviteUrl={inviteUrl}
+                  memberCount={1}
+                  hideHeader
+                  leagueId={selectedPod?.id}
+                  canManage={isOwner}
+                  onInviteGenerated={(token) => setInviteToken(token)}
+                />
               </div>
             ) : (
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
