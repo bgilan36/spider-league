@@ -1026,6 +1026,26 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
           onBattleNow={() => handleUpload(undefined, { afterBattle: true })}
         />
       )}
+      {newSpeciesReveal && (
+        <NewSpeciesReveal
+          open={!!newSpeciesReveal}
+          commonName={newSpeciesReveal.commonName}
+          scientificName={newSpeciesReveal.scientificName}
+          imageUrl={newSpeciesReveal.imageUrl}
+          xpAwarded={newSpeciesReveal.xpAwarded}
+          badgeUnlocked={newSpeciesReveal.badgeUnlocked}
+          distinctSpecies={newSpeciesReveal.distinctSpecies}
+          onClose={() => {
+            const nav = newSpeciesReveal.nextNav;
+            setNewSpeciesReveal(null);
+            navigate("/", {
+              state: nav.afterBattle
+                ? { newSpiderId: nav.spiderId, autoBattle: true }
+                : { newSpiderId: nav.spiderId },
+            });
+          }}
+        />
+      )}
     </div>
   );
 };
