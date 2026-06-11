@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import FriendPodsHomeSection from "@/components/FriendPodsHomeSection";
 import { useAuth } from "@/auth/AuthProvider";
 import EmptyState from "@/components/EmptyState";
+import MyJoinRequestsPanel from "@/components/MyJoinRequestsPanel";
 
 const Pods: React.FC = () => {
   const { user } = useAuth();
@@ -46,7 +47,10 @@ const Pods: React.FC = () => {
             secondaryAction={{ label: "Browse Pods", to: "/pods/browse", icon: Compass }}
           />
         ) : (
-          <FriendPodsHomeSection />
+          <>
+            <MyJoinRequestsPanel />
+            <FriendPodsHomeSection />
+          </>
         )}
       </div>
     </div>
