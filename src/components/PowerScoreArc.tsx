@@ -28,7 +28,7 @@ const PowerScoreArc: React.FC<PowerScoreArcProps> = ({
       </div>
       {showLabel && (
         <div className={`${config.labelSize} text-muted-foreground font-medium`}>
-          Power Score
+          Power
         </div>
       )}
     </div>

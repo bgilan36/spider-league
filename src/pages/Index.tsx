@@ -131,11 +131,11 @@ const Index = () => {
   const isMobile = useIsMobile();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const rarityColors = {
-    COMMON: "bg-gray-500",
-    UNCOMMON: "bg-green-500",
-    RARE: "bg-blue-500",
-    EPIC: "bg-purple-500",
-    LEGENDARY: "bg-amber-500"
+    COMMON: "bg-rarity-common",
+    UNCOMMON: "bg-rarity-uncommon",
+    RARE: "bg-rarity-rare",
+    EPIC: "bg-rarity-epic",
+    LEGENDARY: "bg-rarity-legendary",
   };
 
   const normalizedTipAmount = useMemo(() => {
@@ -1306,7 +1306,7 @@ const Index = () => {
                         
                         <div className="text-right flex-shrink-0">
                           <div className="text-base sm:text-lg md:text-xl font-bold">{user.ranking_score ?? user.total_power_score}</div>
-                          <div className="text-[10px] sm:text-xs text-muted-foreground">Power + XP</div>
+                          <div className="text-[10px] sm:text-xs text-muted-foreground">Power</div>
                           <div className="text-[10px] sm:text-xs text-muted-foreground">
                             XP {user.experience_points ?? 0}
                           </div>

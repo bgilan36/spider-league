@@ -283,7 +283,7 @@ const ChallengeDetailsModal: React.FC<ChallengeDetailsModalProps> = ({
                       </div>
                       <div className="text-center">
                         <div className="text-2xl font-bold">{challenge.challenger_spider.power_score}</div>
-                        <div className="text-xs text-muted-foreground">Power Score</div>
+                        <div className="text-xs text-muted-foreground">Power</div>
                       </div>
                     </div>
                   )}
