@@ -305,6 +305,21 @@ const BattleArena: React.FC<BattleArenaProps> = ({
           />
         </div>
 
+        {/* Cinematic Arena */}
+        <CombatStage
+          me={{
+            name: spider1.nickname, imageUrl: spider1.image_url, maxHp: spider1.hit_points,
+            stats: { damage: spider1.damage, speed: spider1.speed, venom: spider1.venom, webcraft: spider1.webcraft },
+          }}
+          opp={{
+            name: spider2.nickname, imageUrl: spider2.image_url, maxHp: spider2.hit_points,
+            stats: { damage: spider2.damage, speed: spider2.speed, venom: spider2.venom, webcraft: spider2.webcraft },
+          }}
+          myHp={spider1Health}
+          oppHp={spider2Health}
+          events={events}
+        />
+
         {/* Battle Log */}
         <Card>
           <CardHeader>
