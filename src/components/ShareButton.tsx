@@ -35,6 +35,14 @@ interface ShareButtonProps {
    */
   getShareImage?: () => Promise<Blob | null>;
   imageFileName?: string;
+  /**
+   * Optional async hook called once on first share action. Returns the
+   * canonical, crawler-friendly URL that should be embedded in links so
+   * iMessage / WhatsApp / Slack unfurl the proper card. Used together
+   * with the og-card edge function. If it returns null, falls back to
+   * the `url` prop.
+   */
+  prepareShareUrl?: () => Promise<string | null>;
 }
 
 const ShareButton: React.FC<ShareButtonProps> = ({
@@ -46,26 +54,37 @@ const ShareButton: React.FC<ShareButtonProps> = ({
   size = "default",
   getShareImage,
   imageFileName = "spider-league.png",
+  prepareShareUrl,
 }) => {
   const [copied, setCopied] = useState(false);
   const [busyImage, setBusyImage] = useState(false);
   const { toast } = useToast();
 
-  const shareData = {
-    title,
-    text,
-    url
+  // Lazily resolve the share URL once, then memoize it for subsequent
+  // actions in the same dropdown session.
+  const resolvedUrlRef = React.useRef<string | null>(null);
+  const resolveUrl = async (): Promise<string> => {
+    if (resolvedUrlRef.current) return resolvedUrlRef.current;
+    if (prepareShareUrl) {
+      try {
+        const u = await prepareShareUrl();
+        if (u) {
+          resolvedUrlRef.current = u;
+          return u;
+        }
+      } catch (e) {
+        console.warn("prepareShareUrl failed", e);
+      }
+    }
+    resolvedUrlRef.current = url;
+    return url;
   };
 
-  const encodedText = encodeURIComponent(`${text}\n\n${url}`);
-  const encodedTitle = encodeURIComponent(title);
-  const encodedUrl = encodeURIComponent(url);
-  const hashtagString = hashtags.map(tag => `#${tag}`).join(' ');
-
   const handleNativeShare = async () => {
+    const shareUrl = await resolveUrl();
     if (navigator.share) {
       try {
-        await navigator.share(shareData);
+        await navigator.share({ title, text: `${text}\n\n${shareUrl}`, url: shareUrl });
         toast({
           title: "Shared successfully!",
           description: "Thanks for spreading the Spider League love! 🕷️",
@@ -80,12 +99,13 @@ const ShareButton: React.FC<ShareButtonProps> = ({
     if (!getShareImage) return;
     setBusyImage(true);
     try {
+      const shareUrl = await resolveUrl();
       const blob = await getShareImage();
       if (!blob) throw new Error("Could not generate image");
       const file = new File([blob], imageFileName, { type: blob.type || "image/png" });
       const nav: any = navigator;
       if (nav.canShare && nav.canShare({ files: [file] }) && nav.share) {
-        await nav.share({ files: [file], title, text: `${text}\n\n${url}` });
+        await nav.share({ files: [file], title, text: `${text}\n\n${shareUrl}` });
         toast({ title: "Shared!", description: "Battle card on its way 🕷️" });
       } else {
         // Fallback: trigger download so the user can post it manually.
@@ -133,7 +153,8 @@ const ShareButton: React.FC<ShareButtonProps> = ({
 
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(url);
+      const shareUrl = await resolveUrl();
+      await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
       toast({
@@ -149,17 +170,20 @@ const ShareButton: React.FC<ShareButtonProps> = ({
     }
   };
 
-  const shareUrls = {
-    twitter: `https://twitter.com/intent/tweet?text=${encodedText}&hashtags=${hashtags.join(',')}&via=SpiderLeague`,
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedText}`,
-    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}&title=${encodedTitle}&summary=${encodedText}`,
-    whatsapp: `https://wa.me/?text=${encodedText}`,
-    telegram: `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`,
-    sms: `sms:?body=${encodedText}`,
-    email: `mailto:?subject=${encodedTitle}&body=${encodedText}`
-  };
-
-  const openShareUrl = (platform: keyof typeof shareUrls) => {
+  const openShareUrl = async (platform: "twitter" | "facebook" | "linkedin" | "whatsapp" | "telegram" | "sms" | "email") => {
+    const shareUrl = await resolveUrl();
+    const encodedText = encodeURIComponent(`${text}\n\n${shareUrl}`);
+    const encodedTitle = encodeURIComponent(title);
+    const encodedUrl = encodeURIComponent(shareUrl);
+    const shareUrls = {
+      twitter: `https://twitter.com/intent/tweet?text=${encodedText}&hashtags=${hashtags.join(',')}&via=SpiderLeague`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedText}`,
+      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}&title=${encodedTitle}&summary=${encodedText}`,
+      whatsapp: `https://wa.me/?text=${encodedText}`,
+      telegram: `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`,
+      sms: `sms:?body=${encodedText}`,
+      email: `mailto:?subject=${encodedTitle}&body=${encodedText}`,
+    } as const;
     window.open(shareUrls[platform], '_blank', 'width=600,height=400');
     toast({
       title: "Opening share window...",
