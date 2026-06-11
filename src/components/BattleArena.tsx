@@ -255,56 +255,6 @@ const BattleArena: React.FC<BattleArenaProps> = ({
           </p>
         </div>
 
-        {/* Battle Display */}
-        <div className="grid md:grid-cols-3 gap-6 items-center">
-          {/* Spider 1 */}
-          <SpiderBattleCard
-            spider={spider1}
-            health={spider1Health}
-            maxHealth={spider1.hit_points}
-            diceRolls={diceRolls.spider1}
-            animating={animatingDice}
-            isWinner={winner?.id === spider1.id}
-            ownerName={challenger}
-          />
-
-          {/* VS Section */}
-          <div className="text-center space-y-4">
-            <div className="text-6xl font-bold text-primary">VS</div>
-            
-            {battleState === 'rolling' && (
-              <div className="flex justify-center items-center gap-2">
-                <Zap className="w-6 h-6 animate-pulse text-yellow-500" />
-                <span className="text-lg font-medium">Rolling dice...</span>
-                <Zap className="w-6 h-6 animate-pulse text-yellow-500" />
-              </div>
-            )}
-            
-            {battleState === 'calculating' && (
-              <div className="text-lg font-medium text-orange-500">
-                Calculating damage...
-              </div>
-            )}
-
-            {winner && (
-              <div className="text-2xl font-bold text-green-500 animate-pulse">
-                {winner.nickname} WINS!
-              </div>
-            )}
-          </div>
-
-          {/* Spider 2 */}
-          <SpiderBattleCard
-            spider={spider2}
-            health={spider2Health}
-            maxHealth={spider2.hit_points}
-            diceRolls={diceRolls.spider2}
-            animating={animatingDice}
-            isWinner={winner?.id === spider2.id}
-            ownerName={accepter}
-          />
-        </div>
-
         {/* Cinematic Arena */}
         <CombatStage
           me={{
@@ -319,6 +269,27 @@ const BattleArena: React.FC<BattleArenaProps> = ({
           oppHp={spider2Health}
           events={events}
         />
+
+        {/* Compact stat strip — owners + dice + winner callout */}
+        <div className="grid grid-cols-2 gap-4 text-center text-sm">
+          <div className="space-y-1">
+            <div className="text-xs text-muted-foreground">Owner: {challenger}</div>
+            <div className="flex justify-center gap-1">
+              {diceRolls.spider1.map((r, i) => <DiceIcon key={i} value={r} />)}
+            </div>
+          </div>
+          <div className="space-y-1">
+            <div className="text-xs text-muted-foreground">Owner: {accepter}</div>
+            <div className="flex justify-center gap-1">
+              {diceRolls.spider2.map((r, i) => <DiceIcon key={i} value={r} />)}
+            </div>
+          </div>
+        </div>
+        {winner && (
+          <div className="text-center text-2xl font-bold text-green-500 animate-pulse">
+            {winner.nickname} WINS!
+          </div>
+        )}
 
         {/* Battle Log */}
         <Card>
