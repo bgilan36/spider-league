@@ -7,6 +7,8 @@ import ClickableUsername from "@/components/ClickableUsername";
 import SpiderDetailsModal from "@/components/SpiderDetailsModal";
 import { Sparkles } from "lucide-react";
 import InstantBattleButton from "@/components/InstantBattleButton";
+import SpiderPhoto from "@/components/visual/SpiderPhoto";
+import RarityBadge from "@/components/visual/RarityBadge";
 
 interface Spider {
   id: string;
