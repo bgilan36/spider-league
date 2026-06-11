@@ -55,6 +55,8 @@ export default function CombatStage({
   const runningRef = useRef(false);
   const timersRef = useRef<number[]>([]);
   const skippedRef = useRef(false);
+  const eventsRef = useRef<CombatEvent[]>(events);
+  useEffect(() => { eventsRef.current = events; }, [events]);
 
   const clearTimers = () => {
     timersRef.current.forEach((t) => window.clearTimeout(t));
@@ -72,24 +74,17 @@ export default function CombatStage({
     if (playedRef.current >= events.length) return;
     if (runningRef.current) return;       // already animating; new events will be picked up after current loop finishes
     runningRef.current = true;
-    let cursor = playedRef.current;
 
     const playNext = () => {
       if (skippedRef.current) { runningRef.current = false; return; }
-      if (cursor >= events.length) {
+      const list = eventsRef.current;
+      if (playedRef.current >= list.length) {
         runningRef.current = false;
-        // In case more events were appended while we were animating, kick a new loop.
-        if (playedRef.current < events.length) {
-          runningRef.current = true;
-          cursor = playedRef.current;
-          playNext();
-        }
         return;
       }
-      const ev = events[cursor];
-      const idx = cursor;
-      cursor += 1;
-      playedRef.current = cursor;
+      const idx = playedRef.current;
+      const ev = list[idx];
+      playedRef.current = idx + 1;
       playEvent(ev, () => {
         onEventComplete?.(idx);
         playNext();
