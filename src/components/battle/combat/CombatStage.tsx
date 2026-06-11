@@ -52,6 +52,7 @@ export default function CombatStage({
 
   // Mark which event indices we've consumed so we don't double-play.
   const playedRef = useRef(0);
+  const runningRef = useRef(false);
   const timersRef = useRef<number[]>([]);
   const skippedRef = useRef(false);
 
@@ -69,11 +70,22 @@ export default function CombatStage({
   // Whenever new events arrive, schedule them in sequence.
   useEffect(() => {
     if (playedRef.current >= events.length) return;
+    if (runningRef.current) return;       // already animating; new events will be picked up after current loop finishes
+    runningRef.current = true;
     let cursor = playedRef.current;
 
     const playNext = () => {
-      if (skippedRef.current) return;
-      if (cursor >= events.length) return;
+      if (skippedRef.current) { runningRef.current = false; return; }
+      if (cursor >= events.length) {
+        runningRef.current = false;
+        // In case more events were appended while we were animating, kick a new loop.
+        if (playedRef.current < events.length) {
+          runningRef.current = true;
+          cursor = playedRef.current;
+          playNext();
+        }
+        return;
+      }
       const ev = events[cursor];
       const idx = cursor;
       cursor += 1;
