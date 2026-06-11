@@ -44,10 +44,13 @@ export default function StancePicker({
                 const active = attack === s.id;
                 return (
                   <Card key={s.id}
-                    onClick={() => setAttack(s.id as AttackStance)}
+                    role="button"
+                    tabIndex={0}
+                    onPointerDown={(e) => { e.preventDefault(); setAttack(s.id as AttackStance); }}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setAttack(s.id as AttackStance); } }}
                     className={cn(
-                      "p-3 cursor-pointer transition border-2",
-                      active ? "border-primary bg-primary/10" : "border-transparent hover:border-border",
+                      "p-3 cursor-pointer transition border-2 select-none touch-manipulation active:scale-[0.98]",
+                      active ? "border-primary bg-primary/10" : "border-transparent sm:hover:border-border",
                     )}
                   >
                     <div className="flex items-center gap-2 mb-1">
@@ -69,10 +72,13 @@ export default function StancePicker({
                 const active = defense === s.id;
                 return (
                   <Card key={s.id}
-                    onClick={() => setDefense(s.id as DefenseStance)}
+                    role="button"
+                    tabIndex={0}
+                    onPointerDown={(e) => { e.preventDefault(); setDefense(s.id as DefenseStance); }}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setDefense(s.id as DefenseStance); } }}
                     className={cn(
-                      "p-3 cursor-pointer transition border-2",
-                      active ? "border-primary bg-primary/10" : "border-transparent hover:border-border",
+                      "p-3 cursor-pointer transition border-2 select-none touch-manipulation active:scale-[0.98]",
+                      active ? "border-primary bg-primary/10" : "border-transparent sm:hover:border-border",
                     )}
                   >
                     <div className="flex items-center gap-2 mb-1">
