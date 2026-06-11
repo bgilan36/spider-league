@@ -1,7 +1,7 @@
 import React from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Users } from "lucide-react";
+import { ArrowLeft, Trophy, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import FriendPodsHomeSection from "@/components/FriendPodsHomeSection";
 import { useAuth } from "@/auth/AuthProvider";
