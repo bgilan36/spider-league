@@ -88,7 +88,7 @@ const FriendPodsHomeSection = () => {
     setLoading(true);
     const { data: memberships } = await (supabase as any)
       .from("private_league_members")
-      .select("league_id, private_leagues!inner(id, name, is_active, image_url)")
+      .select("league_id, private_leagues!inner(id, name, is_active, image_url, owner_id)")
       .eq("user_id", user.id);
 
     const active = (memberships || [])
@@ -97,6 +97,7 @@ const FriendPodsHomeSection = () => {
         id: m.private_leagues.id,
         name: m.private_leagues.name,
         image_url: m.private_leagues.image_url,
+        owner_id: m.private_leagues.owner_id,
       }));
 
     if (active.length === 0) {
@@ -119,6 +120,7 @@ const FriendPodsHomeSection = () => {
       name: l.name,
       image_url: l.image_url,
       member_count: countMap.get(l.id) || 1,
+      owner_id: l.owner_id,
     }));
 
     setPods(items);
