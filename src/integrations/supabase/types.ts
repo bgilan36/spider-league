@@ -1141,6 +1141,42 @@ export type Database = {
         }
         Relationships: []
       }
+      species_collected: {
+        Row: {
+          best_power: number
+          best_spider_id: string
+          common_name: string
+          count: number
+          first_caught_at: string
+          first_spider_id: string
+          species_slug: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          best_power?: number
+          best_spider_id: string
+          common_name: string
+          count?: number
+          first_caught_at?: string
+          first_spider_id: string
+          species_slug: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          best_power?: number
+          best_spider_id?: string
+          common_name?: string
+          count?: number
+          first_caught_at?: string
+          first_spider_id?: string
+          species_slug?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       spider_of_the_day: {
         Row: {
           created_at: string
@@ -1631,6 +1667,14 @@ export type Database = {
         Returns: boolean
       }
       claim_private_league_invite: { Args: { token: string }; Returns: Json }
+      claim_species_for_spider: {
+        Args: {
+          p_common_name: string
+          p_species_slug: string
+          p_spider_id: string
+        }
+        Returns: Json
+      }
       cleanup_stale_presence: { Args: never; Returns: undefined }
       create_private_league_with_invite: {
         Args: { name: string }
