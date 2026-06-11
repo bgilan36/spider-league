@@ -1,123 +1,133 @@
-# Cinematic Battle Scene
+# SpiderDex Collection Book
 
-Turn the battle screen from "dice + HP bars" into a fight where the spiders visibly move, attack, and react. Same module powers live turn-based battles, auto-battles, and replays.
+A species-level companion to the existing per-spider collection: catalog every species the user has ever uploaded (active + retired), reward first-catches, and reward roster diversity.
 
-## Where it lives
+## Data
 
+### New tables (migration)
+
+```text
+species_collected
+  user_id          uuid    (auth.users)
+  species_slug     text    canonical key (e.g. "southern_black_widow")
+  first_caught_at  timestamptz
+  first_spider_id  uuid    -> spiders.id
+  count            int     total ever uploaded of this species
+  best_power       int     max power_score across history
+  best_spider_id   uuid    -> spiders.id (drives the dex card photo)
+  PK (user_id, species_slug)
 ```
-src/components/battle/
-  CombatStage.tsx            ← NEW. The arena: tokens, lunges, particles, FX.
-  FighterToken.tsx           ← NEW. Circular masked photo + state (idle/hit/dead/winner).
-  DamageFloat.tsx            ← NEW. Floating numbers, CRIT, MISS tags.
-  HpBar.tsx                  ← NEW. Smooth drain + ghost trail + heartbeat pulse.
-  effects/
-    FangStrike.tsx           ← venom: green particles + lingering poison tick.
-    WebShot.tsx              ← webcraft: silk strands + WRAPPED chip.
-    SpeedBlur.tsx            ← speed: afterimage double-strike.
-    HeavySlam.tsx            ← damage: starburst + screen shake.
-  combatFx.ts                ← NEW. Pure helpers: pickAttackStyle(stats), reduced-motion check, timing constants.
-```
 
-A new `<CombatStage>` is the only piece needed by callers. It accepts:
+Three new rows in `badges`:
+- **Naturalist** (rare, 5 species)
+- **Field Researcher** (epic, 10 species)
+- **Spider Curator** (legendary, 25 species)
+
+### Canonical species reference
+
+`src/lib/spiderDex/species.ts` exports `SPECIES_DEX` — a hand-curated list of ~40 common North American spiders. Each entry:
 
 ```ts
-{ mySpider, opponentSpider, myHp, opponentHp,
-  events: CombatEvent[],   // attacker, defender, damage, crit, dodged, finisher
-  onEventComplete?: (i) => void,
-  onSkip?: () => void,     // shows the Skip button when provided
-  reducedMotion?: boolean  // overrides prefers-reduced-motion if needed
+{
+  slug: "southern_black_widow",
+  commonName: "Southern Black Widow",
+  scientificName: "Latrodectus mactans",
+  family: "Theridiidae",
+  rarity: "uncommon",            // dex display rarity
+  region: "North America",
+  hint: "Often found in woodpiles and dim corners.",
+  silhouettePalette: ["#0a0a0a","#7f1d1d"],
+  aliases: ["black widow", "Latrodectus mactans"]
 }
 ```
 
-Events are consumed one at a time; the stage drives all animations, then fires `onEventComplete` so the host can advance the recap.
+`matchSpeciesSlug(raw: string): string | null` — normalizes a user-typed species (case/punctuation/parenthetical-stripped) and matches against `aliases` + `commonName` + `scientificName`. Falls back to `null` for unknowns (those still get a dex card under a "Wild Catches" section, but don't count toward the common-species progress).
 
-## Wire-in points
+## RPC: `claim_species_for_spider(spider_id uuid)`
 
-```text
-src/components/battle/InteractiveBattleArena.tsx   ← live turn battle
-   replaces the current static spider-headers row.
-   Each new completed turn pushes an event onto a local queue.
+Security-definer, public, callable from the upload flow:
 
-src/components/BattleArena.tsx                     ← auto-battle / quick battle
-   replaces the bespoke dice-and-HP scene with <CombatStage>
-   playing one event per round at a metered pace.
+1. Resolve owning user; reject if caller isn't owner.
+2. Compute `species_slug` from `spiders.species`.
+3. Upsert `species_collected` (incrementing `count`, updating `best_power`/`best_spider_id` when this spider beats the current best).
+4. If the row was newly inserted **and** the spider is approved:
+   - `update profiles set xp = xp + 50`
+   - Check badge thresholds (5/10/25 distinct species) and insert `user_badges` rows for any newly crossed.
+   - Return `{ new_species: true, xp_awarded: 50, badge_unlocked: text|null, species_slug, common_name }`.
+5. Otherwise return `{ new_species: false, count, best_power }`.
 
-src/components/BattleDetailsModal.tsx              ← replay
-   if the battle has battle_log.turns, build the event list
-   and play it inside <CombatStage> with a Skip-to-end button.
+## Upload integration
 
-src/components/BattleRecapModal.tsx                ← post-battle recap
-   reuses <CombatStage> to replay the final 1-3 hits + finisher.
-```
+`src/pages/SpiderUpload.tsx` (and any other path that creates a spider — `create-starter-spider` edge function for the starter) calls `claim_species_for_spider(id)` right after the row is created/approved. The starter spider edge function calls the RPC via the service role; the user-facing flow calls it via the supabase client.
 
-The existing `SkillMeter`, dice readout, and victory share card stay where they are — the new stage replaces only the visual arena.
+When the RPC reports `new_species: true`, the upload success screen plays the **New Species reveal**: a holographic dex-page flip with the species name, silhouette → photo dissolve, "+50 XP" tick-up, and (if applicable) badge unlock toast.
 
-## Attack style → stat mapping
+## SpiderDex page
 
-`pickAttackStyle(spider)` returns the dominant style from `{venom, webcraft, speed, damage}` (highest stat, ties broken venom > webcraft > speed > damage):
+Route: `/dex` — added to `App.tsx` and to `GlobalHeader` (and as a dashboard tile on `/`).
 
-| Style       | Trigger stat | Visuals |
-| ----------- | ------------ | ------- |
-| `fang`      | venom        | Lunge → fang glint → green droplet particles → 3-tick poison drip on defender HP bar (small dmg per second for 2s) |
-| `web`       | webcraft     | Silk strands shoot from attacker, wrap defender, `WRAPPED` chip for 1.5s, defender wobble |
-| `blur`      | speed        | Attacker dashes with afterimage trail, hits twice (two damage floats back-to-back) |
-| `slam`      | damage       | Heavy lunge → impact starburst → screen shake + dust particles |
-
-Every style still uses the lunge → strike → snap-back base motion; the style only swaps the strike FX + post-hit overlay.
-
-## Per-hit choreography (~800ms baseline)
+Page sections (all in `src/pages/SpiderDex.tsx`):
 
 ```text
- 0ms   attacker token: ease-in translate toward defender + scale 1 → 1.15
-180ms  strike frame: style-specific FX overlay fires
-220ms  defender: red flash + shake(8px) + knockback translate
-240ms  damage float spawns above defender, rises 40px, fades
-320ms  attacker: snap back to home (ease-out)
-500ms  HP bar drains smoothly to new value; ghost trail lags 250ms behind
-800ms  onEventComplete()
+1. Header
+   "SpiderDex — 12/40 common species"   progress bar
+   Sub-stat row: distinct species ever caught, retired memorials, total catches
 
-CRIT: extend to 1100ms; damage float is larger + gold; global time
-       dilation slows next 200ms to 0.5x via CSS animation-duration.
+2. Filter bar
+   [All] [Caught] [Uncaught] [Retired only]   + search
 
-DODGE: skip strike + damage; defender does a 120ms sidestep,
-       'MISS!' tag floats above attacker.
+3. Grid (responsive 2/3/5 cols)
+   • Caught card: real photo (best_spider), common name, scientific (small),
+     count chip, "Best ★ <power>", rarity tag. Click → species detail modal.
+   • Uncaught card: black silhouette over palette gradient, "???" + hint line.
+   • Retired-only badge: subtle "Memorialized" ribbon if every caught spider
+     of this species has eligible_until in the past.
+
+4. Wild Catches section (unknown-to-dex species)
+   Smaller cards for anything that didn't match a canonical slug.
 ```
 
-## Juice details
+### Species detail modal
 
-- HP drain: `<HpBar>` keeps two layered bars — the front bar tweens immediately, the back "ghost" bar tweens with `transition-delay: 250ms` so the recent damage is visible as a fading sliver.
-- Heartbeat: when either side ≤ 25% HP, both HP bars get `animate-[heartbeat_1.2s_ease-in-out_infinite]` and the stage gets a dimming vignette via a fixed inset overlay with radial gradient.
-- Damage numbers: portal-rendered absolute spans above the defender token, animated with framer-motion (transform + opacity only).
-- Web background: subtle SVG cobweb pattern at 6% opacity behind the tokens; dust particles only spawn on slam impacts (8 transient divs, transform-only, GC'd at end of animation).
+Opens from a dex card. Shows every spider the user has ever caught of that species, sorted by power, each with its final stats and battle record (wins/losses from `battles`). Retired spiders sit alongside active ones with a "Retired" badge — never deleted.
 
-## Finisher
+## Diversity bonus (leaderboard)
 
-When the event marks `finisher: true`:
+`src/pages/Leaderboard.tsx` already computes weekly user rankings client-side from `spiders` rows within the week's window. Modify the aggregation to also count `distinctSpeciesSlugs.size` per user (via `matchSpeciesSlug`), then apply:
 
-1. Stage swaps to slow-mo (CSS var `--combat-speed: 0.5`).
-2. Full-screen white flash (200ms opacity 0→0.6→0).
-3. Loser token rotates 35° + translates 12px down + filter grayscale(1) over 600ms; HP bar empties fully.
-4. Winner token does a single scale 1 → 1.1 → 1 pulse with a soft golden glow.
-5. After 1200ms, existing victory card slides in (unchanged content).
+```ts
+ranking_score = Math.round(
+  (week_power_score + experience_points) * (1 + 0.05 * distinct_species)
+);
+```
 
-## Performance + accessibility
+Render a small "× 1.15 diversity" chip next to the score when bonus > 0, so the reward is visible.
 
-- Animations only use `transform`, `opacity`, and `filter`. Heartbeat uses transform-only. No layout reads in the per-frame loop.
-- All FX componenets unmount after their animation ends (`onAnimationComplete`) so the DOM stays small.
-- `combatFx.ts` exports `useReducedMotion()` (matchMedia hook); when true:
-  - Tokens fade in/out instead of moving.
-  - Damage numbers appear and fade with no rise.
-  - No screen shake, no particles, no time dilation.
-  - Finisher = fade winner to bright, loser to gray, then card.
-- The Skip button is always rendered in the top-right of `<CombatStage>` when `onSkip` is provided, even mid-animation. Hitting it cancels in-flight timers and flushes `onEventComplete` for all remaining events.
+## Badge wiring
 
-## Tech choices
+The three new badges are seeded in the migration. The RPC inserts `user_badges` when thresholds cross; the existing badges page picks them up automatically since it reads from `user_badges`.
 
-- Framer Motion is already in the dep tree (used elsewhere) — used for token tweens, damage floats, finisher orchestration.
-- No new runtime deps. SVG cobweb + particle divs are inline.
-- Timing constants live in `combatFx.ts` so the recap modal can run the same sequence at a faster pace.
+## Files
+
+```text
+NEW  src/lib/spiderDex/species.ts            canonical list + matcher
+NEW  src/lib/spiderDex/useSpeciesProgress.ts hook: collected map + counts
+NEW  src/pages/SpiderDex.tsx                 grid + filters + progress header
+NEW  src/components/dex/SpeciesCard.tsx      caught/silhouette card
+NEW  src/components/dex/SpeciesDetailModal.tsx  history of catches per species
+NEW  src/components/dex/NewSpeciesReveal.tsx animated dex-page reveal overlay
+
+EDIT src/App.tsx                             add /dex route
+EDIT src/components/GlobalHeader.tsx         add SpiderDex link
+EDIT src/pages/SpiderUpload.tsx              call RPC + show reveal on new
+EDIT supabase/functions/create-starter-spider/index.ts  call RPC service-side
+EDIT src/pages/Leaderboard.tsx               apply diversity multiplier
+
+MIG  species_collected table + grants + RLS + RPC + 3 new badges
+```
 
 ## Out of scope (callable in follow-ups)
 
-- New backend fields on `battles`. The stage reads what's already in `battle_log` / turn `result_payload` (attacker_name, defender_name, damage, is_critical, dodged). Where the server doesn't currently mark a finisher, the stage infers it from "defender HP after this hit ≤ 0".
-- Sound. Easy to layer on later — `combatFx.ts` exposes a no-op `playSfx(name)`.
+- Push-notifying friends when you complete the dex.
+- Region selectors beyond North America.
+- A dex-wide share card (the existing per-spider share already covers a "look what I caught" moment).
