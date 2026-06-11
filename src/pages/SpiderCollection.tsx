@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/components/ui/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trophy, Zap, Shield, Target, Droplet, Globe, ArrowUpDown, Swords, RefreshCcw, Upload } from "lucide-react";
+import { Plus, Trophy, Zap, Shield, Target, Droplet, Globe, ArrowUpDown, Swords, RefreshCcw, Upload, Bug, Camera } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
 import PowerScoreArc from "@/components/PowerScoreArc";
@@ -19,6 +19,7 @@ import ActiveSpiders from "@/components/ActiveSpiders";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { useIsMobile } from "@/hooks/use-mobile";
+import EmptyState from "@/components/EmptyState";
 interface Spider {
   id: string;
   nickname: string;
@@ -510,17 +511,13 @@ const SpiderCollection = () => {
         </div>
 
         {spiders.length === 0 && fallenHeroes.length === 0 ? (
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <p className="text-muted-foreground mb-4">You haven't uploaded any spiders yet.</p>
-              <Button asChild>
-                <Link to="/upload">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Upload Your First Spider
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={Bug}
+            title="No Spiders Yet"
+            description="Snap a photo of any spider you find — we'll identify the species, roll its stats, and you can throw it into the arena."
+            primaryAction={{ label: "Upload Your First Spider", to: "/upload", icon: Camera }}
+            secondaryAction={{ label: "Browse the SpiderDex", to: "/dex" }}
+          />
         ) : (
           <>
             {/* Starting 5 — active battle roster (upload or re-enlist retired spiders here) */}
