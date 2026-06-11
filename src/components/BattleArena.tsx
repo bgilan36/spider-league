@@ -6,6 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Dice1, Dice2, Dice3, Dice4, Dice5, Dice6, Zap, Heart, Shield, Skull } from 'lucide-react';
 import BattleRecapModal from './BattleRecapModal';
+import CombatStage from './battle/combat/CombatStage';
+import type { CombatEvent } from './battle/combat/combatFx';
 
 interface Spider {
   id: string;
@@ -57,6 +59,8 @@ const BattleArena: React.FC<BattleArenaProps> = ({
   const [animatingDice, setAnimatingDice] = useState(false);
   const [showRecapModal, setShowRecapModal] = useState(false);
   const [battleId, setBattleId] = useState<string>('');
+  // Cinematic queue: every completed round appends 1-2 events.
+  const [events, setEvents] = useState<CombatEvent[]>([]);
 
   // Battle calculation function
   const calculateBattleRound = () => {
@@ -97,6 +101,27 @@ const BattleArena: React.FC<BattleArenaProps> = ({
     // Add to battle log
     const logEntry = `Round ${currentRound}: ${spider1.nickname} dealt ${damageToSpider2} damage, ${spider2.nickname} dealt ${damageToSpider1} damage`;
     setBattleLog(prev => [...prev, logEntry]);
+
+    // Push cinematic events: spider1 strikes spider2, then spider2 strikes spider1.
+    // Finisher flag goes on whichever blow drops HP to 0.
+    const newEvents: CombatEvent[] = [];
+    if (damageToSpider2 > 0) {
+      newEvents.push({
+        attacker: "me",
+        damage: damageToSpider2,
+        crit: damageToSpider2 >= 18,
+        finisher: newSpider2Health <= 0,
+      });
+    }
+    if (damageToSpider1 > 0 && newSpider2Health > 0) {
+      newEvents.push({
+        attacker: "opp",
+        damage: damageToSpider1,
+        crit: damageToSpider1 >= 18,
+        finisher: newSpider1Health <= 0,
+      });
+    }
+    setEvents((prev) => [...prev, ...newEvents]);
 
     // Check for winner
     if (newSpider1Health <= 0 && newSpider2Health <= 0) {
