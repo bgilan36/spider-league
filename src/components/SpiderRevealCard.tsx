@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import PowerScoreArc from "@/components/PowerScoreArc";
 import { Progress } from "@/components/ui/progress";
 import ShareButton from "@/components/ShareButton";
+import { generateSpiderShareImage } from "@/lib/spiderShareImage";
 import { useAuth } from "@/auth/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -315,6 +316,17 @@ const SpiderRevealCard = ({
                   text={`🕷️ Just recruited ${nickname} (${species}) — ${stats.rarity} • ${stats.power_score} Power. Strongest stat: ${strongest.label} ${strongest.value}. Join me on Spider League!`}
                   variant="outline"
                   size="default"
+                  imageFileName={`spider-league-${nickname.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.png`}
+                  getShareImage={() =>
+                    generateSpiderShareImage({
+                      nickname,
+                      species,
+                      rarity: stats.rarity,
+                      powerScore: stats.power_score,
+                      imageUrl: previewUrl || "",
+                      tagline: "Upload your spider. Battle for glory. spiderleague.app",
+                    })
+                  }
                 />
               </div>
             </div>

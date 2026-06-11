@@ -220,6 +220,7 @@ export type Database = {
           p1_current_hp: number | null
           p2_current_hp: number | null
           rng_seed: string
+          share_image_url: string | null
           stakes_type: string
           stances: Json
           team_a: Json
@@ -242,6 +243,7 @@ export type Database = {
           p1_current_hp?: number | null
           p2_current_hp?: number | null
           rng_seed: string
+          share_image_url?: string | null
           stakes_type?: string
           stances?: Json
           team_a: Json
@@ -264,6 +266,7 @@ export type Database = {
           p1_current_hp?: number | null
           p2_current_hp?: number | null
           rng_seed?: string
+          share_image_url?: string | null
           stakes_type?: string
           stances?: Json
           team_a?: Json
@@ -1265,6 +1268,7 @@ export type Database = {
           power_score: number
           rarity: Database["public"]["Enums"]["spider_rarity"]
           rng_seed: string
+          share_image_url: string | null
           special_attacks: Json | null
           species: string
           speed: number
@@ -1294,6 +1298,7 @@ export type Database = {
           power_score?: number
           rarity?: Database["public"]["Enums"]["spider_rarity"]
           rng_seed: string
+          share_image_url?: string | null
           special_attacks?: Json | null
           species?: string
           speed: number
@@ -1323,6 +1328,7 @@ export type Database = {
           power_score?: number
           rarity?: Database["public"]["Enums"]["spider_rarity"]
           rng_seed?: string
+          share_image_url?: string | null
           special_attacks?: Json | null
           species?: string
           speed?: number

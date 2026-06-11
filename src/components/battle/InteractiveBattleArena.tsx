@@ -14,6 +14,7 @@ import SkillMeter from "./SkillMeter";
 import DiceDisplay from "./DiceDisplay";
 import ShareButton from "@/components/ShareButton";
 import { generateBattleShareImage } from "@/lib/battleShareImage";
+import { ensureShareCard } from "@/lib/ensureShareCard";
 import { useConfetti } from "@/hooks/useConfetti";
 import { invalidatePodStandings } from "@/hooks/usePodStandings";
 import {
@@ -314,6 +315,24 @@ export default function InteractiveBattleArena({ battleId }: Props) {
                       tagline: "Upload your spider. Battle for glory. spiderleague.app",
                     })
                   }
+                  prepareShareUrl={async () => {
+                    const { shareUrl } = await ensureShareCard({
+                      kind: "battle",
+                      id: battle.id,
+                      existingImageUrl: (battle as any).share_image_url ?? null,
+                      generate: () =>
+                        generateBattleShareImage({
+                          iWon: true, // store the winner's perspective
+                          rounds: battle.turn_count || 0,
+                          winnerName: iWon ? mySpider.nickname : opponentSpider.nickname,
+                          winnerImageUrl: iWon ? mySpider.image_url : opponentSpider.image_url,
+                          loserName: iWon ? opponentSpider.nickname : mySpider.nickname,
+                          loserImageUrl: iWon ? opponentSpider.image_url : mySpider.image_url,
+                          tagline: "Spider League — spiderleague.app",
+                        }),
+                    });
+                    return shareUrl;
+                  }}
                 />
               </div>
             </CardContent>
