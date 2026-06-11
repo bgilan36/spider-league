@@ -1681,6 +1681,10 @@ export type Database = {
         Returns: Json
       }
       gen_random_bytes: { Args: { length: number }; Returns: string }
+      generate_pod_invite: {
+        Args: { p_deactivate_others?: boolean; p_league_id: string }
+        Returns: Json
+      }
       get_current_pt_week_end: { Args: never; Returns: string }
       get_current_pt_week_start: { Args: never; Returns: string }
       get_current_week: { Args: never; Returns: string }
