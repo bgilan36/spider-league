@@ -14,6 +14,8 @@ import { classifyImage } from "@/hooks/useImageClassifier";
 import { useBadgeSystem } from "@/hooks/useBadgeSystem";
 import heic2any from "heic2any";
 import SpiderRevealCard from "@/components/SpiderRevealCard";
+import NewSpeciesReveal from "@/components/dex/NewSpeciesReveal";
+import { matchSpeciesSlug, getDexSpecies } from "@/lib/spiderDex/species";
 
 const titleCase = (str: string) =>
   str
@@ -612,7 +614,33 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
       
       // Check for new badges after successful upload
       await checkAndAwardBadges(authUser.id);
-      
+
+      // SpiderDex: record the catch + maybe award the +50 XP new-species bonus.
+      try {
+        const slug = matchSpeciesSlug(species) ??
+          species.trim().toLowerCase().replace(/\s+/g, "_");
+        const def = matchSpeciesSlug(species) ? getDexSpecies(matchSpeciesSlug(species)!) : null;
+        const { data: claim } = await (supabase.rpc as any)(
+          "claim_species_for_spider",
+          { p_spider_id: insertData.id, p_species_slug: slug, p_common_name: def?.commonName ?? species.trim() },
+        );
+        if (claim?.new_species) {
+          setNewSpeciesReveal({
+            commonName: claim.common_name || def?.commonName || species.trim(),
+            scientificName: def?.scientificName,
+            imageUrl: publicUrl,
+            xpAwarded: claim.xp_awarded ?? 50,
+            badgeUnlocked: claim.badge_unlocked,
+            distinctSpecies: claim.distinct_species ?? 1,
+            nextNav: { spiderId: insertData.id, afterBattle: !!opts?.afterBattle },
+          });
+          setRevealOpen(false);
+          return; // wait for user to dismiss the reveal before navigating
+        }
+      } catch (e) {
+        console.warn("species claim failed", e);
+      }
+
       setRevealOpen(false);
       if (opts?.afterBattle) {
         navigate("/", { state: { newSpiderId: insertData.id, autoBattle: true } });
