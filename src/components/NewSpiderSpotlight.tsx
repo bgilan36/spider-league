@@ -119,24 +119,21 @@ const NewSpiderSpotlight = () => {
         <Card className="overflow-hidden hover:shadow-xl transition-all rounded-3xl cursor-pointer" onClick={() => setIsModalOpen(true)}>
           <CardContent className="p-6">
             <div className="flex flex-col items-center space-y-4">
-              {/* Circular Spider Image */}
-              <div className="relative w-32 h-32 rounded-full overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5 ring-4 ring-primary/20">
-                <img
-                  src={newestSpider.image_url}
-                  alt={newestSpider.nickname}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              
+              {/* Rarity-framed spider photo */}
+              <SpiderPhoto
+                src={newestSpider.image_url}
+                alt={newestSpider.nickname}
+                rarity={newestSpider.rarity}
+                className="w-32 h-32 rounded-full"
+              />
+
               {/* Spider Name & Rarity */}
               <div className="text-center space-y-1">
                 <div className="flex items-center justify-center gap-2">
-                  <h3 className="text-lg font-bold">{newestSpider.nickname}</h3>
-                  <Badge className={`${rarityColors[newestSpider.rarity]} text-xs`}>
-                    {newestSpider.rarity}
-                  </Badge>
+                  <h3 className="font-display text-xl uppercase tracking-wide">{newestSpider.nickname}</h3>
+                  <RarityBadge rarity={newestSpider.rarity} />
                 </div>
-                <p className="text-xs text-muted-foreground italic">{newestSpider.species}</p>
+                <p className="species-name">{newestSpider.species}</p>
               </div>
               
               {/* Power Score */}
