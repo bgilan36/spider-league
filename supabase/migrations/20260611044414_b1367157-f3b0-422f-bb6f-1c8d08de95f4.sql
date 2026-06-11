@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.claim_species_for_spider(uuid, text, text) FROM PUBLIC, anon;
