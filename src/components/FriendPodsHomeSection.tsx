@@ -71,6 +71,7 @@ const FriendPodsHomeSection = () => {
   const [selectedOpponentSpiderId, setSelectedOpponentSpiderId] = useState<string>("");
   const [inviteToken, setInviteToken] = useState<string | null>(null);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [joinInput, setJoinInput] = useState("");
 
   const {
     standings: podStandings,
