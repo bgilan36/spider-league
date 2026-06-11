@@ -300,10 +300,11 @@ const Leaderboard = () => {
         const speciesByUser = new Map<string, Set<string>>();
         weekSpiders?.forEach((spider: any) => {
           const userId = spider.owner_id;
-          // species-diversity bookkeeping
-          const slug = (await import("@/lib/spiderDex/species")).matchSpeciesSlug
-            ? null
-            : null;
+          const slug = matchSpeciesSlug(spider.species)
+            ?? `wild:${(spider.species || "").toLowerCase().trim()}`;
+          const set = speciesByUser.get(userId) ?? new Set<string>();
+          set.add(slug);
+          speciesByUser.set(userId, set);
           const existing = userMap.get(userId);
           if (existing) {
             existing.week_power_score += spider.power_score;
