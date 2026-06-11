@@ -245,6 +245,15 @@ const FriendPodsHomeSection = () => {
     };
   }, [selectedId]);
 
+  const handleJoin = (e: React.FormEvent) => {
+    e.preventDefault();
+    const raw = joinInput.trim();
+    if (!raw) return;
+    const token = raw.split("/").pop()?.trim() || raw;
+    if (!token) return;
+    navigate(`/join/${token}`);
+  };
+
   if (loading) {
     return (
       <Card className="overflow-hidden border-primary/20 bg-card/70">
