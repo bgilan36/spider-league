@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import PrivateLeagueInvitePanel from "@/components/PrivateLeagueInvitePanel";
+import PodJoinRequestsPanel from "@/components/PodJoinRequestsPanel";
 import PrivateLeagueStandings from "@/components/PrivateLeagueStandings";
 import WeeklyMatchupCard from "@/components/WeeklyMatchupCard";
 import PodChat from "@/components/PodChat";
@@ -323,6 +324,9 @@ const PrivateLeagueDetail = () => {
             refreshing={standingsRefreshing}
           />
           <PodChat leagueId={leagueId!} members={members} />
+          {isCommissioner && leagueId && (
+            <PodJoinRequestsPanel leagueId={leagueId} onApproved={fetchLeague} />
+          )}
           <Card><CardHeader><CardTitle className="flex items-center gap-2 text-lg"><Users className="h-5 w-5 text-primary" />Members</CardTitle></CardHeader><CardContent className="space-y-2">{members.map((member) => <div key={member.user_id} className="flex items-center gap-3 rounded-md border border-border p-3"><div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-muted">{member.profiles?.avatar_url ? <img src={member.profiles.avatar_url} alt="" className="h-full w-full object-cover" /> : <span>{(member.profiles?.display_name || "P").charAt(0)}</span>}</div><div className="flex-1"><div className="font-medium">{member.profiles?.display_name || `Player ${member.user_id.slice(0, 6)}`}</div><div className="text-xs capitalize text-muted-foreground">{member.role === "owner" ? "Commissioner" : member.role}</div></div></div>)}</CardContent></Card>
         </div>
       </div>
