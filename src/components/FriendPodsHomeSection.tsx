@@ -4,6 +4,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ArrowRight, Link2, Loader2, Share2, Sparkles, Sword, Trophy, UserPlus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
