@@ -102,6 +102,15 @@ const SpiderUpload = () => {
   } | null>(null);
   const [weeklyUploadCount, setWeeklyUploadCount] = useState<number>(0);
   const [revealOpen, setRevealOpen] = useState(false);
+  const [newSpeciesReveal, setNewSpeciesReveal] = useState<{
+    commonName: string;
+    scientificName?: string;
+    imageUrl: string;
+    xpAwarded: number;
+    badgeUnlocked?: string | null;
+    distinctSpecies: number;
+    nextNav: { spiderId: string; afterBattle: boolean };
+  } | null>(null);
 
   // Location tagging
   const [latitude, setLatitude] = useState<number | null>(null);
