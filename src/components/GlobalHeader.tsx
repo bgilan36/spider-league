@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Heart, Home } from 'lucide-react';
+import { Heart, Home, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -51,6 +51,7 @@ const GlobalHeader: React.FC = () => {
       '/upload': 'Upload Spider',
       '/collection': 'My Collection',
       '/leaderboard': 'Leaderboard',
+      '/dex': 'SpiderDex',
       '/battle-history': 'Battle History',
       '/roadmap': 'Roadmap',
       '/shop': 'Shop',
@@ -101,6 +102,23 @@ const GlobalHeader: React.FC = () => {
           
           {/* Right section - Tip + Home button */}
           <div className="flex items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  asChild
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground hover:text-foreground"
+                  aria-label="Open SpiderDex"
+                >
+                  <Link to="/dex">
+                    <BookOpen className="h-4 w-4" />
+                    <span className="sr-only sm:not-sr-only sm:ml-1 text-xs font-medium">Dex</span>
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="hidden sm:block">SpiderDex collection</TooltipContent>
+            </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button

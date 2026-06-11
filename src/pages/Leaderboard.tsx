@@ -17,6 +17,7 @@ import ClickableUsername from "@/components/ClickableUsername";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { matchSpeciesSlug } from "@/lib/spiderDex/species";
 interface Spider {
   id: string;
   nickname: string;
@@ -296,8 +297,15 @@ const Leaderboard = () => {
         if (spiderError) throw spiderError;
 
         const userMap = new Map<string, WeeklyUserRanking>();
+        // Track distinct dex species per user for the diversity bonus.
+        const speciesByUser = new Map<string, Set<string>>();
         weekSpiders?.forEach((spider: any) => {
           const userId = spider.owner_id;
+          const slug = matchSpeciesSlug(spider.species)
+            ?? `wild:${(spider.species || "").toLowerCase().trim()}`;
+          const set = speciesByUser.get(userId) ?? new Set<string>();
+          set.add(slug);
+          speciesByUser.set(userId, set);
           const existing = userMap.get(userId);
           if (existing) {
             existing.week_power_score += spider.power_score;
@@ -336,6 +344,14 @@ const Leaderboard = () => {
         });
 
         const fallbackRankings = Array.from(userMap.values())
+          .map((u) => {
+            const distinct = speciesByUser.get(u.user_id)?.size ?? 0;
+            const multiplier = 1 + 0.05 * distinct;
+            return {
+              ...u,
+              ranking_score: Math.round((u.week_power_score + u.experience_points) * multiplier),
+            };
+          })
           .sort((a, b) => b.ranking_score - a.ranking_score)
           .slice(0, 100);
         setWeeklyUserRankings(fallbackRankings);
