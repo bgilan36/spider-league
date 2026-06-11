@@ -26,6 +26,7 @@ export default {
 		extend: {
 			fontFamily: {
 				sans: ['Inter', 'system-ui', 'sans-serif'],
+				display: ['Oswald', 'Inter', 'system-ui', 'sans-serif'],
 			},
 			minHeight: {
 				'touch': '44px', // Minimum touch target size
@@ -39,6 +40,21 @@ export default {
 			},
 			colors: {
 				'primary-glow': 'hsl(var(--primary-glow))',
+				rarity: {
+					common: 'hsl(var(--rarity-common))',
+					uncommon: 'hsl(var(--rarity-uncommon))',
+					rare: 'hsl(var(--rarity-rare))',
+					epic: 'hsl(var(--rarity-epic))',
+					legendary: 'hsl(var(--rarity-legendary))',
+				},
+				stat: {
+					hp: 'hsl(var(--stat-hp))',
+					damage: 'hsl(var(--stat-damage))',
+					speed: 'hsl(var(--stat-speed))',
+					defense: 'hsl(var(--stat-defense))',
+					venom: 'hsl(var(--stat-venom))',
+					webcraft: 'hsl(var(--stat-webcraft))',
+				},
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
@@ -143,6 +159,18 @@ export default {
 					'0%': { backgroundPosition: '-200% 0' },
 					'100%': { backgroundPosition: '200% 0' }
 				},
+				'legendary-shimmer': {
+					'0%': { backgroundPosition: '0% 50%' },
+					'100%': { backgroundPosition: '200% 50%' }
+				},
+				'stat-fill': {
+					'0%': { width: '0%' },
+					'100%': { width: 'var(--stat-target, 100%)' }
+				},
+				'count-up': {
+					'0%': { transform: 'translateY(8px)', opacity: '0' },
+					'100%': { transform: 'translateY(0)', opacity: '1' }
+				},
 				'scroll': {
 					'0%': { transform: 'translateX(0)' },
 					'100%': { transform: 'translateX(-50%)' }
@@ -184,6 +212,9 @@ export default {
 				'float': 'float 6s ease-in-out infinite',
 				'pulse-glow': 'pulse-glow 3s ease-in-out infinite',
 				'shimmer': 'shimmer 2s linear infinite',
+				'legendary-shimmer': 'legendary-shimmer 3.5s linear infinite',
+				'stat-fill': 'stat-fill 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards',
+				'count-up': 'count-up 0.4s ease-out',
 				'scroll': 'scroll 13s linear infinite',
 				'heartbeat': 'heartbeat 1.1s ease-in-out infinite',
 				'recoil-shake': 'recoil-shake 0.35s ease-out',

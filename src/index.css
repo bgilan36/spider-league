@@ -70,6 +70,21 @@ All colors MUST be HSL.
     --shadow-lg: 0 10px 15px -3px hsl(210 40% 8% / 0.1), 0 4px 6px -2px hsl(210 40% 8% / 0.05);
     --shadow-xl: 0 20px 25px -5px hsl(210 40% 8% / 0.1), 0 10px 10px -5px hsl(210 40% 8% / 0.04);
     --shadow-glow: 0 0 0 1px hsl(221 83% 53% / 0.1), 0 0 20px hsl(221 100% 65% / 0.3);
+
+    /* Rarity tier palette (HSL — used by tailwind tokens) */
+    --rarity-common: 215 16% 55%;       /* slate */
+    --rarity-uncommon: 142 71% 45%;     /* green */
+    --rarity-rare: 217 91% 60%;         /* blue */
+    --rarity-epic: 270 76% 62%;         /* purple */
+    --rarity-legendary: 43 96% 56%;     /* gold */
+
+    /* Per-stat colors */
+    --stat-hp: 142 71% 45%;
+    --stat-damage: 0 84% 60%;
+    --stat-speed: 48 96% 53%;
+    --stat-defense: 217 91% 60%;
+    --stat-venom: 270 76% 62%;
+    --stat-webcraft: 188 86% 53%;
   }
 
   .dark {
@@ -131,6 +146,20 @@ All colors MUST be HSL.
     --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.4), 0 4px 6px -2px hsl(0 0% 0% / 0.3);
     --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.4), 0 10px 10px -5px hsl(0 0% 0% / 0.3);
     --shadow-glow: 0 0 0 1px hsl(221 100% 70% / 0.2), 0 0 30px hsl(221 100% 80% / 0.4);
+
+    /* Rarity — slightly brighter in dark mode for contrast */
+    --rarity-common: 215 20% 65%;
+    --rarity-uncommon: 142 71% 55%;
+    --rarity-rare: 217 91% 70%;
+    --rarity-epic: 270 76% 72%;
+    --rarity-legendary: 43 96% 64%;
+
+    --stat-hp: 142 71% 55%;
+    --stat-damage: 0 84% 65%;
+    --stat-speed: 48 96% 60%;
+    --stat-defense: 217 91% 70%;
+    --stat-venom: 270 76% 72%;
+    --stat-webcraft: 188 86% 60%;
   }
 }
 
@@ -290,6 +319,89 @@ All colors MUST be HSL.
 
   .pulse-glow-slow {
     animation: pulse-glow-slow 6s ease-in-out infinite;
+  }
+
+  /* ===== Unified spider photo treatment =====
+     Square crop, subtle vignette, slight contrast/sat boost,
+     rarity-colored frame, soft inner shadow so photos feel mounted. */
+  .spider-photo {
+    @apply relative overflow-hidden;
+    aspect-ratio: 1 / 1;
+    border-radius: calc(var(--radius) - 2px);
+    box-shadow:
+      inset 0 0 0 1px hsl(0 0% 0% / 0.25),
+      inset 0 8px 24px hsl(0 0% 0% / 0.35);
+  }
+  .spider-photo > img {
+    @apply absolute inset-0 h-full w-full object-cover;
+    filter: contrast(1.06) saturate(1.12);
+  }
+  .spider-photo::after {
+    /* vignette */
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      ellipse at center,
+      transparent 55%,
+      hsl(0 0% 0% / 0.45) 100%
+    );
+  }
+
+  .rarity-frame {
+    box-shadow:
+      inset 0 0 0 2px hsl(var(--rarity-tier, var(--rarity-common))),
+      inset 0 0 0 3px hsl(0 0% 0% / 0.3),
+      inset 0 8px 24px hsl(0 0% 0% / 0.35),
+      0 0 18px hsl(var(--rarity-tier, var(--rarity-common)) / 0.25);
+  }
+
+  /* Legendary gets an animated shimmer border on top of the frame */
+  .rarity-legendary-shimmer::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 2px;
+    background: linear-gradient(
+      110deg,
+      hsl(43 96% 56%) 0%,
+      hsl(48 100% 75%) 25%,
+      hsl(43 96% 56%) 50%,
+      hsl(36 90% 50%) 75%,
+      hsl(43 96% 56%) 100%
+    );
+    background-size: 200% 100%;
+    animation: legendary-shimmer 3.5s linear infinite;
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Display font helper */
+  .font-display {
+    font-family: 'Oswald', 'Inter', system-ui, sans-serif;
+    letter-spacing: 0.01em;
+  }
+
+  /* Latin species name treatment */
+  .species-name {
+    @apply text-xs italic text-muted-foreground;
+    letter-spacing: 0.01em;
+  }
+
+  /* Metadata label — small caps, tracked */
+  .meta-label {
+    @apply text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rarity-legendary-shimmer::before { animation: none; }
   }
 
   /* Modern scrollbar */

@@ -17,6 +17,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, ChevronRight, Star } from "lucide-react";
 import { format } from "date-fns";
 import BattleDetailsModal from "@/components/BattleDetailsModal";
+import SpiderPhoto from "@/components/visual/SpiderPhoto";
+import RarityBadge from "@/components/visual/RarityBadge";
+import StatBar, { type StatKey } from "@/components/visual/StatBar";
+import PowerLabel from "@/components/visual/PowerLabel";
 
 interface Spider {
   id: string;
@@ -105,21 +109,13 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
 
   if (!spider) return null;
 
-  const rarityColors = {
-    COMMON: "bg-gray-500",
-    UNCOMMON: "bg-green-500", 
-    RARE: "bg-blue-500",
-    EPIC: "bg-purple-500",
-    LEGENDARY: "bg-amber-500"
-  };
-
-  const attributes = [
-    { name: "Hit Points", value: spider.hit_points, max: 100 },
-    { name: "Damage", value: spider.damage, max: 100 },
-    { name: "Speed", value: spider.speed, max: 100 },
-    { name: "Defense", value: spider.defense, max: 100 },
-    { name: "Venom", value: spider.venom, max: 100 },
-    { name: "Webcraft", value: spider.webcraft, max: 100 },
+  const attributes: { stat: StatKey; value: number }[] = [
+    { stat: "hp",       value: spider.hit_points },
+    { stat: "damage",   value: spider.damage },
+    { stat: "speed",    value: spider.speed },
+    { stat: "defense",  value: spider.defense },
+    { stat: "venom",    value: spider.venom },
+    { stat: "webcraft", value: spider.webcraft },
   ];
 
   const spiderLevel = spider.level ?? 1;
@@ -138,12 +134,10 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
       <DialogContent className="max-w-2xl sm:max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
-            <span className="text-2xl font-bold">{spider.nickname}</span>
-            <Badge 
-              className={`${rarityColors[spider.rarity]} text-white`}
-            >
-              {spider.rarity}
-            </Badge>
+            <span className="font-display text-3xl uppercase tracking-wide">
+              {spider.nickname}
+            </span>
+            <RarityBadge rarity={spider.rarity} />
             {spiderLevel > 1 && (
               <Badge variant="outline" className="gap-1">
                 <Star className="h-3 w-3" />
@@ -151,7 +145,7 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
               </Badge>
             )}
           </DialogTitle>
-          <DialogDescription className="text-lg">
+          <DialogDescription className="species-name text-sm">
             {spider.species}
           </DialogDescription>
         </DialogHeader>
@@ -159,25 +153,20 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Spider Image */}
           <div className="space-y-4">
-            <div className="aspect-square rounded-lg overflow-hidden bg-muted">
-              <img 
-                src={spider.image_url} 
-                alt={spider.nickname}
-                className="w-full h-full object-cover"
-              />
-            </div>
+            <SpiderPhoto
+              src={spider.image_url}
+              alt={spider.nickname}
+              rarity={spider.rarity}
+            />
             <div className="text-center">
               <PowerScoreArc score={spider.power_score} size="large" />
-              <div className="mt-2">
-                <div className="text-3xl font-bold">{spider.power_score}</div>
-                <div className="text-sm text-muted-foreground">
-                  Total Power Score
-                  {levelPowerBonus > 0 && (
-                    <span className="ml-1 text-primary font-medium">
-                      (+{levelPowerBonus} from Level {spiderLevel})
-                    </span>
-                  )}
-                </div>
+              <div className="mt-2 flex flex-col items-center gap-1">
+                <PowerLabel value={spider.power_score} size="xl" />
+                {levelPowerBonus > 0 && (
+                  <div className="text-xs text-primary font-medium">
+                    +{levelPowerBonus} from Level {spiderLevel}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -203,19 +192,17 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
 
           {/* Attributes */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Battle Statistics</h3>
-            <div className="space-y-4">
-              {attributes.map((attr) => (
-                <div key={attr.name} className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="font-medium">{attr.name}</span>
-                    <span className="text-muted-foreground">{attr.value}/{attr.max}</span>
-                  </div>
-                  <Progress 
-                    value={(attr.value / attr.max) * 100} 
-                    className="h-2"
-                  />
-                </div>
+            <h3 className="font-display text-xl uppercase tracking-wide">
+              Battle Stats
+            </h3>
+            <div className="space-y-3">
+              {attributes.map((attr, i) => (
+                <StatBar
+                  key={attr.stat}
+                  stat={attr.stat}
+                  value={attr.value}
+                  delay={i * 70}
+                />
               ))}
             </div>
 
