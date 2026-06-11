@@ -296,8 +296,14 @@ const Leaderboard = () => {
         if (spiderError) throw spiderError;
 
         const userMap = new Map<string, WeeklyUserRanking>();
+        // Track distinct dex species per user for the diversity bonus.
+        const speciesByUser = new Map<string, Set<string>>();
         weekSpiders?.forEach((spider: any) => {
           const userId = spider.owner_id;
+          // species-diversity bookkeeping
+          const slug = (await import("@/lib/spiderDex/species")).matchSpeciesSlug
+            ? null
+            : null;
           const existing = userMap.get(userId);
           if (existing) {
             existing.week_power_score += spider.power_score;
