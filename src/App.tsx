@@ -20,6 +20,7 @@ import UserCollection from "./pages/UserCollection";
 import AdminDashboard from "./pages/AdminDashboard";
 import PrivateLeagueDetail from "./pages/PrivateLeagueDetail";
 import JoinLeague from "./pages/JoinLeague";
+import SpiderDex from "./pages/SpiderDex";
 import { AuthProvider } from "@/auth/AuthProvider";
 import Layout from "@/components/Layout";
 import NotificationListener from "@/components/NotificationListener";
@@ -53,6 +54,7 @@ const App = () => (
                 <Route path="/upload" element={<SpiderUpload />} />
                 <Route path="/collection" element={<SpiderCollection />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
+                <Route path="/dex" element={<SpiderDex />} />
                 <Route path="/battle-history" element={<BattleHistory />} />
                 <Route path="/battle/:battleId" element={<TurnBasedBattle />} />
                 <Route path="/roadmap" element={<Roadmap />} />
