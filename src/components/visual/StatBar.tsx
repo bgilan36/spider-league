@@ -1,6 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { Heart, Sword, Zap, Shield, Skull, Activity } from "lucide-react";
+import { Heart, Sword, Zap, Shield, Skull, Activity, type LucideIcon } from "lucide-react";
 
 export type StatKey =
   | "hp"
@@ -12,7 +12,7 @@ export type StatKey =
 
 const META: Record<
   StatKey,
-  { label: string; cssVar: string; Icon: React.ComponentType<{ className?: string }> }
+  { label: string; cssVar: string; Icon: LucideIcon }
 > = {
   hp:       { label: "HP",       cssVar: "stat-hp",       Icon: Heart    },
   damage:   { label: "Damage",   cssVar: "stat-damage",   Icon: Sword    },
