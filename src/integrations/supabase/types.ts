@@ -765,6 +765,50 @@ export type Database = {
           },
         ]
       }
+      private_league_join_requests: {
+        Row: {
+          created_at: string
+          id: string
+          league_id: string
+          message: string | null
+          responded_at: string | null
+          responded_by: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          league_id: string
+          message?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          league_id?: string
+          message?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "private_league_join_requests_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "private_leagues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       private_league_members: {
         Row: {
           id: string
@@ -810,6 +854,7 @@ export type Database = {
           id: string
           image_url: string | null
           is_active: boolean
+          is_discoverable: boolean
           name: string
           owner_id: string
           slug: string
@@ -820,6 +865,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_discoverable?: boolean
           name: string
           owner_id: string
           slug: string
@@ -830,6 +876,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_discoverable?: boolean
           name?: string
           owner_id?: string
           slug?: string
@@ -1666,6 +1713,7 @@ export type Database = {
         Args: { user_id_param: string }
         Returns: boolean
       }
+      cancel_join_request: { Args: { p_request_id: string }; Returns: Json }
       claim_private_league_invite: { Args: { token: string }; Returns: Json }
       claim_species_for_spider: {
         Args: {
@@ -1795,12 +1843,29 @@ export type Database = {
         Args: { _league_id: string; _user_id: string }
         Returns: boolean
       }
+      list_discoverable_pods: {
+        Args: never
+        Returns: {
+          created_at: string
+          has_pending_request: boolean
+          id: string
+          image_url: string
+          is_member: boolean
+          member_count: number
+          name: string
+          slug: string
+        }[]
+      }
       process_battle_turn: {
         Args: {
           p_action_payload: Json
           p_action_type: string
           p_battle_id: string
         }
+        Returns: Json
+      }
+      request_to_join_pod: {
+        Args: { p_league_id: string; p_message?: string }
         Returns: Json
       }
       resolve_battle_challenge: {
@@ -1810,6 +1875,10 @@ export type Database = {
           loser_user_id: string
           winner_user_id: string
         }
+        Returns: Json
+      }
+      respond_to_join_request: {
+        Args: { p_approve: boolean; p_request_id: string }
         Returns: Json
       }
       sanitize_plain_text: { Args: { t: string }; Returns: string }
