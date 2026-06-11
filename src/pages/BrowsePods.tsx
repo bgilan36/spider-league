@@ -103,7 +103,7 @@ const BrowsePods: React.FC = () => {
             <Card key={pod.id} className="overflow-hidden">
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
-                  <PodThumbnail imageUrl={pod.image_url} podName={pod.name} size={56} />
+                  <PodThumbnail imageUrl={pod.image_url} podName={pod.name} className="h-14 w-14" iconClassName="h-6 w-6" />
                   <div className="min-w-0 flex-1">
                     <h3 className="font-semibold truncate">{pod.name}</h3>
                     <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
