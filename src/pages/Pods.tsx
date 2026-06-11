@@ -1,7 +1,7 @@
 import React from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Users } from "lucide-react";
+import { ArrowLeft, Trophy, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import FriendPodsHomeSection from "@/components/FriendPodsHomeSection";
 import { useAuth } from "@/auth/AuthProvider";
@@ -36,8 +36,9 @@ const Pods: React.FC = () => {
           <EmptyState
             icon={Users}
             title="Pods Are For Friends"
-            description="Sign in to create a private pod, invite your crew, and start a season of bragging-rights battles."
+            description="Friend pods are private mini-leagues built for your group chat. Create a pod, share the invite link, battle each other's spiders, and chase the top of the pod leaderboard together."
             primaryAction={{ label: "Sign In", to: "/auth" }}
+            secondaryAction={{ label: "Leaderboard", to: "/leaderboard", icon: Trophy }}
           />
         ) : (
           <FriendPodsHomeSection />

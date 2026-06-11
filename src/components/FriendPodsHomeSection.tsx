@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
-import { ArrowRight, Loader2, Share2, Sword, Trophy, UserPlus, Users } from "lucide-react";
+import { ArrowRight, Link2, Loader2, Share2, Sparkles, Sword, Trophy, UserPlus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -70,6 +71,7 @@ const FriendPodsHomeSection = () => {
   const [selectedOpponentSpiderId, setSelectedOpponentSpiderId] = useState<string>("");
   const [inviteToken, setInviteToken] = useState<string | null>(null);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [joinInput, setJoinInput] = useState("");
 
   const {
     standings: podStandings,
@@ -243,6 +245,15 @@ const FriendPodsHomeSection = () => {
     };
   }, [selectedId]);
 
+  const handleJoin = (e: React.FormEvent) => {
+    e.preventDefault();
+    const raw = joinInput.trim();
+    if (!raw) return;
+    const token = raw.split("/").pop()?.trim() || raw;
+    if (!token) return;
+    navigate(`/join/${token}`);
+  };
+
   if (loading) {
     return (
       <Card className="overflow-hidden border-primary/20 bg-card/70">
@@ -256,19 +267,36 @@ const FriendPodsHomeSection = () => {
   if (!user || pods.length === 0) {
     return (
       <Card className="overflow-hidden border-primary/20 bg-card/70">
-        <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-          <div className="min-w-0">
+        <CardContent className="flex flex-col gap-5 p-5 sm:flex-row sm:items-start sm:justify-between sm:p-6">
+          <div className="min-w-0 flex-1">
             <div className="mb-2 flex items-center gap-2 text-primary">
-              <Users className="h-5 w-5" />
+              <Sparkles className="h-5 w-5" />
               <span className="text-sm font-semibold uppercase tracking-wide">Friend pods</span>
             </div>
-            <h2 className="text-xl font-bold sm:text-2xl">Compete with your friends</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Create a private league for your group chat and see who rules the pod.
+            <h2 className="font-display text-xl font-bold sm:text-2xl">Start a private league</h2>
+            <p className="mt-1 max-w-md text-sm text-muted-foreground">
+              Create a pod for your group chat, share the invite link, battle each other's spiders, and race to the top of the pod leaderboard.
             </p>
           </div>
-          <div className="sm:min-w-56">
+          <div className="flex flex-col gap-3 sm:min-w-72">
             <CreatePrivateLeagueButton size="lg" className="w-full" onCreated={fetchPods} />
+            <div className="flex items-center gap-2">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-xs text-muted-foreground">or join one</span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+            <form onSubmit={handleJoin} className="flex gap-2">
+              <Input
+                placeholder="Paste invite link"
+                value={joinInput}
+                onChange={(e) => setJoinInput(e.target.value)}
+                className="h-10 flex-1 text-sm"
+              />
+              <Button type="submit" variant="outline" size="sm" className="h-10 shrink-0 gap-1.5">
+                <Link2 className="h-4 w-4" />
+                Join
+              </Button>
+            </form>
           </div>
         </CardContent>
       </Card>
