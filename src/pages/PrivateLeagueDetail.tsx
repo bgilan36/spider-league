@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import PrivateLeagueInvitePanel from "@/components/PrivateLeagueInvitePanel";
+import PodJoinRequestsPanel from "@/components/PodJoinRequestsPanel";
 import PrivateLeagueStandings from "@/components/PrivateLeagueStandings";
 import WeeklyMatchupCard from "@/components/WeeklyMatchupCard";
 import PodChat from "@/components/PodChat";
