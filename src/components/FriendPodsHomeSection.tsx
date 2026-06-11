@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
-import { ArrowRight, Loader2, Share2, Sword, Trophy, UserPlus, Users } from "lucide-react";
+import { ArrowRight, Link2, Loader2, Share2, Sparkles, Sword, Trophy, UserPlus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
