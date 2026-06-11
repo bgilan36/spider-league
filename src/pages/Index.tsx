@@ -1306,7 +1306,7 @@ const Index = () => {
                         
                         <div className="text-right flex-shrink-0">
                           <div className="text-base sm:text-lg md:text-xl font-bold">{user.ranking_score ?? user.total_power_score}</div>
-                          <div className="text-[10px] sm:text-xs text-muted-foreground">Power + XP</div>
+                          <div className="text-[10px] sm:text-xs text-muted-foreground">Power</div>
                           <div className="text-[10px] sm:text-xs text-muted-foreground">
                             XP {user.experience_points ?? 0}
                           </div>

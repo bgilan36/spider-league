@@ -441,7 +441,7 @@ const Leaderboard = () => {
               />
             </div>
             <h1 className="text-2xl sm:text-4xl font-bold mb-1 sm:mb-2">User Leaderboard</h1>
-            <p className="text-muted-foreground text-sm sm:text-base">Top trainers ranked by Power + XP</p>
+            <p className="text-muted-foreground text-sm sm:text-base">Top trainers ranked by Power</p>
           </div>
         </div>
 
@@ -617,12 +617,12 @@ const Leaderboard = () => {
                           </Badge>
                         </div>
                       )}
-                      <p className="text-xs sm:text-sm text-muted-foreground">Ranking uses Power + XP</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">Ranking uses Power</p>
                     </div>
                     
                     <div className="text-right flex-shrink-0 w-full sm:w-auto sm:ml-4 border-t sm:border-t-0 pt-3 sm:pt-0">
                       <div className="text-2xl sm:text-3xl font-bold">{rankingScore}</div>
-                      <div className="text-xs sm:text-sm text-muted-foreground">Power + XP</div>
+                      <div className="text-xs sm:text-sm text-muted-foreground">Power</div>
                       <div className="text-xs text-muted-foreground">Power {powerScore}</div>
                     </div>
                   </CardContent>
@@ -705,7 +705,7 @@ const Leaderboard = () => {
                   
                   <div className="text-right flex-shrink-0 w-full sm:w-auto sm:ml-4 border-t sm:border-t-0 pt-2 sm:pt-0">
                     <div className="text-xl sm:text-2xl font-bold">{rankingScore}</div>
-                    <div className="text-xs text-muted-foreground">Power + XP</div>
+                    <div className="text-xs text-muted-foreground">Power</div>
                     <div className="text-xs text-muted-foreground">Power {powerScore}</div>
                   </div>
                 </CardContent>

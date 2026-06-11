@@ -137,9 +137,9 @@ export const HowItWorksModal = () => {
           </section>
 
           <section>
-            <h3 className="text-lg font-semibold mb-3">Power Score & Rarity</h3>
+            <h3 className="text-lg font-semibold mb-3">Power & Rarity</h3>
             <p className="text-sm text-muted-foreground">
-              Power Score summarizes overall combat strength. Rarity tiers (Common to Legendary) indicate overall quality bands, but battles and skirmishes are still decided by full stat interactions and turn-by-turn outcomes.
+              Power (⚡) summarizes overall combat strength. Rarity tiers (Common to Legendary) indicate overall quality bands, but battles and skirmishes are still decided by full stat interactions and turn-by-turn outcomes.
             </p>
           </section>
         </div>
