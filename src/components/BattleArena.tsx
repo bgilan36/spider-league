@@ -6,6 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Dice1, Dice2, Dice3, Dice4, Dice5, Dice6, Zap, Heart, Shield, Skull } from 'lucide-react';
 import BattleRecapModal from './BattleRecapModal';
+import CombatStage from './battle/combat/CombatStage';
+import type { CombatEvent } from './battle/combat/combatFx';
 
 interface Spider {
   id: string;
@@ -57,6 +59,8 @@ const BattleArena: React.FC<BattleArenaProps> = ({
   const [animatingDice, setAnimatingDice] = useState(false);
   const [showRecapModal, setShowRecapModal] = useState(false);
   const [battleId, setBattleId] = useState<string>('');
+  // Cinematic queue: every completed round appends 1-2 events.
+  const [events, setEvents] = useState<CombatEvent[]>([]);
 
   // Battle calculation function
   const calculateBattleRound = () => {
@@ -97,6 +101,27 @@ const BattleArena: React.FC<BattleArenaProps> = ({
     // Add to battle log
     const logEntry = `Round ${currentRound}: ${spider1.nickname} dealt ${damageToSpider2} damage, ${spider2.nickname} dealt ${damageToSpider1} damage`;
     setBattleLog(prev => [...prev, logEntry]);
+
+    // Push cinematic events: spider1 strikes spider2, then spider2 strikes spider1.
+    // Finisher flag goes on whichever blow drops HP to 0.
+    const newEvents: CombatEvent[] = [];
+    if (damageToSpider2 > 0) {
+      newEvents.push({
+        attacker: "me",
+        damage: damageToSpider2,
+        crit: damageToSpider2 >= 18,
+        finisher: newSpider2Health <= 0,
+      });
+    }
+    if (damageToSpider1 > 0 && newSpider2Health > 0) {
+      newEvents.push({
+        attacker: "opp",
+        damage: damageToSpider1,
+        crit: damageToSpider1 >= 18,
+        finisher: newSpider1Health <= 0,
+      });
+    }
+    setEvents((prev) => [...prev, ...newEvents]);
 
     // Check for winner
     if (newSpider1Health <= 0 && newSpider2Health <= 0) {
@@ -230,55 +255,41 @@ const BattleArena: React.FC<BattleArenaProps> = ({
           </p>
         </div>
 
-        {/* Battle Display */}
-        <div className="grid md:grid-cols-3 gap-6 items-center">
-          {/* Spider 1 */}
-          <SpiderBattleCard
-            spider={spider1}
-            health={spider1Health}
-            maxHealth={spider1.hit_points}
-            diceRolls={diceRolls.spider1}
-            animating={animatingDice}
-            isWinner={winner?.id === spider1.id}
-            ownerName={challenger}
-          />
+        {/* Cinematic Arena */}
+        <CombatStage
+          me={{
+            name: spider1.nickname, imageUrl: spider1.image_url, maxHp: spider1.hit_points,
+            stats: { damage: spider1.damage, speed: spider1.speed, venom: spider1.venom, webcraft: spider1.webcraft },
+          }}
+          opp={{
+            name: spider2.nickname, imageUrl: spider2.image_url, maxHp: spider2.hit_points,
+            stats: { damage: spider2.damage, speed: spider2.speed, venom: spider2.venom, webcraft: spider2.webcraft },
+          }}
+          myHp={spider1Health}
+          oppHp={spider2Health}
+          events={events}
+        />
 
-          {/* VS Section */}
-          <div className="text-center space-y-4">
-            <div className="text-6xl font-bold text-primary">VS</div>
-            
-            {battleState === 'rolling' && (
-              <div className="flex justify-center items-center gap-2">
-                <Zap className="w-6 h-6 animate-pulse text-yellow-500" />
-                <span className="text-lg font-medium">Rolling dice...</span>
-                <Zap className="w-6 h-6 animate-pulse text-yellow-500" />
-              </div>
-            )}
-            
-            {battleState === 'calculating' && (
-              <div className="text-lg font-medium text-orange-500">
-                Calculating damage...
-              </div>
-            )}
-
-            {winner && (
-              <div className="text-2xl font-bold text-green-500 animate-pulse">
-                {winner.nickname} WINS!
-              </div>
-            )}
+        {/* Compact stat strip — owners + dice + winner callout */}
+        <div className="grid grid-cols-2 gap-4 text-center text-sm">
+          <div className="space-y-1">
+            <div className="text-xs text-muted-foreground">Owner: {challenger}</div>
+            <div className="flex justify-center gap-1">
+              {diceRolls.spider1.map((r, i) => <DiceIcon key={i} value={r} />)}
+            </div>
           </div>
-
-          {/* Spider 2 */}
-          <SpiderBattleCard
-            spider={spider2}
-            health={spider2Health}
-            maxHealth={spider2.hit_points}
-            diceRolls={diceRolls.spider2}
-            animating={animatingDice}
-            isWinner={winner?.id === spider2.id}
-            ownerName={accepter}
-          />
+          <div className="space-y-1">
+            <div className="text-xs text-muted-foreground">Owner: {accepter}</div>
+            <div className="flex justify-center gap-1">
+              {diceRolls.spider2.map((r, i) => <DiceIcon key={i} value={r} />)}
+            </div>
+          </div>
         </div>
+        {winner && (
+          <div className="text-center text-2xl font-bold text-green-500 animate-pulse">
+            {winner.nickname} WINS!
+          </div>
+        )}
 
         {/* Battle Log */}
         <Card>

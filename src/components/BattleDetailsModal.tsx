@@ -8,6 +8,8 @@ import { format } from 'date-fns';
 import ShareButton from '@/components/ShareButton';
 import ClickableUsername from '@/components/ClickableUsername';
 import { supabase } from '@/integrations/supabase/client';
+import CombatStage from '@/components/battle/combat/CombatStage';
+import type { CombatEvent } from '@/components/battle/combat/combatFx';
 
 interface BattleDetailsModalProps {
   isOpen: boolean;
@@ -120,6 +122,27 @@ const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
     { round: 2, attacker: teamBSpider.nickname, defender: teamASpider.nickname, damage: 12, description: `${teamBSpider.nickname} counters with web trap!` },
     { round: 3, attacker: teamASpider.nickname, defender: teamBSpider.nickname, damage: 18, description: `${teamASpider.nickname} delivers critical bite!` },
   ];
+
+  // Build replay events from the rounds list (mocked or future real log).
+  const replayEvents: CombatEvent[] = rounds.map((r, i) => ({
+    attacker: r.attacker === teamASpider.nickname ? "me" : "opp",
+    damage: r.damage,
+    crit: r.damage >= 18,
+    finisher: i === rounds.length - 1 && !isDraw,
+  }));
+
+  const teamAMaxHp = (teamASpider as any).hit_points ?? 100;
+  const teamBMaxHp = (teamBSpider as any).hit_points ?? 100;
+  // Derive HP trajectory so the cinematic bars drain over the replay.
+  const [replayIdx, setReplayIdx] = React.useState(0);
+  React.useEffect(() => { if (isOpen) setReplayIdx(0); }, [isOpen, battle?.id]);
+  let aHp = teamAMaxHp, bHp = teamBMaxHp;
+  for (let i = 0; i < replayIdx; i++) {
+    const r = replayEvents[i];
+    if (!r) break;
+    if (r.attacker === "me") bHp = Math.max(0, bHp - r.damage);
+    else aHp = Math.max(0, aHp - r.damage);
+  }
 
   const getBattleTypeIcon = (type: string) => {
     switch (type) {
@@ -311,6 +334,31 @@ const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
                 <Target className="w-5 h-5" />
                 Battle Timeline ({rounds.length} Rounds)
               </h4>
+              <div className="mb-4">
+                <CombatStage
+                  me={{
+                    name: teamASpider.nickname, imageUrl: teamASpider.image_url,
+                    maxHp: teamAMaxHp,
+                    stats: {
+                      damage: (teamASpider as any).damage, speed: (teamASpider as any).speed,
+                      venom: (teamASpider as any).venom, webcraft: (teamASpider as any).webcraft,
+                    },
+                  }}
+                  opp={{
+                    name: teamBSpider.nickname, imageUrl: teamBSpider.image_url,
+                    maxHp: teamBMaxHp,
+                    stats: {
+                      damage: (teamBSpider as any).damage, speed: (teamBSpider as any).speed,
+                      venom: (teamBSpider as any).venom, webcraft: (teamBSpider as any).webcraft,
+                    },
+                  }}
+                  myHp={aHp}
+                  oppHp={bHp}
+                  events={replayEvents}
+                  onEventComplete={(i) => setReplayIdx(i + 1)}
+                  onSkip={() => setReplayIdx(replayEvents.length)}
+                />
+              </div>
               <div className="space-y-3">
                 {rounds.map((round, index) => (
                   <div key={index} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">

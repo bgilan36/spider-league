@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { ArrowLeft, Loader2, Trophy, Heart } from "lucide-react";
+import { ArrowLeft, Loader2, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useTurnBasedBattle } from "@/hooks/useTurnBasedBattle";
 import { useAuth } from "@/auth/AuthProvider";
@@ -21,6 +20,8 @@ import {
   ATTACK_STANCE_META, DEFENSE_STANCE_META,
   type ZoneBucket, type AttackStance, type DefenseStance, BUCKET_LABEL,
 } from "@/lib/battle/stances";
+import CombatStage from "./combat/CombatStage";
+import type { CombatEvent } from "./combat/combatFx";
 
 interface Props { battleId: string }
 
@@ -65,6 +66,28 @@ export default function InteractiveBattleArena({ battleId }: Props) {
         : null
     : null;
   const iWon = !!winnerId && winnerId === user?.id;
+
+  // Derive a CombatEvent for every completed turn so the arena plays it.
+  // Memoized by length so new turns simply append.
+  const events = useMemo<CombatEvent[]>(() => {
+    if (!mySpider || !opponentSpider) return [];
+    const list: CombatEvent[] = [];
+    for (let i = 0; i < turns.length; i++) {
+      const t = turns[i] as any;
+      const r = t?.result_payload || {};
+      const isMine = r.attacker_name === mySpider.nickname;
+      const isLast = i === turns.length - 1;
+      list.push({
+        attacker: isMine ? "me" : "opp",
+        damage: Math.max(0, Number(r.damage) || 0),
+        crit: !!r.is_critical,
+        dodged: !!r.dodged,
+        finisher: isLast && finished,
+      });
+    }
+    return list;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [turns.length, finished, mySpider?.nickname, opponentSpider?.nickname]);
 
   useEffect(() => {
     if (finished && iWon && !celebrated) {
@@ -141,50 +164,41 @@ export default function InteractiveBattleArena({ battleId }: Props) {
           <Link to={returnPath}><ArrowLeft className="h-4 w-4 mr-1" />Back</Link>
         </Button>
 
-        {/* Spider headers */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <Card>
-            <CardContent className="p-3">
-              <div className="flex items-center gap-2">
-                <img src={mySpider.image_url} alt={mySpider.nickname} className="w-12 h-12 rounded object-cover" />
-                <div className="min-w-0">
-                  <div className="font-semibold truncate text-sm">{mySpider.nickname}</div>
-                  <div className="text-xs text-muted-foreground">Power {mySpider.power_score}</div>
-                </div>
-              </div>
-              <div className="mt-2 flex items-center gap-2 text-xs">
-                <Heart className="h-3 w-3 text-red-500" />
-                <Progress value={Math.max(0, ((myHp ?? 0) / mySpider.hit_points) * 100)} className="h-2" />
-                <span className="tabular-nums">{myHp}/{mySpider.hit_points}</span>
-              </div>
-              {myStances && (
-                <div className="flex gap-1 mt-2 flex-wrap">
-                  <Badge variant="outline" className="text-[10px]">
-                    Atk: {ATTACK_STANCE_META[myStances.attack as AttackStance]?.label}
-                  </Badge>
-                  <Badge variant="outline" className="text-[10px]">
-                    Def: {DEFENSE_STANCE_META[myStances.defense as DefenseStance]?.label}
-                  </Badge>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-3">
-              <div className="flex items-center gap-2">
-                <img src={opponentSpider.image_url} alt={opponentSpider.nickname} className="w-12 h-12 rounded object-cover" />
-                <div className="min-w-0">
-                  <div className="font-semibold truncate text-sm">{opponentSpider.nickname}</div>
-                  <div className="text-xs text-muted-foreground">Power {opponentSpider.power_score}</div>
-                </div>
-              </div>
-              <div className="mt-2 flex items-center gap-2 text-xs">
-                <Heart className="h-3 w-3 text-red-500" />
-                <Progress value={Math.max(0, ((opponentHp ?? 0) / opponentSpider.hit_points) * 100)} className="h-2" />
-                <span className="tabular-nums">{opponentHp}/{opponentSpider.hit_points}</span>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Cinematic combat arena */}
+        <div className="mb-4">
+          <CombatStage
+            me={{
+              name: mySpider.nickname,
+              imageUrl: mySpider.image_url,
+              maxHp: mySpider.hit_points,
+              stats: {
+                damage: mySpider.damage, speed: mySpider.speed,
+                venom: mySpider.venom,   webcraft: mySpider.webcraft,
+              },
+            }}
+            opp={{
+              name: opponentSpider.nickname,
+              imageUrl: opponentSpider.image_url,
+              maxHp: opponentSpider.hit_points,
+              stats: {
+                damage: opponentSpider.damage, speed: opponentSpider.speed,
+                venom: opponentSpider.venom,   webcraft: opponentSpider.webcraft,
+              },
+            }}
+            myHp={myHp ?? mySpider.hit_points}
+            oppHp={opponentHp ?? opponentSpider.hit_points}
+            events={events}
+          />
+          {myStances && (
+            <div className="flex gap-1 mt-2 flex-wrap">
+              <Badge variant="outline" className="text-[10px]">
+                Atk: {ATTACK_STANCE_META[myStances.attack as AttackStance]?.label}
+              </Badge>
+              <Badge variant="outline" className="text-[10px]">
+                Def: {DEFENSE_STANCE_META[myStances.defense as DefenseStance]?.label}
+              </Badge>
+            </div>
+          )}
         </div>
 
         {/* Action area — kept close to the HP meters for quick rolling */}
