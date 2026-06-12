@@ -17,6 +17,37 @@ const STARTER_SPECIES = [
 // Single starter spider image for all new users
 const STARTER_IMAGE = "https://www.spiderleague.app/images/starter-spider.png";
 
+const NICKNAME_ADJECTIVES = [
+  "Shadow","Crimson","Iron","Silk","Night","Ember","Storm","Ghost","Venom","Glimmer",
+  "Swift","Steel","Dark","Thunder","Frost","Cinder","Obsidian","Velvet","Rogue","Mystic",
+  "Savage","Lunar","Solar","Phantom","Wicked","Onyx","Scarlet","Ivory","Jade","Cobalt",
+  "Amber","Hollow","Wild","Feral","Silent","Brutal","Toxic","Arcane","Hex","Rune",
+  "Vex","Grim","Bone","Ash","Blood","Twilight","Midnight","Eclipse","Nebula","Quantum",
+  "Razor","Spectral","Hexed","Cursed","Sable","Crystal","Plasma","Neon","Chrome","Rust",
+];
+const NICKNAME_NOUNS = [
+  "Weaver","Stalker","Spinner","Fang","Crawler","Prowler","Skitter","Bite","Warden","Hunter",
+  "Striker","Whisper","Reaper","Shade","Specter","Wraith","Drifter","Maven","Sentinel","Marauder",
+  "Talon","Claw","Sting","Veil","Knot","Thread","Loom","Snare","Tangle","Vortex",
+];
+const MYTHIC_NAMES = [
+  "Anansi","Arachne","Atropos","Charlotte","Morrigan","Nyx","Hecate","Lilith","Medusa","Selene",
+  "Shelob","Aragog","Ungoliant","Mab","Titania","Morgana","Circe","Calypso",
+];
+const SINGLE_WORDS = [
+  "Inkwell","Pepper","Domino","Pumpkin","Biscuit","Mocha","Cricket","Pebble","Marble","Truffle",
+  "Hazel","Saffron","Clover","Juniper","Sage","Cypress","Indigo","Cobweb","Bramble",
+  "Twitch","Wiggle","Scuttle","Tippy","Boots","Mittens","Pickle","Noodle","Beanie","Sprout",
+];
+const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+function generateNickname(): string {
+  const r = Math.random();
+  if (r < 0.55) return `${pick(NICKNAME_ADJECTIVES)}${pick(NICKNAME_NOUNS)}`;
+  if (r < 0.75) return pick(SINGLE_WORDS);
+  if (r < 0.9) return pick(MYTHIC_NAMES);
+  return `${pick(NICKNAME_ADJECTIVES)} ${pick(MYTHIC_NAMES)}`;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -63,8 +94,10 @@ serve(async (req) => {
       .eq("owner_id", userId);
 
     if (count && count > 0) {
-      // User already has spiders, just return the first one
-      const { data: existing } = await supabase
+      // User already has spiders, return the first one. If it's still the
+      // boring default "X's Starter Spider" nickname, upgrade it to a
+      // personality nickname so new players have flair from day one.
+      let { data: existing } = await supabase
         .from("spiders")
         .select("*")
         .eq("owner_id", userId)
@@ -72,13 +105,26 @@ serve(async (req) => {
         .limit(1)
         .single();
 
+      if (existing && typeof existing.nickname === "string" &&
+          /\sStarter Spider$/i.test(existing.nickname)) {
+        const newNickname = generateNickname();
+        const newSpecies = STARTER_SPECIES[Math.floor(Math.random() * STARTER_SPECIES.length)].species;
+        const { data: updated } = await supabase
+          .from("spiders")
+          .update({ nickname: newNickname, species: newSpecies })
+          .eq("id", existing.id)
+          .select("*")
+          .single();
+        if (updated) existing = updated;
+      }
+
       return new Response(JSON.stringify({ spider: existing, alreadyExists: true }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // Pick a random starter species
     const starter = STARTER_SPECIES[Math.floor(Math.random() * STARTER_SPECIES.length)];
-    const nickname = `${displayName}'s Starter Spider`;
+    const nickname = generateNickname();
     const image = STARTER_IMAGE;
 
     // Generate stats targeting ~250 total power score
