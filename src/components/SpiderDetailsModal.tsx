@@ -22,7 +22,7 @@ import RarityBadge from "@/components/visual/RarityBadge";
 import StatBar, { type StatKey } from "@/components/visual/StatBar";
 import PowerLabel from "@/components/visual/PowerLabel";
 import LocationBackfill from "@/components/LocationBackfill";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/auth/AuthProvider";
 
 interface Spider {
   id: string;
