@@ -1093,6 +1093,57 @@ export type Database = {
         }
         Relationships: []
       }
+      referrals: {
+        Row: {
+          created_at: string
+          id: string
+          invitee_id: string
+          inviter_id: string
+          qualified_at: string | null
+          source: string
+          source_ref: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invitee_id: string
+          inviter_id: string
+          qualified_at?: string | null
+          source?: string
+          source_ref?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invitee_id?: string
+          inviter_id?: string
+          qualified_at?: string | null
+          source?: string
+          source_ref?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_invitee_id_fkey"
+            columns: ["invitee_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_inviter_id_fkey"
+            columns: ["inviter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       roadmap_items: {
         Row: {
           category: string
@@ -1154,6 +1205,38 @@ export type Database = {
             columns: ["roadmap_item_id"]
             isOneToOne: false
             referencedRelation: "roadmap_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      roster_slot_bonuses: {
+        Row: {
+          created_at: string
+          expires_at: string
+          reason: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          reason?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          reason?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roster_slot_bonuses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1700,10 +1783,15 @@ export type Database = {
           webcraft: number
         }[]
       }
+      award_badge_by_name: {
+        Args: { p_badge_name: string; p_user_id: string }
+        Returns: undefined
+      }
       award_badges_for_user: {
         Args: { user_id_param: string }
         Returns: undefined
       }
+      award_recruiter_tier: { Args: { p_user_id: string }; Returns: undefined }
       award_spider_xp: {
         Args: { p_seed?: string; p_spider_id: string; p_xp_amount: number }
         Returns: Json
@@ -1785,6 +1873,7 @@ export type Database = {
           winner_side: string
         }[]
       }
+      get_referral_progress: { Args: { p_user_id?: string }; Returns: Json }
       get_spider_skirmish_suggestion: { Args: never; Returns: Json }
       get_spider_upload_heatmap: {
         Args: { days_back?: number }
@@ -1819,6 +1908,14 @@ export type Database = {
           week_power_score: number
           week_spider_count: number
         }[]
+      }
+      get_user_roster_slot_count: {
+        Args: { p_user_id?: string }
+        Returns: number
+      }
+      grant_referral_slot_bonus: {
+        Args: { p_user_id: string }
+        Returns: undefined
       }
       has_role: {
         Args: {
@@ -1862,6 +1959,14 @@ export type Database = {
           p_action_type: string
           p_battle_id: string
         }
+        Returns: Json
+      }
+      qualify_referral_on_first_battle: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
+      record_referral: {
+        Args: { p_inviter_id: string; p_source?: string; p_source_ref?: string }
         Returns: Json
       }
       request_to_join_pod: {

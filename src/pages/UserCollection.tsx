@@ -11,6 +11,7 @@ import PowerScoreArc from '@/components/PowerScoreArc';
 import BattleButton from '@/components/BattleButton';
 import { Skeleton } from '@/components/ui/skeleton';
 import ProfileWall from '@/components/ProfileWall';
+import ReferralProgressCard from '@/components/ReferralProgressCard';
 import { useAuth } from '@/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
 
@@ -327,6 +328,11 @@ const UserCollection: React.FC = () => {
 
             {/* Profile Wall Section */}
             <div className="mt-8 max-w-4xl mx-auto">
+              {user?.id === userId && (
+                <div className="mb-6">
+                  <ReferralProgressCard />
+                </div>
+              )}
               <ProfileWall 
                 profileUserId={userId!} 
                 profileDisplayName={userProfile?.display_name || 'User'} 
