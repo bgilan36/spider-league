@@ -18,6 +18,7 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { matchSpeciesSlug } from "@/lib/spiderDex/species";
+import CityLeaderboard from "@/components/CityLeaderboard";
 interface Spider {
   id: string;
   nickname: string;
@@ -446,6 +447,7 @@ const Leaderboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "all-time" | "weekly")} className="w-full">
+          <CityLeaderboard />
           <TabsList className="grid w-full grid-cols-2 mb-6 sm:mb-8">
             <TabsTrigger value="all-time" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
               <Trophy className="h-3 w-3 sm:h-4 sm:w-4" />
