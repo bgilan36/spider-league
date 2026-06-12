@@ -1093,6 +1093,33 @@ export type Database = {
         }
         Relationships: []
       }
+      rarity_thresholds: {
+        Row: {
+          id: number
+          p50: number
+          p80: number
+          p93: number
+          p98: number
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          p50: number
+          p80: number
+          p93: number
+          p98: number
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          p50?: number
+          p80?: number
+          p93?: number
+          p98?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       referrals: {
         Row: {
           created_at: string
@@ -1811,6 +1838,10 @@ export type Database = {
         }
         Returns: Json
       }
+      classify_rarity: {
+        Args: { p_power: number }
+        Returns: Database["public"]["Enums"]["spider_rarity"]
+      }
       cleanup_stale_presence: { Args: never; Returns: undefined }
       create_private_league_with_invite: {
         Args: { name: string }
@@ -1861,6 +1892,14 @@ export type Database = {
           user_id: string
           win_rate: number
           wins: number
+        }[]
+      }
+      get_rarity_distribution: {
+        Args: never
+        Returns: {
+          count: number
+          percentage: number
+          rarity: string
         }[]
       }
       get_recent_public_skirmishes: {
@@ -1964,6 +2003,23 @@ export type Database = {
       qualify_referral_on_first_battle: {
         Args: { p_user_id: string }
         Returns: undefined
+      }
+      recompute_rarity_thresholds: {
+        Args: never
+        Returns: {
+          id: number
+          p50: number
+          p80: number
+          p93: number
+          p98: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "rarity_thresholds"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       record_referral: {
         Args: { p_inviter_id: string; p_source?: string; p_source_ref?: string }
