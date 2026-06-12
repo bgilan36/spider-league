@@ -709,11 +709,13 @@ serve(async (req) => {
                         species.danger === 'low' ? 6 : 0;
     const power_score = basePowerScore + dangerBonus;
     
-    // Determine rarity
-    let rarity: "COMMON" | "RARE" | "EPIC" | "LEGENDARY";
-    if (power_score >= 310) rarity = "LEGENDARY";
-    else if (power_score >= 260) rarity = "EPIC";
-    else if (power_score >= 210) rarity = "RARE";
+    // Percentile-aligned rarity tiers (DB trigger is source of truth).
+    // Common 0–50, Uncommon 50–80, Rare 80–93, Epic 93–98, Legendary 98+.
+    let rarity: "COMMON" | "UNCOMMON" | "RARE" | "EPIC" | "LEGENDARY";
+    if (power_score >= 453) rarity = "LEGENDARY";
+    else if (power_score >= 368) rarity = "EPIC";
+    else if (power_score >= 323) rarity = "RARE";
+    else if (power_score >= 300) rarity = "UNCOMMON";
     else rarity = "COMMON";
 
     // Format top 3 candidates

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,8 @@ import ShareButton from "@/components/ShareButton";
 import { generateSpiderShareImage } from "@/lib/spiderShareImage";
 import { useAuth } from "@/auth/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
+import { useConfetti } from "@/hooks/useConfetti";
+import RarityDistributionTooltip from "@/components/RarityDistributionTooltip";
 
 interface Stats {
   hit_points: number;
@@ -97,8 +99,20 @@ const SpiderRevealCard = ({
 }: SpiderRevealCardProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { fireConfetti } = useConfetti();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(nickname);
+
+  const isLegendary = stats.rarity === "LEGENDARY";
+  const isEpicPlus = isLegendary || stats.rarity === "EPIC";
+
+  useEffect(() => {
+    if (open && isLegendary) {
+      // Fanfare: badge burst + sustained victory rain
+      fireConfetti("badge");
+      setTimeout(() => fireConfetti("victory"), 200);
+    }
+  }, [open, isLegendary, fireConfetti]);
 
   const startEdit = () => {
     setDraft(nickname);
@@ -143,17 +157,32 @@ const SpiderRevealCard = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-0 overflow-hidden border-0 bg-transparent shadow-none">
+      <DialogContent
+        className={`max-w-md p-0 overflow-hidden border-0 bg-transparent shadow-none ${
+          isLegendary ? "sm:max-w-lg" : ""
+        }`}
+      >
+        {isLegendary && (
+          <div className="absolute inset-0 -z-10 pointer-events-none">
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 via-yellow-400/10 to-orange-500/20 blur-3xl" />
+          </div>
+        )}
         <div
-          className={`relative rounded-2xl border-2 bg-gradient-to-br ${rarityClasses(
+          className={`relative rounded-2xl border-2 bg-gradient-to-br ${
+            isLegendary ? "rarity-legendary-glow" : ""
+          } ${rarityClasses(
             stats.rarity,
           )} p-[2px] animate-scale-in`}
         >
           <div className="rounded-[14px] bg-card/95 backdrop-blur-xl p-5 space-y-4">
             {/* Header */}
-            <div className="flex items-center justify-center gap-2 text-xs font-semibold tracking-widest text-primary uppercase">
+            <div
+              className={`flex items-center justify-center gap-2 text-xs font-semibold tracking-widest uppercase ${
+                isLegendary ? "text-amber-500 animate-pulse" : "text-primary"
+              }`}
+            >
               <Sparkles className="h-4 w-4 animate-pulse" />
-              New Fighter Revealed
+              {isLegendary ? "🚨 LEGENDARY Fighter Revealed 🚨" : "New Fighter Revealed"}
               <Sparkles className="h-4 w-4 animate-pulse" />
             </div>
 
@@ -171,13 +200,15 @@ const SpiderRevealCard = ({
                   <div className="w-full h-full bg-muted" />
                 )}
               </div>
-              <Badge
-                className={`absolute -bottom-1 left-1/2 -translate-x-1/2 ${rarityBadge(
-                  stats.rarity,
-                )} px-3 py-1 text-[10px] font-bold tracking-wider shadow-lg border-0`}
-              >
-                {stats.rarity}
-              </Badge>
+              <RarityDistributionTooltip rarity={stats.rarity}>
+                <Badge
+                  className={`absolute -bottom-1 left-1/2 -translate-x-1/2 ${rarityBadge(
+                    stats.rarity,
+                  )} px-3 py-1 text-[10px] font-bold tracking-wider shadow-lg border-0 cursor-help`}
+                >
+                  {stats.rarity}
+                </Badge>
+              </RarityDistributionTooltip>
             </div>
 
             {/* Identity */}

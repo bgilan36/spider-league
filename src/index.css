@@ -383,6 +383,54 @@ All colors MUST be HSL.
     z-index: 1;
   }
 
+  /* Epic — subtle shimmering border */
+  .rarity-epic-shimmer::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 2px;
+    background: linear-gradient(
+      110deg,
+      hsl(270 76% 62%) 0%,
+      hsl(290 90% 78%) 50%,
+      hsl(270 76% 62%) 100%
+    );
+    background-size: 200% 100%;
+    animation: legendary-shimmer 5s linear infinite;
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0.7;
+    z-index: 1;
+  }
+
+  @keyframes legendary-shimmer {
+    0%   { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
+  /* Legendary full-card halo glow */
+  .rarity-legendary-glow {
+    box-shadow:
+      0 0 24px hsl(43 96% 56% / 0.55),
+      0 0 48px hsl(43 96% 56% / 0.35),
+      0 0 96px hsl(48 100% 75% / 0.25);
+    animation: legendary-pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes legendary-pulse {
+    0%, 100% { box-shadow: 0 0 24px hsl(43 96% 56% / 0.55), 0 0 48px hsl(43 96% 56% / 0.35); }
+    50%      { box-shadow: 0 0 36px hsl(43 96% 56% / 0.8),  0 0 80px hsl(48 100% 75% / 0.55); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rarity-epic-shimmer::before { animation: none; }
+    .rarity-legendary-glow { animation: none; }
+  }
+
   /* Display font helper */
   .font-display {
     font-family: 'Oswald', 'Inter', system-ui, sans-serif;

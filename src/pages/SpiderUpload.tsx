@@ -534,10 +534,14 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
     const biased = species ? applySpeciesBias(species, baseStats) : baseStats;
     const power_score = Object.values(biased).reduce((sum, stat) => sum + (stat as number), 0);
 
-    let rarity: "COMMON" | "RARE" | "EPIC" | "LEGENDARY";
-    if (power_score >= 280) rarity = "LEGENDARY";
-    else if (power_score >= 240) rarity = "EPIC";
-    else if (power_score >= 200) rarity = "RARE";
+    // Percentile-aligned tiers (DB trigger is source of truth; this keeps the
+    // upload preview honest). Common 0–50, Uncommon 50–80, Rare 80–93,
+    // Epic 93–98, Legendary 98+.
+    let rarity: "COMMON" | "UNCOMMON" | "RARE" | "EPIC" | "LEGENDARY";
+    if (power_score >= 453) rarity = "LEGENDARY";
+    else if (power_score >= 368) rarity = "EPIC";
+    else if (power_score >= 323) rarity = "RARE";
+    else if (power_score >= 300) rarity = "UNCOMMON";
     else rarity = "COMMON";
 
     return {
