@@ -21,6 +21,8 @@ import SpiderPhoto from "@/components/visual/SpiderPhoto";
 import RarityBadge from "@/components/visual/RarityBadge";
 import StatBar, { type StatKey } from "@/components/visual/StatBar";
 import PowerLabel from "@/components/visual/PowerLabel";
+import LocationBackfill from "@/components/LocationBackfill";
+import { useAuth } from "@/auth/AuthProvider";
 
 interface Spider {
   id: string;
@@ -41,6 +43,9 @@ interface Spider {
   xp?: number;
   level?: number;
   share_image_url?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  location_name?: string | null;
 }
 
 interface SpiderDetailsModalProps {
@@ -54,6 +59,7 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
   isOpen,
   onClose,
 }) => {
+  const { user } = useAuth();
   const [battles, setBattles] = React.useState<any[]>([]);
   const [loadingBattles, setLoadingBattles] = React.useState(false);
   const [selectedBattle, setSelectedBattle] = React.useState<any | null>(null);
@@ -213,6 +219,21 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
                   {spider.is_approved ? "Approved" : "Pending"}
                 </Badge>
               </div>
+            </div>
+
+            {/* Location / backfill */}
+            <div className="pt-4 border-t space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium">Location</span>
+                {spider.location_name && (
+                  <span className="text-xs text-muted-foreground truncate max-w-[60%]" title={spider.location_name}>
+                    📍 {spider.location_name}
+                  </span>
+                )}
+              </div>
+              {!spider.latitude && user?.id && spider.owner_id === user.id && (
+                <LocationBackfill spiderId={spider.id} ownerId={spider.owner_id} />
+              )}
             </div>
 
             {/* Action Buttons */}

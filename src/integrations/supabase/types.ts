@@ -438,6 +438,44 @@ export type Database = {
           },
         ]
       }
+      local_legend_winners: {
+        Row: {
+          city_key: string
+          created_at: string
+          id: string
+          power_score: number
+          spider_id: string
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          city_key: string
+          created_at?: string
+          id?: string
+          power_score: number
+          spider_id: string
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          city_key?: string
+          created_at?: string
+          id?: string
+          power_score?: number
+          spider_id?: string
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "local_legend_winners_spider_id_fkey"
+            columns: ["spider_id"]
+            isOneToOne: false
+            referencedRelation: "spiders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       login_streaks: {
         Row: {
           created_at: string
@@ -1441,6 +1479,7 @@ export type Database = {
       }
       spiders: {
         Row: {
+          city_key: string | null
           created_at: string | null
           damage: number
           defense: number
@@ -1471,6 +1510,7 @@ export type Database = {
           xp: number
         }
         Insert: {
+          city_key?: string | null
           created_at?: string | null
           damage: number
           defense: number
@@ -1501,6 +1541,7 @@ export type Database = {
           xp?: number
         }
         Update: {
+          city_key?: string | null
           created_at?: string | null
           damage?: number
           defense?: number
@@ -1818,6 +1859,7 @@ export type Database = {
         Args: { user_id_param: string }
         Returns: undefined
       }
+      award_local_legends_for_current_week: { Args: never; Returns: number }
       award_recruiter_tier: { Args: { p_user_id: string }; Returns: undefined }
       award_spider_xp: {
         Args: { p_seed?: string; p_spider_id: string; p_xp_amount: number }
@@ -1852,9 +1894,29 @@ export type Database = {
         Args: { p_deactivate_others?: boolean; p_league_id: string }
         Returns: Json
       }
+      get_city_leaderboard: {
+        Args: { p_city_key: string; p_limit?: number }
+        Returns: {
+          image_url: string
+          nickname: string
+          owner_display_name: string
+          owner_id: string
+          power_score: number
+          rank_position: number
+          rarity: Database["public"]["Enums"]["spider_rarity"]
+          species: string
+          spider_id: string
+        }[]
+      }
       get_current_pt_week_end: { Args: never; Returns: string }
       get_current_pt_week_start: { Args: never; Returns: string }
       get_current_week: { Args: never; Returns: string }
+      get_heatmap_stats: {
+        Args: never
+        Returns: {
+          mapped_count: number
+        }[]
+      }
       get_most_active_pods: {
         Args: { limit_count?: number }
         Returns: {
@@ -1921,6 +1983,22 @@ export type Database = {
           longitude: number
         }[]
       }
+      get_top_spider_in_area: {
+        Args: { p_lat: number; p_lng: number; p_radius_deg?: number }
+        Returns: {
+          area_count: number
+          city_key: string
+          image_url: string
+          location_name: string
+          nickname: string
+          owner_display_name: string
+          owner_id: string
+          power_score: number
+          rarity: Database["public"]["Enums"]["spider_rarity"]
+          species: string
+          spider_id: string
+        }[]
+      }
       get_user_rankings_all_time: {
         Args: never
         Returns: {
@@ -1978,6 +2056,14 @@ export type Database = {
       is_private_league_owner: {
         Args: { _league_id: string; _user_id: string }
         Returns: boolean
+      }
+      list_cities_with_spiders: {
+        Args: never
+        Returns: {
+          city_key: string
+          display_name: string
+          spider_count: number
+        }[]
       }
       list_discoverable_pods: {
         Args: never

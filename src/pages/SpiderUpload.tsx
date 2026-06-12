@@ -120,7 +120,8 @@ const SpiderUpload = () => {
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationOptIn, setLocationOptIn] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
-    return localStorage.getItem("spider_location_optin") === "true";
+    // Default ON — user can tap Skip to disable.
+    return localStorage.getItem("spider_location_optin") !== "false";
   });
 
   const reverseGeocode = async (lat: number, lng: number): Promise<string> => {
@@ -155,16 +156,18 @@ const SpiderUpload = () => {
     setLocationLoading(true);
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
-        const { latitude: lat, longitude: lng, accuracy } = pos.coords;
+        const { latitude: rawLat, longitude: rawLng } = pos.coords;
+        const { fuzzCoords } = await import("@/lib/fuzzLocation");
+        const { lat, lng } = fuzzCoords(rawLat, rawLng, 1000);
         setLatitude(lat);
         setLongitude(lng);
-        setLocationAccuracy(accuracy);
+        setLocationAccuracy(1000);
         setLocationOptIn(true);
         localStorage.setItem("spider_location_optin", "true");
         const name = await reverseGeocode(lat, lng);
         setLocationName(name);
         setLocationLoading(false);
-        toast({ title: "Location captured", description: name });
+        toast({ title: "Location captured (fuzzed ~1km)", description: name });
       },
       (err) => {
         setLocationLoading(false);
@@ -609,6 +612,16 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
 
       if (insertError) throw insertError;
 
+      // If the user attached a location, ensure their profile opts into sharing it.
+      if (latitude !== null && longitude !== null) {
+        await supabase
+          .from("profile_settings")
+          .upsert(
+            { id: authUser.id, share_spider_locations: true },
+            { onConflict: "id" },
+          );
+      }
+
       // Track weekly upload
       const { error: trackError } = await supabase.rpc('increment_weekly_upload', {
         user_id_param: authUser.id,
@@ -958,12 +971,13 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Optional. Tagging a location helps power local discovery and recommendations.
+                    Only your spider's location is stored — never your home address.
+                    Locations are fuzzed to ~1&nbsp;km before saving.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-2">
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="default"
                       size="sm"
                       onClick={useMyLocation}
                       disabled={locationLoading}
@@ -976,6 +990,19 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                       )}
                       Use my location
                     </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        clearLocation();
+                        setLocationOptIn(false);
+                        localStorage.setItem("spider_location_optin", "false");
+                      }}
+                      className="sm:w-auto"
+                    >
+                      Skip
+                    </Button>
                     <Input
                       placeholder="Or type a place (e.g., Austin, TX)"
                       value={locationName}
@@ -985,13 +1012,7 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                   </div>
                   {latitude !== null && longitude !== null && (
                     <p className="text-xs text-muted-foreground">
-                      📍 {latitude.toFixed(4)}, {longitude.toFixed(4)}
-                      {locationAccuracy ? ` · ±${Math.round(locationAccuracy)}m` : ""}
-                    </p>
-                  )}
-                  {!locationOptIn && (
-                    <p className="text-[11px] text-muted-foreground leading-snug">
-                      We only request your location when you tap the button, and only store it on this spider.
+                      📍 {latitude.toFixed(3)}, {longitude.toFixed(3)} · fuzzed ~1&nbsp;km
                     </p>
                   )}
                 </div>

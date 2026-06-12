@@ -4,8 +4,9 @@ import "leaflet/dist/leaflet.css";
 import "leaflet.heat";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPin, Loader2 } from "lucide-react";
+import { MapPin, Loader2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
 
 type Range = "week" | "month" | "all";
 
@@ -22,9 +23,20 @@ export default function SpiderUploadHeatmap() {
   const [range, setRange] = useState<Range>("all");
   const [loading, setLoading] = useState(true);
   const [count, setCount] = useState(0);
+  const [globalCount, setGlobalCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.rpc("get_heatmap_stats");
+      if (!cancelled) setGlobalCount(Number((data?.[0] as any)?.mapped_count ?? 0));
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // Init map once
   useEffect(() => {
+    if (globalCount === null || globalCount < 10) return;
     if (!mapEl.current || mapRef.current) return;
     const map = L.map(mapEl.current, {
       worldCopyJump: true,
@@ -38,16 +50,49 @@ export default function SpiderUploadHeatmap() {
         maxZoom: 19,
       }
     ).addTo(map);
+
+    // Cluster click → top spider in area
+    map.on("click", async (e: L.LeafletMouseEvent) => {
+      const { lat, lng } = e.latlng;
+      const zoom = map.getZoom();
+      const radius = zoom >= 10 ? 0.15 : zoom >= 6 ? 0.6 : 2.5;
+      const { data, error } = await supabase.rpc("get_top_spider_in_area", {
+        p_lat: lat, p_lng: lng, p_radius_deg: radius,
+      });
+      if (error || !data || (data as any[]).length === 0) return;
+      const r: any = (data as any[])[0];
+      const cityHref = r.city_key
+        ? `/leaderboard?city=${encodeURIComponent(r.city_key)}`
+        : `/leaderboard`;
+      L.popup({ maxWidth: 260 })
+        .setLatLng([lat, lng])
+        .setContent(
+          `<div style="font-family:inherit">
+            <div style="display:flex;gap:8px;align-items:center">
+              <img src="${r.image_url}" style="width:44px;height:44px;border-radius:6px;object-fit:cover"/>
+              <div>
+                <div style="font-weight:600">${escapeHtml(r.nickname || "Spider")}</div>
+                <div style="font-size:11px;opacity:0.75">${escapeHtml(r.location_name || "Unknown area")}</div>
+                <div style="font-size:11px">⚡ ${r.power_score} · top of ${r.area_count} nearby</div>
+              </div>
+            </div>
+            <a href="${cityHref}" style="display:inline-block;margin-top:6px;font-size:12px;color:#60a5fa">View city leaderboard →</a>
+          </div>`
+        )
+        .openOn(map);
+    });
+
     mapRef.current = map;
     return () => {
       map.remove();
       mapRef.current = null;
       heatRef.current = null;
     };
-  }, []);
+  }, [globalCount]);
 
   // Fetch and render heat data
   useEffect(() => {
+    if (globalCount === null || globalCount < 10) return;
     let cancelled = false;
     (async () => {
       setLoading(true);
@@ -96,7 +141,30 @@ export default function SpiderUploadHeatmap() {
     return () => {
       cancelled = true;
     };
-  }, [range]);
+  }, [range, globalCount]);
+
+  // Pre-threshold CTA
+  if (globalCount !== null && globalCount < 10) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-xl">
+            <MapPin className="h-5 w-5 text-primary" />
+            Put your city on the map
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <p className="text-sm text-muted-foreground flex-1">
+            We need <strong>{10 - globalCount}</strong> more spider{10 - globalCount === 1 ? "" : "s"} with locations
+            before the global heat map unlocks. Tag your next spider's location to help kickstart your city's league.
+          </p>
+          <Button asChild>
+            <Link to="/upload"><Upload className="h-4 w-4 mr-2" />Upload a spider</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -121,7 +189,7 @@ export default function SpiderUploadHeatmap() {
           </div>
         </div>
         <p className="text-xs text-muted-foreground">
-          {loading ? "Loading sightings…" : `${count} spider${count === 1 ? "" : "s"} mapped`}
+          {loading ? "Loading sightings…" : `${count} spider${count === 1 ? "" : "s"} mapped · tap a hotspot to see its top spider`}
         </p>
       </CardHeader>
       <CardContent className="pt-0">
@@ -136,4 +204,10 @@ export default function SpiderUploadHeatmap() {
       </CardContent>
     </Card>
   );
+}
+
+function escapeHtml(s: string) {
+  return String(s).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[c] as string));
 }
