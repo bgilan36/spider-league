@@ -31,7 +31,9 @@ const SpiderPhoto: React.FC<Props> = ({
       className={cn(
         "spider-photo",
         !unframed && "rarity-frame",
+        !unframed && tier === "EPIC" && "rarity-epic-shimmer",
         !unframed && tier === "LEGENDARY" && "rarity-legendary-shimmer",
+        !unframed && tier === "LEGENDARY" && "rarity-legendary-glow",
         className,
       )}
       style={unframed ? undefined : rarityFrameStyle(tier)}
