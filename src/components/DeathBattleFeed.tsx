@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/auth/AuthProvider';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Skull, Timer, Swords, ChevronDown } from 'lucide-react';
+import { Skull, Timer, Swords, ChevronDown, Sword } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ClickableUsername from './ClickableUsername';
+import ChallengeDetailsModal from './ChallengeDetailsModal';
 
 interface DeathChallenge {
   id: string;
@@ -19,11 +21,15 @@ interface DeathChallenge {
 }
 
 const DeathBattleFeed: React.FC = () => {
+  const { user } = useAuth();
   const [challenges, setChallenges] = useState<DeathChallenge[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
+  const [myEligiblePowers, setMyEligiblePowers] = useState<number[]>([]);
+  const [selectedChallenge, setSelectedChallenge] = useState<DeathChallenge | null>(null);
   const fetchRef = useRef<() => void>(() => {});
   const INITIAL_VISIBLE = 3;
+  const POWER_THRESHOLD = 5;
 
   const fetchChallenges = useCallback(async () => {
     try {
@@ -72,6 +78,22 @@ const DeathBattleFeed: React.FC = () => {
   }, []);
 
   useEffect(() => { fetchRef.current = fetchChallenges; }, [fetchChallenges]);
+
+  // Fetch the current user's eligible spider power scores to determine if they can accept.
+  useEffect(() => {
+    if (!user) { setMyEligiblePowers([]); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('spiders')
+        .select('power_score')
+        .eq('owner_id', user.id)
+        .eq('is_approved', true)
+        .gt('eligible_until', new Date().toISOString());
+      if (!cancelled) setMyEligiblePowers((data || []).map((s: any) => s.power_score));
+    })();
+    return () => { cancelled = true; };
+  }, [user, challenges]);
 
   useEffect(() => {
     fetchChallenges();
