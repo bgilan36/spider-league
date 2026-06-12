@@ -26,6 +26,7 @@ import BrowsePods from "./pages/BrowsePods";
 import { AuthProvider } from "@/auth/AuthProvider";
 import Layout from "@/components/Layout";
 import NotificationListener from "@/components/NotificationListener";
+import ReferralCapture from "@/components/ReferralCapture";
 
 import BattleNotification from "@/components/BattleNotification";
 import RouteAnnouncer from "@/components/RouteAnnouncer";
@@ -49,6 +50,7 @@ const App = () => (
             <ScrollToTop />
             <NotificationListener />
             <BattleNotification />
+            <ReferralCapture />
             <Layout>
               <Routes>
                 <Route path="/" element={<Index />} />
