@@ -120,7 +120,8 @@ const SpiderUpload = () => {
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationOptIn, setLocationOptIn] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
-    return localStorage.getItem("spider_location_optin") === "true";
+    // Default ON — user can tap Skip to disable.
+    return localStorage.getItem("spider_location_optin") !== "false";
   });
 
   const reverseGeocode = async (lat: number, lng: number): Promise<string> => {
@@ -155,16 +156,18 @@ const SpiderUpload = () => {
     setLocationLoading(true);
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
-        const { latitude: lat, longitude: lng, accuracy } = pos.coords;
+        const { latitude: rawLat, longitude: rawLng } = pos.coords;
+        const { fuzzCoords } = await import("@/lib/fuzzLocation");
+        const { lat, lng } = fuzzCoords(rawLat, rawLng, 1000);
         setLatitude(lat);
         setLongitude(lng);
-        setLocationAccuracy(accuracy);
+        setLocationAccuracy(1000);
         setLocationOptIn(true);
         localStorage.setItem("spider_location_optin", "true");
         const name = await reverseGeocode(lat, lng);
         setLocationName(name);
         setLocationLoading(false);
-        toast({ title: "Location captured", description: name });
+        toast({ title: "Location captured (fuzzed ~1km)", description: name });
       },
       (err) => {
         setLocationLoading(false);
