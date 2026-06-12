@@ -1,133 +1,68 @@
-# SpiderDex Collection Book
+# Referral Rewards Plan
 
-A species-level companion to the existing per-spider collection: catalog every species the user has ever uploaded (active + retired), reward first-catches, and reward roster diversity.
+Build referral rewards on top of the existing pod invite / challenge link flow so inviters and invitees both get rewarded the first time the invitee completes a battle.
 
-## Data
+## Rewards (per spec)
+- **Badges** (one-time, tier-based on lifetime recruit count):
+  - Bronze Recruiter — 1 recruit
+  - Silver Recruiter — 3 recruits
+  - Gold Recruiter — 5 recruits
+  - Legendary Recruiter — 10 recruits
+  - Invitees get a one-time **"Drafted"** badge when their first battle resolves.
+- **Roster slot bonus**: temporary 6th active slot for 30 days, granted to both inviter and invitee on first qualifying battle. Capped at **one** extra slot regardless of how many referrals — additional referrals refresh the existing 30-day expiry rather than stacking.
 
-### New tables (migration)
+## Data Model (new migration)
 
-```text
-species_collected
-  user_id          uuid    (auth.users)
-  species_slug     text    canonical key (e.g. "southern_black_widow")
-  first_caught_at  timestamptz
-  first_spider_id  uuid    -> spiders.id
-  count            int     total ever uploaded of this species
-  best_power       int     max power_score across history
-  best_spider_id   uuid    -> spiders.id (drives the dex card photo)
-  PK (user_id, species_slug)
-```
+1. **`referrals`** table
+   - `inviter_id` (uuid → profiles.id)
+   - `invitee_id` (uuid → profiles.id, unique — a user can only be referred once)
+   - `source` text (`'pod_invite' | 'challenge_link' | 'manual'`)
+   - `source_ref` text nullable (invite token / challenge id)
+   - `status` text default `'pending'` (`pending` | `qualified`)
+   - `qualified_at` timestamptz nullable
+   - `created_at`, `updated_at`
 
-Three new rows in `badges`:
-- **Naturalist** (rare, 5 species)
-- **Field Researcher** (epic, 10 species)
-- **Spider Curator** (legendary, 25 species)
+2. **`roster_slot_bonuses`** table
+   - `user_id`, `expires_at`, `reason` (`'referral'`), `created_at`
+   - Used to compute "extra slot active?" via `expires_at > now()`.
 
-### Canonical species reference
+3. **Badges seeding**: insert 5 new rows in `badges` (Bronze/Silver/Gold/Legendary Recruiter + Drafted) with criteria `{ "type": "referrals_qualified", "target": N }` and `{ "type": "drafted" }`.
 
-`src/lib/spiderDex/species.ts` exports `SPECIES_DEX` — a hand-curated list of ~40 common North American spiders. Each entry:
+4. **RPCs**:
+   - `record_referral(p_inviter_id, p_source, p_source_ref)` — called client-side on signup if a stored referral code exists. Idempotent; no-op if invitee already has a referral row.
+   - `qualify_referral_on_first_battle(p_user_id)` — invoked by a trigger on `battles` / `spider_skirmishes` insert; if invitee's referral is still pending and this is their first completed battle, mark `qualified`, grant 30-day slot bonus to both parties (insert or extend `expires_at`), and award badges (Drafted for invitee, Recruiter tier for inviter based on lifetime qualified count).
+   - `get_referral_progress(p_user_id)` — returns `{ qualified_count, pending_count, next_tier, next_tier_target, current_tier, extra_slot_expires_at }`.
 
-```ts
-{
-  slug: "southern_black_widow",
-  commonName: "Southern Black Widow",
-  scientificName: "Latrodectus mactans",
-  family: "Theridiidae",
-  rarity: "uncommon",            // dex display rarity
-  region: "North America",
-  hint: "Often found in woodpiles and dim corners.",
-  silhouettePalette: ["#0a0a0a","#7f1d1d"],
-  aliases: ["black widow", "Latrodectus mactans"]
-}
-```
+5. **Roster cap integration**: `weekly_roster` is currently 1-slot. The "6th slot" maps to the eligible roster size used in `WeeklyEligibleSpiders` / battle eligibility. Add helper SQL function `public.get_user_roster_slot_count(p_user_id)` returning `5 + (case when active bonus then 1 else 0 end)` and update the relevant client checks to read from it (lightweight — most enforcement happens in `WeeklyRosterManager` / `WeeklyEligibleSpiders`).
 
-`matchSpeciesSlug(raw: string): string | null` — normalizes a user-typed species (case/punctuation/parenthetical-stripped) and matches against `aliases` + `commonName` + `scientificName`. Falls back to `null` for unknowns (those still get a dex card under a "Wild Catches" section, but don't count toward the common-species progress).
+## Client Changes
 
-## RPC: `claim_species_for_spider(spider_id uuid)`
+- **Referral code capture**: extend `src/pages/Auth.tsx` and the existing invite/challenge link entry points (`JoinLeague.tsx`, challenge accept flow) to stash `?ref=<inviter_id>` (or league/challenge token) in `localStorage` pre-auth, then on `SIGNED_IN` call `record_referral` RPC.
+- **Trigger qualification**: hook into existing battle-completion paths (skirmish/turn-based) — simplest is a DB trigger on `battles` set `is_active=false` + winner present, calling `qualify_referral_on_first_battle` for both participants. Same trigger on `spider_skirmishes` insert.
+- **Profile progress card**: new component `src/components/ReferralProgressCard.tsx` rendered on the profile page showing:
+  - Progress bar "2 of 3 friends recruited toward Gold Recruiter"
+  - Current tier badge + next tier preview
+  - Active extra-slot countdown ("Bonus 6th slot active — 12d left")
+  - Share-your-link button (reuse existing invite link infra, append `?ref=<my_id>`)
+- **Roster UI**: surface the bonus slot in `WeeklyRosterManager` / `WeeklyEligibleSpiders` (e.g. extra slot card with "Referral bonus — expires in Xd").
 
-Security-definer, public, callable from the upload flow:
-
-1. Resolve owning user; reject if caller isn't owner.
-2. Compute `species_slug` from `spiders.species`.
-3. Upsert `species_collected` (incrementing `count`, updating `best_power`/`best_spider_id` when this spider beats the current best).
-4. If the row was newly inserted **and** the spider is approved:
-   - `update profiles set xp = xp + 50`
-   - Check badge thresholds (5/10/25 distinct species) and insert `user_badges` rows for any newly crossed.
-   - Return `{ new_species: true, xp_awarded: 50, badge_unlocked: text|null, species_slug, common_name }`.
-5. Otherwise return `{ new_species: false, count, best_power }`.
-
-## Upload integration
-
-`src/pages/SpiderUpload.tsx` (and any other path that creates a spider — `create-starter-spider` edge function for the starter) calls `claim_species_for_spider(id)` right after the row is created/approved. The starter spider edge function calls the RPC via the service role; the user-facing flow calls it via the supabase client.
-
-When the RPC reports `new_species: true`, the upload success screen plays the **New Species reveal**: a holographic dex-page flip with the species name, silhouette → photo dissolve, "+50 XP" tick-up, and (if applicable) badge unlock toast.
-
-## SpiderDex page
-
-Route: `/dex` — added to `App.tsx` and to `GlobalHeader` (and as a dashboard tile on `/`).
-
-Page sections (all in `src/pages/SpiderDex.tsx`):
+## Technical Details
 
 ```text
-1. Header
-   "SpiderDex — 12/40 common species"   progress bar
-   Sub-stat row: distinct species ever caught, retired memorials, total catches
-
-2. Filter bar
-   [All] [Caught] [Uncaught] [Retired only]   + search
-
-3. Grid (responsive 2/3/5 cols)
-   • Caught card: real photo (best_spider), common name, scientific (small),
-     count chip, "Best ★ <power>", rarity tag. Click → species detail modal.
-   • Uncaught card: black silhouette over palette gradient, "???" + hint line.
-   • Retired-only badge: subtle "Memorialized" ribbon if every caught spider
-     of this species has eligible_until in the past.
-
-4. Wild Catches section (unknown-to-dex species)
-   Smaller cards for anything that didn't match a canonical slug.
+referrals (unique invitee_id) ──► qualify_referral_on_first_battle()
+                                       │
+                ┌──────────────────────┼──────────────────────┐
+                ▼                      ▼                      ▼
+        award Drafted badge   upsert roster_slot_bonuses   award Recruiter tier
+        to invitee            (extend expires_at to        based on count(*)
+                              now()+30d for both users)    qualified for inviter
 ```
 
-### Species detail modal
+- Tier evaluation reuses existing `award_badges_for_user` pattern but extends it to handle `type = 'referrals_qualified'` and `type = 'drafted'`.
+- Slot stacking cap is enforced by upserting a single row per user and setting `expires_at = greatest(expires_at, now()+30d)` — never adding multiple windows.
+- All new tables: standard `GRANT` block (`authenticated` CRUD on own rows, `service_role` ALL), RLS by `auth.uid()`.
 
-Opens from a dex card. Shows every spider the user has ever caught of that species, sorted by power, each with its final stats and battle record (wins/losses from `battles`). Retired spiders sit alongside active ones with a "Retired" badge — never deleted.
-
-## Diversity bonus (leaderboard)
-
-`src/pages/Leaderboard.tsx` already computes weekly user rankings client-side from `spiders` rows within the week's window. Modify the aggregation to also count `distinctSpeciesSlugs.size` per user (via `matchSpeciesSlug`), then apply:
-
-```ts
-ranking_score = Math.round(
-  (week_power_score + experience_points) * (1 + 0.05 * distinct_species)
-);
-```
-
-Render a small "× 1.15 diversity" chip next to the score when bonus > 0, so the reward is visible.
-
-## Badge wiring
-
-The three new badges are seeded in the migration. The RPC inserts `user_badges` when thresholds cross; the existing badges page picks them up automatically since it reads from `user_badges`.
-
-## Files
-
-```text
-NEW  src/lib/spiderDex/species.ts            canonical list + matcher
-NEW  src/lib/spiderDex/useSpeciesProgress.ts hook: collected map + counts
-NEW  src/pages/SpiderDex.tsx                 grid + filters + progress header
-NEW  src/components/dex/SpeciesCard.tsx      caught/silhouette card
-NEW  src/components/dex/SpeciesDetailModal.tsx  history of catches per species
-NEW  src/components/dex/NewSpeciesReveal.tsx animated dex-page reveal overlay
-
-EDIT src/App.tsx                             add /dex route
-EDIT src/components/GlobalHeader.tsx         add SpiderDex link
-EDIT src/pages/SpiderUpload.tsx              call RPC + show reveal on new
-EDIT supabase/functions/create-starter-spider/index.ts  call RPC service-side
-EDIT src/pages/Leaderboard.tsx               apply diversity multiplier
-
-MIG  species_collected table + grants + RLS + RPC + 3 new badges
-```
-
-## Out of scope (callable in follow-ups)
-
-- Push-notifying friends when you complete the dex.
-- Region selectors beyond North America.
-- A dex-wide share card (the existing per-spider share already covers a "look what I caught" moment).
+## Out of Scope
+- Anti-abuse beyond the unique invitee constraint and "first battle must be against a different user" check inside the qualification RPC.
+- Email notifications for tier-ups (toast only, for now).
+- Redesigning the existing invite/challenge link UI — only adding a `?ref=` param.
