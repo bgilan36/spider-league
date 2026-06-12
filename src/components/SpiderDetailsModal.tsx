@@ -64,6 +64,7 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
   const [loadingBattles, setLoadingBattles] = React.useState(false);
   const [selectedBattle, setSelectedBattle] = React.useState<any | null>(null);
   const [isBattleModalOpen, setIsBattleModalOpen] = React.useState(false);
+  const [locInfo, setLocInfo] = React.useState<{ latitude: number | null; location_name: string | null } | null>(null);
 
   const handleBattleClick = (battle: any) => {
     setSelectedBattle(battle);
@@ -78,6 +79,17 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
   React.useEffect(() => {
     if (isOpen && spider) {
       fetchBattleHistory();
+      (async () => {
+        const { data } = await supabase
+          .from("spiders")
+          .select("latitude, location_name")
+          .eq("id", spider.id)
+          .maybeSingle();
+        setLocInfo({
+          latitude: (data?.latitude as number | null) ?? null,
+          location_name: (data?.location_name as string | null) ?? null,
+        });
+      })();
     }
   }, [isOpen, spider?.id]);
 
@@ -225,14 +237,18 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
             <div className="pt-4 border-t space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="font-medium">Location</span>
-                {spider.location_name && (
-                  <span className="text-xs text-muted-foreground truncate max-w-[60%]" title={spider.location_name}>
-                    📍 {spider.location_name}
+                {locInfo?.location_name && (
+                  <span className="text-xs text-muted-foreground truncate max-w-[60%]" title={locInfo.location_name}>
+                    📍 {locInfo.location_name}
                   </span>
                 )}
               </div>
-              {!spider.latitude && user?.id && spider.owner_id === user.id && (
-                <LocationBackfill spiderId={spider.id} ownerId={spider.owner_id} />
+              {locInfo && locInfo.latitude === null && user?.id && spider.owner_id === user.id && (
+                <LocationBackfill
+                  spiderId={spider.id}
+                  ownerId={spider.owner_id}
+                  onSaved={(info) => setLocInfo({ latitude: info.lat, location_name: info.name })}
+                />
               )}
             </div>
 
