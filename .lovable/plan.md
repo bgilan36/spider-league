@@ -1,68 +1,48 @@
-# Referral Rewards Plan
+## Local Leagues on the Heat Map
 
-Build referral rewards on top of the existing pod invite / challenge link flow so inviters and invitees both get rewarded the first time the invitee completes a battle.
+### 1. Privacy-first location capture at upload
+- New `LocationCaptureStep` component shown during upload (right after image selection), default-ON.
+- Copy: *"Only your spider's location is stored — never your home address. Locations are fuzzed to ~1 km."*
+- Buttons: **Use my location** (primary) / **Skip**.
+- Uses `navigator.geolocation` once, then fuzzes coordinates client-side by a random offset up to ~1 km (±~0.009°) before sending. Sets `location_accuracy_m = 1000` so the data model reflects the fuzz.
+- Reverse-geocodes via a new edge function `reverse-geocode` (OpenStreetMap Nominatim — no key needed) to get a `city, region, country` string saved into `location_name`.
 
-## Rewards (per spec)
-- **Badges** (one-time, tier-based on lifetime recruit count):
-  - Bronze Recruiter — 1 recruit
-  - Silver Recruiter — 3 recruits
-  - Gold Recruiter — 5 recruits
-  - Legendary Recruiter — 10 recruits
-  - Invitees get a one-time **"Drafted"** badge when their first battle resolves.
-- **Roster slot bonus**: temporary 6th active slot for 30 days, granted to both inviter and invitee on first qualifying battle. Capped at **one** extra slot regardless of how many referrals — additional referrals refresh the existing 30-day expiry rather than stacking.
+### 2. Backfill from the spider detail modal
+- `SpiderDetailsModal` gains an "Add location" section for owners of spiders missing `latitude`/`longitude`.
+- Same one-tap capture flow, same fuzz + reverse-geocode, same copy.
 
-## Data Model (new migration)
+### 3. City leaderboards + Local Legend badge
+- DB: parse `location_name` into a normalized `city_key` (lowercased "city, country") via a generated column, indexed.
+- New RPC `get_city_leaderboard(p_city_key, p_limit)` returns the top spiders for a city (weekly, scoped to current PT week).
+- New RPC `list_cities_with_spiders()` returns cities with ≥3 mapped spiders (for browse/dropdown).
+- New page section `CityLeaderboard` rendered on Leaderboard page (and linkable from heatmap popups).
+- Weekly cron `award-local-legends` (Sunday 00:05 PT) assigns the **Local Legend** badge to the #1 spider's owner in each city, scoped to that week. Badge seeded once.
 
-1. **`referrals`** table
-   - `inviter_id` (uuid → profiles.id)
-   - `invitee_id` (uuid → profiles.id, unique — a user can only be referred once)
-   - `source` text (`'pod_invite' | 'challenge_link' | 'manual'`)
-   - `source_ref` text nullable (invite token / challenge id)
-   - `status` text default `'pending'` (`pending` | `qualified`)
-   - `qualified_at` timestamptz nullable
-   - `created_at`, `updated_at`
+### 4. Heat-map UX
+- Clicking a heat cluster (lat/lng round-to-grid) opens a popup with the top-power spider in that area (thumbnail, nickname, owner, power, "View city leaderboard" link).
+- If global mapped-spider count `< 10`, the heatmap is replaced with a **"Put your city on the map"** CTA card linking to the upload page.
 
-2. **`roster_slot_bonuses`** table
-   - `user_id`, `expires_at`, `reason` (`'referral'`), `created_at`
-   - Used to compute "extra slot active?" via `expires_at > now()`.
+### Technical details
 
-3. **Badges seeding**: insert 5 new rows in `badges` (Bronze/Silver/Gold/Legendary Recruiter + Drafted) with criteria `{ "type": "referrals_qualified", "target": N }` and `{ "type": "drafted" }`.
+**Migration**
+- `ALTER TABLE spiders ADD COLUMN city_key TEXT GENERATED ALWAYS AS (lower(btrim(location_name))) STORED;` plus an index on `city_key` when not null.
+- Seed badge: `Local Legend` (criteria `{type: 'local_legend'}`) — awarded via cron, not the generic checker.
+- `get_city_leaderboard(p_city_key text, p_limit int)` — security definer, returns ranked spiders for the current PT week.
+- `list_cities_with_spiders()` — returns city_key, display_name, spider_count where count ≥ 3.
+- `get_top_spider_in_area(p_lat, p_lng, p_radius_deg)` — returns the highest-power spider in a bounding box for cluster popups.
 
-4. **RPCs**:
-   - `record_referral(p_inviter_id, p_source, p_source_ref)` — called client-side on signup if a stored referral code exists. Idempotent; no-op if invitee already has a referral row.
-   - `qualify_referral_on_first_battle(p_user_id)` — invoked by a trigger on `battles` / `spider_skirmishes` insert; if invitee's referral is still pending and this is their first completed battle, mark `qualified`, grant 30-day slot bonus to both parties (insert or extend `expires_at`), and award badges (Drafted for invitee, Recruiter tier for inviter based on lifetime qualified count).
-   - `get_referral_progress(p_user_id)` — returns `{ qualified_count, pending_count, next_tier, next_tier_target, current_tier, extra_slot_expires_at }`.
+**Edge functions**
+- `reverse-geocode` (verify_jwt=false; rate-limited by IP via simple in-memory map; no secrets needed): calls Nominatim, returns `{city, region, country, location_name}`.
+- `award-local-legends` (scheduled): computes weekly #1 per city, inserts `user_badges` rows for new winners, idempotent per (week_start, city_key).
 
-5. **Roster cap integration**: `weekly_roster` is currently 1-slot. The "6th slot" maps to the eligible roster size used in `WeeklyEligibleSpiders` / battle eligibility. Add helper SQL function `public.get_user_roster_slot_count(p_user_id)` returning `5 + (case when active bonus then 1 else 0 end)` and update the relevant client checks to read from it (lightweight — most enforcement happens in `WeeklyRosterManager` / `WeeklyEligibleSpiders`).
+**Frontend**
+- `src/lib/fuzzLocation.ts` — `fuzzCoords(lat, lng, radiusMeters)`.
+- `src/components/LocationCaptureStep.tsx` — reusable, used in upload + modal.
+- `src/components/CityLeaderboard.tsx` — table.
+- Update `SpiderUpload.tsx` to invoke the step before insert; save `latitude/longitude/location_name/location_accuracy_m`.
+- Update `SpiderDetailsModal.tsx` with backfill section for owner.
+- Update `SpiderUploadHeatmap.tsx`: gate by global count; add cluster click handler that hits `get_top_spider_in_area` and opens a leaflet popup.
 
-## Client Changes
-
-- **Referral code capture**: extend `src/pages/Auth.tsx` and the existing invite/challenge link entry points (`JoinLeague.tsx`, challenge accept flow) to stash `?ref=<inviter_id>` (or league/challenge token) in `localStorage` pre-auth, then on `SIGNED_IN` call `record_referral` RPC.
-- **Trigger qualification**: hook into existing battle-completion paths (skirmish/turn-based) — simplest is a DB trigger on `battles` set `is_active=false` + winner present, calling `qualify_referral_on_first_battle` for both participants. Same trigger on `spider_skirmishes` insert.
-- **Profile progress card**: new component `src/components/ReferralProgressCard.tsx` rendered on the profile page showing:
-  - Progress bar "2 of 3 friends recruited toward Gold Recruiter"
-  - Current tier badge + next tier preview
-  - Active extra-slot countdown ("Bonus 6th slot active — 12d left")
-  - Share-your-link button (reuse existing invite link infra, append `?ref=<my_id>`)
-- **Roster UI**: surface the bonus slot in `WeeklyRosterManager` / `WeeklyEligibleSpiders` (e.g. extra slot card with "Referral bonus — expires in Xd").
-
-## Technical Details
-
-```text
-referrals (unique invitee_id) ──► qualify_referral_on_first_battle()
-                                       │
-                ┌──────────────────────┼──────────────────────┐
-                ▼                      ▼                      ▼
-        award Drafted badge   upsert roster_slot_bonuses   award Recruiter tier
-        to invitee            (extend expires_at to        based on count(*)
-                              now()+30d for both users)    qualified for inviter
-```
-
-- Tier evaluation reuses existing `award_badges_for_user` pattern but extends it to handle `type = 'referrals_qualified'` and `type = 'drafted'`.
-- Slot stacking cap is enforced by upserting a single row per user and setting `expires_at = greatest(expires_at, now()+30d)` — never adding multiple windows.
-- All new tables: standard `GRANT` block (`authenticated` CRUD on own rows, `service_role` ALL), RLS by `auth.uid()`.
-
-## Out of Scope
-- Anti-abuse beyond the unique invitee constraint and "first battle must be against a different user" check inside the qualification RPC.
-- Email notifications for tier-ups (toast only, for now).
-- Redesigning the existing invite/challenge link UI — only adding a `?ref=` param.
+### Out of scope
+- Custom map tiles, offline mode, multi-language reverse geocoding, manual city pinning (we accept browser geolocation only).
+- No retroactive city assignment for existing spiders without lat/lng — backfill is user-driven via the modal.
