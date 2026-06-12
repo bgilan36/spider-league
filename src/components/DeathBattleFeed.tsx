@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/auth/AuthProvider';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Skull, Timer, Swords, ChevronDown } from 'lucide-react';
+import { Skull, Timer, Swords, ChevronDown, Sword } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ClickableUsername from './ClickableUsername';
+import ChallengeDetailsModal from './ChallengeDetailsModal';
 
 interface DeathChallenge {
   id: string;
@@ -19,11 +21,15 @@ interface DeathChallenge {
 }
 
 const DeathBattleFeed: React.FC = () => {
+  const { user } = useAuth();
   const [challenges, setChallenges] = useState<DeathChallenge[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
+  const [myEligiblePowers, setMyEligiblePowers] = useState<number[]>([]);
+  const [selectedChallenge, setSelectedChallenge] = useState<DeathChallenge | null>(null);
   const fetchRef = useRef<() => void>(() => {});
   const INITIAL_VISIBLE = 3;
+  const POWER_THRESHOLD = 5;
 
   const fetchChallenges = useCallback(async () => {
     try {
@@ -72,6 +78,22 @@ const DeathBattleFeed: React.FC = () => {
   }, []);
 
   useEffect(() => { fetchRef.current = fetchChallenges; }, [fetchChallenges]);
+
+  // Fetch the current user's eligible spider power scores to determine if they can accept.
+  useEffect(() => {
+    if (!user) { setMyEligiblePowers([]); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('spiders')
+        .select('power_score')
+        .eq('owner_id', user.id)
+        .eq('is_approved', true)
+        .gt('eligible_until', new Date().toISOString());
+      if (!cancelled) setMyEligiblePowers((data || []).map((s: any) => s.power_score));
+    })();
+    return () => { cancelled = true; };
+  }, [user, challenges]);
 
   useEffect(() => {
     fetchChallenges();
@@ -126,13 +148,21 @@ const DeathBattleFeed: React.FC = () => {
           const timeLeft = new Date(challenge.expires_at).getTime() - Date.now();
           const hoursLeft = Math.max(0, Math.floor(timeLeft / (1000 * 60 * 60)));
           const spider = challenge.challenger_spider;
+          const targetPower = spider?.power_score ?? null;
+          const isOwnChallenge = !!user && challenge.challenger_id === user.id;
+          const hasMatch =
+            !!user &&
+            !isOwnChallenge &&
+            targetPower !== null &&
+            myEligiblePowers.some((p) => Math.abs(p - targetPower) <= POWER_THRESHOLD);
 
           return (
             <Card
               key={challenge.id}
               className="border-l-4 border-l-destructive hover:shadow-md transition-shadow"
             >
-              <CardContent className="flex items-center gap-3 p-3 sm:p-4">
+              <CardContent className="p-3 sm:p-4 space-y-3">
+              <div className="flex items-center gap-3">
                 {/* Spider image */}
                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden flex-shrink-0">
                   {spider?.image_url ? (
@@ -178,6 +208,30 @@ const DeathBattleFeed: React.FC = () => {
                     <div className="text-xs text-muted-foreground">Power</div>
                   </div>
                 </div>
+              </div>
+
+              {/* Accept CTA — eligible if user has a spider within ±5 power */}
+              {!isOwnChallenge && (
+                <div className="flex items-center justify-between gap-2 pt-1 border-t">
+                  <span className="text-[11px] text-muted-foreground">
+                    {hasMatch
+                      ? `You have a spider within ±${POWER_THRESHOLD} power — accept now!`
+                      : user
+                        ? `Need a spider within ±${POWER_THRESHOLD} power (${targetPower ?? '?'}) to accept`
+                        : `Sign in with an eligible spider to accept`}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant={hasMatch ? 'destructive' : 'outline'}
+                    disabled={!hasMatch}
+                    onClick={() => setSelectedChallenge(challenge)}
+                    className="h-7 px-3 text-xs"
+                  >
+                    <Sword className="w-3 h-3 mr-1" />
+                    Accept
+                  </Button>
+                </div>
+              )}
               </CardContent>
             </Card>
           );
@@ -196,6 +250,16 @@ const DeathBattleFeed: React.FC = () => {
           </Button>
         </div>
       )}
+
+      <ChallengeDetailsModal
+        isOpen={!!selectedChallenge}
+        onClose={() => setSelectedChallenge(null)}
+        challenge={selectedChallenge as any}
+        onChallengeAccepted={() => {
+          setSelectedChallenge(null);
+          fetchRef.current();
+        }}
+      />
     </div>
   );
 };
