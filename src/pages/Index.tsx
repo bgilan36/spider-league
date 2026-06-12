@@ -36,6 +36,7 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { useIsMobile } from "@/hooks/use-mobile";
 import ActiveSpiders from "@/components/ActiveSpiders";
+import RookieSeasonChecklist from "@/components/RookieSeasonChecklist";
 import DeathBattleFeed from "@/components/DeathBattleFeed";
 import PublishErrorPanel from "@/components/PublishErrorPanel";
 import CreatePrivateLeagueButton from "@/components/CreatePrivateLeagueButton";
@@ -960,6 +961,10 @@ const Index = () => {
         </div>
 
         {/* Above-the-fold: Your Starting 5 with embedded battle controls */}
+        <section className="mb-6">
+          <RookieSeasonChecklist />
+        </section>
+
         <section className="mb-8">
           <ActiveSpiders onSpiderChange={fetchUserSpiders} newSpiderId={newSpiderId} />
         </section>

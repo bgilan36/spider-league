@@ -938,6 +938,8 @@ export type Database = {
           has_completed_first_skirmish: boolean | null
           has_completed_onboarding: boolean | null
           id: string
+          rookie_season_completed: boolean
+          rookie_season_dismissed: boolean
           share_spider_locations: boolean
           updated_at: string
         }
@@ -948,6 +950,8 @@ export type Database = {
           has_completed_first_skirmish?: boolean | null
           has_completed_onboarding?: boolean | null
           id: string
+          rookie_season_completed?: boolean
+          rookie_season_dismissed?: boolean
           share_spider_locations?: boolean
           updated_at?: string
         }
@@ -958,6 +962,8 @@ export type Database = {
           has_completed_first_skirmish?: boolean | null
           has_completed_onboarding?: boolean | null
           id?: string
+          rookie_season_completed?: boolean
+          rookie_season_dismissed?: boolean
           share_spider_locations?: boolean
           updated_at?: string
         }
@@ -1885,6 +1891,7 @@ export type Database = {
         Returns: Database["public"]["Enums"]["spider_rarity"]
       }
       cleanup_stale_presence: { Args: never; Returns: undefined }
+      complete_rookie_season: { Args: never; Returns: Json }
       create_private_league_with_invite: {
         Args: { name: string }
         Returns: Json
@@ -1975,6 +1982,7 @@ export type Database = {
         }[]
       }
       get_referral_progress: { Args: { p_user_id?: string }; Returns: Json }
+      get_rookie_season_progress: { Args: never; Returns: Json }
       get_spider_skirmish_suggestion: { Args: never; Returns: Json }
       get_spider_upload_heatmap: {
         Args: { days_back?: number }

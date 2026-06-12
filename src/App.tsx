@@ -23,6 +23,7 @@ import JoinLeague from "./pages/JoinLeague";
 import SpiderDex from "./pages/SpiderDex";
 import Pods from "./pages/Pods";
 import BrowsePods from "./pages/BrowsePods";
+import Skirmish from "./pages/Skirmish";
 import { AuthProvider } from "@/auth/AuthProvider";
 import Layout from "@/components/Layout";
 import NotificationListener from "@/components/NotificationListener";
@@ -66,6 +67,7 @@ const App = () => (
                 <Route path="/shop" element={<Shop />} />
                 <Route path="/pods" element={<Pods />} />
                 <Route path="/pods/browse" element={<BrowsePods />} />
+                <Route path="/skirmish" element={<Skirmish />} />
                 <Route path="/leagues" element={<Navigate to="/pods" replace />} />
                 <Route path="/leagues/:leagueId" element={<PrivateLeagueDetail />} />
                 <Route path="/join/:inviteToken" element={<JoinLeague />} />
