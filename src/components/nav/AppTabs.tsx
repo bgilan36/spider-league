@@ -84,7 +84,7 @@ export const DesktopTabs: React.FC<{ pathname: string }> = ({ pathname }) => {
 
 export const MobileTabBar: React.FC<{ pathname: string }> = ({ pathname }) => {
   if (useShouldHide(pathname)) return null;
-  const [expanded, setExpanded] = React.useState(false);
+  const [expanded, setExpanded] = React.useState(true);
   const lastY = React.useRef(0);
 
   React.useEffect(() => {
@@ -94,11 +94,11 @@ export const MobileTabBar: React.FC<{ pathname: string }> = ({ pathname }) => {
       const dy = y - lastY.current;
       if (Math.abs(dy) < 4) return;
       if (dy > 0 && y > 40) {
-        // scrolling down — reveal full nav
-        setExpanded(true);
-      } else if (dy < 0) {
-        // scrolling up — collapse to home pill
+        // scrolling down — collapse to home pill
         setExpanded(false);
+      } else if (dy < 0) {
+        // scrolling up — reveal full nav
+        setExpanded(true);
       }
       lastY.current = y;
     };
@@ -126,7 +126,7 @@ export const MobileTabBar: React.FC<{ pathname: string }> = ({ pathname }) => {
           "bg-background/40 supports-[backdrop-filter]:bg-background/30",
           "backdrop-blur-2xl backdrop-saturate-150 shadow-xl",
           "transition-all duration-300 ease-out",
-          expanded ? "px-2 py-2 justify-between" : "px-2 py-2 w-14"
+          expanded ? "px-2 py-2 justify-between w-full" : "px-2 py-2 w-14"
         )}
       >
         <NavLink
@@ -161,12 +161,13 @@ export const MobileTabBar: React.FC<{ pathname: string }> = ({ pathname }) => {
                 aria-label={tab.label}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-0.5 h-10 px-3 rounded-full text-[10px] font-medium tracking-wide uppercase",
+                  "flex flex-col items-center justify-center gap-0.5 h-10 px-2 rounded-full text-[9px] font-medium tracking-wide uppercase",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   active ? "text-primary bg-white/15" : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 <Icon className={cn("h-4 w-4", active && "scale-110")} />
+                <span>{tab.label}</span>
               </NavLink>
             );
           })}
