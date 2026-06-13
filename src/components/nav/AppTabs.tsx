@@ -84,94 +84,44 @@ export const DesktopTabs: React.FC<{ pathname: string }> = ({ pathname }) => {
 
 export const MobileTabBar: React.FC<{ pathname: string }> = ({ pathname }) => {
   if (useShouldHide(pathname)) return null;
-  const [expanded, setExpanded] = React.useState(true);
-  const lastY = React.useRef(0);
-
-  React.useEffect(() => {
-    lastY.current = window.scrollY;
-    const onScroll = () => {
-      const y = window.scrollY;
-      const dy = y - lastY.current;
-      if (Math.abs(dy) < 4) return;
-      if (dy > 0 && y > 40) {
-        // scrolling down — collapse to home pill
-        setExpanded(false);
-      } else if (dy < 0) {
-        // scrolling up — reveal full nav
-        setExpanded(true);
-      }
-      lastY.current = y;
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  const homeTab = TABS[0];
-  const restTabs = TABS.slice(1);
-  const HomeIcon = homeTab.icon;
-  const homeActive = homeTab.match ? homeTab.match(pathname) : pathname === homeTab.to;
-
   return (
     <nav
       aria-label="Primary"
       className={cn(
         "md:hidden fixed bottom-3 left-3 right-3 z-50",
-        "pb-[env(safe-area-inset-bottom)]",
-        "transition-all duration-300 ease-out"
+        "pb-[env(safe-area-inset-bottom)]"
       )}
     >
       <div
         className={cn(
-          "flex items-center gap-1 rounded-full border border-white/15",
+          "flex items-center justify-between gap-1 rounded-full border border-white/15 px-2 py-2",
           "bg-background/40 supports-[backdrop-filter]:bg-background/30",
-          "backdrop-blur-2xl backdrop-saturate-150 shadow-xl",
-          "transition-all duration-300 ease-out",
-          expanded ? "px-2 py-2 justify-between w-full" : "px-2 py-2 w-14"
+          "backdrop-blur-2xl backdrop-saturate-150 shadow-xl"
         )}
       >
-        <NavLink
-          to={homeTab.to}
-          aria-label={homeTab.label}
-          aria-current={homeActive ? "page" : undefined}
-          onClick={() => setExpanded((v) => !v)}
-          className={cn(
-            "flex items-center justify-center h-10 w-10 rounded-full shrink-0",
-            "transition-colors",
-            homeActive
-              ? "bg-primary text-primary-foreground"
-              : "bg-white/10 text-foreground hover:bg-white/20"
-          )}
-        >
-          <HomeIcon className="h-5 w-5" />
-        </NavLink>
-
-        <div
-          className={cn(
-            "flex items-center gap-1 overflow-hidden transition-all duration-300 ease-out",
-            expanded ? "max-w-[400px] opacity-100 ml-1" : "max-w-0 opacity-0"
-          )}
-        >
-          {restTabs.map((tab) => {
-            const active = tab.match ? tab.match(pathname) : pathname === tab.to;
-            const Icon = tab.icon;
-            return (
-              <NavLink
-                key={tab.to}
-                to={tab.to}
-                aria-label={tab.label}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "flex flex-col items-center justify-center gap-0.5 h-10 px-2 rounded-full text-[9px] font-medium tracking-wide uppercase",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  active ? "text-primary bg-white/15" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Icon className={cn("h-4 w-4", active && "scale-110")} />
-                <span>{tab.label}</span>
-              </NavLink>
-            );
-          })}
-        </div>
+        {TABS.map((tab, i) => {
+          const active = tab.match ? tab.match(pathname) : pathname === tab.to;
+          const Icon = tab.icon;
+          const isHome = i === 0;
+          return (
+            <NavLink
+              key={tab.to}
+              to={tab.to}
+              aria-label={tab.label}
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                "flex flex-col items-center justify-center gap-0.5 h-11 flex-1 rounded-full text-[9px] font-medium tracking-wide uppercase transition-colors",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                isHome && active && "bg-primary text-primary-foreground",
+                !isHome && active && "text-primary bg-white/15",
+                !active && "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Icon className={cn("h-4 w-4", active && "scale-110")} />
+              <span>{tab.label}</span>
+            </NavLink>
+          );
+        })}
       </div>
     </nav>
   );
