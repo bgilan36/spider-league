@@ -8,8 +8,11 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
+const HIDDEN_ROUTES = ['/auth', '/admin'];
+
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { pathname } = useLocation();
+  const hideNav = HIDDEN_ROUTES.some((r) => pathname.startsWith(r));
   return (
     <>
       <a
@@ -20,8 +23,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </a>
       <BattleResultsNotification />
       <GlobalHeader />
-      <AppTabs pathname={pathname} />
-      <main id="main-content" className="pb-20 md:pb-0">{children}</main>
+      {!hideNav && <AppTabs pathname={pathname} />}
+      <main id="main-content" className={hideNav ? '' : 'pb-20 md:pb-0'}>{children}</main>
     </>
   );
 };
