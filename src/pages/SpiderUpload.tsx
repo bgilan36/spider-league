@@ -952,11 +952,15 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                 )}
 
                 {/* Location tagging */}
-                <div className="border rounded-lg p-4 space-y-3">
+                <div className={`border-2 rounded-lg p-4 space-y-3 transition-colors ${
+                  latitude !== null || locationName
+                    ? "border-primary/40 bg-primary/5"
+                    : "border-dashed border-primary/50 bg-primary/5"
+                }`}>
                   <div className="flex items-center justify-between gap-2">
                     <Label className="text-sm font-semibold flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      Where did you find this spider?
+                      <MapPin className="h-4 w-4 text-primary" />
+                      Tag location <span className="text-muted-foreground font-normal">(optional)</span>
                     </Label>
                     {(latitude !== null || locationName) && (
                       <Button
@@ -971,25 +975,38 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Only your spider's location is stored — never your home address.
-                    Locations are fuzzed to ~1&nbsp;km before saving.
+                    Tap <strong>Use my location</strong> for a one-tap GPS tag, or <strong>type a place</strong> below
+                    (e.g., "Austin, TX"). Locations are fuzzed to ~1&nbsp;km — your home address is never stored.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-2">
                     <Button
                       type="button"
                       variant="default"
-                      size="sm"
+                      size="default"
                       onClick={useMyLocation}
                       disabled={locationLoading}
                       className="sm:w-auto"
                     >
                       {locationLoading ? (
-                        <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       ) : (
-                        <MapPin className="h-3 w-3 mr-2" />
+                        <MapPin className="h-4 w-4 mr-2" />
                       )}
                       Use my location
                     </Button>
+                    <Input
+                      placeholder="Or type a place (e.g., Austin, TX)"
+                      value={locationName}
+                      onChange={(e) => setLocationName(e.target.value)}
+                      className="flex-1"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    {latitude !== null && longitude !== null ? (
+                      <p className="text-xs text-muted-foreground">
+                        📍 {latitude.toFixed(3)}, {longitude.toFixed(3)} · fuzzed ~1&nbsp;km
+                      </p>
+                    ) : <span />}
                     <Button
                       type="button"
                       variant="ghost"
@@ -999,22 +1016,11 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                         setLocationOptIn(false);
                         localStorage.setItem("spider_location_optin", "false");
                       }}
-                      className="sm:w-auto"
+                      className="h-7 px-2 text-xs text-muted-foreground"
                     >
-                      Skip
+                      Skip location
                     </Button>
-                    <Input
-                      placeholder="Or type a place (e.g., Austin, TX)"
-                      value={locationName}
-                      onChange={(e) => setLocationName(e.target.value)}
-                      className="flex-1"
-                    />
                   </div>
-                  {latitude !== null && longitude !== null && (
-                    <p className="text-xs text-muted-foreground">
-                      📍 {latitude.toFixed(3)}, {longitude.toFixed(3)} · fuzzed ~1&nbsp;km
-                    </p>
-                  )}
                 </div>
 
                 <Button type="submit" className="w-full" disabled={uploading || identifying}>
