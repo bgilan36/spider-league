@@ -15,7 +15,7 @@ const triggerHaptic = (duration: number = 10) => {
 
 export const usePullToRefresh = ({
   onRefresh,
-  threshold = 80,
+  threshold = 120,
   disabled = false,
 }: UsePullToRefreshOptions) => {
   const [isPulling, setIsPulling] = useState(false);
@@ -24,6 +24,7 @@ export const usePullToRefresh = ({
   const startY = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const hasTriggeredHaptic = useRef(false);
+  const activated = useRef(false);
 
   const handleTouchStart = useCallback(
     (e: TouchEvent) => {
@@ -34,6 +35,7 @@ export const usePullToRefresh = ({
         startY.current = e.touches[0].clientY;
         setIsPulling(true);
         hasTriggeredHaptic.current = false;
+        activated.current = false;
       }
     },
     [disabled, isRefreshing]
@@ -45,10 +47,23 @@ export const usePullToRefresh = ({
       
       const currentY = e.touches[0].clientY;
       const diff = currentY - startY.current;
-      
+
+      // Require a clear, intentional downward drag before engaging pull-to-refresh.
+      // This prevents accidental triggers during normal upward scrolling at the top.
+      const ACTIVATION_DIFF = 60;
+      if (!activated.current) {
+        if (diff > ACTIVATION_DIFF && window.scrollY === 0) {
+          activated.current = true;
+          // Re-baseline so distance starts from activation point
+          startY.current = currentY;
+        } else {
+          return;
+        }
+      }
+
       if (diff > 0 && window.scrollY === 0) {
         // Apply resistance to make it feel more natural
-        const resistance = 0.4;
+        const resistance = 0.35;
         const newDistance = Math.min(diff * resistance, threshold * 1.5);
         setPullDistance(newDistance);
         
@@ -60,8 +75,8 @@ export const usePullToRefresh = ({
           hasTriggeredHaptic.current = false;
         }
         
-        // Prevent default scrolling when pulling down
-        if (diff > 10) {
+        // Prevent default scrolling once we've meaningfully engaged
+        if (newDistance > 20 && e.cancelable) {
           e.preventDefault();
         }
       }
