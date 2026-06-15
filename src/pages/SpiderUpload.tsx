@@ -682,14 +682,14 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overscroll-y-contain [touch-action:pan-y] [overflow-anchor:none]">
       <Helmet>
         <title>Upload Spider — Spider League</title>
         <meta name="description" content="Upload your spider to Spider League and get battle-ready stats." />
         <link rel="canonical" href={`${window.location.origin}/upload`} />
       </Helmet>
       
-      <main className="container mx-auto px-6 py-8">
+      <main className="container mx-auto px-6 py-8 overscroll-y-contain [touch-action:pan-y]">
         <div className="max-w-2xl mx-auto">
           <div className="mb-6">
             <Link 
