@@ -3,6 +3,7 @@ import BattleResultsNotification from '@/components/BattleResultsNotification';
 import GlobalHeader from '@/components/GlobalHeader';
 import AppTabs from '@/components/nav/AppTabs';
 import { useLocation } from 'react-router-dom';
+import { useAuth } from '@/auth/AuthProvider';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -12,7 +13,8 @@ const HIDDEN_ROUTES = ['/auth', '/admin'];
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { pathname } = useLocation();
-  const hideNav = HIDDEN_ROUTES.some((r) => pathname.startsWith(r));
+  const { user } = useAuth();
+  const hideNav = HIDDEN_ROUTES.some((r) => pathname.startsWith(r)) || !user;
   return (
     <>
       <a
