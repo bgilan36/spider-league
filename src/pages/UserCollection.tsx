@@ -8,7 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Users, Zap } from 'lucide-react';
 import PowerScoreArc from '@/components/PowerScoreArc';
-import BattleButton from '@/components/BattleButton';
+import InstantBattleButton from '@/components/InstantBattleButton';
 import { Skeleton } from '@/components/ui/skeleton';
 import ProfileWall from '@/components/ProfileWall';
 import ReferralProgressCard from '@/components/ReferralProgressCard';
@@ -313,14 +313,16 @@ const UserCollection: React.FC = () => {
                     <Progress value={spider.webcraft} className="h-2" />
                   </div>
 
-                  <BattleButton 
-                    targetSpider={{
-                      ...spider,
-                      is_approved: true,
-                      owner_id: userId
-                    }} 
-                    context="collection"
-                  />
+                  {user && userId && userId !== user.id && (
+                    <InstantBattleButton
+                      opponentSpiderId={spider.id}
+                      opponentUserId={userId}
+                      size="sm"
+                      variant="default"
+                      className="w-full"
+                      label={`Battle ${spider.nickname}`}
+                    />
+                  )}
                 </CardContent>
               </Card>
               ))}
