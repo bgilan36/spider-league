@@ -322,25 +322,25 @@ const SpiderRevealCard = ({
               <Button
                 className="w-full"
                 size="lg"
-                onClick={onBattleNow}
+                onClick={onAddToStarting5}
                 disabled={uploading}
               >
                 {uploading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Sword className="h-4 w-4" />
+                  <Plus className="h-4 w-4" />
                 )}
-                Battle Now
+                Add to Starting Lineup
               </Button>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  onClick={onAddToStarting5}
+                  onClick={onBattleNow}
                   disabled={uploading}
                   className="flex-1"
                 >
-                  <Plus className="h-4 w-4" />
-                  Add to Starting 5
+                  <Sword className="h-4 w-4" />
+                  Battle Now
                 </Button>
                 <ShareButton
                   title={`${nickname} — ${stats.rarity} Spider`}
