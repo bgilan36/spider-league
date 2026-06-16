@@ -92,6 +92,7 @@ const SpiderUpload = () => {
     harmfulToHumans: string;
     specialAbilities: string[];
     rank: number;
+    reasoning?: string;
   }>>([]);
   const [identificationQuality, setIdentificationQuality] = useState<string | null>(null);
   const [safetyInfo, setSafetyInfo] = useState<{
@@ -826,7 +827,14 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
 
                 {candidates.length > 0 && (
                   <div className="space-y-3">
-                    <Label>Top 3 Species Matches</Label>
+                    <div className="flex items-center justify-between">
+                      <Label>Top 3 Species Matches</Label>
+                      {candidates[0]?.confidence !== undefined && (
+                        <span className="text-xs font-semibold">
+                          {candidates[0].confidence}% match
+                        </span>
+                      )}
+                    </div>
                     {identificationQuality && (
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <Badge variant={
@@ -852,7 +860,7 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                             setSpiderStats(updated);
                             toast({ 
                               title: 'Match selected', 
-                              description: `${c.species} - ${c.confidence}% confidence` 
+                              description: `${c.species} — ${c.confidence}% confidence` 
                             });
                           }}
                         >
@@ -867,6 +875,11 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                                   <Badge variant="secondary" className="text-xs">US Native</Badge>
                                 )}
                               </div>
+                              {c.reasoning && (
+                                <p className="text-xs text-foreground/80 line-clamp-2">
+                                  {c.reasoning}
+                                </p>
+                              )}
                               <p className="text-xs text-muted-foreground line-clamp-2">
                                 {c.harmfulToHumans}
                               </p>
@@ -880,7 +893,15 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                                 </div>
                               )}
                             </div>
-                            <Badge className="shrink-0">{c.confidence}%</Badge>
+                            <div className="shrink-0 flex flex-col items-end gap-1">
+                              <Badge>{c.confidence}%</Badge>
+                              <div className="w-12 h-1.5 bg-muted rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full bg-primary rounded-full"
+                                  style={{ width: `${c.confidence}%` }}
+                                />
+                              </div>
+                            </div>
                           </div>
                         </div>
                       ))}
