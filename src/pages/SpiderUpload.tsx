@@ -1152,6 +1152,23 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
           uploading={uploading}
           onAddToStarting5={() => handleUpload()}
           onBattleNow={() => handleUpload(undefined, { afterBattle: true })}
+          candidates={candidates}
+          onSelectCandidate={(picked) => {
+            setSpecies(picked);
+            const nick = generateNickname(picked);
+            setNickname(nick);
+            const updated = generateSpiderStats();
+            setSpiderStats(updated);
+            toast({ title: "Species updated", description: picked });
+          }}
+          locationName={locationName}
+          hasLocation={latitude !== null || !!locationName}
+          locationLoading={locationLoading}
+          citySearchLoading={citySearchLoading}
+          onLocationNameChange={setLocationName}
+          onUseMyLocation={useMyLocation}
+          onSearchCity={searchCity}
+          onClearLocation={clearLocation}
         />
       )}
       {newSpeciesReveal && (

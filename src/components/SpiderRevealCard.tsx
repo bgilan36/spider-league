@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Sword, Users, Plus, Loader2, ShieldAlert, Heart, Pencil, Check, X } from "lucide-react";
+import { Sparkles, Sword, Users, Plus, Loader2, ShieldAlert, Heart, Pencil, Check, X, MapPin, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import PowerScoreArc from "@/components/PowerScoreArc";
 import { Progress } from "@/components/ui/progress";
@@ -31,6 +31,13 @@ interface SafetyInfo {
   specialAbilities: string[];
 }
 
+interface Candidate {
+  species: string;
+  confidence: number;
+  rank: number;
+  reasoning?: string;
+}
+
 interface SpiderRevealCardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -43,6 +50,16 @@ interface SpiderRevealCardProps {
   uploading: boolean;
   onAddToStarting5: () => Promise<void> | void;
   onBattleNow: () => Promise<void> | void;
+  candidates?: Candidate[];
+  onSelectCandidate?: (species: string) => void;
+  locationName?: string;
+  hasLocation?: boolean;
+  locationLoading?: boolean;
+  citySearchLoading?: boolean;
+  onLocationNameChange?: (next: string) => void;
+  onUseMyLocation?: () => void;
+  onSearchCity?: (query: string) => void;
+  onClearLocation?: () => void;
 }
 
 const STAT_META: Record<string, { label: string; icon: string }> = {
@@ -96,12 +113,23 @@ const SpiderRevealCard = ({
   uploading,
   onAddToStarting5,
   onBattleNow,
+  candidates,
+  onSelectCandidate,
+  locationName,
+  hasLocation,
+  locationLoading,
+  citySearchLoading,
+  onLocationNameChange,
+  onUseMyLocation,
+  onSearchCity,
+  onClearLocation,
 }: SpiderRevealCardProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { fireConfetti } = useConfetti();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(nickname);
+  const [speciesPickerOpen, setSpeciesPickerOpen] = useState(false);
 
   const isLegendary = stats.rarity === "LEGENDARY";
   const isEpicPlus = isLegendary || stats.rarity === "EPIC";
@@ -247,6 +275,54 @@ const SpiderRevealCard = ({
                 </button>
               )}
               <p className="text-sm italic text-muted-foreground">{species}</p>
+              {onSelectCandidate && candidates && candidates.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setSpeciesPickerOpen((v) => !v)}
+                  className="text-[11px] text-primary hover:underline mt-1"
+                >
+                  {speciesPickerOpen ? "Hide other matches" : `Not quite right? Pick from ${candidates.length} matches`}
+                </button>
+              )}
+              {speciesPickerOpen && candidates && onSelectCandidate && (
+                <div className="mt-2 space-y-1.5 text-left">
+                  {candidates.slice(0, 5).map((c, i) => {
+                    const selected = c.species === species;
+                    return (
+                      <button
+                        type="button"
+                        key={c.species + i}
+                        onClick={() => {
+                          onSelectCandidate(c.species);
+                          setSpeciesPickerOpen(false);
+                        }}
+                        className={`w-full rounded-lg border p-2 text-left transition-colors ${
+                          selected
+                            ? "border-primary bg-primary/10"
+                            : "border-border hover:bg-accent/50"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Badge variant={i === 0 ? "default" : "outline"} className="text-[10px] shrink-0">
+                              #{c.rank ?? i + 1}
+                            </Badge>
+                            <span className="text-sm font-medium truncate">{c.species}</span>
+                          </div>
+                          <Badge variant="secondary" className="text-[10px] shrink-0">
+                            {c.confidence}%
+                          </Badge>
+                        </div>
+                        {c.reasoning && (
+                          <p className="text-[11px] text-muted-foreground line-clamp-2 mt-1">
+                            {c.reasoning}
+                          </p>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Power + strongest stat */}
@@ -314,6 +390,83 @@ const SpiderRevealCard = ({
                     <Badge variant="secondary" className="ml-2 text-[10px]">US Native</Badge>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* Location tagging */}
+            {(onUseMyLocation || onSearchCity) && (
+              <div className={`rounded-xl border p-3 space-y-2 ${
+                hasLocation ? "border-primary/40 bg-primary/5" : "border-dashed border-primary/40 bg-muted/30"
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold">
+                    <MapPin className="h-3.5 w-3.5 text-primary" />
+                    {hasLocation ? "Location" : "Tag location"}
+                    <span className="font-normal text-muted-foreground">(optional)</span>
+                  </div>
+                  {hasLocation && onClearLocation && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={onClearLocation}
+                      className="h-6 px-2 text-[11px]"
+                    >
+                      <X className="h-3 w-3 mr-1" /> Clear
+                    </Button>
+                  )}
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  {onUseMyLocation && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={onUseMyLocation}
+                      disabled={locationLoading}
+                      className="sm:w-auto"
+                    >
+                      {locationLoading ? (
+                        <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <MapPin className="h-3.5 w-3.5 mr-1.5" />
+                      )}
+                      Use my location
+                    </Button>
+                  )}
+                  {onSearchCity && (
+                    <div className="flex flex-1 gap-1.5">
+                      <Input
+                        placeholder="Type a city (e.g., Austin, TX)"
+                        value={locationName ?? ""}
+                        onChange={(e) => onLocationNameChange?.(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            onSearchCity(locationName ?? "");
+                          }
+                        }}
+                        className="h-9 text-sm"
+                      />
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => onSearchCity(locationName ?? "")}
+                        disabled={citySearchLoading || !(locationName ?? "").trim()}
+                      >
+                        {citySearchLoading ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Search className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  Locations are fuzzed to ~1 km — your exact spot is never stored.
+                </p>
               </div>
             )}
 
