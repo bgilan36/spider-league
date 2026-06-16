@@ -145,6 +145,31 @@ const SpiderUpload = () => {
     }
   };
 
+  const forwardGeocode = async (query: string): Promise<{ lat: number; lng: number; name: string } | null> => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(query)}&limit=1&addressdetails=1`,
+        { headers: { Accept: "application/json" } }
+      );
+      if (!res.ok) throw new Error("forward geocode failed");
+      const data = await res.json();
+      if (!Array.isArray(data) || data.length === 0) return null;
+      const place = data[0];
+      const lat = parseFloat(place.lat);
+      const lng = parseFloat(place.lon);
+      const a = place.address || {};
+      const parts = [
+        a.city || a.town || a.village || a.hamlet || a.suburb || a.county,
+        a.state || a.region,
+        a.country,
+      ].filter(Boolean);
+      const name = parts.join(", ") || place.display_name || query;
+      return { lat, lng, name };
+    } catch {
+      return null;
+    }
+  };
+
   const useMyLocation = async () => {
     if (!("geolocation" in navigator)) {
       toast({
