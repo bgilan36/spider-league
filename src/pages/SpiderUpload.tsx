@@ -440,7 +440,7 @@ const { data, error } = await supabase.functions.invoke('spider-identify', {
           const nick = generateNickname(speciesLocal);
           setNickname(nick);
 
-          const statsLocal = generateSpiderStats();
+          const statsLocal = generateSpiderStats(speciesLocal);
           setSpiderStats(statsLocal);
 
           toast({
@@ -579,7 +579,7 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
   };
 };
 
-  const generateSpiderStats = () => {
+  const generateSpiderStats = (speciesName?: string) => {
     // Generate random stats, then bias by species if available
     const baseStats = {
       hit_points: Math.floor(Math.random() * 50) + 50, // 50-100
@@ -590,7 +590,8 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
       webcraft: Math.floor(Math.random() * 40) + 20, // 20-60
     };
 
-    const biased = species ? applySpeciesBias(species, baseStats) : baseStats;
+    const targetSpecies = speciesName ?? species;
+    const biased = targetSpecies ? applySpeciesBias(targetSpecies, baseStats) : baseStats;
     const power_score = Object.values(biased).reduce((sum, stat) => sum + (stat as number), 0);
 
     // Percentile-aligned tiers (DB trigger is source of truth; this keeps the
@@ -899,12 +900,18 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                         <div
                           key={c.species + i}
                           className="border rounded-lg p-3 hover:bg-accent/50 transition-colors cursor-pointer"
-                          onClick={() => {
+                        onClick={() => {
                             setSpecies(c.species);
                             const nick = generateNickname(c.species);
                             setNickname(nick);
-                            const updated = generateSpiderStats();
+                            const updated = generateSpiderStats(c.species);
                             setSpiderStats(updated);
+                            setSafetyInfo({
+                              isUSNative: c.isUSNative,
+                              harmfulToHumans: c.harmfulToHumans,
+                              dangerLevel: c.harmfulToHumans.toLowerCase().startsWith('yes') ? 'high' : 'low',
+                              specialAbilities: c.specialAbilities,
+                            });
                             toast({ 
                               title: 'Match selected', 
                               description: `${c.species} — ${c.confidence}% confidence` 
@@ -1157,8 +1164,17 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
             setSpecies(picked);
             const nick = generateNickname(picked);
             setNickname(nick);
-            const updated = generateSpiderStats();
+            const updated = generateSpiderStats(picked);
             setSpiderStats(updated);
+            const candidate = candidates.find((c) => c.species === picked);
+            if (candidate) {
+              setSafetyInfo({
+                isUSNative: candidate.isUSNative,
+                harmfulToHumans: candidate.harmfulToHumans,
+                dangerLevel: candidate.harmfulToHumans.toLowerCase().startsWith('yes') ? 'high' : 'low',
+                specialAbilities: candidate.specialAbilities,
+              });
+            }
             toast({ title: "Species updated", description: picked });
           }}
           locationName={locationName}
