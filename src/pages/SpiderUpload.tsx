@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { Upload, Camera, Loader2, ArrowLeft, MapPin, X } from "lucide-react";
+import { Upload, Camera, Loader2, ArrowLeft, MapPin, X, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
 import { classifyImage } from "@/hooks/useImageClassifier";
@@ -119,6 +119,7 @@ const SpiderUpload = () => {
   const [locationName, setLocationName] = useState<string>("");
   const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
+  const [citySearchLoading, setCitySearchLoading] = useState(false);
   const [locationOptIn, setLocationOptIn] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     // Default ON — user can tap Skip to disable.
@@ -142,6 +143,31 @@ const SpiderUpload = () => {
       return parts.join(", ") || data.display_name || `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
     } catch {
       return `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
+    }
+  };
+
+  const forwardGeocode = async (query: string): Promise<{ lat: number; lng: number; name: string } | null> => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(query)}&limit=1&addressdetails=1`,
+        { headers: { Accept: "application/json" } }
+      );
+      if (!res.ok) throw new Error("forward geocode failed");
+      const data = await res.json();
+      if (!Array.isArray(data) || data.length === 0) return null;
+      const place = data[0];
+      const lat = parseFloat(place.lat);
+      const lng = parseFloat(place.lon);
+      const a = place.address || {};
+      const parts = [
+        a.city || a.town || a.village || a.hamlet || a.suburb || a.county,
+        a.state || a.region,
+        a.country,
+      ].filter(Boolean);
+      const name = parts.join(", ") || place.display_name || query;
+      return { lat, lng, name };
+    } catch {
+      return null;
     }
   };
 
@@ -180,6 +206,27 @@ const SpiderUpload = () => {
       },
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
     );
+  };
+
+  const searchCity = async (query: string) => {
+    const q = query.trim();
+    if (!q) return;
+    setCitySearchLoading(true);
+    const result = await forwardGeocode(q);
+    if (result) {
+      const { fuzzCoords } = await import("@/lib/fuzzLocation");
+      const { lat, lng } = fuzzCoords(result.lat, result.lng, 1000);
+      setLatitude(lat);
+      setLongitude(lng);
+      setLocationName(result.name);
+      setLocationAccuracy(1000);
+      setLocationOptIn(true);
+      localStorage.setItem("spider_location_optin", "true");
+      toast({ title: "Location set", description: result.name });
+    } else {
+      toast({ title: "City not found", description: "Try a broader search like 'Austin, TX'", variant: "destructive" });
+    }
+    setCitySearchLoading(false);
   };
 
   const clearLocation = () => {
@@ -1023,12 +1070,33 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                       )}
                       Use my location
                     </Button>
-                    <Input
-                      placeholder="Or type a place (e.g., Austin, TX)"
-                      value={locationName}
-                      onChange={(e) => setLocationName(e.target.value)}
-                      className="flex-1"
-                    />
+                    <div className="flex flex-1 gap-2">
+                      <Input
+                        placeholder="Or type a city (e.g., Austin, TX)"
+                        value={locationName}
+                        onChange={(e) => setLocationName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            searchCity(locationName);
+                          }
+                        }}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="default"
+                        onClick={() => searchCity(locationName)}
+                        disabled={citySearchLoading || !locationName.trim()}
+                      >
+                        {citySearchLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Search className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                   <div className="flex items-center justify-between">
                     {latitude !== null && longitude !== null ? (
