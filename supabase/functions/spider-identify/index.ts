@@ -815,6 +815,7 @@ serve(async (req) => {
         harmfulToHumans: c.dbData.danger !== 'minimal',
         harmfulReason: c.dbData.harmfulReason,
         specialAbilities: c.dbData.specialAbilities,
+        reasoning: c.reasoning,
         rank: index + 1
       };
     });
