@@ -92,6 +92,7 @@ const SpiderUpload = () => {
     harmfulToHumans: string;
     specialAbilities: string[];
     rank: number;
+    reasoning?: string;
   }>>([]);
   const [identificationQuality, setIdentificationQuality] = useState<string | null>(null);
   const [safetyInfo, setSafetyInfo] = useState<{
