@@ -579,7 +579,7 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
   };
 };
 
-  const generateSpiderStats = () => {
+  const generateSpiderStats = (speciesName?: string) => {
     // Generate random stats, then bias by species if available
     const baseStats = {
       hit_points: Math.floor(Math.random() * 50) + 50, // 50-100
@@ -590,7 +590,8 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
       webcraft: Math.floor(Math.random() * 40) + 20, // 20-60
     };
 
-    const biased = species ? applySpeciesBias(species, baseStats) : baseStats;
+    const targetSpecies = speciesName ?? species;
+    const biased = targetSpecies ? applySpeciesBias(targetSpecies, baseStats) : baseStats;
     const power_score = Object.values(biased).reduce((sum, stat) => sum + (stat as number), 0);
 
     // Percentile-aligned tiers (DB trigger is source of truth; this keeps the
