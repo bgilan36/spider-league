@@ -613,6 +613,7 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
       ...biased,
       power_score,
       rarity,
+    };
   };
 
   const confirmPendingSpecies = () => {
