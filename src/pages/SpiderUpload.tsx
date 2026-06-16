@@ -1193,22 +1193,29 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
           onBattleNow={() => handleUpload(undefined, { afterBattle: true })}
           candidates={candidates}
           onSelectCandidate={(picked) => {
-            setSpecies(picked);
-            const nick = generateNickname(picked);
-            setNickname(nick);
-            const updated = generateSpiderStats(picked);
-            setSpiderStats(updated);
+            if (picked === species) {
+              cancelPendingSpecies();
+              return;
+            }
+            setPendingSpecies(picked);
+            setPendingNickname(generateNickname(picked));
+            setPendingStats(generateSpiderStats(picked));
             const candidate = candidates.find((c) => c.species === picked);
             if (candidate) {
-              setSafetyInfo({
+              setPendingSafety({
                 isUSNative: candidate.isUSNative,
                 harmfulToHumans: candidate.harmfulToHumans,
                 dangerLevel: candidate.harmfulToHumans.toLowerCase().startsWith('yes') ? 'high' : 'low',
                 specialAbilities: candidate.specialAbilities,
               });
             }
-            toast({ title: "Species updated", description: picked });
           }}
+          pendingSpecies={pendingSpecies}
+          pendingNickname={pendingNickname}
+          pendingStats={pendingStats}
+          pendingSafety={pendingSafety}
+          onConfirmSpecies={confirmPendingSpecies}
+          onCancelPreview={cancelPendingSpecies}
           locationName={locationName}
           hasLocation={latitude !== null || !!locationName}
           locationLoading={locationLoading}
