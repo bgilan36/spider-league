@@ -119,6 +119,7 @@ const SpiderUpload = () => {
   const [locationName, setLocationName] = useState<string>("");
   const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
+  const [citySearchLoading, setCitySearchLoading] = useState(false);
   const [locationOptIn, setLocationOptIn] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     // Default ON — user can tap Skip to disable.
