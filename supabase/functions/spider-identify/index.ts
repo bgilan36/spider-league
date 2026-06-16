@@ -534,7 +534,7 @@ serve(async (req) => {
       });
     }
 
-    const { image, topK = 5 } = await req.json();
+    const { image, topK = 5, location } = await req.json();
 
     if (!image || typeof image !== "string") {
       return new Response(
@@ -552,42 +552,90 @@ serve(async (req) => {
       });
     }
 
-    console.log("Starting spider identification with Lovable AI vision...");
+    console.log("Starting spider identification with Lovable AI vision (closed-set, structured)...");
 
-    // Use Gemini 2.5 Flash vision model for spider identification
-    const visionResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: `Analyze this image and identify the spider species. Provide multiple possible species names in order of likelihood. Focus on US-native spiders. Include scientific names, common names, and family names. List at least 5 possible spider species even if confidence is lower for some. Format your response as a list of species, one per line, starting with the most likely.`
-              },
-              {
-                type: "image_url",
-                image_url: {
-                  url: image
-                }
-              }
-            ]
-          }
-        ],
-        max_tokens: 1000
-      })
-    });
+    // Build a compact, model-friendly catalog of the candidate species we
+    // actually score. The model picks from these keys — closed-set
+    // classification is dramatically more reliable than open-vocabulary
+    // free-text parsing.
+    const catalogEntries = Object.entries(US_SPIDER_DATABASE)
+      .filter(([, d]) => d.isUSNative || d.isCommonInvasive)
+      .map(([key, d]) => ({
+        key,
+        scientific: d.scientificName,
+        common: d.commonNames[0],
+        family: d.family,
+        size_mm: `${d.size.min}-${d.size.max}`,
+        diagnostic: d.visualKeywords.slice(0, 8).join(", "),
+      }));
+
+    const locationHint = (() => {
+      if (!location) return "Unknown — assume continental United States.";
+      const parts: string[] = [];
+      if (typeof location.latitude === "number" && typeof location.longitude === "number") {
+        parts.push(`approx coords ${location.latitude.toFixed(2)}, ${location.longitude.toFixed(2)}`);
+      }
+      if (location.name) parts.push(String(location.name));
+      return parts.join(" — ") || "Unknown — assume continental United States.";
+    })();
+
+    const systemPrompt =
+      "You are an expert arachnologist. Identify spider species from photos using diagnostic morphology: " +
+      "body coloration and markings (e.g. hourglass, violin, stabilimentum), abdomen shape, leg banding/length, " +
+      "eye arrangement when visible, posture, web type if visible, and approximate body size. " +
+      "You MUST choose species ONLY from the provided catalog of US-relevant species. " +
+      "If the image clearly does not show a spider, return isSpider=false. " +
+      "Reply ONLY with a single JSON object matching the requested schema — no prose, no markdown.";
+
+    const userInstruction =
+      `Catalog of allowed species (pick the species_key from this list ONLY):\n` +
+      JSON.stringify(catalogEntries) +
+      `\n\nObservation location: ${locationHint}\n` +
+      `Use the location to disambiguate similar species (e.g. western vs southern black widow, regional tarantulas).` +
+      `\n\nReturn JSON with this exact shape:\n` +
+      `{\n` +
+      `  "isSpider": boolean,\n` +
+      `  "observedFeatures": string,  // 1-2 sentences naming the diagnostic features you saw\n` +
+      `  "candidates": [\n` +
+      `    { "species_key": string, "confidence": number /* 0-100 */, "reasoning": string }\n` +
+      `  ]  // up to 5 entries, sorted most likely first; species_key MUST be one of the catalog keys\n` +
+      `}`;
+
+    async function callVision(model: string) {
+      return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: systemPrompt },
+            {
+              role: "user",
+              content: [
+                { type: "text", text: userInstruction },
+                { type: "image_url", image_url: { url: image } },
+              ],
+            },
+          ],
+          response_format: { type: "json_object" },
+          max_tokens: 1200,
+        }),
+      });
+    }
+
+    // Prefer Gemini 2.5 Pro for finer-grained species ID; fall back to Flash on rate limits.
+    let visionResponse = await callVision("google/gemini-2.5-pro");
+    if (visionResponse.status === 429 || visionResponse.status === 503) {
+      console.warn("Pro vision rate-limited/unavailable; falling back to flash");
+      visionResponse = await callVision("google/gemini-2.5-flash");
+    }
 
     if (!visionResponse.ok) {
       const errorText = await visionResponse.text();
       console.error("Lovable AI vision error:", visionResponse.status, errorText);
-      
       if (visionResponse.status === 429) {
         throw new Error("Rate limit exceeded. Please try again in a moment.");
       }
@@ -598,71 +646,105 @@ serve(async (req) => {
     }
 
     const visionData = await visionResponse.json();
-    const aiResponse = visionData.choices?.[0]?.message?.content || "";
-    
-    console.log("AI Vision Response:", aiResponse);
+    const aiResponse: string = visionData.choices?.[0]?.message?.content || "";
+    console.log("AI Vision Response:", aiResponse.slice(0, 800));
 
-    if (!aiResponse || aiResponse.length < 10) {
+    if (!aiResponse || aiResponse.length < 5) {
       throw new Error("AI failed to identify the image. Please ensure it shows a spider.");
     }
 
-    // Parse AI response to extract species names
-    const lines = aiResponse.split('\n').filter((line: string) => line.trim().length > 0);
-    const spiderFiltered: Array<{ label: string; score: number }> = [];
-    
-    // Extract species names from AI response (looking for scientific names, common names)
-    for (let i = 0; i < Math.min(lines.length, 10); i++) {
-      const line = lines[i].toLowerCase();
-      
-      // Skip lines that are clearly not species names
-      if (line.length < 5 || line.includes('image') || line.includes('analysis') || 
-          line.includes('please') || line.includes('however') || line.includes('cannot')) {
-        continue;
+    // ---- Parse structured response (with robust fallbacks) ----
+    type AiCandidate = { species_key: string; confidence: number; reasoning?: string };
+    let parsed: { isSpider?: boolean; observedFeatures?: string; candidates?: AiCandidate[] } = {};
+    try {
+      // Strip markdown fences if the model added them despite instructions.
+      const cleaned = aiResponse.trim().replace(/^```(?:json)?\s*/i, "").replace(/```$/i, "").trim();
+      parsed = JSON.parse(cleaned);
+    } catch (e) {
+      // Try to extract the first {...} block.
+      const m = aiResponse.match(/\{[\s\S]*\}/);
+      if (m) {
+        try { parsed = JSON.parse(m[0]); } catch { /* ignore */ }
       }
-      
-      // Calculate confidence based on position (earlier = higher confidence)
-      const positionScore = 1.0 - (i * 0.08); // Decreases by 8% per position
-      const baseScore = Math.max(0.4, positionScore);
-      
-      spiderFiltered.push({
-        label: line.replace(/^\d+[\.\)\-]\s*/, '').trim(), // Remove numbering
-        score: baseScore
-      });
     }
 
-    console.log("Parsed species from AI:", spiderFiltered);
-
-    if (spiderFiltered.length === 0) {
-      throw new Error("No spider species detected. Please upload a clear image of a spider.");
+    if (parsed.isSpider === false) {
+      return new Response(
+        JSON.stringify({
+          error: "No spider detected in this image. Please upload a clear photo of a spider.",
+          isSpider: false,
+        }),
+        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
-    // Map to database with US-native prioritization
     const candidatesWithDB: Array<{
       dbKey: string;
       dbData: SpiderData;
       aiLabel: string;
-      aiScore: number;
-      dbConfidence: number;
-      combinedScore: number;
+      aiScore: number;        // 0-1
+      dbConfidence: number;   // 0-100
+      combinedScore: number;  // 0-1
+      reasoning?: string;
     }> = [];
 
-    for (const result of spiderFiltered) {
-      const match = getBestSpeciesMatch(result.label);
-      if (match && match.data.isUSNative) { // STRICT US filter
-        const combinedScore = (result.score * 0.6) + (match.confidence / 100 * 0.4);
-        candidatesWithDB.push({
-          dbKey: match.key,
-          dbData: match.data,
-          aiLabel: result.label,
-          aiScore: result.score,
-          dbConfidence: match.confidence,
-          combinedScore
-        });
+    const aiCands = Array.isArray(parsed.candidates) ? parsed.candidates : [];
+    for (const c of aiCands) {
+      if (!c || typeof c.species_key !== "string") continue;
+      const key = c.species_key.trim();
+      const data = US_SPIDER_DATABASE[key];
+      if (!data || (!data.isUSNative && !data.isCommonInvasive)) continue;
+      const aiScore = Math.max(0, Math.min(1, Number(c.confidence) / 100));
+      candidatesWithDB.push({
+        dbKey: key,
+        dbData: data,
+        aiLabel: data.commonNames[0],
+        aiScore,
+        dbConfidence: Math.round(aiScore * 100),
+        combinedScore: aiScore,
+        reasoning: typeof c.reasoning === "string" ? c.reasoning : undefined,
+      });
+    }
+
+    // ---- Fallback: legacy free-text parsing if structured parse produced nothing ----
+    if (candidatesWithDB.length === 0) {
+      console.warn("Structured parse empty — falling back to legacy text matcher");
+      const lines = aiResponse.split(/\n+/).filter((l: string) => l.trim().length > 0);
+      for (let i = 0; i < Math.min(lines.length, 10); i++) {
+        const line = lines[i].toLowerCase();
+        if (line.length < 5) continue;
+        const positionScore = Math.max(0.4, 1.0 - i * 0.08);
+        const match = getBestSpeciesMatch(line.replace(/^\d+[\.\)\-]\s*/, "").trim());
+        if (match && match.data.isUSNative) {
+          candidatesWithDB.push({
+            dbKey: match.key,
+            dbData: match.data,
+            aiLabel: match.commonName,
+            aiScore: positionScore,
+            dbConfidence: match.confidence,
+            combinedScore: positionScore * 0.6 + (match.confidence / 100) * 0.4,
+          });
+        }
       }
     }
 
     if (candidatesWithDB.length === 0) {
-      throw new Error("Could not identify any US-native spider species. Please ensure image shows a spider found in the United States.");
+      throw new Error("Could not identify any US-native spider species. Please ensure image shows a clear spider photo.");
+    }
+
+    // Optional: small bump for region-consistent species when a US location is provided.
+    if (location && (typeof location.latitude === "number" || typeof location.name === "string")) {
+      const locName = String(location.name || "").toLowerCase();
+      for (const cand of candidatesWithDB) {
+        const region = (US_SPIDER_DATABASE[cand.dbKey]?.commonNames.join(" ") || "").toLowerCase();
+        // Lightweight regional boost based on common-name hints (e.g. "Western", "Texas", "Arizona").
+        const regionalHints = ["western", "southern", "northern", "eastern", "desert", "texas", "arizona", "carolina"];
+        for (const hint of regionalHints) {
+          if (region.includes(hint) && locName.includes(hint)) {
+            cand.combinedScore = Math.min(1, cand.combinedScore + 0.05);
+          }
+        }
+      }
     }
 
     // Sort and get unique top 3
@@ -733,6 +815,7 @@ serve(async (req) => {
         harmfulToHumans: c.dbData.danger !== 'minimal',
         harmfulReason: c.dbData.harmfulReason,
         specialAbilities: c.dbData.specialAbilities,
+        reasoning: c.reasoning,
         rank: index + 1
       };
     });
