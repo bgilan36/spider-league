@@ -613,7 +613,34 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
       ...biased,
       power_score,
       rarity,
-    };
+  };
+
+  const confirmPendingSpecies = () => {
+    if (!pendingSpecies) return;
+    setSpecies(pendingSpecies);
+    setNickname(pendingNickname || generateNickname(pendingSpecies));
+    if (pendingStats) setSpiderStats(pendingStats);
+    if (pendingSafety) setSafetyInfo(pendingSafety);
+    setPendingSpecies(null);
+    setPendingNickname(null);
+    setPendingStats(null);
+    setPendingSafety(null);
+    toast({ title: "Species saved", description: pendingSpecies });
+  };
+
+  const cancelPendingSpecies = () => {
+    setPendingSpecies(null);
+    setPendingNickname(null);
+    setPendingStats(null);
+    setPendingSafety(null);
+  };
+
+  useEffect(() => {
+    setPendingSpecies(null);
+    setPendingNickname(null);
+    setPendingStats(null);
+    setPendingSafety(null);
+  }, [species]);
   };
 
   const handleUpload = async (e?: React.FormEvent, opts?: { afterBattle?: boolean }) => {
