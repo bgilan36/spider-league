@@ -440,7 +440,7 @@ const { data, error } = await supabase.functions.invoke('spider-identify', {
           const nick = generateNickname(speciesLocal);
           setNickname(nick);
 
-          const statsLocal = generateSpiderStats();
+          const statsLocal = generateSpiderStats(speciesLocal);
           setSpiderStats(statsLocal);
 
           toast({
@@ -900,12 +900,18 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                         <div
                           key={c.species + i}
                           className="border rounded-lg p-3 hover:bg-accent/50 transition-colors cursor-pointer"
-                          onClick={() => {
+                        onClick={() => {
                             setSpecies(c.species);
                             const nick = generateNickname(c.species);
                             setNickname(nick);
-                            const updated = generateSpiderStats();
+                            const updated = generateSpiderStats(c.species);
                             setSpiderStats(updated);
+                            setSafetyInfo({
+                              isUSNative: c.isUSNative,
+                              harmfulToHumans: c.harmfulToHumans,
+                              dangerLevel: c.harmfulToHumans.toLowerCase().startsWith('yes') ? 'high' : 'low',
+                              specialAbilities: c.specialAbilities,
+                            });
                             toast({ 
                               title: 'Match selected', 
                               description: `${c.species} — ${c.confidence}% confidence` 
@@ -1158,8 +1164,17 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
             setSpecies(picked);
             const nick = generateNickname(picked);
             setNickname(nick);
-            const updated = generateSpiderStats();
+            const updated = generateSpiderStats(picked);
             setSpiderStats(updated);
+            const candidate = candidates.find((c) => c.species === picked);
+            if (candidate) {
+              setSafetyInfo({
+                isUSNative: candidate.isUSNative,
+                harmfulToHumans: candidate.harmfulToHumans,
+                dangerLevel: candidate.harmfulToHumans.toLowerCase().startsWith('yes') ? 'high' : 'low',
+                specialAbilities: candidate.specialAbilities,
+              });
+            }
             toast({ title: "Species updated", description: picked });
           }}
           locationName={locationName}
