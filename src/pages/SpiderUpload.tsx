@@ -1070,12 +1070,33 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                       )}
                       Use my location
                     </Button>
-                    <Input
-                      placeholder="Or type a place (e.g., Austin, TX)"
-                      value={locationName}
-                      onChange={(e) => setLocationName(e.target.value)}
-                      className="flex-1"
-                    />
+                    <div className="flex flex-1 gap-2">
+                      <Input
+                        placeholder="Or type a city (e.g., Austin, TX)"
+                        value={locationName}
+                        onChange={(e) => setLocationName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            searchCity(locationName);
+                          }
+                        }}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="default"
+                        onClick={() => searchCity(locationName)}
+                        disabled={citySearchLoading || !locationName.trim()}
+                      >
+                        {citySearchLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Search className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                   <div className="flex items-center justify-between">
                     {latitude !== null && longitude !== null ? (
