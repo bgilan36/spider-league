@@ -208,6 +208,27 @@ const SpiderUpload = () => {
     );
   };
 
+  const searchCity = async (query: string) => {
+    const q = query.trim();
+    if (!q) return;
+    setCitySearchLoading(true);
+    const result = await forwardGeocode(q);
+    if (result) {
+      const { fuzzCoords } = await import("@/lib/fuzzLocation");
+      const { lat, lng } = fuzzCoords(result.lat, result.lng, 1000);
+      setLatitude(lat);
+      setLongitude(lng);
+      setLocationName(result.name);
+      setLocationAccuracy(1000);
+      setLocationOptIn(true);
+      localStorage.setItem("spider_location_optin", "true");
+      toast({ title: "Location set", description: result.name });
+    } else {
+      toast({ title: "City not found", description: "Try a broader search like 'Austin, TX'", variant: "destructive" });
+    }
+    setCitySearchLoading(false);
+  };
+
   const clearLocation = () => {
     setLatitude(null);
     setLongitude(null);
