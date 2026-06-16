@@ -126,6 +126,11 @@ const SpiderUpload = () => {
     return localStorage.getItem("spider_location_optin") !== "false";
   });
 
+  const [pendingSpecies, setPendingSpecies] = useState<string | null>(null);
+  const [pendingNickname, setPendingNickname] = useState<string | null>(null);
+  const [pendingStats, setPendingStats] = useState<any | null>(null);
+  const [pendingSafety, setPendingSafety] = useState<any | null>(null);
+
   const reverseGeocode = async (lat: number, lng: number): Promise<string> => {
     try {
       const res = await fetch(
