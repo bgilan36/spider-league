@@ -642,7 +642,6 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
     setPendingStats(null);
     setPendingSafety(null);
   }, [species]);
-  };
 
   const handleUpload = async (e?: React.FormEvent, opts?: { afterBattle?: boolean }) => {
     if (e) e.preventDefault();
