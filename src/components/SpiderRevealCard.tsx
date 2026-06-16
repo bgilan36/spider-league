@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Sword, Users, Plus, Loader2, ShieldAlert, Heart, Pencil, Check, X, MapPin, Search } from "lucide-react";
+import { Sparkles, Sword, Plus, Loader2, ShieldAlert, Heart, Pencil, Check, X, MapPin, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import PowerScoreArc from "@/components/PowerScoreArc";
 import { Progress } from "@/components/ui/progress";
@@ -36,6 +36,9 @@ interface Candidate {
   confidence: number;
   rank: number;
   reasoning?: string;
+  isUSNative?: boolean;
+  harmfulToHumans?: string;
+  specialAbilities?: string[];
 }
 
 interface SpiderRevealCardProps {
@@ -60,6 +63,12 @@ interface SpiderRevealCardProps {
   onUseMyLocation?: () => void;
   onSearchCity?: (query: string) => void;
   onClearLocation?: () => void;
+  pendingSpecies?: string | null;
+  pendingNickname?: string | null;
+  pendingStats?: Stats | null;
+  pendingSafety?: SafetyInfo | null;
+  onConfirmSpecies?: () => void;
+  onCancelPreview?: () => void;
 }
 
 const STAT_META: Record<string, { label: string; icon: string }> = {
@@ -123,6 +132,12 @@ const SpiderRevealCard = ({
   onUseMyLocation,
   onSearchCity,
   onClearLocation,
+  pendingSpecies,
+  pendingNickname,
+  pendingStats,
+  pendingSafety,
+  onConfirmSpecies,
+  onCancelPreview,
 }: SpiderRevealCardProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -131,16 +146,28 @@ const SpiderRevealCard = ({
   const [draft, setDraft] = useState(nickname);
   const [speciesPickerOpen, setSpeciesPickerOpen] = useState(false);
 
-  const isLegendary = stats.rarity === "LEGENDARY";
-  const isEpicPlus = isLegendary || stats.rarity === "EPIC";
+  const isPreviewing = !!pendingSpecies && pendingSpecies !== species;
+  const displaySpecies = pendingSpecies ?? species;
+  const displayNickname = pendingNickname ?? nickname;
+  const displayStats = pendingStats ?? stats;
+  const displaySafety = pendingSafety ?? safety;
+
+  const isLegendary = displayStats.rarity === "LEGENDARY";
+  const isEpicPlus = isLegendary || displayStats.rarity === "EPIC";
 
   useEffect(() => {
-    if (open && isLegendary) {
+    if (open && stats.rarity === "LEGENDARY") {
       // Fanfare: badge burst + sustained victory rain
       fireConfetti("badge");
       setTimeout(() => fireConfetti("victory"), 200);
     }
-  }, [open, isLegendary, fireConfetti]);
+  }, [open, stats.rarity, fireConfetti]);
+
+  useEffect(() => {
+    if (isPreviewing && editing) {
+      setEditing(false);
+    }
+  }, [isPreviewing, editing]);
 
   const startEdit = () => {
     setDraft(nickname);
@@ -161,10 +188,10 @@ const SpiderRevealCard = ({
       key: k,
       label: meta.label,
       icon: meta.icon,
-      value: (stats as any)[k] as number,
+      value: (displayStats as any)[k] as number,
     }));
     return entries.reduce((best, cur) => (cur.value > best.value ? cur : best), entries[0]);
-  }, [stats]);
+  }, [displayStats]);
 
   const statEntries = useMemo(
     () =>
@@ -172,16 +199,16 @@ const SpiderRevealCard = ({
         key: k,
         label: meta.label,
         icon: meta.icon,
-        value: (stats as any)[k] as number,
+        value: (displayStats as any)[k] as number,
       })),
-    [stats],
+    [displayStats],
   );
   const maxStat = useMemo(
     () => Math.max(100, ...statEntries.map((s) => s.value)),
     [statEntries],
   );
 
-  const harmful = (safety?.harmfulToHumans || "").toLowerCase().startsWith("yes");
+  const harmful = (displaySafety?.harmfulToHumans || "").toLowerCase().startsWith("yes");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -199,7 +226,7 @@ const SpiderRevealCard = ({
           className={`relative rounded-2xl border-2 bg-gradient-to-br ${
             isLegendary ? "rarity-legendary-glow" : ""
           } ${rarityClasses(
-            stats.rarity,
+            displayStats.rarity,
           )} p-[2px] animate-scale-in`}
         >
           <div className="rounded-[14px] bg-card/95 backdrop-blur-xl p-5 space-y-4">
@@ -218,23 +245,23 @@ const SpiderRevealCard = ({
             <div className="relative mx-auto w-40 h-40">
               <div
                 className={`absolute inset-0 rounded-full blur-2xl opacity-60 bg-gradient-to-br ${rarityClasses(
-                  stats.rarity,
+                  displayStats.rarity,
                 )}`}
               />
               <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-card shadow-2xl">
                 {previewUrl ? (
-                  <img src={previewUrl} alt={nickname} className="w-full h-full object-cover" />
+                  <img src={previewUrl} alt={displayNickname} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full bg-muted" />
                 )}
               </div>
-              <RarityDistributionTooltip rarity={stats.rarity}>
+              <RarityDistributionTooltip rarity={displayStats.rarity}>
                 <Badge
                   className={`absolute -bottom-1 left-1/2 -translate-x-1/2 ${rarityBadge(
-                    stats.rarity,
+                    displayStats.rarity,
                   )} px-3 py-1 text-[10px] font-bold tracking-wider shadow-lg border-0 cursor-help`}
                 >
-                  {stats.rarity}
+                  {displayStats.rarity}
                 </Badge>
               </RarityDistributionTooltip>
             </div>
@@ -264,17 +291,17 @@ const SpiderRevealCard = ({
               ) : (
                 <button
                   type="button"
-                  onClick={onNicknameChange ? startEdit : undefined}
-                  className={`group inline-flex items-center justify-center gap-2 ${onNicknameChange ? "cursor-pointer" : "cursor-default"}`}
-                  aria-label={onNicknameChange ? "Edit nickname" : undefined}
+                  onClick={!isPreviewing && onNicknameChange ? startEdit : undefined}
+                  className={`group inline-flex items-center justify-center gap-2 ${!isPreviewing && onNicknameChange ? "cursor-pointer" : "cursor-default"}`}
+                  aria-label={!isPreviewing && onNicknameChange ? "Edit nickname" : undefined}
                 >
-                  <h2 className="text-2xl font-bold leading-tight">{nickname}</h2>
-                  {onNicknameChange && (
+                  <h2 className="text-2xl font-bold leading-tight">{displayNickname}</h2>
+                  {!isPreviewing && onNicknameChange && (
                     <Pencil className="h-3.5 w-3.5 text-muted-foreground opacity-60 group-hover:opacity-100 transition-opacity" />
                   )}
                 </button>
               )}
-              <p className="text-sm italic text-muted-foreground">{species}</p>
+              <p className="text-sm italic text-muted-foreground">{displaySpecies}</p>
               {onSelectCandidate && candidates && candidates.length > 1 && (
                 <button
                   type="button"
@@ -287,7 +314,7 @@ const SpiderRevealCard = ({
               {speciesPickerOpen && candidates && onSelectCandidate && (
                 <div className="mt-2 space-y-1.5 text-left">
                   {candidates.slice(0, 5).map((c, i) => {
-                    const selected = c.species === species;
+                    const selected = c.species === displaySpecies;
                     return (
                       <button
                         type="button"
@@ -325,10 +352,21 @@ const SpiderRevealCard = ({
               )}
             </div>
 
+            {isPreviewing && (
+              <div className="rounded-lg border border-primary/40 bg-primary/10 p-3 text-center space-y-2">
+                <p className="text-sm font-semibold text-primary">
+                  Previewing: {pendingSpecies}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Review the fighter profile below, then save or keep the original.
+                </p>
+              </div>
+            )}
+
             {/* Power + strongest stat */}
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-xl border border-border bg-background/50 p-3 flex flex-col items-center justify-center">
-                <PowerScoreArc score={stats.power_score} size="small" />
+                <PowerScoreArc score={displayStats.power_score} size="small" />
               </div>
               <div className="rounded-xl border border-border bg-background/50 p-3 flex flex-col items-center justify-center text-center">
                 <div className="text-2xl">{strongest.icon}</div>
@@ -368,7 +406,7 @@ const SpiderRevealCard = ({
             </div>
 
             {/* Safety */}
-            {safety && (
+            {displaySafety && (
               <div
                 className={`rounded-xl border p-3 flex items-start gap-2 text-xs ${
                   harmful
@@ -385,8 +423,8 @@ const SpiderRevealCard = ({
                   <span className="font-semibold">
                     {harmful ? "Handle with caution: " : "Safety: "}
                   </span>
-                  <span className="text-muted-foreground">{safety.harmfulToHumans}</span>
-                  {safety.isUSNative && (
+                  <span className="text-muted-foreground">{displaySafety.harmfulToHumans}</span>
+                  {displaySafety.isUSNative && (
                     <Badge variant="secondary" className="ml-2 text-[10px]">US Native</Badge>
                   )}
                 </div>
@@ -471,49 +509,69 @@ const SpiderRevealCard = ({
             )}
 
             {/* Actions */}
-            <div className="space-y-2 pt-1">
-              <Button
-                className="w-full"
-                size="lg"
-                onClick={onAddToStarting5}
-                disabled={uploading}
-              >
-                {uploading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Plus className="h-4 w-4" />
-                )}
-                Add to Starting Lineup
-              </Button>
-              <div className="flex gap-2">
+            {isPreviewing ? (
+              <div className="space-y-2 pt-1">
+                <Button
+                  className="w-full"
+                  size="lg"
+                  onClick={onConfirmSpecies}
+                >
+                  Save this species
+                </Button>
                 <Button
                   variant="outline"
-                  onClick={onBattleNow}
-                  disabled={uploading}
-                  className="flex-1"
+                  className="w-full"
+                  size="lg"
+                  onClick={onCancelPreview}
                 >
-                  <Sword className="h-4 w-4" />
-                  Battle Now
+                  Keep original
                 </Button>
-                <ShareButton
-                  title={`${nickname} — ${stats.rarity} Spider`}
-                  text={`🕷️ Just recruited ${nickname} (${species}) — ${stats.rarity} • ${stats.power_score} Power. Strongest stat: ${strongest.label} ${strongest.value}. Join me on Spider League!`}
-                  variant="outline"
-                  size="default"
-                  imageFileName={`spider-league-${nickname.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.png`}
-                  getShareImage={() =>
-                    generateSpiderShareImage({
-                      nickname,
-                      species,
-                      rarity: stats.rarity,
-                      powerScore: stats.power_score,
-                      imageUrl: previewUrl || "",
-                      tagline: "Upload your spider. Battle for glory. spiderleague.app",
-                    })
-                  }
-                />
               </div>
-            </div>
+            ) : (
+              <div className="space-y-2 pt-1">
+                <Button
+                  className="w-full"
+                  size="lg"
+                  onClick={onAddToStarting5}
+                  disabled={uploading}
+                >
+                  {uploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Plus className="h-4 w-4" />
+                  )}
+                  Add to Starting Lineup
+                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={onBattleNow}
+                    disabled={uploading}
+                    className="flex-1"
+                  >
+                    <Sword className="h-4 w-4" />
+                    Battle Now
+                  </Button>
+                  <ShareButton
+                    title={`${nickname} — ${stats.rarity} Spider`}
+                    text={`🕷️ Just recruited ${nickname} (${species}) — ${stats.rarity} • ${stats.power_score} Power. Strongest stat: ${strongest.label} ${strongest.value}. Join me on Spider League!`}
+                    variant="outline"
+                    size="default"
+                    imageFileName={`spider-league-${nickname.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.png`}
+                    getShareImage={() =>
+                      generateSpiderShareImage({
+                        nickname,
+                        species,
+                        rarity: stats.rarity,
+                        powerScore: stats.power_score,
+                        imageUrl: previewUrl || "",
+                        tagline: "Upload your spider. Battle for glory. spiderleague.app",
+                      })
+                    }
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </DialogContent>

@@ -126,6 +126,11 @@ const SpiderUpload = () => {
     return localStorage.getItem("spider_location_optin") !== "false";
   });
 
+  const [pendingSpecies, setPendingSpecies] = useState<string | null>(null);
+  const [pendingNickname, setPendingNickname] = useState<string | null>(null);
+  const [pendingStats, setPendingStats] = useState<any | null>(null);
+  const [pendingSafety, setPendingSafety] = useState<any | null>(null);
+
   const reverseGeocode = async (lat: number, lng: number): Promise<string> => {
     try {
       const res = await fetch(
@@ -610,6 +615,33 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
       rarity,
     };
   };
+
+  const confirmPendingSpecies = () => {
+    if (!pendingSpecies) return;
+    setSpecies(pendingSpecies);
+    setNickname(pendingNickname || generateNickname(pendingSpecies));
+    if (pendingStats) setSpiderStats(pendingStats);
+    if (pendingSafety) setSafetyInfo(pendingSafety);
+    setPendingSpecies(null);
+    setPendingNickname(null);
+    setPendingStats(null);
+    setPendingSafety(null);
+    toast({ title: "Species saved", description: pendingSpecies });
+  };
+
+  const cancelPendingSpecies = () => {
+    setPendingSpecies(null);
+    setPendingNickname(null);
+    setPendingStats(null);
+    setPendingSafety(null);
+  };
+
+  useEffect(() => {
+    setPendingSpecies(null);
+    setPendingNickname(null);
+    setPendingStats(null);
+    setPendingSafety(null);
+  }, [species]);
 
   const handleUpload = async (e?: React.FormEvent, opts?: { afterBattle?: boolean }) => {
     if (e) e.preventDefault();
@@ -1161,22 +1193,29 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
           onBattleNow={() => handleUpload(undefined, { afterBattle: true })}
           candidates={candidates}
           onSelectCandidate={(picked) => {
-            setSpecies(picked);
-            const nick = generateNickname(picked);
-            setNickname(nick);
-            const updated = generateSpiderStats(picked);
-            setSpiderStats(updated);
+            if (picked === species) {
+              cancelPendingSpecies();
+              return;
+            }
+            setPendingSpecies(picked);
+            setPendingNickname(generateNickname(picked));
+            setPendingStats(generateSpiderStats(picked));
             const candidate = candidates.find((c) => c.species === picked);
             if (candidate) {
-              setSafetyInfo({
+              setPendingSafety({
                 isUSNative: candidate.isUSNative,
                 harmfulToHumans: candidate.harmfulToHumans,
                 dangerLevel: candidate.harmfulToHumans.toLowerCase().startsWith('yes') ? 'high' : 'low',
                 specialAbilities: candidate.specialAbilities,
               });
             }
-            toast({ title: "Species updated", description: picked });
           }}
+          pendingSpecies={pendingSpecies}
+          pendingNickname={pendingNickname}
+          pendingStats={pendingStats}
+          pendingSafety={pendingSafety}
+          onConfirmSpecies={confirmPendingSpecies}
+          onCancelPreview={cancelPendingSpecies}
           locationName={locationName}
           hasLocation={latitude !== null || !!locationName}
           locationLoading={locationLoading}
