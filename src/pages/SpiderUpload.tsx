@@ -296,7 +296,15 @@ const SpiderUpload = () => {
       
       const base64 = await compressImageToBase64(file, 1024, 0.85);
 const { data, error } = await supabase.functions.invoke('spider-identify', {
-        body: { image: base64, topK: 8 }
+        body: {
+          image: base64,
+          topK: 8,
+          // Location context greatly improves species ID accuracy
+          // (e.g. western vs southern black widow, regional tarantulas).
+          location: (latitude !== null && longitude !== null)
+            ? { latitude, longitude, name: locationName || null }
+            : (locationName ? { name: locationName } : null),
+        }
       });
       
       if (error) throw error;
