@@ -163,6 +163,7 @@ const MissedBattleModal: React.FC<MissedBattleModalProps> = ({
   if (!isOpen) return null;
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={handleDismiss}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
