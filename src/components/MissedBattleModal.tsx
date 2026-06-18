@@ -9,12 +9,13 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Trophy, Clock, Play } from 'lucide-react';
+import { Trophy, Clock, Play, Swords } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/auth/AuthProvider';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
+import { useStartSkillBattle } from '@/components/battle/useStartSkillBattle';
 
 interface MissedBattle {
   id: string;
@@ -39,6 +40,7 @@ const MissedBattleModal: React.FC<MissedBattleModalProps> = ({
   const navigate = useNavigate();
   const [missedBattles, setMissedBattles] = useState<MissedBattle[]>([]);
   const [loading, setLoading] = useState(true);
+  const { open: openRematch, picker: rematchPicker } = useStartSkillBattle();
 
   useEffect(() => {
     if (!isOpen || !user) return;
@@ -75,6 +77,19 @@ const MissedBattleModal: React.FC<MissedBattleModalProps> = ({
           (battle: any) => !viewedBattles.includes(battle.id)
         );
 
+        // Sort: losses first (so a rematch is the obvious next action), then most recent.
+        unviewedBattles.sort((a: any, b: any) => {
+          const userLost = (battle: any) => {
+            const userIsTeamA = (battle.team_a as any)?.userId === user.id;
+            const won = (battle.winner === 'TEAM_A' && userIsTeamA) ||
+                        (battle.winner === 'TEAM_B' && !userIsTeamA);
+            return !won;
+          };
+          const al = userLost(a) ? 0 : 1;
+          const bl = userLost(b) ? 0 : 1;
+          if (al !== bl) return al - bl;
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
         setMissedBattles(unviewedBattles);
       } catch (error) {
         console.error('Error fetching missed battles:', error);
@@ -98,6 +113,34 @@ const MissedBattleModal: React.FC<MissedBattleModalProps> = ({
 
     onWatchBattle(battleId);
     navigate(`/battle/${battleId}`);
+  };
+
+  const markViewed = (battleId: string) => {
+    if (!user) return;
+    const viewed = JSON.parse(
+      localStorage.getItem(`viewed-battles-${user.id}`) || '[]'
+    );
+    if (!viewed.includes(battleId)) {
+      viewed.push(battleId);
+      localStorage.setItem(`viewed-battles-${user.id}`, JSON.stringify(viewed));
+    }
+  };
+
+  const handleRematch = (battle: MissedBattle) => {
+    if (!user) return;
+    const teamA = battle.team_a as any;
+    const teamB = battle.team_b as any;
+    const userIsTeamA = teamA?.userId === user.id;
+    const mySpider = userIsTeamA ? teamA?.spider : teamB?.spider;
+    const oppTeam = userIsTeamA ? teamB : teamA;
+    if (!oppTeam?.userId || !oppTeam?.spider?.id) return;
+    markViewed(battle.id);
+    onClose();
+    openRematch({
+      spiderId: mySpider?.id ?? null,
+      opponentSpiderId: oppTeam.spider.id,
+      opponentUserId: oppTeam.userId,
+    });
   };
 
   const handleDismiss = () => {
@@ -192,10 +235,46 @@ const MissedBattleModal: React.FC<MissedBattleModalProps> = ({
                             {format(new Date(battle.created_at), 'MMM d, h:mm a')}
                           </div>
                         </div>
-                        <Button size="sm" variant="outline">
-                          <Play className="h-3 w-3 mr-1" />
-                          Watch
-                        </Button>
+                        <div className="flex flex-col gap-2 items-stretch">
+                          {!userWon && (
+                            <Button
+                              size="sm"
+                              variant="default"
+                              className="bg-red-500 hover:bg-red-600 text-white"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRematch(battle);
+                              }}
+                            >
+                              <Swords className="h-3 w-3 mr-1" />
+                              Rematch
+                            </Button>
+                          )}
+                          {userWon && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRematch(battle);
+                              }}
+                            >
+                              <Swords className="h-3 w-3 mr-1" />
+                              Rematch
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleWatchNow(battle.id);
+                            }}
+                          >
+                            <Play className="h-3 w-3 mr-1" />
+                            Watch
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -217,6 +296,8 @@ const MissedBattleModal: React.FC<MissedBattleModalProps> = ({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    {rematchPicker}
+    </>
   );
 };
 
