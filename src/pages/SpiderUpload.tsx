@@ -133,10 +133,13 @@ const SpiderUpload = () => {
 
   const reverseGeocode = async (lat: number, lng: number): Promise<string> => {
     try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 2500);
       const res = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=12&addressdetails=1`,
-        { headers: { Accept: "application/json" } }
+        { headers: { Accept: "application/json" }, signal: controller.signal }
       );
+      clearTimeout(timer);
       if (!res.ok) throw new Error("reverse geocode failed");
       const data = await res.json();
       const a = data.address || {};
@@ -196,10 +199,15 @@ const SpiderUpload = () => {
         setLocationAccuracy(1000);
         setLocationOptIn(true);
         localStorage.setItem("spider_location_optin", "true");
-        const name = await reverseGeocode(lat, lng);
-        setLocationName(name);
+        // Show coords immediately so the UI isn't blocked on reverse geocode.
+        const fallback = `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
+        setLocationName(fallback);
         setLocationLoading(false);
-        toast({ title: "Location captured (fuzzed ~1km)", description: name });
+        toast({ title: "Location captured (fuzzed ~1km)" });
+        // Resolve a human-readable name in the background; update if it arrives.
+        reverseGeocode(lat, lng).then((name) => {
+          if (name && name !== fallback) setLocationName(name);
+        }).catch(() => {});
       },
       (err) => {
         setLocationLoading(false);
@@ -209,7 +217,7 @@ const SpiderUpload = () => {
           variant: "destructive",
         });
       },
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+      { enableHighAccuracy: false, timeout: 3000, maximumAge: 5 * 60 * 1000 }
     );
   };
 
