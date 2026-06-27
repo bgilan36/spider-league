@@ -173,8 +173,8 @@ const OnlineUsersBar: React.FC = () => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <ScrollArea className="w-full whitespace-nowrap">
-                <div className="flex gap-2">
+              <ScrollArea className="min-w-0 flex-1 whitespace-nowrap">
+                <div className="flex gap-2 pb-1">
                   {displayUsers.map((onlineUser) => {
                     const isSelf = onlineUser.user_id === user?.id;
                     return (
