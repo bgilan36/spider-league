@@ -226,6 +226,38 @@ All colors MUST be HSL.
     scroll-behavior: smooth;
     overscroll-behavior-y: contain;
   }
+
+  /* --- Mobile overflow safety net ---------------------------------------
+   * Prevents any single element from forcing horizontal page scroll on
+   * narrow viewports. Media is capped to its container; long words break
+   * instead of pushing layout wider; tables/pre get an isolated scroll. */
+  img, video, canvas, svg {
+    max-width: 100%;
+    height: auto;
+  }
+  /* Keep aspect ratios on intrinsically-sized SVG icons (lucide etc.) */
+  svg[width][height] {
+    height: revert;
+  }
+  p, h1, h2, h3, h4, h5, h6, span, a, li, dd, dt, label, button {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  pre, code {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  table {
+    max-width: 100%;
+  }
+
+  /* Main content area: clip stray overflow without enabling page-level
+   * horizontal scroll. `clip` is preferred over `hidden` so sticky/fixed
+   * descendants (e.g. dropdowns) are not constrained. */
+  main {
+    overflow-x: clip;
+    max-width: 100%;
+  }
 }
 
 @layer components {
