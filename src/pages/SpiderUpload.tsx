@@ -299,11 +299,32 @@ const SpiderUpload = () => {
     setLocationAccuracy(null);
   };
 
-  // Auto-prompt for location once the user has opted in previously
+  // Auto-detect only when permission is already granted. Requesting permission
+  // automatically on mobile can leave the upload flow feeling stuck.
   useEffect(() => {
-    if (locationOptIn && latitude === null && !locationLoading && selectedFile) {
-      useMyLocation({ silent: true });
+    let cancelled = false;
+    if (!locationOptIn || latitude !== null || locationLoading || !selectedFile || !("geolocation" in navigator)) {
+      return () => {
+        cancelled = true;
+      };
     }
+
+    const autoDetectIfAllowed = async () => {
+      try {
+        if (!("permissions" in navigator) || !navigator.permissions?.query) return;
+        const status = await navigator.permissions.query({ name: "geolocation" as PermissionName });
+        if (!cancelled && status.state === "granted") {
+          useMyLocation({ silent: true });
+        }
+      } catch {
+        // Ignore unsupported Permissions API / browser quirks; manual tagging remains available.
+      }
+    };
+
+    autoDetectIfAllowed();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFile]);
 
