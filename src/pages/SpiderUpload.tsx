@@ -1156,7 +1156,7 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                       type="button"
                       variant="default"
                       size="default"
-                      onClick={useMyLocation}
+                      onClick={() => useMyLocation()}
                       disabled={locationLoading}
                       className="sm:w-auto"
                     >

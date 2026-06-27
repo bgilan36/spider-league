@@ -10,14 +10,14 @@ const GEOCODE_TIMEOUT_MS = 1200;
 const LOCATION_CACHE_AGE_MS = 10 * 60 * 1000;
 
 async function reverseGeocode(lat: number, lng: number): Promise<string> {
+  let timer: number | undefined;
   try {
     const controller = new AbortController();
-    const timer = window.setTimeout(() => controller.abort(), GEOCODE_TIMEOUT_MS);
+    timer = window.setTimeout(() => controller.abort(), GEOCODE_TIMEOUT_MS);
     const res = await fetch(
       `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`,
       { headers: { Accept: "application/json" }, signal: controller.signal },
     );
-    window.clearTimeout(timer);
     if (!res.ok) throw new Error("rg failed");
     const data = await res.json();
     const a = data.address || {};
@@ -29,6 +29,8 @@ async function reverseGeocode(lat: number, lng: number): Promise<string> {
     return parts.join(", ") || data.display_name || `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
   } catch {
     return `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
+  } finally {
+    if (timer) window.clearTimeout(timer);
   }
 }
 
