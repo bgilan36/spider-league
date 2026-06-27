@@ -114,10 +114,10 @@ const OnlineUsersBar: React.FC = () => {
   return (
     <>
       <div className="w-full mb-6">
-        <div className="container mx-auto px-4">
-          <div className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-2xl p-4 shadow-sm border border-primary/10 hover:shadow-md transition-shadow duration-300">
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-semibold text-foreground flex items-center gap-2">
+        <div className="w-full">
+          <div className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-2xl p-3 sm:p-4 shadow-sm border border-primary/10 hover:shadow-md transition-shadow duration-300">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <span className="text-sm font-semibold text-foreground flex items-center gap-2 flex-shrink-0">
                 <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
                 Online: <span className="text-primary font-bold">{displayUsers.length}</span>
               </span>
