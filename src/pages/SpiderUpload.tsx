@@ -17,6 +17,11 @@ import SpiderRevealCard from "@/components/SpiderRevealCard";
 import NewSpeciesReveal from "@/components/dex/NewSpeciesReveal";
 import { matchSpeciesSlug, getDexSpecies } from "@/lib/spiderDex/species";
 
+const AUTO_LOCATION_TIMEOUT_MS = 1500;
+const MANUAL_LOCATION_TIMEOUT_MS = 2500;
+const GEOCODE_TIMEOUT_MS = 1200;
+const LOCATION_CACHE_AGE_MS = 10 * 60 * 1000;
+
 const titleCase = (str: string) =>
   str
     .replace(/[_-]+/g, " ")
@@ -131,15 +136,22 @@ const SpiderUpload = () => {
   const [pendingStats, setPendingStats] = useState<any | null>(null);
   const [pendingSafety, setPendingSafety] = useState<any | null>(null);
 
+  const fetchWithTimeout = async (url: string, timeoutMs: number) => {
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(url, { headers: { Accept: "application/json" }, signal: controller.signal });
+    } finally {
+      window.clearTimeout(timer);
+    }
+  };
+
   const reverseGeocode = async (lat: number, lng: number): Promise<string> => {
     try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 2500);
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=12&addressdetails=1`,
-        { headers: { Accept: "application/json" }, signal: controller.signal }
+      const res = await fetchWithTimeout(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`,
+        GEOCODE_TIMEOUT_MS,
       );
-      clearTimeout(timer);
       if (!res.ok) throw new Error("reverse geocode failed");
       const data = await res.json();
       const a = data.address || {};
@@ -156,9 +168,9 @@ const SpiderUpload = () => {
 
   const forwardGeocode = async (query: string): Promise<{ lat: number; lng: number; name: string } | null> => {
     try {
-      const res = await fetch(
+      const res = await fetchWithTimeout(
         `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(query)}&limit=1&addressdetails=1`,
-        { headers: { Accept: "application/json" } }
+        GEOCODE_TIMEOUT_MS,
       );
       if (!res.ok) throw new Error("forward geocode failed");
       const data = await res.json();
@@ -179,67 +191,105 @@ const SpiderUpload = () => {
     }
   };
 
-  const useMyLocation = async () => {
+  const getFastPosition = (timeoutMs: number) =>
+    new Promise<GeolocationPosition>((resolve, reject) => {
+      let settled = false;
+      const failTimer = window.setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        reject(new Error("Location timed out. Type a city instead."));
+      }, timeoutMs);
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          if (settled) return;
+          settled = true;
+          window.clearTimeout(failTimer);
+          resolve(pos);
+        },
+        (err) => {
+          if (settled) return;
+          settled = true;
+          window.clearTimeout(failTimer);
+          reject(err);
+        },
+        { enableHighAccuracy: false, timeout: timeoutMs, maximumAge: LOCATION_CACHE_AGE_MS },
+      );
+    });
+
+  const applyDetectedLocation = async (pos: GeolocationPosition) => {
+    const { latitude: rawLat, longitude: rawLng } = pos.coords;
+    const { fuzzCoords } = await import("@/lib/fuzzLocation");
+    const { lat, lng } = fuzzCoords(rawLat, rawLng, 1000);
+    setLatitude(lat);
+    setLongitude(lng);
+    setLocationAccuracy(1000);
+    setLocationOptIn(true);
+    localStorage.setItem("spider_location_optin", "true");
+    const fallback = `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
+    setLocationName(fallback);
+    reverseGeocode(lat, lng).then((name) => {
+      if (name && name !== fallback) setLocationName(name);
+    }).catch(() => {});
+  };
+
+  const useMyLocation = async (opts?: { silent?: boolean }) => {
     if (!("geolocation" in navigator)) {
-      toast({
-        title: "Location unavailable",
-        description: "Your device doesn't support geolocation.",
-        variant: "destructive",
-      });
+      if (!opts?.silent) {
+        toast({
+          title: "Location unavailable",
+          description: "Your device doesn't support geolocation.",
+          variant: "destructive",
+        });
+      }
       return;
     }
     setLocationLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude: rawLat, longitude: rawLng } = pos.coords;
-        const { fuzzCoords } = await import("@/lib/fuzzLocation");
-        const { lat, lng } = fuzzCoords(rawLat, rawLng, 1000);
-        setLatitude(lat);
-        setLongitude(lng);
-        setLocationAccuracy(1000);
-        setLocationOptIn(true);
-        localStorage.setItem("spider_location_optin", "true");
-        // Show coords immediately so the UI isn't blocked on reverse geocode.
-        const fallback = `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
-        setLocationName(fallback);
-        setLocationLoading(false);
-        toast({ title: "Location captured (fuzzed ~1km)" });
-        // Resolve a human-readable name in the background; update if it arrives.
-        reverseGeocode(lat, lng).then((name) => {
-          if (name && name !== fallback) setLocationName(name);
-        }).catch(() => {});
-      },
-      (err) => {
-        setLocationLoading(false);
+    try {
+      const pos = await getFastPosition(opts?.silent ? AUTO_LOCATION_TIMEOUT_MS : MANUAL_LOCATION_TIMEOUT_MS);
+      await applyDetectedLocation(pos);
+      if (!opts?.silent) toast({ title: "Location captured (fuzzed ~1km)" });
+    } catch (err: any) {
+      if (!opts?.silent) {
         toast({
-          title: "Couldn't get location",
-          description: err.message || "Permission denied.",
+          title: "Couldn't get location quickly",
+          description: err?.message || "Type a city to tag this spider instead.",
           variant: "destructive",
         });
-      },
-      { enableHighAccuracy: false, timeout: 3000, maximumAge: 5 * 60 * 1000 }
-    );
+      }
+    } finally {
+      setLocationLoading(false);
+    }
   };
 
   const searchCity = async (query: string) => {
     const q = query.trim();
     if (!q) return;
     setCitySearchLoading(true);
-    const result = await forwardGeocode(q);
-    if (result) {
-      const { fuzzCoords } = await import("@/lib/fuzzLocation");
-      const { lat, lng } = fuzzCoords(result.lat, result.lng, 1000);
-      setLatitude(lat);
-      setLongitude(lng);
-      setLocationName(result.name);
-      setLocationAccuracy(1000);
-      setLocationOptIn(true);
-      localStorage.setItem("spider_location_optin", "true");
-      toast({ title: "Location set", description: result.name });
-    } else {
-      toast({ title: "City not found", description: "Try a broader search like 'Austin, TX'", variant: "destructive" });
+    try {
+      const result = await forwardGeocode(q);
+      if (result) {
+        const { fuzzCoords } = await import("@/lib/fuzzLocation");
+        const { lat, lng } = fuzzCoords(result.lat, result.lng, 1000);
+        setLatitude(lat);
+        setLongitude(lng);
+        setLocationName(result.name);
+        setLocationAccuracy(1000);
+        setLocationOptIn(true);
+        localStorage.setItem("spider_location_optin", "true");
+        toast({ title: "Location set", description: result.name });
+      } else {
+        setLatitude(null);
+        setLongitude(null);
+        setLocationName(q);
+        setLocationAccuracy(null);
+        setLocationOptIn(true);
+        localStorage.setItem("spider_location_optin", "true");
+        toast({ title: "Location saved", description: "Using the city name without coordinates." });
+      }
+    } finally {
+      setCitySearchLoading(false);
     }
-    setCitySearchLoading(false);
   };
 
   const clearLocation = () => {
@@ -249,11 +299,32 @@ const SpiderUpload = () => {
     setLocationAccuracy(null);
   };
 
-  // Auto-prompt for location once the user has opted in previously
+  // Auto-detect only when permission is already granted. Requesting permission
+  // automatically on mobile can leave the upload flow feeling stuck.
   useEffect(() => {
-    if (locationOptIn && latitude === null && !locationLoading && selectedFile) {
-      useMyLocation();
+    let cancelled = false;
+    if (!locationOptIn || latitude !== null || locationLoading || !selectedFile || !("geolocation" in navigator)) {
+      return () => {
+        cancelled = true;
+      };
     }
+
+    const autoDetectIfAllowed = async () => {
+      try {
+        if (!("permissions" in navigator) || !navigator.permissions?.query) return;
+        const status = await navigator.permissions.query({ name: "geolocation" as PermissionName });
+        if (!cancelled && status.state === "granted") {
+          useMyLocation({ silent: true });
+        }
+      } catch {
+        // Ignore unsupported Permissions API / browser quirks; manual tagging remains available.
+      }
+    };
+
+    autoDetectIfAllowed();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFile]);
 
@@ -1106,7 +1177,7 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                       type="button"
                       variant="default"
                       size="default"
-                      onClick={useMyLocation}
+                      onClick={() => useMyLocation()}
                       disabled={locationLoading}
                       className="sm:w-auto"
                     >
