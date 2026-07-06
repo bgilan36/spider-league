@@ -42,6 +42,13 @@ export default function InteractiveBattleArena({ battleId }: Props) {
   const { fireConfetti } = useConfetti();
   const [celebrated, setCelebrated] = useState(false);
 
+  // On mobile the browser often restores scroll or keeps you mid-page after
+  // navigating in from a modal. Force the arena to open at the top so the
+  // HP bars and the skill-meter/dice roll are visible above the fold.
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [battleId]);
+
   const awaitingAction = (battle as any)?.awaiting_action as "attack" | "defense" | null;
   const awaitingUser = (battle as any)?.awaiting_user_id as string | null;
   const myStances = useMemo(() => {
@@ -159,13 +166,13 @@ export default function InteractiveBattleArena({ battleId }: Props) {
     <div className="min-h-screen bg-background pb-24">
       <Helmet><title>Skill Battle | Spider League</title></Helmet>
 
-      <div className="max-w-3xl mx-auto p-4">
-        <Button variant="ghost" size="sm" asChild className="mb-3">
+      <div className="max-w-3xl mx-auto p-3 sm:p-4">
+        <Button variant="ghost" size="sm" asChild className="mb-2 sm:mb-3 -ml-2 h-8">
           <Link to={returnPath}><ArrowLeft className="h-4 w-4 mr-1" />Back</Link>
         </Button>
 
         {/* Cinematic combat arena */}
-        <div className="mb-4">
+        <div className="mb-3 sm:mb-4">
           <CombatStage
             me={{
               name: mySpider.nickname,
