@@ -213,7 +213,7 @@ export default function CombatStage({
     <div
       className={
         "relative overflow-hidden rounded-xl border bg-gradient-to-b from-zinc-950 to-zinc-900 " +
-        "px-4 py-5 sm:py-6 " +
+        "px-3 py-3 sm:px-4 sm:py-6 " +
         (shakeScreen && !reducedMotion ? "animate-screen-shake" : "")
       }
     >
@@ -247,7 +247,7 @@ export default function CombatStage({
       )}
 
       {/* HP bars */}
-      <div className="relative z-10 grid grid-cols-2 gap-4 mb-4">
+      <div className="relative z-10 grid grid-cols-2 gap-3 sm:gap-4 mb-2 sm:mb-4">
         <FighterHud
           name={me.name} hp={myHp} maxHp={me.maxHp}
           critical={lowHp} align="left"
@@ -261,7 +261,7 @@ export default function CombatStage({
       </div>
 
       {/* Arena */}
-      <div className="relative z-10 grid grid-cols-[1fr_auto_1fr] items-center gap-2 h-36 sm:h-40">
+      <div className="relative z-10 grid grid-cols-[1fr_auto_1fr] items-center gap-2 h-28 sm:h-40">
         <div className="flex justify-end pr-2">
           <FighterToken
             imageUrl={me.imageUrl} name={me.name} side="left"
