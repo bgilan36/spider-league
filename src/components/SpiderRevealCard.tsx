@@ -213,7 +213,7 @@ const SpiderRevealCard = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className={`max-w-md p-0 overflow-hidden border-0 bg-transparent shadow-none ${
+        className={`max-w-md p-0 border-0 bg-transparent shadow-none max-h-[90vh] overflow-y-auto overscroll-contain ${
           isLegendary ? "sm:max-w-lg" : ""
         }`}
       >
