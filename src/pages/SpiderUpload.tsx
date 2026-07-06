@@ -17,10 +17,10 @@ import SpiderRevealCard from "@/components/SpiderRevealCard";
 import NewSpeciesReveal from "@/components/dex/NewSpeciesReveal";
 import { matchSpeciesSlug, getDexSpecies } from "@/lib/spiderDex/species";
 
-const AUTO_LOCATION_TIMEOUT_MS = 1500;
-const MANUAL_LOCATION_TIMEOUT_MS = 2500;
-const GEOCODE_TIMEOUT_MS = 1200;
-const LOCATION_CACHE_AGE_MS = 10 * 60 * 1000;
+const AUTO_LOCATION_TIMEOUT_MS = 800;
+const MANUAL_LOCATION_TIMEOUT_MS = 1500;
+const GEOCODE_TIMEOUT_MS = 700;
+const LOCATION_CACHE_AGE_MS = 60 * 60 * 1000;
 
 const titleCase = (str: string) =>
   str
@@ -265,6 +265,15 @@ const SpiderUpload = () => {
   const searchCity = async (query: string) => {
     const q = query.trim();
     if (!q) return;
+
+    setLatitude(null);
+    setLongitude(null);
+    setLocationName(q);
+    setLocationAccuracy(null);
+    setLocationOptIn(true);
+    localStorage.setItem("spider_location_optin", "true");
+    toast({ title: "Location set", description: q });
+
     setCitySearchLoading(true);
     try {
       const result = await forwardGeocode(q);
@@ -275,17 +284,6 @@ const SpiderUpload = () => {
         setLongitude(lng);
         setLocationName(result.name);
         setLocationAccuracy(1000);
-        setLocationOptIn(true);
-        localStorage.setItem("spider_location_optin", "true");
-        toast({ title: "Location set", description: result.name });
-      } else {
-        setLatitude(null);
-        setLongitude(null);
-        setLocationName(q);
-        setLocationAccuracy(null);
-        setLocationOptIn(true);
-        localStorage.setItem("spider_location_optin", "true");
-        toast({ title: "Location saved", description: "Using the city name without coordinates." });
       }
     } finally {
       setCitySearchLoading(false);
