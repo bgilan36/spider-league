@@ -302,13 +302,41 @@ const SpiderRevealCard = ({
                 </button>
               )}
               <p className="text-sm italic text-muted-foreground">{displaySpecies}</p>
+              {onSelectCandidate && candidates && candidates.length > 1 && (() => {
+                const alt = candidates.find((c) => c.species !== displaySpecies);
+                if (!alt) return null;
+                return (
+                  <div className="mt-2 rounded-lg border border-border bg-muted/30 p-2 text-left">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                          Next closest match
+                        </div>
+                        <div className="text-sm font-medium truncate">{alt.species}</div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Badge variant="secondary" className="text-[10px]">{alt.confidence}%</Badge>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="h-7 px-2 text-[11px]"
+                          onClick={() => onSelectCandidate(alt.species)}
+                        >
+                          Use this
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
               {onSelectCandidate && candidates && candidates.length > 1 && (
                 <button
                   type="button"
                   onClick={() => setSpeciesPickerOpen((v) => !v)}
                   className="text-[11px] text-primary hover:underline mt-1"
                 >
-                  {speciesPickerOpen ? "Hide other matches" : `Not quite right? Pick from ${candidates.length} matches`}
+                  {speciesPickerOpen ? "Hide all matches" : `See all ${candidates.length} matches`}
                 </button>
               )}
               {speciesPickerOpen && candidates && onSelectCandidate && (
