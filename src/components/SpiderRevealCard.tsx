@@ -570,6 +570,15 @@ const SpiderRevealCard = ({
                     }
                   />
                 </div>
+                <Button
+                  variant="ghost"
+                  className="w-full text-muted-foreground"
+                  size="sm"
+                  onClick={() => onOpenChange(false)}
+                  disabled={uploading}
+                >
+                  Save without battling
+                </Button>
               </div>
             )}
           </div>
