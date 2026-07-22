@@ -601,7 +601,11 @@ serve(async (req) => {
       `  ]  // up to 5 entries, sorted most likely first; species_key MUST be one of the catalog keys\n` +
       `}`;
 
-    async function callVision(model: string) {
+    async function callVision(model: string, priorHint?: string) {
+      const userContent: Array<Record<string, unknown>> = [
+        { type: "text", text: priorHint ? `${userInstruction}\n\n${priorHint}` : userInstruction },
+        { type: "image_url", image_url: { url: image } },
+      ];
       return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -612,13 +616,7 @@ serve(async (req) => {
           model,
           messages: [
             { role: "system", content: systemPrompt },
-            {
-              role: "user",
-              content: [
-                { type: "text", text: userInstruction },
-                { type: "image_url", image_url: { url: image } },
-              ],
-            },
+            { role: "user", content: userContent },
           ],
           response_format: { type: "json_object" },
           max_tokens: 1200,
@@ -626,11 +624,18 @@ serve(async (req) => {
       });
     }
 
-    // Prefer Gemini 2.5 Pro for finer-grained species ID; fall back to Flash on rate limits.
-    let visionResponse = await callVision("google/gemini-2.5-pro");
+    // Two-tier pipeline: fast first pass with Gemini 3.6 Flash, escalate to
+    // Gemini 3.1 Pro Preview only when the first pass is uncertain.
+    const FAST_MODEL = "google/gemini-3.6-flash";
+    const STRONG_MODEL = "google/gemini-3.1-pro-preview";
+    const LITE_FALLBACK = "google/gemini-3.1-flash-lite";
+
+    let tierUsed = "fast";
+    let visionResponse = await callVision(FAST_MODEL);
     if (visionResponse.status === 429 || visionResponse.status === 503) {
-      console.warn("Pro vision rate-limited/unavailable; falling back to flash");
-      visionResponse = await callVision("google/gemini-2.5-flash");
+      console.warn("Fast vision rate-limited; falling back to lite");
+      visionResponse = await callVision(LITE_FALLBACK);
+      tierUsed = "lite-fallback";
     }
 
     if (!visionResponse.ok) {
@@ -645,9 +650,54 @@ serve(async (req) => {
       throw new Error("AI vision analysis failed. Please try again.");
     }
 
-    const visionData = await visionResponse.json();
-    const aiResponse: string = visionData.choices?.[0]?.message?.content || "";
-    console.log("AI Vision Response:", aiResponse.slice(0, 800));
+    let visionData = await visionResponse.json();
+    let aiResponse: string = visionData.choices?.[0]?.message?.content || "";
+    console.log(`AI Vision (${tierUsed}) Response:`, aiResponse.slice(0, 800));
+
+    // Peek at the fast-pass confidence to decide whether to escalate.
+    function peekTopTwo(raw: string): { top1?: number; top2?: number; summary?: string } {
+      try {
+        const cleaned = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/```$/i, "").trim();
+        const obj = JSON.parse(cleaned);
+        const cands = Array.isArray(obj?.candidates) ? obj.candidates : [];
+        const top1 = Number(cands[0]?.confidence);
+        const top2 = Number(cands[1]?.confidence);
+        const summary = cands
+          .slice(0, 3)
+          .map((c: { species_key?: string; confidence?: number }) =>
+            `${c?.species_key ?? "?"} (${Math.round(Number(c?.confidence) || 0)}%)`)
+          .join(", ");
+        return { top1, top2, summary };
+      } catch { return {}; }
+    }
+
+    if (tierUsed === "fast") {
+      const { top1, top2, summary } = peekTopTwo(aiResponse);
+      const uncertain =
+        !Number.isFinite(top1) ||
+        (top1 as number) < 70 ||
+        (Number.isFinite(top2) && (top1 as number) - (top2 as number) < 10);
+      if (uncertain) {
+        console.log(`Escalating to ${STRONG_MODEL}; fast pass: ${summary}`);
+        const priorHint = summary
+          ? `A first-pass model suggested: ${summary}. Verify or correct these using the diagnostic features you actually see; prefer accuracy over agreement.`
+          : undefined;
+        const strong = await callVision(STRONG_MODEL, priorHint);
+        if (strong.ok) {
+          const strongData = await strong.json();
+          const strongText: string = strongData.choices?.[0]?.message?.content || "";
+          if (strongText && strongText.length > 5) {
+            aiResponse = strongText;
+            visionData = strongData;
+            tierUsed = "strong";
+            console.log("AI Vision (strong) Response:", aiResponse.slice(0, 800));
+          }
+        } else {
+          console.warn("Escalation failed with status", strong.status, "— keeping fast result");
+        }
+      }
+    }
+    console.log(`Final tier used: ${tierUsed}`);
 
     if (!aiResponse || aiResponse.length < 5) {
       throw new Error("AI failed to identify the image. Please ensure it shows a spider.");
