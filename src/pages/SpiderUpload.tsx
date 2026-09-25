@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import SpeciesReferencePanel from "@/components/dex/SpeciesReferencePanel";
 import { Helmet } from "react-helmet-async";
 import { useNavigate, Link } from "react-router-dom";
 import SpeciesFeedback from "@/components/SpeciesFeedback";
