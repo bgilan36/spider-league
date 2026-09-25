@@ -624,11 +624,68 @@ serve(async (req) => {
       });
     }
 
-    // Two-tier pipeline: fast first pass with Gemini 3.6 Flash, escalate to
-    // Gemini 3.1 Pro Preview only when the first pass is uncertain.
-    const FAST_MODEL = "google/gemini-3.6-flash";
-    const STRONG_MODEL = "google/gemini-3.1-pro-preview";
-    const LITE_FALLBACK = "google/gemini-3.1-flash-lite";
+    // Strong tier: OpenAI GPT-6 Astra via the Responses API (streamed SSE),
+    // with reasoning enabled — a different model family gives a true
+    // independent cross-check on uncertain photos.
+    async function callStrong(priorHint?: string): Promise<{ ok: boolean; status: number; text: string }> {
+      const res = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Lovable-API-Key": apiKey as string,
+          "X-Lovable-AIG-SDK": "fetch",
+        },
+        body: JSON.stringify({
+          model: STRONG_MODEL,
+          stream: true,
+          store: false,
+          reasoning: { effort: "medium", summary: "auto" },
+          include: ["reasoning.encrypted_content"],
+          text: { format: { type: "json_object" } },
+          input: [
+            { role: "system", content: [{ type: "input_text", text: systemPrompt }] },
+            {
+              role: "user",
+              content: [
+                { type: "input_text", text: priorHint ? `${userInstruction}\n\n${priorHint}` : userInstruction },
+                { type: "input_image", image_url: image },
+              ],
+            },
+          ],
+        }),
+      });
+      if (!res.ok || !res.body) {
+        console.warn("Strong tier error:", res.status, await res.text().catch(() => ""));
+        return { ok: false, status: res.status, text: "" };
+      }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = "", text = "", failed = false;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split("\n");
+        buf = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.startsWith("data:")) continue;
+          const payload = line.slice(5).trim();
+          if (!payload || payload === "[DONE]") continue;
+          try {
+            const ev = JSON.parse(payload);
+            if (ev.type === "response.output_text.delta") text += ev.delta ?? "";
+            else if (ev.type === "error" || ev.type === "response.failed") { failed = true; console.warn("Strong tier stream error:", payload.slice(0, 300)); }
+          } catch { /* partial */ }
+        }
+      }
+      return { ok: !failed && text.length > 0, status: res.status, text };
+    }
+
+    // Two-tier pipeline: fast first pass with the newest Gemini Flash,
+    // escalate to GPT-6 Astra only when the first pass is uncertain.
+    const FAST_MODEL = "google/gemini-3.8-flash";
+    const STRONG_MODEL = "openai/gpt-6-astra";
+    const LITE_FALLBACK = "google/gemini-3.6-flash";
 
     let tierUsed = "fast";
     let visionResponse = await callVision(FAST_MODEL);
@@ -698,16 +755,11 @@ serve(async (req) => {
         const priorHint = summary
           ? `A first-pass model suggested: ${summary}. Verify or correct these using the diagnostic features you actually see; prefer accuracy over agreement.`
           : undefined;
-        const strong = await callVision(STRONG_MODEL, priorHint);
-        if (strong.ok) {
-          const strongData = await strong.json();
-          const strongText: string = strongData.choices?.[0]?.message?.content || "";
-          if (strongText && strongText.length > 5) {
-            aiResponse = strongText;
-            visionData = strongData;
-            tierUsed = "strong";
-            console.log("AI Vision (strong) Response:", aiResponse.slice(0, 800));
-          }
+        const strong = await callStrong(priorHint);
+        if (strong.ok && strong.text.length > 5) {
+          aiResponse = strong.text;
+          tierUsed = "strong";
+          console.log("AI Vision (strong) Response:", aiResponse.slice(0, 800));
         } else {
           console.warn("Escalation failed with status", strong.status, "— keeping fast result");
         }
