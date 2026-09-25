@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import refSpecies from "../_shared/spider-species.json" with { type: "json" };
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -299,6 +300,51 @@ const US_SPIDER_DATABASE: Record<string, SpiderData> = {
   }
 };
 
+// ===== Real reference library (mirrors public.spider_species) =====
+type RefSpecies = {
+  slug: string; common_name: string; scientific_name: string; family: string; aliases: string[];
+  habitat: string; us_range: string; size_min_mm: number; size_max_mm: number;
+  danger: SpiderData["danger"]; venom_potency: number; web_builder: boolean;
+  speed_type: SpiderData["speedType"]; is_native: boolean; diagnostic_features: string;
+  harmful_reason: string | null; special_abilities: string[];
+  base_stats: SpiderData["baseStats"]; image_url: string | null; image_credit: string | null;
+  wikipedia_url: string | null; summary: string | null;
+};
+const REF_BY_SCI = new Map<string, RefSpecies>();
+for (const r of refSpecies as RefSpecies[]) {
+  REF_BY_SCI.set(r.scientific_name.toLowerCase(), r);
+  const legacy = Object.values(US_SPIDER_DATABASE).some(
+    (d) => d.scientificName.toLowerCase() === r.scientific_name.toLowerCase(),
+  );
+  if (legacy || US_SPIDER_DATABASE[r.slug]) continue;
+  US_SPIDER_DATABASE[r.slug] = {
+    scientificName: r.scientific_name,
+    family: r.family,
+    commonNames: [r.common_name],
+    danger: r.danger,
+    isUSNative: true,
+    isCommonInvasive: !r.is_native,
+    size: { min: r.size_min_mm, max: r.size_max_mm },
+    speedType: r.speed_type,
+    venomPotency: r.venom_potency,
+    webBuilder: r.web_builder,
+    harmfulReason: r.harmful_reason ?? undefined,
+    specialAbilities: r.special_abilities,
+    visualKeywords: r.diagnostic_features.split(/,\s*/),
+    baseStats: r.base_stats,
+  };
+}
+function refFacts(sci: string) {
+  const r = REF_BY_SCI.get(sci.toLowerCase());
+  if (!r) return null;
+  return {
+    slug: r.slug, habitat: r.habitat, range: r.us_range,
+    sizeMm: [r.size_min_mm, r.size_max_mm], diagnosticFeatures: r.diagnostic_features,
+    imageUrl: r.image_url, imageCredit: r.image_credit, wikipediaUrl: r.wikipedia_url,
+  };
+}
+
+
 // Enhanced species identification with strict US filtering
 function identifySpecies(label: string): Array<{ key: string; data: SpiderData; confidence: number }> {
   const normalizedLabel = label.toLowerCase();
@@ -560,14 +606,18 @@ serve(async (req) => {
     // free-text parsing.
     const catalogEntries = Object.entries(US_SPIDER_DATABASE)
       .filter(([, d]) => d.isUSNative || d.isCommonInvasive)
-      .map(([key, d]) => ({
-        key,
-        scientific: d.scientificName,
-        common: d.commonNames[0],
-        family: d.family,
-        size_mm: `${d.size.min}-${d.size.max}`,
-        diagnostic: d.visualKeywords.slice(0, 8).join(", "),
-      }));
+      .map(([key, d]) => {
+        const ref = REF_BY_SCI.get(d.scientificName.toLowerCase());
+        return {
+          key,
+          scientific: d.scientificName,
+          common: d.commonNames[0],
+          family: d.family,
+          size_mm: `${d.size.min}-${d.size.max}`,
+          diagnostic: ref?.diagnostic_features ?? d.visualKeywords.slice(0, 8).join(", "),
+          ...(ref ? { habitat: ref.habitat, range: ref.us_range } : {}),
+        };
+      });
 
     const locationHint = (() => {
       if (!location) return "Unknown — assume continental United States.";
@@ -934,6 +984,7 @@ serve(async (req) => {
         harmfulReason: c.dbData.harmfulReason,
         specialAbilities: c.dbData.specialAbilities,
         reasoning: c.reasoning,
+        reference: refFacts(c.dbData.scientificName),
         rank: index + 1
       };
     });
