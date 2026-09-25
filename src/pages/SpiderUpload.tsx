@@ -1052,6 +1052,7 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                                   {c.reasoning}
                                 </p>
                               )}
+                              <SpeciesReferencePanel species={c.species} />
                               <p className="text-xs text-muted-foreground line-clamp-2">
                                 {c.harmfulToHumans}
                               </p>
