@@ -671,12 +671,28 @@ serve(async (req) => {
       } catch { return {}; }
     }
 
-    if (tierUsed === "fast") {
+    // Configurable escalation thresholds (admin-tunable, defaults 70 / 10).
+    let minConfidence = 70, minMargin = 10, escalationEnabled = true;
+    try {
+      const { data: cfg } = await supabase
+        .from("species_id_config")
+        .select("min_confidence, min_margin, escalation_enabled")
+        .eq("id", 1)
+        .maybeSingle();
+      if (cfg) {
+        minConfidence = cfg.min_confidence;
+        minMargin = cfg.min_margin;
+        escalationEnabled = cfg.escalation_enabled;
+      }
+    } catch (e) { console.warn("Config load failed, using defaults", e); }
+
+    if (tierUsed === "fast" && escalationEnabled) {
       const { top1, top2, summary } = peekTopTwo(aiResponse);
       const uncertain =
         !Number.isFinite(top1) ||
-        (top1 as number) < 70 ||
-        (Number.isFinite(top2) && (top1 as number) - (top2 as number) < 10);
+        (top1 as number) < minConfidence ||
+        (Number.isFinite(top2) && (top1 as number) - (top2 as number) < minMargin);
+      console.log(`Escalation check: top1=${top1} top2=${top2} thresholds=${minConfidence}/${minMargin} → ${uncertain ? "escalate" : "keep"}`);
       if (uncertain) {
         console.log(`Escalating to ${STRONG_MODEL}; fast pass: ${summary}`);
         const priorHint = summary
@@ -883,6 +899,7 @@ serve(async (req) => {
                             topCandidates[0].confidence >= 50 ? "medium" : "low",
       
       topCandidates,
+      tierUsed,
       
       isUSNative: species.isUSNative,
       harmfulToHumans: species.harmfulReason || 'Harmless',
