@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { useNavigate, Link } from "react-router-dom";
+import SpeciesFeedback from "@/components/SpeciesFeedback";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -100,6 +101,7 @@ const SpiderUpload = () => {
     reasoning?: string;
   }>>([]);
   const [identificationQuality, setIdentificationQuality] = useState<string | null>(null);
+  const [tierUsed, setTierUsed] = useState<string | null>(null);
   const [safetyInfo, setSafetyInfo] = useState<{
     isUSNative: boolean;
     harmfulToHumans: string;
@@ -461,6 +463,7 @@ const { data, error } = await supabase.functions.invoke('spider-identify', {
       if (Array.isArray(data?.topCandidates)) {
         setCandidates(data.topCandidates);
       }
+      setTierUsed(typeof data?.tierUsed === 'string' ? data.tierUsed : null);
       
       // Store identification quality
       if (data?.identificationQuality) {
@@ -1004,6 +1007,12 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                         </Badge>
                       </div>
                     )}
+                    <SpeciesFeedback
+                      predictedSpecies={candidates[0]?.species ?? ""}
+                      predictedConfidence={candidates[0]?.confidence}
+                      tierUsed={tierUsed}
+                      candidates={candidates}
+                    />
                     <div className="space-y-2">
                       {candidates.slice(0, 3).map((c, i) => (
                         <div
