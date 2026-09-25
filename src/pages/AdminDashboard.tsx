@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/auth/AuthProvider';
 import { useAdminRole } from '@/hooks/useAdminRole';
 import { supabase } from '@/integrations/supabase/client';
+import SpeciesIdSettings from '@/components/SpeciesIdSettings';
 import {
   Users,
   Bug,
@@ -339,6 +340,7 @@ const AdminDashboard = () => {
                 <BarChart3 className="h-4 w-4" />
                 Activity
               </TabsTrigger>
+              <TabsTrigger value="species-id">Species ID</TabsTrigger>
             </TabsList>
 
             <TabsContent value="trends" className="space-y-6">
@@ -532,6 +534,10 @@ const AdminDashboard = () => {
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="species-id" className="space-y-6">
+              <SpeciesIdSettings />
             </TabsContent>
           </Tabs>
         </div>
