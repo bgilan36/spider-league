@@ -2046,14 +2046,6 @@ export type Database = {
       }
       get_referral_progress: { Args: { p_user_id?: string }; Returns: Json }
       get_rookie_season_progress: { Args: never; Returns: Json }
-      get_species_id_config: {
-        Args: never
-        Returns: {
-          escalation_enabled: boolean
-          min_confidence: number
-          min_margin: number
-        }[]
-      }
       get_spider_skirmish_suggestion: { Args: never; Returns: Json }
       get_spider_upload_heatmap: {
         Args: { days_back?: number }
