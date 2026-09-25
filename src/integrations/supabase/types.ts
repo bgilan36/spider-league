@@ -1378,6 +1378,69 @@ export type Database = {
         }
         Relationships: []
       }
+      species_id_config: {
+        Row: {
+          escalation_enabled: boolean
+          id: number
+          min_confidence: number
+          min_margin: number
+          updated_at: string
+        }
+        Insert: {
+          escalation_enabled?: boolean
+          id?: number
+          min_confidence?: number
+          min_margin?: number
+          updated_at?: string
+        }
+        Update: {
+          escalation_enabled?: boolean
+          id?: number
+          min_confidence?: number
+          min_margin?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      species_id_feedback: {
+        Row: {
+          candidates: Json | null
+          confirmed_species: string
+          created_at: string
+          id: string
+          is_correct: boolean
+          note: string | null
+          predicted_confidence: number | null
+          predicted_species: string
+          tier_used: string | null
+          user_id: string
+        }
+        Insert: {
+          candidates?: Json | null
+          confirmed_species: string
+          created_at?: string
+          id?: string
+          is_correct: boolean
+          note?: string | null
+          predicted_confidence?: number | null
+          predicted_species: string
+          tier_used?: string | null
+          user_id: string
+        }
+        Update: {
+          candidates?: Json | null
+          confirmed_species?: string
+          created_at?: string
+          id?: string
+          is_correct?: boolean
+          note?: string | null
+          predicted_confidence?: number | null
+          predicted_species?: string
+          tier_used?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       spider_of_the_day: {
         Row: {
           created_at: string
