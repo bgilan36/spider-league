@@ -1546,6 +1546,87 @@ export type Database = {
           },
         ]
       }
+      spider_species: {
+        Row: {
+          aliases: string[]
+          base_stats: Json
+          common_name: string
+          created_at: string
+          danger: string
+          diagnostic_features: string
+          family: string
+          habitat: string
+          harmful_reason: string | null
+          image_credit: string | null
+          image_url: string | null
+          is_native: boolean
+          scientific_name: string
+          size_max_mm: number
+          size_min_mm: number
+          slug: string
+          special_abilities: string[]
+          speed_type: string
+          summary: string | null
+          updated_at: string
+          us_range: string
+          venom_potency: number
+          web_builder: boolean
+          wikipedia_url: string | null
+        }
+        Insert: {
+          aliases?: string[]
+          base_stats: Json
+          common_name: string
+          created_at?: string
+          danger?: string
+          diagnostic_features: string
+          family: string
+          habitat: string
+          harmful_reason?: string | null
+          image_credit?: string | null
+          image_url?: string | null
+          is_native?: boolean
+          scientific_name: string
+          size_max_mm: number
+          size_min_mm: number
+          slug: string
+          special_abilities?: string[]
+          speed_type?: string
+          summary?: string | null
+          updated_at?: string
+          us_range: string
+          venom_potency?: number
+          web_builder?: boolean
+          wikipedia_url?: string | null
+        }
+        Update: {
+          aliases?: string[]
+          base_stats?: Json
+          common_name?: string
+          created_at?: string
+          danger?: string
+          diagnostic_features?: string
+          family?: string
+          habitat?: string
+          harmful_reason?: string | null
+          image_credit?: string | null
+          image_url?: string | null
+          is_native?: boolean
+          scientific_name?: string
+          size_max_mm?: number
+          size_min_mm?: number
+          slug?: string
+          special_abilities?: string[]
+          speed_type?: string
+          summary?: string | null
+          updated_at?: string
+          us_range?: string
+          venom_potency?: number
+          web_builder?: boolean
+          wikipedia_url?: string | null
+        }
+        Relationships: []
+      }
       spiders: {
         Row: {
           city_key: string | null

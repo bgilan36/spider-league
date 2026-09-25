@@ -31,6 +31,8 @@ interface SafetyInfo {
   specialAbilities: string[];
 }
 
+import SpeciesReferencePanel from "@/components/dex/SpeciesReferencePanel";
+
 interface Candidate {
   species: string;
   confidence: number;
@@ -373,6 +375,7 @@ const SpiderRevealCard = ({
                             {c.reasoning}
                           </p>
                         )}
+                        <SpeciesReferencePanel species={c.species} compact />
                       </button>
                     );
                   })}

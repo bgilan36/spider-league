@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import SpeciesReferencePanel from "@/components/dex/SpeciesReferencePanel";
 import { Helmet } from "react-helmet-async";
 import { useNavigate, Link } from "react-router-dom";
 import SpeciesFeedback from "@/components/SpeciesFeedback";
@@ -1052,6 +1053,7 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                                   {c.reasoning}
                                 </p>
                               )}
+                              <SpeciesReferencePanel species={c.species} />
                               <p className="text-xs text-muted-foreground line-clamp-2">
                                 {c.harmfulToHumans}
                               </p>

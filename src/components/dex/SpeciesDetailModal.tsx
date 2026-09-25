@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Skull } from "lucide-react";
 import type { DexEntry } from "@/lib/spiderDex/useSpeciesProgress";
+import { findReference, useSpeciesLibrary } from "@/lib/spiderDex/useSpeciesReference";
 
 interface Props {
   entry: DexEntry | null;
@@ -35,6 +36,8 @@ export default function SpeciesDetailModal({ entry, open, onClose }: Props) {
             {def.hint} <span className="text-xs ml-1">({def.region})</span>
           </div>
         )}
+
+        <SpeciesFacts text={def?.scientificName ?? entry.commonName} fallback={entry.commonName} />
 
         <div className="grid grid-cols-3 gap-3 text-center my-3">
           <Stat label="Caught" value={entry.count} />
@@ -78,6 +81,37 @@ export default function SpeciesDetailModal({ entry, open, onClose }: Props) {
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function SpeciesFacts({ text, fallback }: { text: string; fallback: string }) {
+  const { data } = useSpeciesLibrary();
+  const ref = findReference(data, text) ?? findReference(data, fallback);
+  if (!ref) return null;
+  return (
+    <div className="rounded-md border overflow-hidden">
+      {ref.image_url && (
+        <img src={ref.image_url} alt={`Real photo of ${ref.common_name}`} className="w-full max-h-64 object-cover" loading="lazy" />
+      )}
+      <div className="p-3 space-y-1.5 text-sm">
+        <Fact label="Habitat" value={ref.habitat} />
+        <Fact label="Range" value={ref.us_range} />
+        <Fact label="Size" value={`${ref.size_min_mm}–${ref.size_max_mm} mm body length`} />
+        <Fact label="How to recognize" value={ref.diagnostic_features} />
+        <Fact label="Danger to people" value={ref.danger} />
+        {ref.summary && <p className="text-xs text-muted-foreground line-clamp-4">{ref.summary}</p>}
+        <div className="text-[10px] text-muted-foreground">
+          {ref.image_credit && <>Photo: {ref.image_credit} · </>}
+          {ref.wikipedia_url && <a href={ref.wikipedia_url} target="_blank" rel="noreferrer" className="underline">Read on Wikipedia</a>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Fact({ label, value }: { label: string; value: string }) {
+  return (
+    <div><span className="font-medium">{label}:</span> <span className="text-muted-foreground capitalize-first">{value}</span></div>
   );
 }
 
