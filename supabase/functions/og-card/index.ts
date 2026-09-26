@@ -11,7 +11,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const APP_ORIGIN = "https://spiderleague.app";
-const DEFAULT_OG = `${APP_ORIGIN}/spider-league-og.png`;
+const DEFAULT_OG = `${APP_ORIGIN}/spider-league-og.png?v=2`;
 
 const esc = (s: string) =>
   String(s ?? "")
