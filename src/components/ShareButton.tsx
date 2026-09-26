@@ -84,7 +84,7 @@ const ShareButton: React.FC<ShareButtonProps> = ({
     const shareUrl = await resolveUrl();
     if (navigator.share) {
       try {
-        await navigator.share({ title, text: `${text}\n\n${shareUrl}`, url: shareUrl });
+        await navigator.share({ title, text, url: shareUrl });
         toast({
           title: "Shared successfully!",
           description: "Thanks for spreading the Spider League love! 🕷️",
@@ -106,7 +106,7 @@ const ShareButton: React.FC<ShareButtonProps> = ({
       const nav: any = navigator;
       if (nav.canShare && nav.canShare({ files: [file] }) && nav.share) {
         await nav.share({ files: [file], title, text: `${text}\n\n${shareUrl}` });
-        toast({ title: "Shared!", description: "Battle card on its way 🕷️" });
+        toast({ title: "Shared!", description: "Spider League image on its way 🕷️" });
       } else {
         // Fallback: trigger download so the user can post it manually.
         const u = URL.createObjectURL(blob);
@@ -204,7 +204,7 @@ const ShareButton: React.FC<ShareButtonProps> = ({
           <>
             <DropdownMenuItem onClick={handleShareImage} disabled={busyImage} className="gap-2">
               <ImageIcon className="h-4 w-4" />
-              {busyImage ? "Preparing image…" : "Share battle image"}
+              {busyImage ? "Preparing image…" : "Share image"}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleDownloadImage} disabled={busyImage} className="gap-2">
               <Download className="h-4 w-4" />

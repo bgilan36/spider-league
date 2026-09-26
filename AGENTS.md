@@ -1,0 +1,2 @@
+- Keep downloadable spider and battle share art in the shared canvas drawing module and make the public 1200×630 preview separately; this keeps social cards consistent without relying on crawler-side canvas rendering.
+- Version cached share-card filenames when changing card designs; this prevents stale uploaded images from appearing in shared links.
