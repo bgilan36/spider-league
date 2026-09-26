@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Trophy, Crown, ArrowRight, Users, Clock, Target } from 'lucide-react';
 import { format } from 'date-fns';
 import ShareButton from '@/components/ShareButton';
+import { generateBattleShareImage } from '@/lib/battleShareImage';
+import { ensureShareCard } from '@/lib/ensureShareCard';
 import ClickableUsername from '@/components/ClickableUsername';
 import { supabase } from '@/integrations/supabase/client';
 import CombatStage from '@/components/battle/combat/CombatStage';
@@ -409,6 +411,29 @@ const BattleDetailsModal: React.FC<BattleDetailsModalProps> = ({
               hashtags={["SpiderLeague", "WebWarriors", "EpicBattle", isDraw ? "Draw" : "Victory"]}
               variant="default"
               size="lg"
+              url={battle.id ? `${window.location.origin}/battle/${battle.id}` : undefined}
+              imageFileName={`spider-league-battle-${String(battle.id || 'result').slice(0, 8)}.png`}
+              getShareImage={() => generateBattleShareImage({
+                winnerName: (winner || teamASpider).nickname,
+                winnerImageUrl: (winner || teamASpider).image_url,
+                loserName: (loser || teamBSpider).nickname,
+                loserImageUrl: (loser || teamBSpider).image_url,
+                rounds: battle.turn_count ?? rounds.length,
+                iWon: true,
+                isDraw,
+              })}
+              prepareShareUrl={battle.id ? async () => (await ensureShareCard({
+                kind: 'battle', id: battle.id,
+                existingImageUrl: battle.share_image_url,
+                generate: () => generateBattleShareImage({
+                  winnerName: (winner || teamASpider).nickname,
+                  winnerImageUrl: (winner || teamASpider).image_url,
+                  loserName: (loser || teamBSpider).nickname,
+                  loserImageUrl: (loser || teamBSpider).image_url,
+                  rounds: battle.turn_count ?? rounds.length,
+                  iWon: true, isDraw,
+                }),
+              })).shareUrl : undefined}
             />
             <Button size="lg" onClick={onClose} variant="outline" className="min-w-32">
               Close Details

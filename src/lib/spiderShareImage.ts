@@ -40,11 +40,6 @@ export async function generateSpiderShareImage(input: SpiderShareImageInput): Pr
   ctx.fillStyle = muted;
   ctx.font = "italic 26px system-ui, sans-serif";
   const species = input.species || "Spider";
-  while (ctx.measureText(species).width > 525 && species.length > 1) {
-    // Long scientific labels should remain readable without crossing the photo.
-    ctx.font = `italic ${Math.max(18, Number(ctx.font.match(/\d+/)?.[0] || 26) - 1)}px system-ui, sans-serif`;
-    if (ctx.font.includes("18px")) break;
-  }
   ctx.fillText(species, 48, 290, 525);
   ctx.fillStyle = accent;
   ctx.fillRect(48, 333, 218, 50);

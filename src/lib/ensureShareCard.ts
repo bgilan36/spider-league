@@ -5,6 +5,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const CARD_VERSION = "v2";
 
 export type ShareKind = "spider" | "battle";
 
@@ -20,11 +21,11 @@ async function uploadCard(
   ownerId: string,
   blob: Blob,
 ): Promise<string | null> {
-  const path = `${ownerId}/share-cards/${kind}-${id}.png`;
+  const path = `${ownerId}/share-cards/${kind}-${id}-${CARD_VERSION}.png`;
   const { error } = await supabase.storage
     .from("spiders")
     .upload(path, blob, {
-      cacheControl: "31536000",
+      cacheControl: "3600",
       contentType: "image/png",
       upsert: true,
     });
@@ -49,7 +50,7 @@ export async function ensureShareCard(opts: {
 }): Promise<{ shareUrl: string; imageUrl: string | null }> {
   const shareUrl = buildShareUrl(opts.kind, opts.id);
 
-  if (opts.existingImageUrl) {
+  if (opts.existingImageUrl?.includes(`-${CARD_VERSION}.png`)) {
     return { shareUrl, imageUrl: opts.existingImageUrl };
   }
 

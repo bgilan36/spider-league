@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, Crown, ArrowRight, Users } from 'lucide-react';
 import ShareButton from '@/components/ShareButton';
+import { generateBattleShareImage } from '@/lib/battleShareImage';
 
 interface Spider {
   id: string;
@@ -150,6 +151,12 @@ const BattleRecapModal: React.FC<BattleRecapModalProps> = ({
               hashtags={["SpiderLeague", "WebWarriors", "EpicBattle", "Victory"]}
               variant="default"
               size="lg"
+              imageFileName="spider-league-battle-result.png"
+              getShareImage={() => generateBattleShareImage({
+                winnerName: winner.nickname, winnerImageUrl: winner.image_url,
+                loserName: loser.nickname, loserImageUrl: loser.image_url,
+                rounds: battleLog.length, iWon: true,
+              })}
             />
             <Button size="lg" onClick={onClose} variant="outline" className="min-w-32">
               Close Battle Recap
