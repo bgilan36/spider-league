@@ -613,18 +613,9 @@ const Index = () => {
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Store file in sessionStorage as base64 for navigation
-      const reader = new FileReader();
-      reader.onload = () => {
-        sessionStorage.setItem('pendingUploadFile', JSON.stringify({
-          data: reader.result,
-          name: file.name,
-          type: file.type
-        }));
-        navigate('/upload');
-      };
-      reader.readAsDataURL(file);
+      navigate('/upload', { state: { photoToCrop: file } });
     }
+    event.target.value = '';
   };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import SpeciesReferencePanel from "@/components/dex/SpeciesReferencePanel";
 import { Helmet } from "react-helmet-async";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import SpeciesFeedback from "@/components/SpeciesFeedback";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,6 +81,7 @@ async function ensureJpeg(file: File): Promise<File> {
 const SpiderUpload = () => {
   const { user, session } = useAuth();
   const navigate = useNavigate();
+  const routeLocation = useLocation();
   const { toast } = useToast();
   const { checkAndAwardBadges } = useBadgeSystem();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -375,8 +376,18 @@ const SpiderUpload = () => {
     fetchWeeklyUploadCount();
   }, [user]);
 
-  // Check for pending file upload from Index page
+  // Show the crop editor first for photos selected on the home page.
   useEffect(() => {
+    const incomingFile = (routeLocation.state as { photoToCrop?: unknown } | null)?.photoToCrop;
+    if (incomingFile instanceof File) {
+      navigate(routeLocation.pathname, { replace: true, state: null });
+      void ensureJpeg(incomingFile).then((converted) => {
+        setOriginalFile(converted);
+        setCropFile(converted);
+      });
+      return;
+    }
+    // Support older in-progress home uploads saved before this change.
     const pendingFile = sessionStorage.getItem('pendingUploadFile');
     if (pendingFile) {
       try {
@@ -397,7 +408,7 @@ const SpiderUpload = () => {
         sessionStorage.removeItem('pendingUploadFile');
       }
     }
-  }, []);
+  }, [routeLocation.state, routeLocation.pathname, navigate]);
 
   const fileToBase64 = (file: File) =>
     new Promise<string>((resolve, reject) => {
@@ -929,7 +940,7 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                           loading="lazy"
                         />
                         <div className="flex flex-wrap justify-center gap-2">
-                          <Button type="button" size="sm" variant="outline" onClick={() => setCropFile(originalFile || selectedFile)} disabled={identifying || uploading}><Crop className="h-4 w-4" /> Re-crop</Button>
+                          <Button type="button" size="sm" variant="outline" onClick={() => setCropFile(originalFile || selectedFile)} disabled={identifying || uploading}><Crop className="h-4 w-4" /> Adjust crop & zoom</Button>
                           <Button type="button" size="sm" variant="ghost" onClick={() => fileInputRef.current?.click()} disabled={identifying || uploading}>Change photo</Button>
                         </div>
                       </div>
@@ -946,7 +957,7 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/*"
+                    accept="image/*,.heic,.heif"
                     onChange={handleFileSelect}
                     className="hidden"
                   />
