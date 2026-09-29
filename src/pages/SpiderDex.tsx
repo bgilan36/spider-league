@@ -58,9 +58,14 @@ export default function SpiderDex() {
       </Helmet>
 
       <div className="max-w-6xl mx-auto p-4 space-y-5">
-        <Button variant="ghost" size="sm" asChild>
-          <Link to="/"><ArrowLeft className="h-4 w-4 mr-1" />Home</Link>
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/"><ArrowLeft className="h-4 w-4 mr-1" />Home</Link>
+          </Button>
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/species"><BookOpen className="h-4 w-4 mr-1" />Field Guide</Link>
+          </Button>
+        </div>
 
         {/* Header card */}
         <Card className="p-5 sm:p-6 bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 text-white border-zinc-800">
