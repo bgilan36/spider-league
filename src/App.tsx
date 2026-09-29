@@ -21,6 +21,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import PrivateLeagueDetail from "./pages/PrivateLeagueDetail";
 import JoinLeague from "./pages/JoinLeague";
 import SpiderDex from "./pages/SpiderDex";
+import SpeciesGuide from "./pages/SpeciesGuide";
 import Pods from "./pages/Pods";
 import BrowsePods from "./pages/BrowsePods";
 import Skirmish from "./pages/Skirmish";
@@ -60,6 +61,7 @@ const App = () => (
                 <Route path="/collection" element={<SpiderCollection />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
                 <Route path="/dex" element={<SpiderDex />} />
+                <Route path="/species" element={<SpeciesGuide />} />
                 <Route path="/battle-history" element={<BattleHistory />} />
                 <Route path="/battle/:battleId" element={<TurnBasedBattle />} />
                 <Route path="/roadmap" element={<Roadmap />} />
