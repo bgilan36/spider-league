@@ -9,13 +9,14 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { Upload, Camera, Loader2, ArrowLeft, MapPin, X, Search } from "lucide-react";
+import { Upload, Camera, Loader2, ArrowLeft, MapPin, X, Search, Crop } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
 import { classifyImage } from "@/hooks/useImageClassifier";
 import { useBadgeSystem } from "@/hooks/useBadgeSystem";
 import heic2any from "heic2any";
 import SpiderRevealCard from "@/components/SpiderRevealCard";
+import SpiderImageCropper from "@/components/SpiderImageCropper";
 import NewSpeciesReveal from "@/components/dex/NewSpeciesReveal";
 import { matchSpeciesSlug, getDexSpecies } from "@/lib/spiderDex/species";
 
@@ -88,6 +89,8 @@ const SpiderUpload = () => {
   const [nickname, setNickname] = useState("");
   const [species, setSpecies] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [originalFile, setOriginalFile] = useState<File | null>(null);
+  const [cropFile, setCropFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [identifying, setIdentifying] = useState(false);
   const [spiderStats, setSpiderStats] = useState<any | null>(null);
@@ -138,6 +141,19 @@ const SpiderUpload = () => {
   const [pendingNickname, setPendingNickname] = useState<string | null>(null);
   const [pendingStats, setPendingStats] = useState<any | null>(null);
   const [pendingSafety, setPendingSafety] = useState<any | null>(null);
+
+  useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
+
+  const usePhoto = (file: File) => {
+    setCropFile(null);
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+    setNickname("");
+    setSpecies("");
+    setSpiderStats(null);
+    setRevealOpen(false);
+    void analyzeImage(file);
+  };
 
   const fetchWithTimeout = async (url: string, timeoutMs: number) => {
     const controller = new AbortController();
@@ -371,9 +387,8 @@ const SpiderUpload = () => {
           .then(async (blob) => {
             const file = new File([blob], fileData.name, { type: fileData.type });
             const converted = await ensureJpeg(file);
-            setSelectedFile(converted);
-            setPreviewUrl(URL.createObjectURL(converted));
-            await analyzeImage(converted);
+            setOriginalFile(converted);
+            setCropFile(converted);
             // Clear the pending file
             sessionStorage.removeItem('pendingUploadFile');
           });
@@ -554,14 +569,18 @@ const { data, error } = await supabase.functions.invoke('spider-identify', {
   const file = event.target.files?.[0];
   if (file) {
     if (file.type.startsWith('image/') || /\.(heic|heif)$/i.test(file.name)) {
-      const converted = await ensureJpeg(file);
-      setSelectedFile(converted);
-      setPreviewUrl(URL.createObjectURL(converted));
-      await analyzeImage(converted);
+      try {
+        const converted = await ensureJpeg(file);
+        setOriginalFile(converted);
+        setCropFile(converted);
+      } catch {
+        toast({ title: "Could not open photo", description: "Please choose a different image.", variant: "destructive" });
+      }
     } else {
       toast({ title: "Invalid file", description: "Please select an image file.", variant: "destructive" });
     }
   }
+   event.target.value = "";
   };
 
 const applySpeciesBias = (speciesName: string, stats: { hit_points: number; damage: number; speed: number; defense: number; venom: number; webcraft: number; }) => {
@@ -898,9 +917,8 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                 {/* Image Upload */}
                  <div className="space-y-2">
                    <Label>Spider Image</Label>
-                   <div 
-                     className={`border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 sm:p-8 text-center cursor-pointer hover:border-muted-foreground/50 transition-colors ${!previewUrl ? 'animate-pulse ring-1 ring-primary/20' : ''}`}
-                     onClick={() => fileInputRef.current?.click()}
+                    <div
+                      className={`border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 sm:p-8 text-center ${!previewUrl ? 'animate-pulse ring-1 ring-primary/20' : ''}`}
                    >
                     {previewUrl ? (
                       <div className="space-y-4">
@@ -910,14 +928,17 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                           className="mx-auto max-h-48 rounded-lg object-cover"
                           loading="lazy"
                         />
-                        <p className="text-sm text-muted-foreground">Click to change image</p>
+                        <div className="flex flex-wrap justify-center gap-2">
+                          <Button type="button" size="sm" variant="outline" onClick={() => setCropFile(originalFile || selectedFile)} disabled={identifying || uploading}><Crop className="h-4 w-4" /> Re-crop</Button>
+                          <Button type="button" size="sm" variant="ghost" onClick={() => fileInputRef.current?.click()} disabled={identifying || uploading}>Change photo</Button>
+                        </div>
                       </div>
                     ) : (
                       <div className="space-y-4">
                         <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
                         <div>
                           <p className="text-lg font-medium">Upload spider image</p>
-                          <p className="text-sm text-muted-foreground">Click to browse files</p>
+                          <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>Choose photo</Button>
                         </div>
                       </div>
                     )}
@@ -1265,6 +1286,8 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
           </Card>
         </div>
       </main>
+
+      <SpiderImageCropper file={cropFile} onCancel={() => setCropFile(null)} onConfirm={usePhoto} />
 
       {spiderStats && (
         <SpiderRevealCard
