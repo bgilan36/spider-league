@@ -60,12 +60,12 @@ export default function SpiderImageCropper({ file, onCancel, onConfirm }: Spider
 
   return (
     <Dialog open={Boolean(file)} onOpenChange={(open) => { if (!open && !saving) onCancel(); }}>
-      <DialogContent className="w-[calc(100vw-1rem)] max-w-xl max-h-[95dvh] overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="w-[calc(100vw-1rem)] max-w-xl max-h-[calc(100dvh-1rem)] grid-rows-[auto_minmax(0,1fr)_auto_auto_auto] overflow-y-auto p-3 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Crop className="h-5 w-5" /> Crop your spider photo</DialogTitle>
           <DialogDescription>Drag the photo to frame your spider. Pinch or use the controls below to zoom.</DialogDescription>
         </DialogHeader>
-        <div aria-label="Drag to frame your spider photo" className="relative h-[min(48dvh,420px)] min-h-[200px] w-full overflow-hidden rounded-md bg-muted touch-none">
+        <div aria-label="Drag to frame your spider photo" className="relative h-[clamp(160px,40dvh,420px)] min-h-0 w-full overflow-hidden rounded-md bg-muted touch-none">
           {imageUrl && <Cropper image={imageUrl} crop={crop} zoom={zoom} minZoom={MIN_ZOOM} maxZoom={MAX_ZOOM} aspect={1} onCropChange={setCrop} onZoomChange={setZoom} onCropComplete={(_, pixels) => setCropPixels(pixels)} />}
         </div>
         <div className="space-y-3">
@@ -77,9 +77,9 @@ export default function SpiderImageCropper({ file, onCancel, onConfirm }: Spider
           </div>
         </div>
         {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button type="button" variant="ghost" onClick={onCancel} disabled={saving}>Cancel</Button>
-          <Button type="button" onClick={applyCrop} disabled={!cropPixels || saving}>
+        <div className="flex gap-2 sm:justify-end">
+          <Button type="button" variant="ghost" className="shrink-0" onClick={onCancel} disabled={saving}>Cancel</Button>
+          <Button type="button" className="min-w-0 flex-1 sm:flex-none" onClick={applyCrop} disabled={!cropPixels || saving}>
             {saving && <Loader2 className="h-4 w-4 animate-spin" />} Use this crop
           </Button>
         </div>

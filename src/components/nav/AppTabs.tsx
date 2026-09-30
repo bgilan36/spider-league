@@ -94,8 +94,8 @@ export const MobileTabBar: React.FC<{ pathname: string }> = ({ pathname }) => {
     >
       <div
         className={cn(
-          "flex items-center justify-between gap-1 rounded-full border border-white/15 px-2 py-2",
-          "bg-background/40 supports-[backdrop-filter]:bg-background/30",
+          "flex items-center justify-between gap-0.5 rounded-full border border-border/60 px-1.5 py-2",
+          "bg-background/90 supports-[backdrop-filter]:bg-background/75",
           "backdrop-blur-2xl backdrop-saturate-150 shadow-xl"
         )}
       >
@@ -110,15 +110,15 @@ export const MobileTabBar: React.FC<{ pathname: string }> = ({ pathname }) => {
               aria-label={tab.label}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex flex-col items-center justify-center gap-0.5 h-11 flex-1 rounded-full text-[9px] font-medium tracking-wide uppercase transition-colors",
+                "flex min-w-0 flex-col items-center justify-center gap-0.5 h-12 flex-1 rounded-full text-[10px] font-semibold uppercase transition-colors",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 isHome && active && "bg-primary text-primary-foreground",
-                !isHome && active && "text-primary bg-white/15",
+                !isHome && active && "text-primary bg-primary/10",
                 !active && "text-muted-foreground hover:text-foreground"
               )}
             >
               <Icon className={cn("h-4 w-4", active && "scale-110")} />
-              <span>{tab.label}</span>
+              <span className="w-full truncate text-center">{tab.label}</span>
             </NavLink>
           );
         })}
