@@ -214,7 +214,9 @@ export type Database = {
           created_at: string | null
           current_turn_user_id: string | null
           id: string
+          idempotency_key: string | null
           is_active: boolean | null
+          is_demo: boolean
           league_id: string | null
           mode: string
           p1_current_hp: number | null
@@ -237,7 +239,9 @@ export type Database = {
           created_at?: string | null
           current_turn_user_id?: string | null
           id?: string
+          idempotency_key?: string | null
           is_active?: boolean | null
+          is_demo?: boolean
           league_id?: string | null
           mode?: string
           p1_current_hp?: number | null
@@ -260,7 +264,9 @@ export type Database = {
           created_at?: string | null
           current_turn_user_id?: string | null
           id?: string
+          idempotency_key?: string | null
           is_active?: boolean | null
+          is_demo?: boolean
           league_id?: string | null
           mode?: string
           p1_current_hp?: number | null
@@ -1097,6 +1103,7 @@ export type Database = {
           current_win_streak: number
           display_name: string | null
           id: string
+          is_demo: boolean
           longest_win_streak: number
           rating_elo: number | null
           season_losses: number | null
@@ -1112,6 +1119,7 @@ export type Database = {
           current_win_streak?: number
           display_name?: string | null
           id: string
+          is_demo?: boolean
           longest_win_streak?: number
           rating_elo?: number | null
           season_losses?: number | null
@@ -1127,6 +1135,7 @@ export type Database = {
           current_win_streak?: number
           display_name?: string | null
           id?: string
+          is_demo?: boolean
           longest_win_streak?: number
           rating_elo?: number | null
           season_losses?: number | null
@@ -2201,6 +2210,7 @@ export type Database = {
         Args: { spider_id_param: string; user_id_param: string }
         Returns: undefined
       }
+      is_demo_user: { Args: { _user_id: string }; Returns: boolean }
       is_private_league_member: {
         Args: { _league_id: string; _user_id: string }
         Returns: boolean
