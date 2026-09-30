@@ -161,7 +161,7 @@ const BattleOutcomeReveal: React.FC<BattleOutcomeRevealProps> = ({
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.4 }}
-          className="relative z-10 max-w-3xl w-full"
+         className="relative z-10 max-w-3xl w-full my-auto"
         >
           <Card className="border-4 border-red-500/60 bg-gradient-to-br from-red-500/10 via-background to-background shadow-2xl">
              <CardContent className="p-4 pt-14 sm:p-8 text-center space-y-4 sm:space-y-6">
@@ -321,7 +321,7 @@ const BattleOutcomeReveal: React.FC<BattleOutcomeRevealProps> = ({
           damping: 20,
           duration: 1,
         }}
-        className="relative z-10 max-w-3xl w-full"
+         className="relative z-10 max-w-3xl w-full my-auto"
       >
         <Card className="border-4 border-yellow-500 bg-gradient-to-br from-yellow-500/20 via-background to-background shadow-2xl">
            <CardContent className="p-4 pt-14 sm:p-8 text-center space-y-4 sm:space-y-6">

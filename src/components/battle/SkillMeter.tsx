@@ -11,7 +11,6 @@ interface SkillMeterProps {
   onLock: (bucket: ZoneBucket) => void;
 }
 
-const BAR_WIDTH = 320;
 const SWEEP_MS = 1400;
 
 export default function SkillMeter({ label, helper, zoneBoost = 0, disabled, onLock }: SkillMeterProps) {
@@ -90,7 +89,7 @@ export default function SkillMeter({ label, helper, zoneBoost = 0, disabled, onL
         )}
       </div>
 
-      <div className="relative h-10 rounded-full bg-muted/40 border border-border overflow-hidden mx-auto" style={{ maxWidth: BAR_WIDTH }}>
+      <div className="relative h-10 w-full max-w-80 rounded-full bg-muted/40 border border-border overflow-hidden mx-auto">
         <div className="absolute inset-y-0 bg-emerald-500/30" style={{ left: `${zoneStart * 100}%`, width: `${(zoneEnd - zoneStart) * 100}%` }} />
         <div className="absolute inset-y-0 bg-yellow-400/60" style={{ left: `${perfectStart * 100}%`, width: `${(perfectEnd - perfectStart) * 100}%` }} />
         <div className="absolute top-0 bottom-0 w-1 bg-foreground" style={{ left: `calc(${pos * 100}% - 2px)` }} />

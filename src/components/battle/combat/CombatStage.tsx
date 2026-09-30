@@ -240,7 +240,7 @@ export default function CombatStage({
         <Button
           variant="ghost" size="sm"
           onClick={skip}
-          className="absolute top-2 right-2 z-30 h-7 px-2 text-xs text-white/80 hover:text-white hover:bg-white/10"
+           className="absolute top-2 right-2 z-30 min-h-10 px-3 text-xs text-white/80 hover:text-white hover:bg-white/10"
         >
           <FastForward className="h-3 w-3 mr-1" /> Skip
         </Button>
@@ -261,7 +261,7 @@ export default function CombatStage({
       </div>
 
       {/* Arena */}
-      <div className="relative z-10 grid grid-cols-[1fr_auto_1fr] items-center gap-2 h-28 sm:h-40">
+       <div className="relative z-10 grid grid-cols-[1fr_auto_1fr] items-center gap-2 h-32 sm:h-40">
         <div className="flex justify-end pr-2">
           <FighterToken
             imageUrl={me.imageUrl} name={me.name} side="left"

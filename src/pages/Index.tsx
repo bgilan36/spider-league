@@ -828,7 +828,7 @@ const Index = () => {
         </div>
       </div>;
   }
-  return <div className="min-h-screen bg-background overflow-x-hidden pb-safe w-full max-w-full">
+  return <div className="min-h-screen bg-background overflow-x-hidden w-full max-w-full">
       {/* Pull to refresh indicator */}
       <PullToRefreshIndicator
         pullDistance={pullDistance}
