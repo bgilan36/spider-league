@@ -173,7 +173,7 @@ serve(async (req) => {
       // Lost a race with an identical submit: hand back the winner.
       const raced = await findBattleByKey(supabase, userId, idempotencyKey);
       if (raced) {
-        await supabase.from("battle_challenges").update({ status: "CANCELLED" }).eq("id", challengeData.id);
+        await supabase.from("battle_challenges").delete().eq("id", challengeData.id);
         return json({ success: true, battleId: raced, resumed: true });
       }
       throw battleError;

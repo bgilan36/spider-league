@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.55.0";
+import { findBattleByKey, isDemoUser, loadPlayerSpider, pickOpponent, validateOpponent } from "../_shared/matchmaking.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -50,12 +51,17 @@ serve(async (req) => {
     let leagueId: string | null = null;
     let requestedOpponentSpiderId: string | null = null;
     let requestedOpponentUserId: string | null = null;
+    let bindOpponent = false;
+    let idempotencyKey: string | null = null;
     try {
       const body = await req.json();
       requestedSpiderId = body?.spiderId || null;
       leagueId = body?.leagueId || null;
       requestedOpponentSpiderId = body?.opponentSpiderId || null;
       requestedOpponentUserId = body?.opponentUserId || null;
+      bindOpponent = body?.bindOpponent === true;
+      idempotencyKey = typeof body?.idempotencyKey === "string" && /^[A-Za-z0-9-]{8,80}$/.test(body.idempotencyKey)
+        ? body.idempotencyKey : null;
     } catch { /* no body */ }
 
     let leagueOpponentOwnerIds: string[] | null = null;
@@ -83,129 +89,32 @@ serve(async (req) => {
       }
     }
 
-    // Find user's spider (specific or best eligible, not on cooldown)
-    const cooldownCutoff = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
-    let playerQuery = supabase
-      .from("spiders")
-      .select("*")
-      .eq("owner_id", userId)
-      .eq("is_approved", true)
-      .gt("eligible_until", now)
-      .or(`last_battled_at.is.null,last_battled_at.lt.${cooldownCutoff}`);
+    const json = (obj: unknown) => new Response(JSON.stringify(obj),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const existingByKey = await findBattleByKey(supabase, userId, idempotencyKey);
+    if (existingByKey) return json({ success: true, battleId: existingByKey, resumed: true });
 
-    if (requestedSpiderId) {
-      playerQuery = playerQuery.eq("id", requestedSpiderId);
+    const playerSpider = await loadPlayerSpider(supabase, userId, requestedSpiderId);
+    if (!playerSpider) {
+      return json({ error: "No eligible spiders available. Your spider may be on cooldown or expired.", code: "PLAYER_INELIGIBLE" });
     }
 
-    const { data: playerSpiders, error: playerError } = await playerQuery
-      .order("power_score", { ascending: false })
-      .limit(1);
-
-    if (playerError) throw playerError;
-
-    if (!playerSpiders || playerSpiders.length === 0) {
-      return new Response(JSON.stringify({ error: "No eligible spiders available. Your spider may be on cooldown or expired." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-
-    const playerSpider = playerSpiders[0];
-
-    // Find closest-matched opponent from another user
-    let opponent = null;
-
-    // If a specific opponent spider was requested, try to load it directly first
+    let opponent: any = null;
     if (requestedOpponentSpiderId) {
-      let directQuery = supabase
-        .from("spiders")
-        .select("*")
-        .eq("id", requestedOpponentSpiderId)
-        .eq("is_approved", true)
-        .neq("owner_id", userId)
-        .limit(1);
-      if (leagueOpponentOwnerIds) {
-        directQuery = directQuery.in("owner_id", leagueOpponentOwnerIds);
-      }
-      const { data: direct } = await directQuery;
-      if (direct && direct.length > 0) {
-        opponent = direct[0];
-      }
+      const v = await validateOpponent(supabase, userId, requestedOpponentSpiderId, leagueOpponentOwnerIds);
+      if (v.opponent) opponent = v.opponent;
+      else if (bindOpponent) return json({ error: v.reason, code: "MATCHUP_INVALID", reason: v.reason });
     }
-
-    // If a specific opponent user was requested (but no specific spider), pick their best eligible spider
-    if (!opponent && requestedOpponentUserId && requestedOpponentUserId !== userId) {
-      let userSpiderQuery = supabase
-        .from("spiders")
-        .select("*")
-        .eq("owner_id", requestedOpponentUserId)
-        .eq("is_approved", true)
-        .gt("eligible_until", now)
-        .order("power_score", { ascending: false })
-        .limit(1);
-      if (leagueOpponentOwnerIds && !leagueOpponentOwnerIds.includes(requestedOpponentUserId)) {
-        // Reject: requested user is not in this pod
-      } else {
-        const { data: userSpiders } = await userSpiderQuery;
-        if (userSpiders && userSpiders.length > 0) {
-          opponent = userSpiders[0];
-        }
-      }
+    if (!opponent && requestedOpponentUserId && requestedOpponentUserId !== userId &&
+        (!leagueOpponentOwnerIds || leagueOpponentOwnerIds.includes(requestedOpponentUserId))) {
+      const { data } = await supabase.from("spiders").select("*")
+        .eq("owner_id", requestedOpponentUserId).eq("is_approved", true)
+        .gt("eligible_until", now).order("power_score", { ascending: false }).limit(1);
+      if (data?.[0] && !(await isDemoUser(supabase, requestedOpponentUserId))) opponent = data[0];
     }
-
-    const bands = [0.12, 0.20, 0.35, 0.55, 1.0];
-
-    for (const pct of bands) {
-      if (opponent) break;
-      const low = Math.floor(playerSpider.power_score * (1.0 - pct));
-      const high = Math.ceil(playerSpider.power_score * (1.0 + pct));
-
-      let opponentQuery = supabase
-        .from("spiders")
-        .select("*")
-        .eq("is_approved", true)
-        .neq("owner_id", userId)
-        .gt("eligible_until", now)
-        .gte("power_score", low)
-        .lte("power_score", high);
-
-      if (leagueOpponentOwnerIds) {
-        opponentQuery = opponentQuery.in("owner_id", leagueOpponentOwnerIds);
-      }
-
-      const { data: opponents } = await opponentQuery.limit(10);
-
-      if (opponents && opponents.length > 0) {
-        // Pick random from close matches
-        opponent = opponents[Math.floor(Math.random() * opponents.length)];
-        break;
-      }
-    }
-
-    if (!opponent) {
-      // Fallback: any approved spider from another user
-      let fallbackQuery = supabase
-        .from("spiders")
-        .select("*")
-        .eq("is_approved", true)
-        .neq("owner_id", userId)
-        .gt("eligible_until", now);
-
-      if (leagueOpponentOwnerIds) {
-        fallbackQuery = fallbackQuery.in("owner_id", leagueOpponentOwnerIds);
-      }
-
-      const { data: fallback } = await fallbackQuery
-        .order("power_score", { ascending: false })
-        .limit(1);
-
-      if (fallback && fallback.length > 0) {
-        opponent = fallback[0];
-      }
-    }
-
-    if (!opponent) {
-      return new Response(JSON.stringify({ error: "No opponent spiders available right now." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
+    if (!opponent) opponent = await pickOpponent(supabase, userId, playerSpider, leagueOpponentOwnerIds);
+    if (!opponent) return json({ error: "No opponent spiders available right now.", code: "NO_OPPONENT" });
+    const playerIsDemo = await isDemoUser(supabase, userId);
 
     // Create challenge (training, auto-accepted)
     const { data: challengeData, error: challengeError } = await supabase
@@ -239,11 +148,20 @@ serve(async (req) => {
         is_active: true,
         rng_seed: Math.random().toString(36).substring(7),
         league_id: leagueId,
+        idempotency_key: idempotencyKey,
+        is_demo: playerIsDemo,
       })
       .select("id")
       .single();
 
-    if (battleError) throw battleError;
+    if (battleError) {
+      const raced = await findBattleByKey(supabase, userId, idempotencyKey);
+      if (raced) {
+        await supabase.from("battle_challenges").delete().eq("id", challengeData.id);
+        return json({ success: true, battleId: raced, resumed: true });
+      }
+      throw battleError;
+    }
 
     // Update challenge with battle_id
     await supabase
