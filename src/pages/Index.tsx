@@ -179,8 +179,6 @@ const Index = () => {
     refreshPromises.push(fetchTopUsers());
     
     await Promise.all(refreshPromises);
-    toast({ title: "Refreshed", description: "Data updated successfully" });
-    
     toast({
       title: "Refreshed",
       description: "Data updated successfully",
@@ -851,21 +849,21 @@ const Index = () => {
       
       {/* Header */}
       <header className="glass-card border-b border-border/30 sticky top-0 z-40 backdrop-blur-xl">
-        <div className="container mx-auto px-3 sm:px-6 py-3 sm:py-5">
+         <div className="container mx-auto px-2 sm:px-6 py-2 sm:py-5">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+             <div className="flex items-center gap-1 sm:gap-4 min-w-0">
               <div className="flex-shrink-0">
-                <img src="/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png" alt="Spider League Logo" className="h-9 sm:h-12 w-auto object-contain drop-shadow-lg" />
+                 <img src="/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png" alt="Spider League Logo" className="h-8 sm:h-12 w-auto object-contain drop-shadow-lg" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-lg sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent truncate">
+                 <h1 className="hidden min-[380px]:block text-base sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent truncate">
                   Spider League
                 </h1>
               </div>
             </div>
-            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+             <div className="flex items-center gap-0 sm:gap-3 flex-shrink-0">
               <NotificationsDropdown />
-              <Button variant="glass" size="icon" asChild className="h-10 w-10 sm:h-11 sm:w-11" title="My Spider Collection">
+               <Button variant="glass" size="icon" asChild className="hidden sm:inline-flex" title="My Spider Collection">
                 <Link to="/collection">
                   <img src="/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png" alt="Spider" className="h-5 w-5 sm:h-6 sm:w-6 object-contain" />
                 </Link>
@@ -877,7 +875,7 @@ const Index = () => {
                     variant="glass"
                     size="icon"
                     onClick={() => setTipModalOpen(true)}
-                    className="h-10 w-10 sm:h-11 sm:w-11"
+                     className="hidden sm:inline-flex"
                     aria-label="Buy the devs a coffee"
                   >
                     <Heart className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -1001,12 +999,12 @@ const Index = () => {
           </div>
 
           {/* Filter pills */}
-          <div className="flex bg-muted rounded-lg p-1 w-fit mb-4">
+           <div className="flex bg-muted rounded-lg p-1 w-full sm:w-fit mb-4">
             {([['all', 'All'], ['battle', 'Battles'], ['skirmish', 'Skirmishes']] as const).map(([value, label]) => (
               <button
                 key={value}
                 onClick={() => { setCombatFilter(value); setVisibleRecentCount(3); }}
-                className={`px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors ${
+                 className={`flex-1 sm:flex-none px-2 py-2.5 min-h-11 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                   combatFilter === value
                     ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'

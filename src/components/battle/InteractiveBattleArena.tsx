@@ -167,7 +167,7 @@ export default function InteractiveBattleArena({ battleId }: Props) {
       <Helmet><title>Skill Battle | Spider League</title></Helmet>
 
       <div className="max-w-3xl mx-auto p-3 sm:p-4">
-        <Button variant="ghost" size="sm" asChild className="mb-2 sm:mb-3 -ml-2 h-8">
+         <Button variant="ghost" size="sm" asChild className="mb-2 sm:mb-3 -ml-2">
           <Link to={returnPath}><ArrowLeft className="h-4 w-4 mr-1" />Back</Link>
         </Button>
 

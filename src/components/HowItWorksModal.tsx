@@ -13,7 +13,7 @@ export const HowItWorksModal = () => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
+        <Button variant="ghost" size="icon" aria-label="Rules and guide">
           <HelpCircle className="h-4 w-4" />
         </Button>
       </DialogTrigger>
