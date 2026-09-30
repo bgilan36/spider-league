@@ -6,6 +6,10 @@ import {
   type AttackStance,
   type DefenseStance,
 } from "../_shared/battle-math.ts";
+import {
+  findActiveBattleForSpider, findBattleByKey, isDemoUser, loadPlayerSpider,
+  pickOpponent, publicSpider, validateOpponent,
+} from "../_shared/matchmaking.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -71,66 +75,55 @@ serve(async (req) => {
       }
     }
 
-    // Find player spider (eligible, not on cooldown).
-    const cooldownCutoff = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
-    let playerQuery = supabase.from("spiders").select("*")
-      .eq("owner_id", userId).eq("is_approved", true)
-      .gt("eligible_until", now)
-      .or(`last_battled_at.is.null,last_battled_at.lt.${cooldownCutoff}`);
-    if (requestedSpiderId) playerQuery = playerQuery.eq("id", requestedSpiderId);
-    const { data: playerSpiders, error: playerError } = await playerQuery
-      .order("power_score", { ascending: false }).limit(1);
-    if (playerError) throw playerError;
-    if (!playerSpiders || playerSpiders.length === 0) {
-      return new Response(JSON.stringify({ error: "No eligible spiders available. Your spider may be on cooldown or expired." }), {
-        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    const playerSpider = playerSpiders[0];
+    const action: "preview" | "start" = body?.action === "preview" ? "preview" : "start";
+    const bindOpponent: boolean = body?.bindOpponent === true;
+    const idempotencyKey: string | null =
+      typeof body?.idempotencyKey === "string" && /^[A-Za-z0-9-]{8,80}$/.test(body.idempotencyKey)
+        ? body.idempotencyKey : null;
+    const json = (obj: unknown, status = 200) => new Response(JSON.stringify(obj), {
+      status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
 
-    // Find opponent (same logic as quick-battle).
+    // Duplicate submit of the same confirmed preview -> return the same battle.
+    const existingByKey = await findBattleByKey(supabase, userId, idempotencyKey);
+    if (existingByKey) return json({ success: true, battleId: existingByKey, resumed: true });
+
+    const playerSpider = await loadPlayerSpider(supabase, userId, requestedSpiderId);
+    if (!playerSpider) {
+      return json({ error: "No eligible spiders available. Your spider may be on cooldown or expired.", code: "PLAYER_INELIGIBLE" });
+    }
+
     let opponent: any = null;
     if (requestedOpponentSpiderId) {
-      let q = supabase.from("spiders").select("*").eq("id", requestedOpponentSpiderId)
-        .eq("is_approved", true).neq("owner_id", userId).limit(1);
-      if (leagueOpponentOwnerIds) q = q.in("owner_id", leagueOpponentOwnerIds);
-      const { data } = await q;
-      if (data && data.length > 0) opponent = data[0];
-    }
-    if (!opponent && requestedOpponentUserId && requestedOpponentUserId !== userId) {
-      if (!leagueOpponentOwnerIds || leagueOpponentOwnerIds.includes(requestedOpponentUserId)) {
-        const { data } = await supabase.from("spiders").select("*")
-          .eq("owner_id", requestedOpponentUserId).eq("is_approved", true)
-          .gt("eligible_until", now)
-          .order("power_score", { ascending: false }).limit(1);
-        if (data && data.length > 0) opponent = data[0];
+      const v = await validateOpponent(supabase, userId, requestedOpponentSpiderId, leagueOpponentOwnerIds);
+      if (v.opponent) opponent = v.opponent;
+      else if (bindOpponent) {
+        // Never silently substitute a confirmed opponent.
+        return json({ error: v.reason, code: "MATCHUP_INVALID", reason: v.reason });
       }
     }
-    const bands = [0.12, 0.20, 0.35, 0.55, 1.0];
-    for (const pct of bands) {
-      if (opponent) break;
-      const low = Math.floor(playerSpider.power_score * (1 - pct));
-      const high = Math.ceil(playerSpider.power_score * (1 + pct));
-      let q = supabase.from("spiders").select("*")
-        .eq("is_approved", true).neq("owner_id", userId)
-        .gt("eligible_until", now)
-        .gte("power_score", low).lte("power_score", high);
-      if (leagueOpponentOwnerIds) q = q.in("owner_id", leagueOpponentOwnerIds);
-      const { data } = await q.limit(10);
-      if (data && data.length > 0) opponent = data[Math.floor(Math.random() * data.length)];
+    if (!opponent && requestedOpponentUserId && requestedOpponentUserId !== userId &&
+        (!leagueOpponentOwnerIds || leagueOpponentOwnerIds.includes(requestedOpponentUserId))) {
+      const { data } = await supabase.from("spiders").select("*")
+        .eq("owner_id", requestedOpponentUserId).eq("is_approved", true)
+        .gt("eligible_until", now).order("power_score", { ascending: false }).limit(1);
+      if (data?.[0] && !(await isDemoUser(supabase, requestedOpponentUserId))) opponent = data[0];
     }
-    if (!opponent) {
-      let q = supabase.from("spiders").select("*").eq("is_approved", true).neq("owner_id", userId)
-        .gt("eligible_until", now);
-      if (leagueOpponentOwnerIds) q = q.in("owner_id", leagueOpponentOwnerIds);
-      const { data } = await q.order("power_score", { ascending: false }).limit(1);
-      if (data && data.length > 0) opponent = data[0];
-    }
-    if (!opponent) {
-      return new Response(JSON.stringify({ error: "No opponent spiders available right now." }), {
-        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    if (!opponent) opponent = await pickOpponent(supabase, userId, playerSpider, leagueOpponentOwnerIds);
+    if (!opponent) return json({ error: "No opponent spiders available right now.", code: "NO_OPPONENT" });
+
+    if (action === "preview") {
+      return json({
+        success: true, mode: "training",
+        player: publicSpider(playerSpider), opponent: publicSpider(opponent),
       });
     }
+
+    // Resume an in-progress battle for this spider instead of creating a duplicate.
+    const activeId = await findActiveBattleForSpider(supabase, userId, playerSpider.id);
+    if (activeId) return json({ success: true, battleId: activeId, resumed: true });
+
+    const playerIsDemo = await isDemoUser(supabase, userId);
 
     // Pick faster spider to act first (minor — supports the "speed matters" feel).
     const playerActsFirst = playerSpider.speed >= opponent.speed;
@@ -173,15 +166,23 @@ serve(async (req) => {
         stances,
         awaiting_action: "attack",
         awaiting_user_id: firstActor,
+        idempotency_key: idempotencyKey,
+        is_demo: playerIsDemo,
       }).select("id").single();
-    if (battleError) throw battleError;
+    if (battleError) {
+      // Lost a race with an identical submit: hand back the winner.
+      const raced = await findBattleByKey(supabase, userId, idempotencyKey);
+      if (raced) {
+        await supabase.from("battle_challenges").delete().eq("id", challengeData.id);
+        return json({ success: true, battleId: raced, resumed: true });
+      }
+      throw battleError;
+    }
 
     await supabase.from("battle_challenges")
       .update({ battle_id: battleData.id }).eq("id", challengeData.id);
 
-    return new Response(JSON.stringify({
-      success: true, battleId: battleData.id, leagueId,
-    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return json({ success: true, battleId: battleData.id, leagueId, opponentSpiderId: opponent.id });
   } catch (error: any) {
     console.error("battle-start error:", error);
     return new Response(JSON.stringify({ error: 'An internal error occurred. Please try again.' }), {

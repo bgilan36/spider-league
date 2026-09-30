@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.protect_profile_is_demo() FROM PUBLIC, anon, authenticated;
