@@ -889,7 +889,7 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
         <link rel="canonical" href={`${window.location.origin}/upload`} />
       </Helmet>
       
-      <main className="container mx-auto px-6 py-8 overscroll-y-contain [touch-action:pan-y]">
+       <main className="container mx-auto px-3 py-4 sm:px-6 sm:py-8 overscroll-y-contain [touch-action:pan-y]">
         <div className="max-w-2xl mx-auto">
           <div className="mb-6">
             <Link 
@@ -901,7 +901,7 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
             </Link>
           </div>
           
-          <div className="text-center mb-8">
+           <div className="text-center mb-5 sm:mb-8">
             <div className="flex justify-center mb-4">
               <img 
                 src="/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png" 
@@ -909,7 +909,7 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                 className="h-16 w-auto"
               />
             </div>
-            <h1 className="text-3xl font-bold mb-2">Upload Your Spider</h1>
+             <h1 className="text-2xl sm:text-3xl font-bold mb-2">Upload Your Spider</h1>
             <p className="text-muted-foreground">Upload a photo and we'll generate battle stats for your spider</p>
           </div>
 
@@ -1229,7 +1229,7 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                       )}
                       Use my location
                     </Button>
-                    <div className="flex flex-1 gap-2">
+                     <div className="flex min-w-0 flex-1 gap-2">
                       <Input
                         placeholder="Or type a city (e.g., Austin, TX)"
                         value={locationName}
@@ -1240,14 +1240,15 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                             searchCity(locationName);
                           }
                         }}
-                        className="flex-1"
+                         className="min-w-0 flex-1"
                       />
                       <Button
                         type="button"
                         variant="secondary"
                         size="default"
                         onClick={() => searchCity(locationName)}
-                        disabled={citySearchLoading || !locationName.trim()}
+                         disabled={citySearchLoading || !locationName.trim()}
+                         aria-label="Find city"
                       >
                         {citySearchLoading ? (
                           <Loader2 className="h-4 w-4 animate-spin" />

@@ -354,13 +354,13 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-4 mb-4">
+           <div className="grid grid-cols-1 min-[380px]:grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-4 mb-4">
             {[1,2,3].map(i => (
               <div key={i} className="aspect-[3/4] bg-muted rounded-lg animate-pulse" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-4 mb-4">
+           <div className="grid grid-cols-1 min-[380px]:grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-4 mb-4">
             {activeSpiders.map(spider => {
               const daysLeft = getDaysRemaining(spider.eligible_until!);
               const cooldown = getCooldownMinutes(spider.last_battled_at);
@@ -437,7 +437,7 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
                     <div className="flex flex-col gap-1 mt-1.5 sm:mt-2">
                       <Button
                         size="sm"
-                        className={`w-full h-7 text-[10px] sm:text-xs gap-1 ${spider.id === newSpiderId ? 'animate-pulse shadow-glow ring-2 ring-primary' : ''}`}
+                         className={`w-full min-h-10 text-xs gap-1 ${spider.id === newSpiderId ? 'animate-pulse shadow-glow ring-2 ring-primary' : ''}`}
                         disabled={onCooldown || isBattling}
                         onClick={() => handleBattleNow(spider)}
                       >
@@ -450,7 +450,7 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
                       <Button
                         size="sm"
                         variant="outline"
-                        className="w-full h-7 text-[10px] sm:text-xs gap-1 border-red-400/50 text-red-400 hover:bg-red-400/10"
+                         className="w-full min-h-10 text-xs gap-1 border-destructive/50 text-destructive hover:bg-destructive/10"
                         disabled={onCooldown || isBattling}
                         onClick={() => handleOpenOpponentBrowser(spider)}
                       >
@@ -482,7 +482,7 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
                     <Button
                       variant="outline"
                       size="sm"
-                      className="gap-1 w-full text-[10px] sm:text-xs h-7"
+                       className="gap-1 w-full text-xs min-h-10"
                       onClick={(e) => { e.stopPropagation(); navigate('/upload'); }}
                     >
                       <Upload className="h-3 w-3" />
@@ -494,7 +494,7 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="gap-1 w-full text-[10px] sm:text-xs h-7 text-muted-foreground"
+                             className="gap-1 w-full text-xs min-h-10 text-muted-foreground"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <RefreshCcw className="h-3 w-3" />

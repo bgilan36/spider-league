@@ -468,11 +468,11 @@ const Leaderboard = () => {
           <TabsContent value="weekly">
             <div className="space-y-6">
               {weeks.length > 0 && (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <h3 className="text-lg font-semibold">Select Week:</h3>
+                 <div className="min-w-0">
+                   <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+                     <h3 className="shrink-0 text-sm font-semibold sm:text-lg">Select Week:</h3>
                     <Select value={selectedWeekId} onValueChange={setSelectedWeekId}>
-                      <SelectTrigger className="w-80">
+                       <SelectTrigger className="w-full min-w-0 sm:w-80">
                         <SelectValue placeholder="Choose a week" />
                       </SelectTrigger>
                       <SelectContent>

@@ -273,7 +273,7 @@ export const UserProfileMenu = () => {
     <div className="flex items-center gap-3">
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
-          <Button variant="ghost" className="flex items-center gap-2 p-2">
+           <Button variant="ghost" className="flex items-center gap-2 p-1.5 sm:p-2" aria-label="My profile">
             <Avatar className="h-8 w-8">
               <AvatarImage src={profile.avatar_url || undefined} alt={displayName} />
               <AvatarFallback className="text-xs">{initials}</AvatarFallback>
@@ -282,24 +282,24 @@ export const UserProfileMenu = () => {
           </Button>
         </DialogTrigger>
         
-        <DialogContent className="sm:max-w-2xl max-h-[90vh]">
+         <DialogContent className="sm:max-w-2xl max-h-[calc(100dvh-1rem)]">
           <DialogHeader>
             <DialogTitle>My Profile</DialogTitle>
           </DialogHeader>
           
           <Tabs defaultValue="edit" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="edit">Edit Profile</TabsTrigger>
+               <TabsTrigger value="edit"><span className="sm:hidden">Edit</span><span className="hidden sm:inline">Edit Profile</span></TabsTrigger>
               <TabsTrigger value="stats">
-                <Trophy className="h-4 w-4 mr-2" />
+                 <Trophy className="hidden sm:block h-4 w-4 mr-2" />
                 Stats
               </TabsTrigger>
               <TabsTrigger value="wall">
-                <MessageSquare className="h-4 w-4 mr-2" />
+                 <MessageSquare className="hidden sm:block h-4 w-4 mr-2" />
                 Wall ({wallPosts.length})
               </TabsTrigger>
               <TabsTrigger value="bites">
-                <Heart className="h-4 w-4 mr-2" />
+                 <Heart className="hidden sm:block h-4 w-4 mr-2" />
                 Bites ({bites.length})
               </TabsTrigger>
             </TabsList>

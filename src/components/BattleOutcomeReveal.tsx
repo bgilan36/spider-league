@@ -156,19 +156,20 @@ const BattleOutcomeReveal: React.FC<BattleOutcomeRevealProps> = ({
     const myFallen = loser;
     const victor = winner;
     return (
-      <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
+       <div className="fixed inset-0 z-50 bg-background/95 flex items-start sm:items-center justify-center overflow-y-auto overscroll-contain px-3 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-4">
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.4 }}
-          className="relative z-10 max-w-3xl w-full"
+         className="relative z-10 max-w-3xl w-full my-auto"
         >
           <Card className="border-4 border-red-500/60 bg-gradient-to-br from-red-500/10 via-background to-background shadow-2xl">
-            <CardContent className="p-8 text-center space-y-6">
+             <CardContent className="p-4 pt-14 sm:p-8 text-center space-y-4 sm:space-y-6">
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute top-4 right-4"
+                 className="absolute top-4 right-4"
+                 aria-label="Close battle result"
                 onClick={onComplete}
               >
                 <X className="h-5 w-5" />
@@ -187,7 +188,7 @@ const BattleOutcomeReveal: React.FC<BattleOutcomeRevealProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
               >
-                <h2 className="text-5xl md:text-6xl font-bold text-red-400 mb-2">
+                 <h2 className="text-3xl sm:text-5xl md:text-6xl font-bold text-red-400 mb-2">
                   DEFEATED
                 </h2>
                 <Badge variant="outline" className="text-base px-4 py-1 border-red-400/50 text-red-300">
@@ -203,15 +204,15 @@ const BattleOutcomeReveal: React.FC<BattleOutcomeRevealProps> = ({
                 className="max-w-md mx-auto"
               >
                 <Card className="ring-2 ring-red-400/60 bg-red-500/5">
-                  <CardContent className="p-6">
+                   <CardContent className="p-3 sm:p-6">
                     <div className="flex items-center gap-4">
                       <img
                         src={myFallen.image_url}
                         alt={myFallen.nickname}
-                        className="w-24 h-24 rounded-full object-cover ring-4 ring-red-400/60 grayscale"
+                         className="w-16 h-16 sm:w-24 sm:h-24 shrink-0 rounded-full object-cover ring-4 ring-red-400/60 grayscale"
                       />
-                      <div className="flex-1 text-left">
-                        <h3 className="text-2xl font-bold">{myFallen.nickname}</h3>
+                       <div className="flex-1 min-w-0 text-left">
+                         <h3 className="text-lg sm:text-2xl font-bold">{myFallen.nickname}</h3>
                         <p className="text-sm text-muted-foreground">{myFallen.species}</p>
                         <p className="text-xs text-muted-foreground mt-1">
                           Owned by <span className="font-semibold text-foreground">You</span>
@@ -287,7 +288,7 @@ const BattleOutcomeReveal: React.FC<BattleOutcomeRevealProps> = ({
 
   // ============ VICTORY VIEW ============
   return (
-    <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
+     <div className="fixed inset-0 z-50 bg-background/95 flex items-start sm:items-center justify-center overflow-y-auto overscroll-contain px-3 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-4">
       {/* Animated background particles */}
       <div className="absolute inset-0 overflow-hidden">
         {[...Array(20)].map((_, i) => (
@@ -320,15 +321,16 @@ const BattleOutcomeReveal: React.FC<BattleOutcomeRevealProps> = ({
           damping: 20,
           duration: 1,
         }}
-        className="relative z-10 max-w-3xl w-full"
+         className="relative z-10 max-w-3xl w-full my-auto"
       >
         <Card className="border-4 border-yellow-500 bg-gradient-to-br from-yellow-500/20 via-background to-background shadow-2xl">
-          <CardContent className="p-8 text-center space-y-6">
+           <CardContent className="p-4 pt-14 sm:p-8 text-center space-y-4 sm:space-y-6">
             {/* Close button */}
             <Button
               variant="ghost"
               size="icon"
-              className="absolute top-4 right-4"
+               className="absolute top-4 right-4"
+               aria-label="Close battle result"
               onClick={onComplete}
             >
               <X className="h-5 w-5" />
@@ -364,7 +366,7 @@ const BattleOutcomeReveal: React.FC<BattleOutcomeRevealProps> = ({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
             >
-              <h2 className="text-6xl font-bold gradient-text mb-2">
+               <h2 className="text-3xl sm:text-6xl font-bold gradient-text mb-2">
                 VICTORY!
               </h2>
               <Badge className="text-lg px-4 py-1 bg-yellow-500 hover:bg-yellow-600">
@@ -381,12 +383,12 @@ const BattleOutcomeReveal: React.FC<BattleOutcomeRevealProps> = ({
               className="max-w-md mx-auto"
             >
               <Card className="ring-4 ring-green-500 bg-green-500/10">
-                <CardContent className="p-6">
+                   <CardContent className="p-3 sm:p-6">
                   <div className="flex items-center gap-4">
                     <motion.img
                       src={winner.image_url}
                       alt={winner.nickname}
-                      className="w-24 h-24 rounded-full object-cover ring-4 ring-green-500"
+                       className="w-16 h-16 sm:w-24 sm:h-24 shrink-0 rounded-full object-cover ring-4 ring-green-500"
                       initial={{ rotate: -10 }}
                       animate={{ rotate: 10 }}
                       transition={{
@@ -395,8 +397,8 @@ const BattleOutcomeReveal: React.FC<BattleOutcomeRevealProps> = ({
                         duration: 0.5,
                       }}
                     />
-                    <div className="flex-1 text-left">
-                      <h3 className="text-2xl font-bold">{winner.nickname}</h3>
+                     <div className="flex-1 min-w-0 text-left">
+                       <h3 className="text-lg sm:text-2xl font-bold">{winner.nickname}</h3>
                       <p className="text-sm text-muted-foreground">{winner.species}</p>
                       <p className="text-xs text-muted-foreground mt-1">
                         Owned by <span className="font-semibold text-foreground">{winnerOwnerName}</span>

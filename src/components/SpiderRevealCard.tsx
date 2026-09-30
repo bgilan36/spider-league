@@ -215,7 +215,7 @@ const SpiderRevealCard = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className={`!top-0 !translate-y-0 max-h-[100vh] max-h-[100dvh] w-[calc(100vw-1rem)] max-w-md overflow-y-auto overscroll-contain border-0 bg-transparent p-0 py-4 shadow-none [align-content:start] [-webkit-overflow-scrolling:touch] sm:!top-[50%] sm:!translate-y-[-50%] sm:max-h-[90vh] sm:w-full sm:py-0 ${
+         className={`!top-0 !translate-y-0 max-h-[100dvh] w-[calc(100vw-1rem)] max-w-md overflow-y-auto overscroll-contain border-0 bg-transparent p-0 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-none [align-content:start] [-webkit-overflow-scrolling:touch] sm:!top-[50%] sm:!translate-y-[-50%] sm:max-h-[90vh] sm:w-full sm:py-0 ${
           isLegendary ? "sm:max-w-lg" : ""
         }`}
       >
@@ -322,7 +322,7 @@ const SpiderRevealCard = ({
                           type="button"
                           size="sm"
                           variant="outline"
-                          className="h-7 px-2 text-[11px]"
+                           className="min-h-10 px-2 text-xs"
                           onClick={() => onSelectCandidate(alt.species)}
                         >
                           Use this
@@ -336,7 +336,7 @@ const SpiderRevealCard = ({
                 <button
                   type="button"
                   onClick={() => setSpeciesPickerOpen((v) => !v)}
-                  className="text-[11px] text-primary hover:underline mt-1"
+                   className="inline-flex min-h-10 items-center text-xs text-primary hover:underline mt-1"
                 >
                   {speciesPickerOpen ? "Hide all matches" : `See all ${candidates.length} matches`}
                 </button>
@@ -504,7 +504,7 @@ const SpiderRevealCard = ({
                     </Button>
                   )}
                   {onSearchCity && (
-                    <div className="flex flex-1 gap-1.5">
+                     <div className="flex min-w-0 flex-1 gap-1.5">
                       <Input
                         placeholder="Type a city (e.g., Austin, TX)"
                         value={locationName ?? ""}
@@ -515,14 +515,15 @@ const SpiderRevealCard = ({
                             onSearchCity(locationName ?? "");
                           }
                         }}
-                        className="h-9 text-sm"
+                         className="min-w-0 text-sm"
                       />
                       <Button
                         type="button"
                         variant="secondary"
                         size="sm"
                         onClick={() => onSearchCity(locationName ?? "")}
-                        disabled={citySearchLoading || !(locationName ?? "").trim()}
+                         disabled={citySearchLoading || !(locationName ?? "").trim()}
+                         aria-label="Find city"
                       >
                         {citySearchLoading ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
