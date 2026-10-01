@@ -7,21 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
 import { useNavigate } from "react-router-dom";
 import PowerScoreArc from "@/components/PowerScoreArc";
-
-interface StarterSpider {
-  id: string;
-  nickname: string;
-  species: string;
-  image_url: string;
-  power_score: number;
-  rarity: string;
-  hit_points: number;
-  damage: number;
-  speed: number;
-  defense: number;
-  venom: number;
-  webcraft: number;
-}
+import { ensureStarterSpider, type StarterSpider } from "@/lib/starterSpider";
 
 interface OnboardingModalProps {
   open: boolean;
@@ -35,40 +21,45 @@ const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [starterSpider, setStarterSpider] = useState<StarterSpider | null>(null);
-  const [creatingSpider, setCreatingSpider] = useState(false);
+  const [starterState, setStarterState] =
+    useState<"idle" | "loading" | "ready" | "inactive" | "session_expired" | "failed">("idle");
   const [spiderCreated, setSpiderCreated] = useState(false);
+  const creatingSpider = starterState === "loading";
 
-  // Create starter spider when reaching slide 3 (reveal slide)
+  // Provision as soon as onboarding opens — independent of which slide is viewed,
+  // so skipping or jumping ahead can never leave an empty roster.
   useEffect(() => {
-    if (open && user && currentSlide === 3 && !starterSpider && !creatingSpider) {
-      createStarterSpider();
-    }
-  }, [open, user, currentSlide]);
+    if (open && user && starterState === "idle") createStarterSpider();
+  }, [open, user, starterState]);
 
   const createStarterSpider = async () => {
     if (!user) return;
-    setCreatingSpider(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('create-starter-spider');
-      if (error) throw error;
-      if (data?.spider) {
-        setStarterSpider(data.spider);
-        setSpiderCreated(!data.alreadyExists);
-      }
-    } catch (err) {
-      console.error('Failed to create starter spider:', err);
-    } finally {
-      setCreatingSpider(false);
+    setStarterState("loading");
+    const res = await ensureStarterSpider(user.id);
+    if (res.status === "ready") {
+      setStarterSpider(res.spider);
+      setSpiderCreated(res.created);
+      setStarterState(res.active ? "ready" : "inactive");
+    } else {
+      setStarterState(res.status);
     }
   };
 
   const markComplete = async () => {
+    // Skipping still waits for the starter so the roster isn't empty when the modal closes.
+    let spiderId = starterSpider?.id;
+    if (user && !spiderId) {
+      const res = await ensureStarterSpider(user.id);
+      if (res.status === "ready") { setStarterSpider(res.spider); spiderId = res.spider.id; }
+    }
     if (user) {
       await supabase
         .from("profile_settings")
         .upsert({ id: user.id, has_completed_onboarding: true }, { onConflict: "id" });
     }
     onComplete();
+    // Nudge the Starting 5 to reload now that the starter exists.
+    if (spiderId) navigate('/', { replace: true, state: { newSpiderId: spiderId } });
   };
 
   const handleStartFirstBattle = async () => {
@@ -208,15 +199,24 @@ const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
             {statBar("Webcraft", "🕸️", starterSpider.webcraft)}
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            {spiderCreated
-              ? "This spider has been added to your Starting 5!"
-              : "Your starter spider is ready in your Starting 5!"}
+            {starterState === "inactive"
+              ? "This spider is retired — re-enlist it from your collection to battle."
+              : spiderCreated
+                ? "This spider has been added to your Starting 5!"
+                : "Your starter spider is ready in your Starting 5!"}
           </p>
         </>
       ) : (
-        <p className="text-muted-foreground text-sm py-8">
-          Something went wrong. You can upload your first spider after onboarding.
-        </p>
+        <div className="flex flex-col items-center gap-3 py-6">
+          <p className="text-muted-foreground text-sm max-w-xs">
+            {starterState === "session_expired"
+              ? "Your session ended before we could hatch your starter. Sign in again to get it."
+              : "We couldn't hatch your starter spider yet."}
+          </p>
+          {starterState !== "session_expired" && (
+            <Button size="sm" variant="outline" onClick={createStarterSpider}>Try again</Button>
+          )}
+        </div>
       )}
     </div>,
 
@@ -227,7 +227,13 @@ const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
       </div>
       <h2 className="text-xl font-bold">Time for Your First Battle!</h2>
       <p className="text-muted-foreground max-w-sm">
-        Your starter spider is ready. Hit the button below to jump to your Starting 5 roster and start your first training battle.
+        {starterState === "ready"
+          ? "Your starter spider is ready."
+          : starterState === "loading"
+            ? "Your starter spider is still hatching…"
+            : starterState === "inactive"
+              ? "Your first spider is in your collection — re-enlist it to battle."
+              : "Upload a spider (or retry the starter on the previous slide) to get battling."}{" "}Hit the button below to jump to your Starting 5 roster and start your first training battle.
       </p>
       <div className="bg-muted/50 rounded-lg p-3 max-w-sm text-left text-xs text-muted-foreground space-y-1">
         <p>💡 <strong>Tip:</strong> Click <strong>"Battle Now"</strong> on your spider card to preview a matchup and fight!</p>

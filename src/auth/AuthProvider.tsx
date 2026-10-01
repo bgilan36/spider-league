@@ -13,7 +13,13 @@ interface AuthContextValue {
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signInWithGoogle: () => Promise<{ error: any }>;
   signInAsDemo: () => Promise<{ error: any }>;
+  /** True for throwaway demo accounts (kept out of rankings and public feeds). */
+  isDemo: boolean;
+  /** Sign out of the current demo account and start a brand-new one. */
+  resetDemo: () => Promise<{ error: any }>;
 }
+
+export const isDemoEmail = (email?: string | null) => !!email && /^demo\+.*@spiderleague\.com$/i.test(email);
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
@@ -188,10 +194,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
+        data: { is_demo: true, name: 'Demo Player' },
       },
     });
 
+    // Demo sessions survive refreshes and in-app navigation in this tab. Without this flag the
+    // "remember me" check signed demo users out on the next page load.
+    sessionStorage.setItem('tempSession', 'true');
+
     if (signUpError) {
+      sessionStorage.removeItem('tempSession');
       setSigningIn(false);
       return { error: signUpError };
     } else if (signUpData?.session) {
@@ -219,10 +231,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await supabase.auth.signOut();
   };
 
+  const resetDemo = async () => {
+    await signOut();
+    return signInAsDemo();
+  };
+  const isDemo = isDemoEmail(user?.email);
+
   console.log("AuthProvider: Rendering with", { hasUser: !!user, loading });
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signingIn, signOut, signIn, signUp, signInWithGoogle, signInAsDemo }}>
+    <AuthContext.Provider value={{ user, session, loading, signingIn, signOut, signIn, signUp, signInWithGoogle, signInAsDemo, isDemo, resetDemo }}>
       {signingIn && <SpiderLogoLoader />}
       {children}
     </AuthContext.Provider>
