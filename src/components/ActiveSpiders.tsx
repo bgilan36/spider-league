@@ -318,11 +318,9 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
           challenger_spider_id: opponentBrowserSpider.id,
           accepter_spider_id: opponentSpider.id,
           is_all_or_nothing: true,
-          challenge_message: `${opponentBrowserSpider.nickname} challenges ${opponentSpider.nickname} to a Battle to the Death!`,
-          status: 'OPEN',
-        });
-      if (error) throw error;
-      toast.success(`Battle to the Death challenge sent! Waiting for ${opponentSpider.nickname}'s owner to accept.`);
+          challenge_message: `${opponentBrowserSpider.nickname} challenges ${opponentSpider.nickname} to a Capture Battle!`,
+...
+      toast.success(`Capture Battle challenge sent! Waiting for ${opponentSpider.nickname}'s owner to accept.`);
       setShowOpponentBrowser(false);
       window.dispatchEvent(new CustomEvent('challenge:created', { detail: { challenger_spider_id: opponentBrowserSpider.id } }));
     } catch (error: any) {
@@ -365,10 +363,11 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
                     className="max-w-[min(20rem,calc(100vw-2rem))] text-xs leading-relaxed whitespace-normal break-words"
                   >
                     <p className="font-semibold mb-1">Your Starting 5</p>
-                    <p>These are the up to <strong>{MAX_ACTIVE} spiders</strong> you can battle with at any given time — every challenge, training match, and pod battle pulls from this roster.</p>
-                    <p className="mt-1">Each spider is eligible for <strong>30 days</strong> from when it's added. After that it retires to your collection, but you can <strong>re-enlist</strong> a retired spider any time to swap it back in for another 30-day stretch.</p>
-                    <p className="mt-1">If your Starting 5 has an open slot, <strong>upload a new spider</strong> to fill it. When all 5 are active, retire one first to make room for an upload or a re-enlist.</p>
-                    <p className="mt-1">After a spider battles, it enters a <strong>4-hour cooldown</strong> before it can battle again. The other spiders in your Starting 5 stay ready, so keeping a full roster means you'll always have someone fresh to send into the next match.</p>
+                    <p>{ROSTER_COPY.summary(MAX_ACTIVE)}</p>
+                    <p className="mt-1">{ROSTER_COPY.eligibility}</p>
+                    <p className="mt-1">{ROSTER_COPY.retirement}</p>
+                    <p className="mt-1">{ROSTER_COPY.uploads}</p>
+                    <p className="mt-1">After a spider starts a battle it rests for <strong>{RULES.battleCooldownHours} hours</strong>. Wild Skirmishes ({RULES.skirmish.dailyLimit}/day) can use any spider and have no per-spider cooldown.</p>
                   </TooltipContent>
                 </Tooltip>
               </div>
@@ -454,7 +453,7 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
                       <div className="flex items-center gap-1 mt-0.5">
                         <Clock className="h-3 w-3 text-amber-500" />
                         <span className="text-[10px] text-amber-500 font-medium">
-                          Ready in {Math.ceil(cooldown / 60)}h
+                          Ready in {cooldownLabel(spider.last_battled_at)}
                         </span>
                       </div>
                     )}
@@ -603,17 +602,17 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
         </div>
       </CardContent>
 
-      {/* Opponent Browser Dialog for Battle to Death */}
+      {/* Opponent Browser Dialog for Capture Battle */}
       <Dialog open={showOpponentBrowser} onOpenChange={setShowOpponentBrowser}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Skull className="h-5 w-5 text-destructive" />
-              Battle to the Death — Choose Opponent
+              {MODES.capture.name} — Choose Opponent
             </DialogTitle>
             <DialogDescription>
               {opponentBrowserSpider && (
-                <>Challenging with <strong>{opponentBrowserSpider.nickname}</strong> (⚡{opponentBrowserSpider.power_score}). The opponent's owner must accept before the battle begins. The loser's spider transfers to the winner.</>
+                <>Challenging with <strong>{opponentBrowserSpider.nickname}</strong> (⚡{opponentBrowserSpider.power_score}). {MODES.capture.who} <strong className="text-destructive">{MODES.capture.risk}</strong> {MODES.capture.rewards} Unanswered challenges expire within {RULES.challengeExpiryMaxDays} days.</>
               )}
             </DialogDescription>
           </DialogHeader>
@@ -668,12 +667,17 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Sword className="h-5 w-5 text-primary" />
-              Training Battle — Matchup Preview
+              {MODES.training.long} — Matchup Preview
             </DialogTitle>
             <DialogDescription>
-              Review the matchup below. No spiders are lost — this is a training fight for XP and stat boosts.
+              Review the matchup below before you start.
             </DialogDescription>
           </DialogHeader>
+          <ul className="rounded-md border border-border bg-muted/30 p-3 text-xs text-muted-foreground space-y-1">
+            <li><strong className="text-foreground">Rewards:</strong> {MODES.training.rewards}</li>
+            <li><strong className="text-foreground">Cooldown:</strong> {MODES.training.cooldown}</li>
+            <li><strong className="text-foreground">Risk:</strong> {MODES.training.risk}</li>
+          </ul>
 
           {battlePreviewLoading ? (
             <div className="flex items-center justify-center py-12">
@@ -776,7 +780,7 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
               Retire a Spider to Make Room
             </DialogTitle>
             <DialogDescription>
-              Your Starting 5 is full! Choose a spider to retire so your new spider can take its place.
+              Your Starting 5 is full ({MAX_ACTIVE} slots). Choose a spider to retire so your new spider can take its place. {ROSTER_COPY.retirement}
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="max-h-[60vh]">
