@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import SpiderDetailsModal from '@/components/SpiderDetailsModal';
 import { useStartSkillBattle } from '@/components/battle/useStartSkillBattle';
 import { ensureStarterSpider } from '@/lib/starterSpider';
+import { RULES, ELIGIBLE_MS, MODES, ROSTER_COPY, cooldownLabel, readyAtLabel } from '@/lib/gameRules';
 
 interface Spider {
   id: string;
@@ -50,13 +51,19 @@ const rarityColors: Record<string, string> = {
   LEGENDARY: 'bg-rarity-legendary',
 };
 
-const MAX_ACTIVE = 5;
-const COOLDOWN_MINUTES = 4 * 60;
+const COOLDOWN_MINUTES = RULES.battleCooldownHours * 60;
 
 const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpiderId }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { open: openStancePicker, picker: skillBattlePicker } = useStartSkillBattle();
+  const [MAX_ACTIVE, setMaxActive] = useState<number>(RULES.roster.baseSlots);
+  useEffect(() => {
+    if (!user) return;
+    supabase.rpc('get_user_roster_slot_count', { p_user_id: user.id }).then(({ data }) => {
+      if (typeof data === 'number' && data > 0) setMaxActive(data);
+    });
+  }, [user]);
   const [activeSpiders, setActiveSpiders] = useState<Spider[]>([]);
   const [retiredSpiders, setRetiredSpiders] = useState<Spider[]>([]);
   const [showRetireDialog, setShowRetireDialog] = useState(false);
@@ -138,7 +145,7 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
         .eq('id', spiderId)
         .eq('owner_id', user.id);
       if (error) throw error;
-      toast.success('Spider retired! Your new spider is now in the Starting 5.');
+      toast.success('Spider retired. It keeps its XP, level and Power, and can be re-enlisted any time a slot is open.');
       setShowRetireDialog(false);
       await fetchSpiders();
       onSpiderChange?.();
@@ -151,18 +158,18 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
   const handleReenlist = async (spiderId: string) => {
     if (!user) return;
     if (activeSpiders.length >= MAX_ACTIVE) {
-      toast.error(`You can only have ${MAX_ACTIVE} active spiders at a time.`);
+      toast.error(`Your Starting 5 is full (${activeSpiders.length}/${MAX_ACTIVE}). Retire an active spider first, then re-enlist.`);
       return;
     }
     try {
-      const newEligibleUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      const newEligibleUntil = new Date(Date.now() + ELIGIBLE_MS).toISOString();
       const { error } = await supabase
         .from('spiders')
         .update({ eligible_until: newEligibleUntil })
         .eq('id', spiderId)
         .eq('owner_id', user.id);
       if (error) throw error;
-      toast.success('Spider re-enlisted for 30 days!');
+      toast.success(`Spider re-enlisted for ${RULES.roster.eligibleDays} days!`);
       setIsReenlistDialogOpen(false);
       await fetchSpiders();
       onSpiderChange?.();
@@ -188,8 +195,11 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
     if (!user) return;
     const cooldown = getCooldownMinutes(spider.last_battled_at);
     if (cooldown > 0) {
-      const hrs = Math.ceil(cooldown / 60);
-      toast.error(`This spider is on cooldown. Ready in ${hrs}h.`);
+      const fresh = activeSpiders.find(s => s.id !== spider.id && getCooldownMinutes(s.last_battled_at) === 0);
+      toast.error(
+        `${spider.nickname} is resting after its last battle (${RULES.battleCooldownHours}h cooldown). Ready at ${readyAtLabel(spider.last_battled_at)} (in ${cooldownLabel(spider.last_battled_at)}).`,
+        { description: fresh ? `${fresh.nickname} is ready now — or run a Wild Skirmish, which has no cooldown.` : 'Wild Skirmishes have no per-spider cooldown.' },
+      );
       return;
     }
     setBattlePreviewSpider(spider);
