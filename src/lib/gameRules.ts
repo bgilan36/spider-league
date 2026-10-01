@@ -67,7 +67,7 @@ export const MODES = {
     who: "Challenge a specific player (or post an open challenge). They accept with one of their Starting 5, then you take turns.",
     rewards: `Same as Training: winner +${RULES.battle.spiderXpWin} XP and stat boosts, loser +${RULES.battle.spiderXpLoss} XP.`,
     eligibility: "Both spiders must be in their owner's Starting 5.",
-    cooldown: `Both spiders rest ${RULES.battleCooldownHours} hours afterward.`,
+    cooldown: `The challenging spider rests ${RULES.battleCooldownHours} hours afterward.`,
     risk: "No ownership risk — both players keep their spiders.",
   },
   capture: {
