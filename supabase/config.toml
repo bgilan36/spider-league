@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.og-card]
 verify_jwt = false
+
+[functions.challenge]
+verify_jwt = false

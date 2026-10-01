@@ -122,7 +122,10 @@ serve(async (req) => {
         targetUserId = target.owner_id;
       }
       if (targetUserId === me) return json({ error: "You can't challenge yourself." }, 400);
-      if (targetUserId && await isDemoUser(sb, targetUserId)) return json({ error: "That player is on a demo account.", code: "OPPONENT_INELIGIBLE" }, 400);
+      // Demo accounts only ever play other demo accounts.
+      if (targetUserId && (await isDemoUser(sb, targetUserId)) !== (await isDemoUser(sb, me))) {
+        return json({ error: "Demo accounts and real players can't challenge each other.", code: "OPPONENT_INELIGIBLE" }, 400);
+      }
 
       if (mode === "capture") {
         if (await isDemoUser(sb, me)) return json({ error: "Demo accounts can't play Capture Battles.", code: "DEMO_BLOCKED" }, 403);
@@ -191,6 +194,9 @@ serve(async (req) => {
       if (ch.challenger_id === me || !isTarget) return json({ error: "This challenge was sent to another player." }, 403);
 
       const capture = ch.is_all_or_nothing === true;
+      if ((await isDemoUser(sb, me)) !== (await isDemoUser(sb, ch.challenger_id))) {
+        return json({ error: "Demo accounts and real players can't challenge each other.", code: "OPPONENT_INELIGIBLE" }, 403);
+      }
       const mySpiderId = capture && ch.accepter_spider_id ? ch.accepter_spider_id : uuid(body.spiderId);
       if (capture && ch.accepter_spider_id && mySpiderId !== ch.accepter_spider_id) return json({ error: "This challenge names a specific spider of yours." }, 400);
       const mine = await loadSpider(mySpiderId);
