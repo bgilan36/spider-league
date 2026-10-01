@@ -7,3 +7,4 @@
 
 - Gameplay numbers and mode names (Training, Friendly Challenge, Capture Battle, Wild Skirmish) live in `src/lib/gameRules.ts`, mirroring server enforcement; UI copy must read from it so help, onboarding and previews never contradict the server.
 - First battles use battle-start `practice:true` (AI-controlled opponent, challenge_message "Practice Battle"); Rookie Season milestone XP is paid only via `claim_rookie_milestone`, so rewards are server-checked and paid once.
+- Player "what's next" state (active battles, incoming challenges, spider Ready/Cooldown/Retired/In battle) comes from `src/hooks/usePlayerActions.ts`; Home Next up, the Battles hub and spider cards share it so they never disagree.
