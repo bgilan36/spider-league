@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/auth/AuthProvider';
 import { toast } from 'sonner';
@@ -32,23 +32,45 @@ export const useTurnBasedBattle = (battleId: string | null) => {
   const [turns, setTurns] = useState<BattleTurn[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  // 'session_expired' and 'not_found' are terminal: polling stops and the page shows a recovery card.
+  const [loadError, setLoadError] = useState<null | 'session_expired' | 'not_found' | 'network'>(null);
+  const failCountRef = useRef(0);
 
   // Fetch battle state
   const fetchBattle = useCallback(async () => {
     if (!battleId) return;
 
     try {
+      const { data: sess } = await supabase.auth.getSession();
+      if (!sess.session) {
+        setLoadError('session_expired');
+        toast.error('Your session expired. Sign in again to continue this battle.', { id: `battle-load-${battleId}` });
+        return;
+      }
       const { data, error } = await supabase
         .from('battles')
         .select('*')
         .eq('id', battleId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      if (!data) {
+        setLoadError('not_found');
+        toast.error('This battle could not be found.', { id: `battle-load-${battleId}` });
+        return;
+      }
+      failCountRef.current = 0;
+      setLoadError(null);
+      toast.dismiss(`battle-load-${battleId}`);
       setBattle(data as BattleState);
     } catch (error) {
       console.error('Error fetching battle:', error);
-      toast.error('Failed to load battle');
+      failCountRef.current += 1;
+      // Transient blips are retried silently by the poller; one deduped toast after repeated failures.
+      if (failCountRef.current >= 3) {
+        setLoadError('network');
+        toast.error('Connection trouble loading this battle — retrying…', { id: `battle-load-${battleId}` });
+      }
     } finally {
       setLoading(false);
     }
@@ -176,6 +198,7 @@ export const useTurnBasedBattle = (battleId: string | null) => {
   useEffect(() => {
     if (!battleId) return;
     if (battle?.is_active === false) return;
+    if (loadError === 'session_expired' || loadError === 'not_found') return;
 
     const interval = setInterval(() => {
       fetchTurns();
@@ -183,12 +206,13 @@ export const useTurnBasedBattle = (battleId: string | null) => {
     }, 1200);
 
     return () => clearInterval(interval);
-  }, [battleId, battle?.is_active, fetchTurns, fetchBattle]);
+  }, [battleId, battle?.is_active, loadError, fetchTurns, fetchBattle]);
 
   return {
     battle,
     turns,
     loading,
+    loadError,
     submitting,
     isMyTurn,
     myHp,
@@ -197,6 +221,8 @@ export const useTurnBasedBattle = (battleId: string | null) => {
     opponentSpider,
     submitTurn,
     refetch: () => {
+      failCountRef.current = 0;
+      setLoadError(null);
       fetchBattle();
       fetchTurns();
     },
