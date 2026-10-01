@@ -9,17 +9,19 @@ import { useNavigate } from "react-router-dom";
 import PowerScoreArc from "@/components/PowerScoreArc";
 import { ensureStarterSpider, type StarterSpider } from "@/lib/starterSpider";
 import { RULES, MODES, ROSTER_COPY } from "@/lib/gameRules";
+import { usePracticeBattle } from "@/components/battle/usePracticeBattle";
 
 interface OnboardingModalProps {
   open: boolean;
   onComplete: () => void;
 }
 
-const TOTAL_SLIDES = 5;
+const TOTAL_SLIDES = 3; // 0 = starter + first battle, 1-2 = optional rules
 
 const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { start: startPractice, picker: practicePicker } = usePracticeBattle();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [starterSpider, setStarterSpider] = useState<StarterSpider | null>(null);
   const [starterState, setStarterState] =
@@ -64,9 +66,12 @@ const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
   };
 
   const handleStartFirstBattle = async () => {
-    await markComplete();
-    // Navigate to home with the starter spider ID so the Battle Now button glows
-    navigate('/', { replace: true, state: { newSpiderId: starterSpider?.id } });
+    if (!user || !starterSpider) return;
+    await supabase
+      .from("profile_settings")
+      .upsert({ id: user.id, has_completed_onboarding: true }, { onConflict: "id" });
+    onComplete();
+    startPractice(starterSpider.id);
   };
 
   const next = () => {
@@ -88,90 +93,6 @@ const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
   );
 
   const slides = [
-    // Slide 0: Welcome
-    <div key="welcome" className="flex flex-col items-center text-center gap-4 py-4">
-      <img
-        src="/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png"
-        alt="Spider League Logo"
-        className="h-24 w-auto drop-shadow-lg"
-      />
-      <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-        Welcome to Spider League!
-      </h2>
-      <p className="text-muted-foreground max-w-sm">
-        Collect real spiders, build your roster, and battle for glory. Let's show you the ropes.
-      </p>
-    </div>,
-
-    // Slide 1: Your Starting 5
-    <div key="starting5" className="flex flex-col items-center text-center gap-4 py-4">
-      <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-        <Target className="h-8 w-8 text-primary" />
-      </div>
-      <h2 className="text-xl font-bold">Your Starting 5</h2>
-      <div className="text-left max-w-sm space-y-3">
-        <div className="flex gap-2">
-          <Camera className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-          <div>
-            <span className="font-semibold">Upload real spiders</span>
-            <span className="text-muted-foreground text-sm"> — Find spiders in the wild, snap a photo, and we'll create a unique fighter.</span>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Shield className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-          <div>
-            <span className="font-semibold">{RULES.roster.baseSlots} active at a time</span>
-            <span className="text-muted-foreground text-sm"> — {ROSTER_COPY.eligibility}</span>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Clock className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-          <div>
-            <span className="text-muted-foreground text-sm">Retiring never costs you the spider: it keeps its XP, level and Power, and can be re-enlisted for another {RULES.roster.eligibleDays} days.</span>
-          </div>
-        </div>
-      </div>
-    </div>,
-
-    // Slide 2: Two ways to fight
-    <div key="combat" className="flex flex-col items-center text-center gap-4 py-4">
-      <div className="flex gap-3">
-        <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
-          <Sword className="h-7 w-7 text-primary" />
-        </div>
-        <div className="h-14 w-14 rounded-2xl bg-destructive/10 flex items-center justify-center">
-          <Skull className="h-7 w-7 text-red-400" />
-        </div>
-      </div>
-      <h2 className="text-xl font-bold">Ways to Fight</h2>
-      <div className="text-left max-w-sm space-y-3">
-        <div className="flex gap-2">
-          <Sword className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-          <div>
-            <span className="font-semibold text-primary">{MODES.training.name}</span>
-            <span className="text-muted-foreground text-sm"> — {MODES.training.risk} Earn XP and stat boosts. {MODES.training.cooldown}</span>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Sword className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-          <div>
-            <span className="font-semibold">{MODES.friendly.name}</span>
-            <span className="text-muted-foreground text-sm"> — Post a challenge for another player to accept. {MODES.friendly.risk}</span>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Skull className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
-          <div>
-            <span className="font-semibold text-red-400">{MODES.capture.name}</span>
-            <span className="text-muted-foreground text-sm"> — Winner takes the loser's spider forever. Both players must agree before it starts.</span>
-          </div>
-        </div>
-      </div>
-      <p className="text-xs text-muted-foreground/70 max-w-sm mt-1">
-        Battles use your Starting 5. Wild Skirmishes ({RULES.skirmish.dailyLimit}/day) can use any spider.
-      </p>
-    </div>,
-
     // Slide 3: Starter Spider Reveal
     <div key="starter" className="flex flex-col items-center text-center gap-3 py-2">
       <Sparkles className="h-6 w-6 text-primary animate-pulse" />
@@ -228,34 +149,10 @@ const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
       )}
     </div>,
 
-    // Slide 4: Go battle!
-    <div key="battle" className="flex flex-col items-center text-center gap-4 py-4">
-      <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-        <Zap className="h-8 w-8 text-primary" />
-      </div>
-      <h2 className="text-xl font-bold">Time for Your First Battle!</h2>
-      <p className="text-muted-foreground max-w-sm">
-        {starterState === "ready"
-          ? "Your starter spider is ready."
-          : starterState === "loading"
-            ? "Your starter spider is still hatching…"
-            : starterState === "inactive"
-              ? "Your first spider is in your collection — re-enlist it to battle."
-              : "Upload a spider (or retry the starter on the previous slide) to get battling."}{" "}Hit the button below to jump to your Starting 5 roster and start your first Training Battle.
-      </p>
-      <div className="bg-muted/50 rounded-lg p-3 max-w-sm text-left text-xs text-muted-foreground space-y-1">
-        <p>💡 <strong>Tip:</strong> Click <strong>"Battle Now"</strong> on your spider card to preview a matchup and fight!</p>
-        <p>💡 Win battles to earn XP and power up your spider's stats.</p>
-        <p>💡 Upload more spiders from the wild to fill your {RULES.roster.baseSlots} roster slots — there's no upload limit.</p>
-      </div>
-      <Button onClick={handleStartFirstBattle} className="mt-2 w-full max-w-[260px]" size="lg">
-        <Sword className="h-4 w-4 mr-2" />
-        Go to My Starting 5
-      </Button>
-    </div>,
   ];
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(o) => { if (!o) markComplete(); }}>
       <DialogContent className="max-w-md p-6 gap-0 [&>button]:hidden">
         <div className="min-h-[380px] flex items-center justify-center">
@@ -263,42 +160,33 @@ const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
         </div>
 
         {/* Navigation */}
-        <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={prev}
-            disabled={currentSlide === 0}
-            className="gap-1"
-          >
-            <ChevronLeft className="h-4 w-4" /> Back
-          </Button>
-
-          {/* Dots */}
-          <div className="flex gap-1.5">
-            {Array.from({ length: TOTAL_SLIDES }).map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentSlide(i)}
-                className={`h-2 rounded-full transition-all ${
-                  i === currentSlide ? "w-6 bg-primary" : "w-2 bg-muted-foreground/30"
-                }`}
-              />
-            ))}
-          </div>
-
-          {currentSlide < TOTAL_SLIDES - 1 ? (
+        {currentSlide === 0 ? (
+          <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
             <Button variant="ghost" size="sm" onClick={next} className="gap-1">
-              Next <ChevronRight className="h-4 w-4" />
+              How it works <ChevronRight className="h-4 w-4" />
             </Button>
-          ) : (
-            <Button variant="ghost" size="sm" onClick={markComplete} className="gap-1 text-primary">
-              Skip
+            <Button variant="ghost" size="sm" onClick={markComplete}>Skip for now</Button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
+            <Button variant="ghost" size="sm" onClick={prev} className="gap-1">
+              <ChevronLeft className="h-4 w-4" /> Back
             </Button>
-          )}
-        </div>
+            {currentSlide < TOTAL_SLIDES - 1 ? (
+              <Button variant="ghost" size="sm" onClick={next} className="gap-1">
+                Next <ChevronRight className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button variant="ghost" size="sm" onClick={() => setCurrentSlide(0)} className="gap-1 text-primary">
+                Back to my spider
+              </Button>
+            )}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
+    {practicePicker}
+    </>
   );
 };
 
