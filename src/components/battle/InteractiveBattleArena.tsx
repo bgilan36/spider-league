@@ -125,16 +125,32 @@ export default function InteractiveBattleArena({ battleId }: Props) {
     }
   }, [finished, iWon, celebrated, fireConfetti]);
 
-  // If it's the AI's move, ask the server to play it.
+  // Player-vs-player battles: the opponent moves on their own time. The server only lets the
+  // computer step in after their move deadline passes.
+  const isPvp = (battle as any)?.is_pvp === true;
+  const turnDeadline = (battle as any)?.turn_deadline as string | null;
+  const autoplayUser = (battle as any)?.autoplay_user_id as string | null;
+  const [clock, setClock] = useState(Date.now());
+  useEffect(() => {
+    if (!isPvp) return;
+    const t = setInterval(() => setClock(Date.now()), 30000);
+    return () => clearInterval(t);
+  }, [isPvp]);
+  const deadlinePassed = !!turnDeadline && new Date(turnDeadline).getTime() <= clock;
+  const pvpWaiting = isPvp && !!battle?.is_active && !!awaitingUser && awaitingUser !== user?.id
+    && autoplayUser !== awaitingUser && !deadlinePassed;
+
+  // If it's the AI's move (training, or a timed-out PvP player), ask the server to play it.
   useEffect(() => {
     if (!battle?.is_active || !awaitingUser || !user) return;
     if (awaitingUser === user.id) return;
-    const key = `${battleId}:${battle.turn_count}:${awaitingAction}:${awaitingUser}`;
+    if (pvpWaiting) return;
+    const key = `${battleId}:${battle.turn_count}:${awaitingAction}:${awaitingUser}:${deadlinePassed}`;
     if (aiTriggered === key) return;
     setAiTriggered(key);
     supabase.functions.invoke("battle-opponent-turn", { body: { battleId } })
       .catch((e) => console.error("opponent turn error", e));
-  }, [battle?.is_active, battle?.turn_count, awaitingUser, awaitingAction, user, battleId, aiTriggered]);
+  }, [battle?.is_active, battle?.turn_count, awaitingUser, awaitingAction, user, battleId, aiTriggered, pvpWaiting, deadlinePassed]);
 
   // When the battle finishes inside a pod, bust the standings cache so the
   // pod page shows fresh numbers as soon as the user navigates back.
