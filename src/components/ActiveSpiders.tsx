@@ -71,6 +71,7 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
   const [battlePreviewOpponent, setBattlePreviewOpponent] = useState<Spider | null>(null);
   const [battlePreviewLoading, setBattlePreviewLoading] = useState(false);
   const [battleStarting, setBattleStarting] = useState(false);
+  const [battlePreviewInvalid, setBattlePreviewInvalid] = useState<string | null>(null);
 
   // Opponent browser state
   const [showOpponentBrowser, setShowOpponentBrowser] = useState(false);
@@ -178,45 +179,37 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
       toast.error(`This spider is on cooldown. Ready in ${hrs}h.`);
       return;
     }
-    // Fetch a preview opponent first
     setBattlePreviewSpider(spider);
+    setBattlePreviewInvalid(null);
+    setShowBattlePreview(true);
+    await loadServerPreview(spider);
+  };
+
+  // The server picks and validates the opponent; the arena will use exactly this one.
+  const loadServerPreview = async (spider: Spider) => {
     setBattlePreviewLoading(true);
     setBattlePreviewOpponent(null);
-    setShowBattlePreview(true);
     try {
-      const bands = [0.12, 0.20, 0.35, 0.55, 1.0];
-      let found: Spider | null = null;
-      for (const pct of bands) {
-        const low = Math.floor(spider.power_score * (1.0 - pct));
-        const high = Math.ceil(spider.power_score * (1.0 + pct));
-        const { data } = await supabase
-          .from('spiders')
-          .select('id, nickname, species, image_url, power_score, rarity, xp, level, level_power_bonus, hit_points, damage, speed, defense, venom, webcraft, owner_id')
-          .eq('is_approved', true)
-          .neq('owner_id', user.id)
-          .gte('power_score', low)
-          .lte('power_score', high)
-          .limit(10);
-        if (data && data.length > 0) {
-          found = data[Math.floor(Math.random() * data.length)] as Spider;
-          break;
+      const { data, error } = await supabase.functions.invoke('battle-start', {
+        body: { action: 'preview', spiderId: spider.id },
+      });
+      if (error) {
+        if ((error as any)?.context?.status === 401) {
+          toast.error('Your session expired. Sign in again to battle.', { id: 'battle-preview' });
+          setShowBattlePreview(false);
+          return;
         }
+        throw error;
       }
-      if (!found) {
-        // Fallback: any spider
-        const { data } = await supabase
-          .from('spiders')
-          .select('id, nickname, species, image_url, power_score, rarity, xp, level, level_power_bonus, hit_points, damage, speed, defense, venom, webcraft, owner_id')
-          .eq('is_approved', true)
-          .neq('owner_id', user.id)
-          .order('power_score', { ascending: false })
-          .limit(1);
-        if (data && data.length > 0) found = data[0] as Spider;
+      if (data?.error) {
+        setBattlePreviewInvalid(data.error);
+        return;
       }
-      setBattlePreviewOpponent(found);
+      if (data?.player) setBattlePreviewSpider({ ...spider, ...data.player });
+      setBattlePreviewOpponent(data?.opponent ?? null);
     } catch (error) {
       console.error('Error fetching opponent preview:', error);
-      toast.error('Failed to find an opponent');
+      toast.error('Failed to find an opponent', { id: 'battle-preview' });
       setShowBattlePreview(false);
     } finally {
       setBattlePreviewLoading(false);
@@ -224,9 +217,19 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
   };
 
   const handleConfirmBattle = async () => {
-    if (!user || !battlePreviewSpider) return;
+    if (!user || !battlePreviewSpider || !battlePreviewOpponent) return;
+    const spider = battlePreviewSpider;
     setShowBattlePreview(false);
-    openStancePicker({ spiderId: battlePreviewSpider.id });
+    openStancePicker({
+      spiderId: spider.id,
+      opponentSpiderId: battlePreviewOpponent.id,
+      bindOpponent: true,
+      onMatchupInvalid: (reason) => {
+        setBattlePreviewInvalid(reason);
+        setBattlePreviewOpponent(null);
+        setShowBattlePreview(true);
+      },
+    });
   };
 
   const handleOpenOpponentBrowser = async (spider: Spider) => {
@@ -707,7 +710,18 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
               </div>
             </div>
           ) : (
-            <p className="text-center text-muted-foreground py-8">No opponents found. Try again later.</p>
+            <div className="text-center py-6 space-y-3">
+              <p className="text-sm text-muted-foreground">
+                {battlePreviewInvalid
+                  ? <>This matchup is no longer valid: <strong className="text-foreground">{battlePreviewInvalid}</strong></>
+                  : 'No opponents found. Try again later.'}
+              </p>
+              {battlePreviewSpider && (
+                <Button variant="outline" className="gap-1" onClick={() => { setBattlePreviewInvalid(null); loadServerPreview(battlePreviewSpider); }}>
+                  <RefreshCcw className="h-4 w-4" /> Get a fresh preview
+                </Button>
+              )}
+            </div>
           )}
         </DialogContent>
       </Dialog>
