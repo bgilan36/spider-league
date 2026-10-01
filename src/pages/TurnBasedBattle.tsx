@@ -58,22 +58,47 @@ const buildDisplayedTurns = (turns: any[], mySpider: any, opponentSpider: any, u
   });
 };
 
+const BattleRecoveryCard = ({ title, body }: { title: string; body: string }) => (
+  <div className="min-h-[70vh] flex items-center justify-center p-4">
+    <Card className="max-w-md w-full">
+      <CardContent className="p-6 text-center space-y-3">
+        <h2 className="text-xl font-bold">{title}</h2>
+        <p className="text-sm text-muted-foreground">{body}</p>
+        <div className="flex flex-col sm:flex-row gap-2 justify-center pt-2">
+          <Button onClick={() => window.location.reload()}>Try again</Button>
+          <Button asChild variant="outline"><Link to="/">Go home</Link></Button>
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+);
+
 const TurnBasedBattle = () => {
   const { battleId } = useParams<{ battleId: string }>();
-  const [mode, setMode] = useState<'interactive' | 'auto' | null>(null);
+  const { user, loading: authLoading } = useAuth();
+  const [mode, setMode] = useState<'interactive' | 'auto' | 'missing' | null>(null);
 
   // Cheap one-shot fetch of just the mode column so we can dispatch.
+  // Wait for auth so an expired session isn't misread as a legacy battle.
   useEffect(() => {
-    if (!battleId) { setMode('auto'); return; }
+    if (authLoading || !user) return;
+    if (!battleId) { setMode('missing'); return; }
     let cancelled = false;
-    supabase.from('battles').select('mode').eq('id', battleId).single()
-      .then(({ data }) => {
+    supabase.from('battles').select('mode').eq('id', battleId).maybeSingle()
+      .then(({ data, error }) => {
         if (cancelled) return;
-        setMode(((data as any)?.mode as 'interactive' | 'auto') || 'auto');
+        if (error || !data) { setMode('missing'); return; }
+        setMode(((data as any).mode as 'interactive' | 'auto') || 'auto');
       });
     return () => { cancelled = true; };
-  }, [battleId]);
+  }, [battleId, user, authLoading]);
 
+  if (!authLoading && !user) {
+    return <BattleRecoveryCard title="Your session ended" body="Sign in again (or restart the demo) from the home screen, then reopen this battle from Battle History. Nothing in the battle was lost." />;
+  }
+  if (mode === 'missing') {
+    return <BattleRecoveryCard title="Battle not found" body="This battle doesn't exist or isn't visible to your account." />;
+  }
   if (mode === null) {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
