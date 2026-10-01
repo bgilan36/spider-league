@@ -468,7 +468,8 @@ const BattleHistory = () => {
                 <CardContent className="text-center py-12">
                   <Bug className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
                   <h3 className="text-lg font-semibold mb-2">No spider records yet</h3>
-                  <p className="text-muted-foreground">Your spiders' battle records will appear here once they start fighting</p>
+                  <p className="text-muted-foreground mb-4">Your spiders' battle records will appear here once they start fighting</p>
+                  <Button asChild><a href="#find">Find a battle</a></Button>
                 </CardContent>
               </Card>
             ) : (
