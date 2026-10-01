@@ -505,7 +505,7 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
     if (usage && usage.used >= usage.limit) {
       setSuggestion({
         available: false,
-        reason: `Daily skirmish limit reached (${usage.limit} per day). Try again tomorrow.`,
+        reason: `Daily skirmish limit reached (${usage.limit} per day, resets at midnight Pacific). Your Starting 5 can still play Training Battles.`,
         daily_limit: usage.limit,
         skirmishes_used_today: usage.used,
         skirmishes_remaining_today: 0,
@@ -586,7 +586,7 @@ export const SpiderSkirmishCard = ({ embedded = false }: { embedded?: boolean })
     try {
       const usage = await fetchDailySkirmishUsage();
       if (usage && usage.used >= usage.limit) {
-        const dailyLimitMessage = `Daily skirmish limit reached (${usage.limit} per day). Try again tomorrow.`;
+        const dailyLimitMessage = `Daily skirmish limit reached (${usage.limit} per day, resets at midnight Pacific). Your Starting 5 can still play Training Battles.`;
         setSuggestion({
           available: false,
           reason: dailyLimitMessage,
