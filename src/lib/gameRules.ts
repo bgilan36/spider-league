@@ -12,6 +12,7 @@
  * - Skirmish limit:   start_spider_skirmish() (3 per Pacific-time day)
  * - Battle rewards:   resolve_battle_challenge() + award_spider_xp()
  * - Rankings:         get_user_rankings_all_time / weekly (Power + spider XP)
+ * - Challenges:       supabase/functions/challenge (48h to respond, 12h per move)
  */
 
 export const RULES = {
@@ -34,7 +35,17 @@ export const RULES = {
   },
   levelPowerBonus: 5,
   challengeExpiryMaxDays: 7,
+  challenge: {
+    responseHours: 48, // a challenge expires if nobody accepts in time
+    moveHours: 12,     // per move in a Friendly Challenge / Capture Battle
+  },
 } as const;
+
+export const CHALLENGE_TIMING = {
+  response: `The other player has ${RULES.challenge.responseHours} hours to accept or decline. After that it expires — nothing happens to either spider.`,
+  moves: `Battles are turn by turn, not live. Each player gets ${RULES.challenge.moveHours} hours per move and gets notified when it's their turn.`,
+  timeout: `Miss a move deadline and the computer plays the rest of your battle for you, so it always finishes. Results count normally.`,
+};
 
 export const BATTLE_COOLDOWN_MS = RULES.battleCooldownHours * 60 * 60 * 1000;
 export const ELIGIBLE_MS = RULES.roster.eligibleDays * 24 * 60 * 60 * 1000;
@@ -53,16 +64,16 @@ export const MODES = {
   friendly: {
     name: "Friendly Challenge",
     long: "Friendly Challenge",
-    who: "You post a challenge; another player accepts with one of their Starting 5.",
+    who: "Challenge a specific player (or post an open challenge). They accept with one of their Starting 5, then you take turns.",
     rewards: `Same as Training: winner +${RULES.battle.spiderXpWin} XP and stat boosts, loser +${RULES.battle.spiderXpLoss} XP.`,
     eligibility: "Both spiders must be in their owner's Starting 5.",
-    cooldown: `The challenging spider rests ${RULES.battleCooldownHours} hours afterward.`,
-    risk: "No ownership risk.",
+    cooldown: `Both spiders rest ${RULES.battleCooldownHours} hours afterward.`,
+    risk: "No ownership risk — both players keep their spiders.",
   },
   capture: {
     name: "Capture Battle",
     long: "Capture Battle",
-    who: "Opt-in. Both players must agree to the stakes before it starts.",
+    who: "Opt-in only. Both players must confirm the exact two spiders at stake before it starts.",
     rewards: `Winning spider: +${RULES.battle.captureSpiderXpWin} XP and stat boosts, plus the winner takes the losing spider. Losing spider: +${RULES.battle.spiderXpLoss} XP.`,
     eligibility: "Both spiders must be in their owner's Starting 5. Demo accounts can't play.",
     cooldown: `The challenging spider rests ${RULES.battleCooldownHours} hours afterward.`,
