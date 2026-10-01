@@ -303,7 +303,7 @@ const LegacyTurnBasedBattle = () => {
       .then(({ data, error }) => {
         if (error) {
           console.error('Failed to start auto-battle:', error);
-          toast.error('Failed to start battle, retrying...');
+          toast.error('Failed to start battle, retrying...', { id: 'battle-autostart' });
           setStarted(false);
         }
       });
