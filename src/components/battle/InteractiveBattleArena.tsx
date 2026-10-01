@@ -306,60 +306,8 @@ export default function InteractiveBattleArena({ battleId }: Props) {
           </Card>
         )}
 
-        {/* Last turn recap */}
-        {lastTurn && (
-          <Card className="mb-4">
-            <CardContent className="p-3 text-sm">
-              <div className="font-semibold mb-1">
-                Turn {lastTurn.turn_index} — {lastResult.attacker_name} → {lastResult.defender_name}
-              </div>
-              {(() => {
-                // Spider headers above are laid out as [mine | opponent].
-                // Align each dice column to its matching spider so HP and
-                // dice for the same spider live in the same vertical stack.
-                const myIsAttacker = lastResult.attacker_name === mySpider.nickname;
-                const mineDice = myIsAttacker
-                  ? { value: lastResult.attacker_dice, label: `${mySpider.nickname} attack`, variant: "attack" as const, bucket: lastResult.attacker_bucket }
-                  : { value: lastResult.defender_dice, label: `${mySpider.nickname} defense`, variant: "defense" as const, bucket: lastResult.defender_bucket };
-                const oppDice = myIsAttacker
-                  ? { value: lastResult.defender_dice, label: `${opponentSpider.nickname} defense`, variant: "defense" as const, bucket: lastResult.defender_bucket }
-                  : { value: lastResult.attacker_dice, label: `${opponentSpider.nickname} attack`, variant: "attack" as const, bucket: lastResult.attacker_bucket };
-                return (
-                  <div className="grid grid-cols-2 gap-3 my-3 items-start">
-                    <div className="flex flex-col items-center">
-                      <DiceDisplay value={mineDice.value} label={mineDice.label} variant={mineDice.variant} />
-                      <span className="text-[10px] text-muted-foreground mt-1">
-                        {BUCKET_LABEL[mineDice.bucket as ZoneBucket]}
-                      </span>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <DiceDisplay value={oppDice.value} label={oppDice.label} variant={oppDice.variant} />
-                      <span className="text-[10px] text-muted-foreground mt-1">
-                        {BUCKET_LABEL[oppDice.bucket as ZoneBucket]}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })()}
-              <div className="mt-1 text-center">
-                {lastResult.dodged
-                  ? <span className="text-emerald-400 font-semibold">Dodged!</span>
-                  : <span>
-                      Damage: <span className="font-bold text-red-400">{lastResult.damage}</span>
-                      {lastResult.is_critical && <span className="ml-2 text-yellow-400 font-bold">CRIT</span>}
-                    </span>}
-              </div>
-              {Array.isArray(lastResult.breakdown) && (
-                <ul className="mt-2 text-[11px] text-muted-foreground list-disc pl-4">
-                  {lastResult.breakdown.map((b: string, i: number) => <li key={i}>{b}</li>)}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
         {finished && (
-          <Card className="mt-4">
+          <Card className="mb-4 border-primary/40">
             <CardContent className="p-6 text-center space-y-3">
               <Trophy className={`h-10 w-10 mx-auto ${iWon ? "text-yellow-400" : "text-muted-foreground"}`} />
               <div className="text-2xl font-bold">{iWon ? "Victory!" : "Defeat"}</div>
@@ -429,6 +377,58 @@ export default function InteractiveBattleArena({ battleId }: Props) {
             </CardContent>
           </Card>
         )}
+        {/* Last turn recap */}
+        {lastTurn && (
+          <Card className="mb-4">
+            <CardContent className="p-3 text-sm">
+              <div className="font-semibold mb-1">
+                Turn {lastTurn.turn_index} — {lastResult.attacker_name} → {lastResult.defender_name}
+              </div>
+              {(() => {
+                // Spider headers above are laid out as [mine | opponent].
+                // Align each dice column to its matching spider so HP and
+                // dice for the same spider live in the same vertical stack.
+                const myIsAttacker = lastResult.attacker_name === mySpider.nickname;
+                const mineDice = myIsAttacker
+                  ? { value: lastResult.attacker_dice, label: `${mySpider.nickname} attack`, variant: "attack" as const, bucket: lastResult.attacker_bucket }
+                  : { value: lastResult.defender_dice, label: `${mySpider.nickname} defense`, variant: "defense" as const, bucket: lastResult.defender_bucket };
+                const oppDice = myIsAttacker
+                  ? { value: lastResult.defender_dice, label: `${opponentSpider.nickname} defense`, variant: "defense" as const, bucket: lastResult.defender_bucket }
+                  : { value: lastResult.attacker_dice, label: `${opponentSpider.nickname} attack`, variant: "attack" as const, bucket: lastResult.attacker_bucket };
+                return (
+                  <div className="grid grid-cols-2 gap-3 my-3 items-start">
+                    <div className="flex flex-col items-center">
+                      <DiceDisplay value={mineDice.value} label={mineDice.label} variant={mineDice.variant} />
+                      <span className="text-[10px] text-muted-foreground mt-1">
+                        {BUCKET_LABEL[mineDice.bucket as ZoneBucket]}
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <DiceDisplay value={oppDice.value} label={oppDice.label} variant={oppDice.variant} />
+                      <span className="text-[10px] text-muted-foreground mt-1">
+                        {BUCKET_LABEL[oppDice.bucket as ZoneBucket]}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
+              <div className="mt-1 text-center">
+                {lastResult.dodged
+                  ? <span className="text-emerald-400 font-semibold">Dodged!</span>
+                  : <span>
+                      Damage: <span className="font-bold text-red-400">{lastResult.damage}</span>
+                      {lastResult.is_critical && <span className="ml-2 text-yellow-400 font-bold">CRIT</span>}
+                    </span>}
+              </div>
+              {Array.isArray(lastResult.breakdown) && (
+                <ul className="mt-2 text-[11px] text-muted-foreground list-disc pl-4">
+                  {lastResult.breakdown.map((b: string, i: number) => <li key={i}>{b}</li>)}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
       </div>
     </div>
   );
