@@ -79,51 +79,69 @@ export type Database = {
       }
       battle_challenges: {
         Row: {
+          accepter_consented_at: string | null
           accepter_id: string | null
           accepter_spider_id: string | null
           battle_id: string | null
           challenge_message: string | null
+          challenger_consented_at: string | null
           challenger_id: string
           challenger_spider_id: string
+          challenger_stances: Json | null
           created_at: string
           expires_at: string
           id: string
+          idempotency_key: string | null
           is_all_or_nothing: boolean
           league_id: string | null
           loser_spider_id: string | null
+          responded_at: string | null
           status: string
+          target_user_id: string | null
           winner_id: string | null
         }
         Insert: {
+          accepter_consented_at?: string | null
           accepter_id?: string | null
           accepter_spider_id?: string | null
           battle_id?: string | null
           challenge_message?: string | null
+          challenger_consented_at?: string | null
           challenger_id: string
           challenger_spider_id: string
+          challenger_stances?: Json | null
           created_at?: string
           expires_at?: string
           id?: string
+          idempotency_key?: string | null
           is_all_or_nothing?: boolean
           league_id?: string | null
           loser_spider_id?: string | null
+          responded_at?: string | null
           status?: string
+          target_user_id?: string | null
           winner_id?: string | null
         }
         Update: {
+          accepter_consented_at?: string | null
           accepter_id?: string | null
           accepter_spider_id?: string | null
           battle_id?: string | null
           challenge_message?: string | null
+          challenger_consented_at?: string | null
           challenger_id?: string
           challenger_spider_id?: string
+          challenger_stances?: Json | null
           created_at?: string
           expires_at?: string
           id?: string
+          idempotency_key?: string | null
           is_all_or_nothing?: boolean
           league_id?: string | null
           loser_spider_id?: string | null
+          responded_at?: string | null
           status?: string
+          target_user_id?: string | null
           winner_id?: string | null
         }
         Relationships: [
@@ -207,6 +225,7 @@ export type Database = {
       }
       battles: {
         Row: {
+          autoplay_user_id: string | null
           awaiting_action: string | null
           awaiting_user_id: string | null
           battle_log: Json | null
@@ -217,6 +236,7 @@ export type Database = {
           idempotency_key: string | null
           is_active: boolean | null
           is_demo: boolean
+          is_pvp: boolean
           league_id: string | null
           mode: string
           p1_current_hp: number | null
@@ -228,10 +248,12 @@ export type Database = {
           team_a: Json
           team_b: Json
           turn_count: number | null
+          turn_deadline: string | null
           type: Database["public"]["Enums"]["battle_type"]
           winner: Database["public"]["Enums"]["battle_winner"] | null
         }
         Insert: {
+          autoplay_user_id?: string | null
           awaiting_action?: string | null
           awaiting_user_id?: string | null
           battle_log?: Json | null
@@ -242,6 +264,7 @@ export type Database = {
           idempotency_key?: string | null
           is_active?: boolean | null
           is_demo?: boolean
+          is_pvp?: boolean
           league_id?: string | null
           mode?: string
           p1_current_hp?: number | null
@@ -253,10 +276,12 @@ export type Database = {
           team_a: Json
           team_b: Json
           turn_count?: number | null
+          turn_deadline?: string | null
           type?: Database["public"]["Enums"]["battle_type"]
           winner?: Database["public"]["Enums"]["battle_winner"] | null
         }
         Update: {
+          autoplay_user_id?: string | null
           awaiting_action?: string | null
           awaiting_user_id?: string | null
           battle_log?: Json | null
@@ -267,6 +292,7 @@ export type Database = {
           idempotency_key?: string | null
           is_active?: boolean | null
           is_demo?: boolean
+          is_pvp?: boolean
           league_id?: string | null
           mode?: string
           p1_current_hp?: number | null
@@ -278,6 +304,7 @@ export type Database = {
           team_a?: Json
           team_b?: Json
           turn_count?: number | null
+          turn_deadline?: string | null
           type?: Database["public"]["Enums"]["battle_type"]
           winner?: Database["public"]["Enums"]["battle_winner"] | null
         }
