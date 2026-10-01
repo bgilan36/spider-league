@@ -192,7 +192,7 @@ serve(async (req) => {
 
       const capture = ch.is_all_or_nothing === true;
       const mySpiderId = capture && ch.accepter_spider_id ? ch.accepter_spider_id : uuid(body.spiderId);
-      if (ch.accepter_spider_id && mySpiderId !== ch.accepter_spider_id) return json({ error: "This challenge names a specific spider of yours." }, 400);
+      if (capture && ch.accepter_spider_id && mySpiderId !== ch.accepter_spider_id) return json({ error: "This challenge names a specific spider of yours." }, 400);
       const mine = await loadSpider(mySpiderId);
       const p1 = await spiderProblem(sb, mine, me);
       if (p1) return json({ error: p1, code: "SPIDER_INELIGIBLE" }, 400);
