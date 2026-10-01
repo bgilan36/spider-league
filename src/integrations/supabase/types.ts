@@ -944,6 +944,7 @@ export type Database = {
           has_completed_first_skirmish: boolean | null
           has_completed_onboarding: boolean | null
           id: string
+          rookie_rewards_claimed: string[]
           rookie_season_completed: boolean
           rookie_season_dismissed: boolean
           share_spider_locations: boolean
@@ -956,6 +957,7 @@ export type Database = {
           has_completed_first_skirmish?: boolean | null
           has_completed_onboarding?: boolean | null
           id: string
+          rookie_rewards_claimed?: string[]
           rookie_season_completed?: boolean
           rookie_season_dismissed?: boolean
           share_spider_locations?: boolean
@@ -968,6 +970,7 @@ export type Database = {
           has_completed_first_skirmish?: boolean | null
           has_completed_onboarding?: boolean | null
           id?: string
+          rookie_rewards_claimed?: string[]
           rookie_season_completed?: boolean
           rookie_season_dismissed?: boolean
           share_spider_locations?: boolean
@@ -2031,6 +2034,7 @@ export type Database = {
       }
       cancel_join_request: { Args: { p_request_id: string }; Returns: Json }
       claim_private_league_invite: { Args: { token: string }; Returns: Json }
+      claim_rookie_milestone: { Args: { p_step: string }; Returns: Json }
       claim_species_for_spider: {
         Args: {
           p_common_name: string
