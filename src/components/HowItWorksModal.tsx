@@ -8,6 +8,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { HelpCircle, Upload, Sword, Trophy, Target, Shield, Zap, Sparkles, CircleHelp } from "lucide-react";
+import { ModeRulesList, RosterRulesList, RankingRulesList } from "@/components/RulesSummary";
 
 export const HowItWorksModal = () => {
   return (
@@ -34,48 +35,25 @@ export const HowItWorksModal = () => {
             <div className="space-y-2 text-sm">
               <p>1. <strong>Start with a spider:</strong> New accounts receive a starter spider so you can play immediately.</p>
               <p>2. <strong>Upload real spiders:</strong> Take photos of spiders you find and upload them to generate playable fighters.</p>
-              <p>3. <strong>Build your roster:</strong> Choose weekly battle-eligible spiders and run skirmishes any time from your collection.</p>
-              <p>4. <strong>Compete and progress:</strong> Win battles and skirmishes to grow your account and spiders.</p>
+              <p>3. <strong>Set your Starting 5:</strong> Your active roster battles in Training, Friendly Challenges and Capture Battles.</p>
+              <p>4. <strong>Compete and progress:</strong> Win battles and Wild Skirmishes to earn XP, level up and climb the rankings.</p>
             </div>
           </section>
 
           <section>
             <h3 className="text-lg font-semibold mb-3 flex items-center">
               <CircleHelp className="mr-2 h-5 w-5 text-primary" />
-              Weekly Eligibility Rules (Battles)
+              Starting 5 & Eligibility
             </h3>
-            <div className="space-y-2 text-sm">
-              <p>• <strong>3 weekly battle slots:</strong> Your weekly battle roster has three slots.</p>
-              <p>• <strong>Upload cap:</strong> You can upload up to three spiders per week (week resets Sunday, PT).</p>
-              <p>• <strong>Mix-and-match roster:</strong> You can activate one older spider, then fill remaining slots with new weekly uploads.</p>
-              <p>• <strong>Battles use eligible spiders:</strong> Only weekly eligible spiders can be used for battle challenges.</p>
-            </div>
-          </section>
-
-          <section>
-            <h3 className="text-lg font-semibold mb-3 flex items-center">
-              <Sparkles className="mr-2 h-5 w-5 text-primary" />
-              Skirmish Rules
-            </h3>
-            <div className="space-y-2 text-sm">
-              <p>• <strong>Any spider can skirmish:</strong> Skirmishes can use any spider in your collection (not just weekly eligible spiders).</p>
-              <p>• <strong>Suggested even matchup:</strong> The app suggests a relatively balanced opponent from another user.</p>
-              <p>• <strong>Daily limit:</strong> Each user can run up to <strong>3 skirmishes per day</strong>.</p>
-              <p>• <strong>Skirmish rewards:</strong> Winning gives XP to the winning user and modest stat boosts to the winning spider.</p>
-              <p>• <strong>No ownership transfer:</strong> Skirmishes are scrimmages; spider ownership never changes.</p>
-            </div>
+            <RosterRulesList />
           </section>
 
           <section>
             <h3 className="text-lg font-semibold mb-3 flex items-center">
               <Sword className="mr-2 h-5 w-5 text-primary" />
-              Battle Rules
+              Battle Modes
             </h3>
-            <div className="space-y-2 text-sm">
-              <p>• <strong>Challenge system:</strong> Create or accept battle challenges with weekly eligible spiders.</p>
-              <p>• <strong>High stakes:</strong> In battles, the losing spider transfers to the winning user.</p>
-              <p>• <strong>Battle XP:</strong> Completed matchup battles award XP to the winning user.</p>
-            </div>
+            <ModeRulesList />
           </section>
 
           <section>
@@ -128,12 +106,7 @@ export const HowItWorksModal = () => {
               <Trophy className="mr-2 h-5 w-5 text-primary" />
               Progression & Ranking
             </h3>
-            <div className="space-y-2 text-sm">
-              <p>• <strong>User XP:</strong> XP is earned from skirmish wins and battle wins.</p>
-              <p>• <strong>Spider growth:</strong> Stat boosts apply to the specific spider that wins a skirmish.</p>
-              <p>• <strong>Leaderboard score:</strong> Rankings reflect both spider power and earned XP.</p>
-              <p>• <strong>Server-authoritative outcomes:</strong> Match results and rewards are validated server-side.</p>
-            </div>
+            <RankingRulesList />
           </section>
 
           <section>

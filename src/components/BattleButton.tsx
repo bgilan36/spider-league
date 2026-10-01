@@ -223,8 +223,8 @@ const BattleButton: React.FC<BattleButtonProps> = ({
         }
       } else {
       toast({
-        title: "Challenge Created!",
-        description: `${targetSpider.nickname} is now looking for opponents`,
+        title: "Friendly Challenge posted!",
+        description: `${targetSpider.nickname} is looking for an opponent. No ownership risk — winner +25 XP, loser +10 XP.`,
       });
       // Notify the homepage preview immediately
       window.dispatchEvent(new CustomEvent('challenge:created', { detail: { id: data.id, challenger_id: user.id, challenger_spider_id: targetSpider.id } }));
@@ -297,7 +297,7 @@ const BattleButton: React.FC<BattleButtonProps> = ({
         });
       } else {
         toast({
-          title: "Challenge Created!",
+          title: "Friendly Challenge posted!",
           description: `${challengerSpider.nickname} has challenged ${targetSpider.nickname}`,
         });
         window.dispatchEvent(new CustomEvent('challenge:created', { detail: { id: data.id, challenger_id: user.id, challenger_spider_id: challengerSpider.id } }));

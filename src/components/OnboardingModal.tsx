@@ -8,6 +8,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import { useNavigate } from "react-router-dom";
 import PowerScoreArc from "@/components/PowerScoreArc";
 import { ensureStarterSpider, type StarterSpider } from "@/lib/starterSpider";
+import { RULES, MODES, ROSTER_COPY } from "@/lib/gameRules";
 
 interface OnboardingModalProps {
   open: boolean;
@@ -119,14 +120,14 @@ const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
         <div className="flex gap-2">
           <Shield className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
           <div>
-            <span className="font-semibold">5 active at a time</span>
-            <span className="text-muted-foreground text-sm"> — Each spider stays active for 30 days. Max 5 in your roster.</span>
+            <span className="font-semibold">{RULES.roster.baseSlots} active at a time</span>
+            <span className="text-muted-foreground text-sm"> — {ROSTER_COPY.eligibility}</span>
           </div>
         </div>
         <div className="flex gap-2">
           <Clock className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
           <div>
-            <span className="text-muted-foreground text-sm">Retired spiders can be re-enlisted for another 30 days.</span>
+            <span className="text-muted-foreground text-sm">Retiring never costs you the spider: it keeps its XP, level and Power, and can be re-enlisted for another {RULES.roster.eligibleDays} days.</span>
           </div>
         </div>
       </div>
@@ -142,25 +143,32 @@ const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
           <Skull className="h-7 w-7 text-red-400" />
         </div>
       </div>
-      <h2 className="text-xl font-bold">Two Ways to Fight</h2>
+      <h2 className="text-xl font-bold">Ways to Fight</h2>
       <div className="text-left max-w-sm space-y-3">
         <div className="flex gap-2">
           <Sword className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
           <div>
-            <span className="font-semibold text-primary">Battle Now</span>
-            <span className="text-muted-foreground text-sm"> — Training battles. Earn XP and stat boosts with zero risk. 1 hour cooldown per spider.</span>
+            <span className="font-semibold text-primary">{MODES.training.name}</span>
+            <span className="text-muted-foreground text-sm"> — {MODES.training.risk} Earn XP and stat boosts. {MODES.training.cooldown}</span>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Sword className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+          <div>
+            <span className="font-semibold">{MODES.friendly.name}</span>
+            <span className="text-muted-foreground text-sm"> — Post a challenge for another player to accept. {MODES.friendly.risk}</span>
           </div>
         </div>
         <div className="flex gap-2">
           <Skull className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
           <div>
-            <span className="font-semibold text-red-400">Battle to the Death</span>
+            <span className="font-semibold text-red-400">{MODES.capture.name}</span>
             <span className="text-muted-foreground text-sm"> — Winner takes the loser's spider forever. Both players must agree before it starts.</span>
           </div>
         </div>
       </div>
       <p className="text-xs text-muted-foreground/70 max-w-sm mt-1">
-        All battles are run from your Starting 5 roster — just click the button on any active spider card.
+        Battles use your Starting 5. Wild Skirmishes ({RULES.skirmish.dailyLimit}/day) can use any spider.
       </p>
     </div>,
 
@@ -233,12 +241,12 @@ const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
             ? "Your starter spider is still hatching…"
             : starterState === "inactive"
               ? "Your first spider is in your collection — re-enlist it to battle."
-              : "Upload a spider (or retry the starter on the previous slide) to get battling."}{" "}Hit the button below to jump to your Starting 5 roster and start your first training battle.
+              : "Upload a spider (or retry the starter on the previous slide) to get battling."}{" "}Hit the button below to jump to your Starting 5 roster and start your first Training Battle.
       </p>
       <div className="bg-muted/50 rounded-lg p-3 max-w-sm text-left text-xs text-muted-foreground space-y-1">
         <p>💡 <strong>Tip:</strong> Click <strong>"Battle Now"</strong> on your spider card to preview a matchup and fight!</p>
         <p>💡 Win battles to earn XP and power up your spider's stats.</p>
-        <p>💡 Upload more spiders from the wild to fill your 5 roster slots.</p>
+        <p>💡 Upload more spiders from the wild to fill your {RULES.roster.baseSlots} roster slots — there's no upload limit.</p>
       </div>
       <Button onClick={handleStartFirstBattle} className="mt-2 w-full max-w-[260px]" size="lg">
         <Sword className="h-4 w-4 mr-2" />

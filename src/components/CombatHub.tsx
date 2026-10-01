@@ -53,8 +53,8 @@ const CombatHub = () => {
               </TooltipTrigger>
               <TooltipContent side="bottom" className="max-w-xs text-xs leading-relaxed">
                 <p className="font-semibold mb-1">Unified Battle System</p>
-                <p><strong>Training Battles</strong> are the default — earn XP and stat boosts with no risk of losing your spider.</p>
-                <p className="mt-1"><strong>All-or-Nothing</strong> battles are opt-in — the winner takes the loser's spider. Both players must agree to the stakes.</p>
+                <p><strong>Training Battles</strong> are the default — earn XP and stat boosts with no risk of losing your spider. Your spider rests 4 hours afterward.</p>
+                <p className="mt-1"><strong>Capture Battles</strong> are opt-in — the winner takes the loser's spider. Both players must agree to the stakes.</p>
               </TooltipContent>
             </Tooltip>
           </CardTitle>
@@ -94,7 +94,7 @@ const CombatHub = () => {
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <p>Your strongest eligible spider will be matched against a similarly-powered opponent in a <strong>Training Battle</strong>.</p>
-              <p className="text-xs text-muted-foreground">No spiders will be lost — you'll earn XP and stat boosts regardless of the outcome.</p>
+              <p className="text-xs text-muted-foreground">No spiders will be lost. Winning spider: +25 XP and stat boosts. Losing spider: +10 XP. Your spider then rests 4 hours.</p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

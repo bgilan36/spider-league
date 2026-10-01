@@ -136,7 +136,7 @@ const DeathBattleFeed: React.FC = () => {
       <div>
         <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 mb-1">
           <Skull className="w-5 h-5 text-destructive" />
-          Death Battle Challenges
+          Capture Battle Challenges
         </h2>
         <p className="text-xs sm:text-sm text-muted-foreground">
           These players have thrown down the gauntlet — the loser forfeits their spider forever.
@@ -178,7 +178,7 @@ const DeathBattleFeed: React.FC = () => {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                     <span className="font-semibold text-sm truncate">{spider?.nickname ?? 'Unknown'}</span>
-                    <Badge variant="destructive" className="text-[10px]">Death Battle</Badge>
+                    <Badge variant="destructive" className="text-[10px]">Capture Battle</Badge>
                   </div>
                   <p className="text-xs text-muted-foreground truncate">
                     <ClickableUsername

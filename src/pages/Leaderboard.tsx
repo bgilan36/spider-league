@@ -442,7 +442,7 @@ const Leaderboard = () => {
               />
             </div>
             <h1 className="text-2xl sm:text-4xl font-bold mb-1 sm:mb-2">User Leaderboard</h1>
-            <p className="text-muted-foreground text-sm sm:text-base">Top trainers ranked by Power</p>
+            <p className="text-muted-foreground text-sm sm:text-base">Top trainers ranked by total spider Power + spider XP</p>
           </div>
         </div>
 
