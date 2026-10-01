@@ -393,6 +393,8 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
               const cooldown = getCooldownMinutes(spider.last_battled_at);
               const isBattling = battleLoadingId === spider.id;
               const onCooldown = cooldown > 0;
+              const inBattle = inBattleIds.has(spider.id);
+              const liveBattle = playerBattles.find(b => b.mySpiderId === spider.id);
 
               return (
                 <Card
@@ -450,25 +452,35 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
                       </span>
                     </div>
 
-                    {/* Cooldown */}
-                    {onCooldown && (
-                      <div className="flex items-center gap-1 mt-0.5">
-                        <Clock className="h-3 w-3 text-amber-500" />
-                        <span className="text-[10px] text-amber-500 font-medium">
-                          Ready in {cooldownLabel(spider.last_battled_at)}
-                        </span>
-                      </div>
-                    )}
+                    {/* Explicit state */}
+                    <div className="mt-1" aria-label="Spider status">
+                      {inBattle ? (
+                        <Badge variant="outline" className="text-[10px] border-primary text-primary">In battle</Badge>
+                      ) : onCooldown ? (
+                        <Badge variant="outline" className="text-[10px] border-amber-500/60 text-amber-600 dark:text-amber-400">
+                          Cooldown · {cooldownLabel(spider.last_battled_at)}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] border-green-500/60 text-green-600 dark:text-green-400">Ready</Badge>
+                      )}
+                      {(inBattle || onCooldown) && (
+                        <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
+                          {inBattle ? "Finish its current battle first." : `Resting after battle · ready at ${readyAtLabel(spider.last_battled_at)}.`}
+                        </p>
+                      )}
+                    </div>
 
                     {/* Battle buttons */}
                     <div className="flex flex-col gap-1 mt-1.5 sm:mt-2">
                       <Button
                         size="sm"
                          className={`w-full min-h-10 text-xs gap-1 ${spider.id === newSpiderId ? 'animate-pulse shadow-glow ring-2 ring-primary' : ''}`}
-                        disabled={onCooldown || isBattling}
-                        onClick={() => handleBattleNow(spider)}
+                        disabled={(onCooldown && !inBattle) || isBattling}
+                        onClick={() => liveBattle ? navigate(`/battle/${liveBattle.id}`) : handleBattleNow(spider)}
                       >
-                        {isBattling ? (
+                        {inBattle ? (
+                          <><Sword className="h-3 w-3" /> Resume battle</>
+                        ) : isBattling ? (
                           <><Loader2 className="h-3 w-3 animate-spin" /> Battling...</>
                         ) : (
                           <><Sword className="h-3 w-3" /> Battle Now</>
@@ -478,11 +490,11 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
                         size="sm"
                         variant="outline"
                          className="w-full min-h-10 text-xs gap-1 border-destructive/50 text-destructive hover:bg-destructive/10"
-                        disabled={onCooldown || isBattling}
+                        disabled={onCooldown || inBattle || isBattling}
                         onClick={() => handleOpenOpponentBrowser(spider)}
                       >
                         <Skull className="h-3 w-3" />
-                        Battle to Death
+                        {MODES.capture.name}
                       </Button>
                     </div>
                   </div>
