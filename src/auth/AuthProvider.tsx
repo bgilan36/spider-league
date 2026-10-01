@@ -194,6 +194,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
+        data: { is_demo: true, name: 'Demo Player' },
       },
     });
 
