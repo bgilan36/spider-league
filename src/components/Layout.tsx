@@ -4,6 +4,7 @@ import GlobalHeader from '@/components/GlobalHeader';
 import AppTabs from '@/components/nav/AppTabs';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthProvider';
+import DemoBanner from '@/components/DemoBanner';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -25,6 +26,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </a>
       <BattleResultsNotification />
       <GlobalHeader />
+      <DemoBanner />
       {!hideNav && <AppTabs pathname={pathname} />}
       <main id="main-content" className={hideNav ? '' : 'pb-20 md:pb-0'}>{children}</main>
     </>
