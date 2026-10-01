@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, Swords, Bell, Zap, Sparkles, RefreshCcw, Clock, Camera } from "lucide-react";
 import { usePlayerActions, spiderState, cooldownEndsAt } from "@/hooks/usePlayerActions";
-import { usePracticeBattle } from "@/components/battle/usePracticeBattle";
+import { useStartSkillBattle } from "@/components/battle/useStartSkillBattle";
 import { MODES, RULES } from "@/lib/gameRules";
 
 function fmtLeft(ms: number) {
@@ -16,7 +16,7 @@ function fmtLeft(ms: number) {
 export default function NextUpCard() {
   const navigate = useNavigate();
   const { loading, spiders, battles, incoming, inBattleIds } = usePlayerActions();
-  const { start: startPractice, picker } = usePracticeBattle();
+  const { open: openBattle, picker } = useStartSkillBattle();
   const [, tick] = useState(0);
   useEffect(() => { const t = setInterval(() => tick((n) => n + 1), 30000); return () => clearInterval(t); }, []);
 
@@ -47,7 +47,7 @@ export default function NextUpCard() {
     const s = ready[0];
     icon = Zap; title = `${s.nickname} is ready`;
     body = `Start a ${MODES.training.long}: no ownership risk, winner earns +${RULES.battle.spiderXpWin} XP.`;
-    cta = "Battle now"; act = () => startPractice(s.id);
+    cta = "Battle now"; act = () => openBattle({ spiderId: s.id });
     secondary = { label: "Wild Skirmish", act: () => navigate("/skirmish") };
   } else if (spiders.length === 0) {
     icon = Sparkles; title = "Get your first spider";
