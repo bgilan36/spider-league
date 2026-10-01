@@ -30,7 +30,11 @@ interface BattleRow {
   challenge_id: string | null;
   league_id: string | null;
   current_turn_user_id: string | null;
+  is_pvp?: boolean;
 }
+const MOVE_HOURS = 12;
+const nextDeadline = (b: { is_pvp?: boolean }) =>
+  b.is_pvp ? new Date(Date.now() + MOVE_HOURS * 3600_000).toISOString() : null;
 
 // One full turn = attacker's bucket + defender's bucket, then resolve damage.
 // We store both buckets in pending state on `battles.battle_log` to keep things atomic.
@@ -145,6 +149,7 @@ async function maybeResolveTurn(
     updates.awaiting_user_id = null;
     updates.current_turn_user_id = null;
     updates.battle_log = { pending: null, lastRider: newRider ?? null };
+    updates.turn_deadline = null;
 
     const { data: closed } = await supabase.from("battles").update(updates)
       .eq("id", battle.id).eq("is_active", true).select("id");
@@ -168,7 +173,8 @@ async function maybeResolveTurn(
   updates.awaiting_user_id = newPending!.attackerId;
   updates.current_turn_user_id = newPending!.attackerId;
   updates.battle_log = { pending: newPending, lastRider: newRider ?? null };
-  await supabase.from("battles").update(updates).eq("id", battle.id);
+  updates.turn_deadline = nextDeadline(battle);
+  await supabase.from("battles").update(updates).eq("id", battle.id).eq("is_active", true);
 
   return { battle: { ...battle, ...updates }, pending: newPending, finished: false };
 }
@@ -254,7 +260,8 @@ serve(async (req) => {
         awaiting_user_id: opponentId,
         current_turn_user_id: opponentId,
         battle_log: { pending, lastRider },
-      }).eq("id", battle.id);
+        turn_deadline: nextDeadline(battle as any),
+      }).eq("id", battle.id).eq("awaiting_user_id", userId).eq("awaiting_action", "attack").eq("is_active", true);
     } else if (battle.awaiting_action === "defense") {
       pending.defenderBucket = bucket as ZoneBucket;
       await maybeResolveTurn(supabase, battle as any as BattleRow, pending);

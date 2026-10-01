@@ -81,6 +81,27 @@ serve(async (req) => {
       });
     }
 
+    // Player-vs-player: the computer only moves for a player who missed a move deadline.
+    // Once someone times out, it keeps playing their remaining moves so the battle can finish.
+    const pvp = (battle as any).is_pvp === true;
+    const MOVE_MS = 12 * 3600_000;
+    const pvpDeadline = () => pvp ? new Date(Date.now() + MOVE_MS).toISOString() : null;
+    if (pvp && (battle as any).autoplay_user_id !== opponentId) {
+      const dl = (battle as any).turn_deadline ? new Date((battle as any).turn_deadline).getTime() : 0;
+      if (!dl || dl > Date.now()) {
+        return new Response(JSON.stringify({ success: true, waiting: true, turnDeadline: (battle as any).turn_deadline }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: marked } = await supabase.from("battles").update({ autoplay_user_id: opponentId })
+        .eq("id", battle.id).eq("is_active", true).eq("awaiting_user_id", opponentId).select("id");
+      if (!marked?.length) {
+        return new Response(JSON.stringify({ success: true, skipped: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const opponentSpider: SpiderLite = (opponentId === teamAUser ? battle.team_a : battle.team_b).spider;
     const playerSpider: SpiderLite = (userId === teamAUser ? battle.team_a : battle.team_b).spider;
 
@@ -104,7 +125,8 @@ serve(async (req) => {
         awaiting_user_id: userId,
         current_turn_user_id: userId,
         battle_log: { pending, lastRider },
-      }).eq("id", battle.id);
+        turn_deadline: pvpDeadline(),
+      }).eq("id", battle.id).eq("awaiting_user_id", opponentId).eq("awaiting_action", "attack").eq("is_active", true);
       return new Response(JSON.stringify({ success: true, opponentBucket: bucket }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -205,6 +227,7 @@ serve(async (req) => {
         updates.awaiting_user_id = null;
         updates.current_turn_user_id = null;
         updates.battle_log = { pending: null, lastRider: newRider ?? null };
+        updates.turn_deadline = null;
         const { data: closed } = await supabase.from("battles").update(updates)
           .eq("id", battle.id).eq("is_active", true).select("id");
         // Another request already finished this battle: never reward twice.
@@ -238,7 +261,8 @@ serve(async (req) => {
       updates.awaiting_user_id = nextAttackerId;
       updates.current_turn_user_id = nextAttackerId;
       updates.battle_log = { pending: newPending, lastRider: newRider ?? null };
-      await supabase.from("battles").update(updates).eq("id", battle.id);
+      updates.turn_deadline = pvpDeadline();
+      await supabase.from("battles").update(updates).eq("id", battle.id).eq("is_active", true);
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

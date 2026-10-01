@@ -6,6 +6,7 @@ import { Loader2, Swords, Bell, Zap, Sparkles, RefreshCcw, Clock, Camera } from 
 import { usePlayerActions, spiderState, cooldownEndsAt } from "@/hooks/usePlayerActions";
 import { useStartSkillBattle } from "@/components/battle/useStartSkillBattle";
 import { MODES, RULES } from "@/lib/gameRules";
+import { openChallengeResponse, openChallengeComposer } from "@/lib/challenges";
 
 function fmtLeft(ms: number) {
   const m = Math.max(1, Math.ceil(ms / 60000));
@@ -40,15 +41,15 @@ export default function NextUpCard() {
     cta = "Resume battle"; act = () => navigate(`/battle/${myTurn.id}`);
   } else if (incoming.length) {
     const c = incoming[0];
-    icon = Bell; title = c.capture ? `${MODES.capture.name} challenge` : "Incoming challenge";
+    icon = Bell; title = c.capture ? `${MODES.capture.name} challenge` : `${MODES.friendly.name} received`;
     body = `${c.challengerSpider} challenged ${c.mySpider}.${c.capture ? " The loser's spider changes owners." : ""}`;
-    cta = "Respond"; act = () => navigate("/battle-history#action-needed");
+    cta = "Review & respond"; act = () => openChallengeResponse(c.id);
   } else if (ready.length) {
     const s = ready[0];
     icon = Zap; title = `${s.nickname} is ready`;
     body = `Start a ${MODES.training.long}: no ownership risk, winner earns +${RULES.battle.spiderXpWin} XP.`;
     cta = "Battle now"; act = () => openBattle({ spiderId: s.id });
-    secondary = { label: "Wild Skirmish", act: () => navigate("/skirmish") };
+    secondary = { label: "Challenge a player", act: () => openChallengeComposer({ mySpiderId: s.id }) };
   } else if (spiders.length === 0) {
     icon = Sparkles; title = "Get your first spider";
     body = "Catch a real spider with your camera to build your Starting 5.";

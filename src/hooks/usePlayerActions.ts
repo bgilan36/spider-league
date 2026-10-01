@@ -62,10 +62,11 @@ export function usePlayerActions() {
       };
     }));
     const ids = mine.map((s) => s.id);
-    if (ids.length) {
+    {
+      const filt = ids.length ? `target_user_id.eq.${uid},accepter_spider_id.in.(${ids.join(",")})` : `target_user_id.eq.${uid}`;
       const { data: ch } = await supabase.from("battle_challenges")
         .select("id,challenger_id,challenger_spider_id,accepter_spider_id,expires_at,is_all_or_nothing")
-        .eq("status", "OPEN").in("accepter_spider_id", ids).neq("challenger_id", uid)
+        .eq("status", "OPEN").or(filt).neq("challenger_id", uid)
         .gt("expires_at", new Date().toISOString()).limit(10);
       const cs = ch || [];
       const chIds = [...new Set(cs.map((c: any) => c.challenger_spider_id))];
@@ -78,7 +79,7 @@ export function usePlayerActions() {
         challengerSpider: nm.get(c.challenger_spider_id) ?? "A spider",
         mySpider: mine.find((s) => s.id === c.accepter_spider_id)?.nickname ?? "your spider",
       })));
-    } else setIncoming([]);
+    }
     setLoading(false);
   }, [user]);
 

@@ -14,6 +14,8 @@ import SpiderDetailsModal from '@/components/SpiderDetailsModal';
 import { useStartSkillBattle } from '@/components/battle/useStartSkillBattle';
 import { ensureStarterSpider } from '@/lib/starterSpider';
 import { usePlayerActions } from '@/hooks/usePlayerActions';
+import { openChallengeComposer } from '@/lib/challenges';
+import { Handshake } from 'lucide-react';
 import { RULES, ELIGIBLE_MS, MODES, ROSTER_COPY, cooldownLabel, readyAtLabel } from '@/lib/gameRules';
 
 interface Spider {
@@ -297,6 +299,9 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
 
   const handleChallengeOpponent = async (opponentSpider: Spider) => {
     if (!user || !opponentBrowserSpider) return;
+    setShowOpponentBrowser(false);
+    openChallengeComposer({ mySpiderId: opponentBrowserSpider.id, targetSpider: opponentSpider as any, mode: 'capture' });
+    return;
     try {
       // First, cancel any existing open challenge for this spider and wait for confirmation
       const { error: cancelError } = await supabase
@@ -491,12 +496,12 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
                       <Button
                         size="sm"
                         variant="outline"
-                         className="w-full min-h-10 text-xs gap-1 border-destructive/50 text-destructive hover:bg-destructive/10"
+                         className="w-full min-h-10 text-xs gap-1"
                         disabled={onCooldown || inBattle || isBattling}
-                        onClick={() => handleOpenOpponentBrowser(spider)}
+                        onClick={() => openChallengeComposer({ mySpiderId: spider.id })}
                       >
-                        <Skull className="h-3 w-3" />
-                        {MODES.capture.name}
+                        <Handshake className="h-3 w-3" />
+                        Challenge
                       </Button>
                     </div>
                   </div>
