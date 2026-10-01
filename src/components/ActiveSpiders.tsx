@@ -319,7 +319,9 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
           accepter_spider_id: opponentSpider.id,
           is_all_or_nothing: true,
           challenge_message: `${opponentBrowserSpider.nickname} challenges ${opponentSpider.nickname} to a Capture Battle!`,
-...
+          status: 'OPEN',
+        });
+      if (error) throw error;
       toast.success(`Capture Battle challenge sent! Waiting for ${opponentSpider.nickname}'s owner to accept.`);
       setShowOpponentBrowser(false);
       window.dispatchEvent(new CustomEvent('challenge:created', { detail: { challenger_spider_id: opponentBrowserSpider.id } }));
