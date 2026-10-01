@@ -6,3 +6,4 @@
 - Starter spiders are provisioned through `src/lib/starterSpider.ts` (deduped, retried) when onboarding opens and whenever a roster has zero spiders — never tied to a specific onboarding slide.
 
 - Gameplay numbers and mode names (Training, Friendly Challenge, Capture Battle, Wild Skirmish) live in `src/lib/gameRules.ts`, mirroring server enforcement; UI copy must read from it so help, onboarding and previews never contradict the server.
+- First battles use battle-start `practice:true` (AI-controlled opponent, challenge_message "Practice Battle"); Rookie Season milestone XP is paid only via `claim_rookie_milestone`, so rewards are server-checked and paid once.

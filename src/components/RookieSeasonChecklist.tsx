@@ -7,22 +7,17 @@ import { Check, Camera, Swords, Users, Send, Sparkles, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
 import { toast } from "sonner";
+import { usePracticeBattle } from "@/components/battle/usePracticeBattle";
 
-type Progress = {
-  caught: boolean;
-  won: boolean;
-  podded: boolean;
-  challenged: boolean;
-  completed: boolean;
-  dismissed: boolean;
-};
+type StepKey = "trained" | "caught" | "friendly" | "podded";
+type Progress = Record<StepKey, boolean> & { completed: boolean; dismissed: boolean; claimed?: string[] };
 
-const STEPS = [
-  { key: "caught", title: "Catch your first spider", cta: "Upload", icon: Camera, route: "/upload", xp: 25 },
-  { key: "won", title: "Win your first battle", cta: "Find a wild fight", icon: Swords, route: "/skirmish", xp: 25 },
-  { key: "podded", title: "Join or create a pod", cta: "Browse pods", icon: Users, route: "/pods", xp: 25 },
-  { key: "challenged", title: "Challenge a friend", cta: "Pick an opponent", icon: Send, route: "/collection", xp: 25 },
-] as const;
+const STEPS: { key: StepKey; title: string; hint: string; cta: string; icon: any; route: string | null; xp: number }[] = [
+  { key: "trained", title: "Complete a training battle", hint: "Win or lose — vs an AI practice opponent", cta: "Start", icon: Swords, route: null, xp: 25 },
+  { key: "caught", title: "Discover & upload a spider", hint: "Snap any spider you find", cta: "Upload", icon: Camera, route: "/upload", xp: 25 },
+  { key: "friendly", title: "Play a Friendly Challenge", hint: "Post one, or accept someone else's", cta: "Challenge", icon: Send, route: "/collection", xp: 25 },
+  { key: "podded", title: "Join or create a pod", hint: "Battle with friends", cta: "Browse pods", icon: Users, route: "/pods", xp: 25 },
+];
 
 const RookieSeasonChecklist = () => {
   const { user } = useAuth();
@@ -30,6 +25,7 @@ const RookieSeasonChecklist = () => {
   const [progress, setProgress] = useState<Progress | null>(null);
   const [loading, setLoading] = useState(true);
   const [awarding, setAwarding] = useState(false);
+  const { start: startPractice, picker: practicePicker } = usePracticeBattle();
 
   const fetchProgress = useCallback(async () => {
     if (!user) return;
@@ -45,10 +41,23 @@ const RookieSeasonChecklist = () => {
     return () => window.removeEventListener("focus", onFocus);
   }, [fetchProgress]);
 
+  // Pay each finished milestone once (server checks completion and dedupes).
+  useEffect(() => {
+    if (!progress) return;
+    const unclaimed = STEPS.filter((st) => progress[st.key] && !(progress.claimed || []).includes(st.key));
+    if (unclaimed.length === 0) return;
+    Promise.all(unclaimed.map((st) => supabase.rpc("claim_rookie_milestone" as any, { p_step: st.key })))
+      .then((results) => {
+        const xp = results.reduce((sum, r: any) => sum + (r.data?.awarded ? Number(r.data.xp) || 0 : 0), 0);
+        if (xp > 0) toast.success(`Rookie Season: +${xp} XP`, { id: "rookie-xp" });
+        fetchProgress();
+      });
+  }, [progress, fetchProgress]);
+
   // Auto-award when all four steps are complete.
   useEffect(() => {
     if (!progress || awarding) return;
-    const allDone = progress.caught && progress.won && progress.podded && progress.challenged;
+    const allDone = STEPS.every((st) => progress[st.key]);
     if (allDone && !progress.completed) {
       setAwarding(true);
       supabase.rpc("complete_rookie_season").then(({ data }) => {
@@ -74,7 +83,7 @@ const RookieSeasonChecklist = () => {
   if (!user || loading || !progress) return null;
   if (progress.dismissed || progress.completed) return null;
 
-  const doneCount = STEPS.filter((s) => progress[s.key as keyof Progress]).length;
+  const doneCount = STEPS.filter((st) => progress[st.key]).length;
   const totalXp = STEPS.reduce((sum, s) => sum + s.xp, 0) + 100;
 
   return (
@@ -106,7 +115,7 @@ const RookieSeasonChecklist = () => {
 
       <ul className="space-y-2">
         {STEPS.map((step) => {
-          const done = !!progress[step.key as keyof Progress];
+          const done = !!progress[step.key];
           const Icon = step.icon;
           return (
             <li
@@ -126,10 +135,10 @@ const RookieSeasonChecklist = () => {
                 <p className={`text-sm font-medium truncate ${done ? "text-muted-foreground line-through" : ""}`}>
                   {step.title}
                 </p>
-                <p className="text-[10px] text-primary font-semibold">+{step.xp} XP</p>
+                <p className="text-[10px] text-muted-foreground truncate">{step.hint} · <span className="text-primary font-semibold">+{step.xp} XP</span></p>
               </div>
               {!done && (
-                <Button size="sm" variant="default" onClick={() => navigate(step.route)} className="flex-shrink-0">
+                <Button size="sm" variant="default" onClick={() => (step.route ? navigate(step.route) : startPractice())} className="flex-shrink-0">
                   {step.cta}
                 </Button>
               )}
@@ -137,6 +146,7 @@ const RookieSeasonChecklist = () => {
           );
         })}
       </ul>
+      {practicePicker}
     </Card>
   );
 };

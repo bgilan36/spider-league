@@ -14,6 +14,10 @@ export interface StartArgs {
   bindOpponent?: boolean;
   /** Called instead of substituting when a confirmed matchup is no longer valid. */
   onMatchupInvalid?: (reason: string) => void;
+  /** AI-controlled practice opponent (first battle / tutorial). */
+  practice?: boolean;
+  title?: string;
+  subtitle?: string;
 }
 
 type StartResponse = { battleId?: string; error?: string; code?: string; reason?: string; resumed?: boolean };
@@ -56,6 +60,7 @@ export function useStartSkillBattle() {
           opponentSpiderId: args.opponentSpiderId ?? undefined,
           opponentUserId: args.opponentUserId ?? undefined,
           bindOpponent: args.bindOpponent === true,
+          practice: args.practice === true,
           idempotencyKey: keyRef.current,
           ...extra,
         },
@@ -80,7 +85,7 @@ export function useStartSkillBattle() {
       if (!res?.battleId) { toast.error("Could not start battle", { id: "battle-start-error" }); return; }
       if (res.resumed) toast.message("Resuming your battle in progress", { id: "battle-resume" });
       setArgs(null);
-      navigate(`/battle/${res.battleId}`);
+      navigate(`/battle/${res.battleId}`, { state: args.practice ? { practice: true } : undefined });
     } catch (e: any) {
       // Same key on retry, so a retry after a network blip can't create a second battle.
       toast.error(e?.message || "Failed to start battle. Tap again to retry.", { id: "battle-start-error" });
@@ -101,6 +106,9 @@ export function useStartSkillBattle() {
       onConfirm={handleConfirm}
       onAutoResolve={handleAuto}
       loading={loading}
+      title={args?.title}
+      subtitle={args?.subtitle}
+      hideAutoResolve={args?.practice}
     />
   );
 

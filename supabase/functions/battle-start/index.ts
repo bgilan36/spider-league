@@ -75,6 +75,8 @@ serve(async (req) => {
       }
     }
 
+    // Practice: AI-controlled opponent at or below your Power, for first battles/tutorials.
+    const practice: boolean = body?.practice === true && !leagueId;
     const action: "preview" | "start" = body?.action === "preview" ? "preview" : "start";
     const bindOpponent: boolean = body?.bindOpponent === true;
     const idempotencyKey: string | null =
@@ -109,12 +111,15 @@ serve(async (req) => {
         .gt("eligible_until", now).order("power_score", { ascending: false }).limit(1);
       if (data?.[0] && !(await isDemoUser(supabase, requestedOpponentUserId))) opponent = data[0];
     }
+    if (!opponent && practice) {
+      opponent = await pickOpponent(supabase, userId, { ...playerSpider, power_score: Math.max(1, Math.round(playerSpider.power_score * 0.9)) }, null);
+    }
     if (!opponent) opponent = await pickOpponent(supabase, userId, playerSpider, leagueOpponentOwnerIds);
     if (!opponent) return json({ error: "No opponent spiders available right now.", code: "NO_OPPONENT" });
 
     if (action === "preview") {
       return json({
-        success: true, mode: "training",
+        success: true, mode: "training", practice,
         player: publicSpider(playerSpider), opponent: publicSpider(opponent),
       });
     }
@@ -137,7 +142,7 @@ serve(async (req) => {
         accepter_spider_id: opponent.id,
         status: "ACCEPTED",
         is_all_or_nothing: false,
-        challenge_message: leagueId ? "Pod Skill Battle" : "Skill Battle",
+        challenge_message: leagueId ? "Pod Skill Battle" : practice ? "Practice Battle" : "Skill Battle",
         league_id: leagueId,
       }).select("id").single();
     if (challengeError) throw challengeError;
@@ -182,7 +187,7 @@ serve(async (req) => {
     await supabase.from("battle_challenges")
       .update({ battle_id: battleData.id }).eq("id", challengeData.id);
 
-    return json({ success: true, battleId: battleData.id, leagueId, opponentSpiderId: opponent.id });
+    return json({ success: true, battleId: battleData.id, leagueId, opponentSpiderId: opponent.id, practice });
   } catch (error: any) {
     console.error("battle-start error:", error);
     return new Response(JSON.stringify({ error: 'An internal error occurred. Please try again.' }), {

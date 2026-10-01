@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { ArrowLeft, Loader2, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,8 @@ import {
 } from "@/lib/battle/stances";
 import CombatStage from "./combat/CombatStage";
 import type { CombatEvent } from "./combat/combatFx";
+import { BattleCoach, combatLesson, useCoachVisible } from "./BattleCoach";
+import { RULES } from "@/lib/gameRules";
 
 interface Props { battleId: string }
 
@@ -41,6 +43,9 @@ export default function InteractiveBattleArena({ battleId }: Props) {
   const [aiTriggered, setAiTriggered] = useState<string>("");
   const { fireConfetti } = useConfetti();
   const [celebrated, setCelebrated] = useState(false);
+  const location = useLocation();
+  const [isPractice, setIsPractice] = useState<boolean>(!!(location.state as any)?.practice);
+  const [rookieXp, setRookieXp] = useState<number | null>(null);
 
   // On mobile the browser often restores scroll or keeps you mid-page after
   // navigating in from a modal. Force the arena to open at the top so the
@@ -95,6 +100,23 @@ export default function InteractiveBattleArena({ battleId }: Props) {
     return list;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [turns.length, finished, mySpider?.nickname, opponentSpider?.nickname]);
+
+  // Practice battles are labeled; detect from the challenge so refreshes keep the label.
+  const challengeId = (battle as any)?.challenge_id as string | undefined;
+  useEffect(() => {
+    if (!challengeId || isPractice) return;
+    supabase.from("battle_challenges").select("challenge_message").eq("id", challengeId).maybeSingle()
+      .then(({ data }) => { if (data?.challenge_message === "Practice Battle") setIsPractice(true); });
+  }, [challengeId, isPractice]);
+  const coach = useCoachVisible(isPractice);
+
+  // First finished battle (win or lose) completes Rookie Season step 1; the server pays once.
+  useEffect(() => {
+    if (!finished || rookieXp !== null || !user) return;
+    supabase.rpc("claim_rookie_milestone" as any, { p_step: "trained" }).then(({ data }) => {
+      setRookieXp((data as any)?.awarded ? Number((data as any).xp) || 0 : 0);
+    });
+  }, [finished, rookieXp, user]);
 
   useEffect(() => {
     if (finished && iWon && !celebrated) {
@@ -175,6 +197,10 @@ export default function InteractiveBattleArena({ battleId }: Props) {
   const lastResult = (lastTurn?.result_payload || {}) as any;
 
   const myPower = mySpider.power_score;
+  const myBuckets = turns.map((t: any) => {
+    const r = t?.result_payload || {};
+    return (r.attacker_name === mySpider.nickname ? r.attacker_bucket : r.defender_bucket) as ZoneBucket;
+  }).filter(Boolean);
   const oppPower = opponentSpider.power_score;
   const myZoneBoost = underdogBoost(myPower, oppPower);
   const returnPath = (battle as any)?.league_id
@@ -187,7 +213,7 @@ export default function InteractiveBattleArena({ battleId }: Props) {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <Helmet><title>Skill Battle | Spider League</title></Helmet>
+      <Helmet><title>{isPractice ? "Practice Battle" : "Training Battle"} | Spider League</title></Helmet>
 
       <div className="max-w-3xl mx-auto p-3 sm:p-4">
          <Button variant="ghost" size="sm" asChild className="mb-2 sm:mb-3 -ml-2">
@@ -221,6 +247,9 @@ export default function InteractiveBattleArena({ battleId }: Props) {
           />
           {myStances && (
             <div className="flex gap-1 mt-2 flex-wrap">
+              {isPractice && (
+                <Badge variant="secondary" className="text-[10px]">Practice opponent · AI-controlled</Badge>
+              )}
               <Badge variant="outline" className="text-[10px]">
                 Atk: {ATTACK_STANCE_META[myStances.attack as AttackStance]?.label}
               </Badge>
@@ -235,6 +264,9 @@ export default function InteractiveBattleArena({ battleId }: Props) {
         {!finished && (
           <Card className="mb-4">
             <CardContent className="p-4">
+              {isMyMove && coach.show && awaitingAction && (
+                <BattleCoach phase={awaitingAction} round={(battle.turn_count || 0) + 1} onHide={coach.hide} />
+              )}
               {isMyMove ? (
                 awaitingAction === "attack" ? (
                   <SkillMeter
@@ -274,6 +306,77 @@ export default function InteractiveBattleArena({ battleId }: Props) {
           </Card>
         )}
 
+        {finished && (
+          <Card className="mb-4 border-primary/40">
+            <CardContent className="p-6 text-center space-y-3">
+              <Trophy className={`h-10 w-10 mx-auto ${iWon ? "text-yellow-400" : "text-muted-foreground"}`} />
+              <div className="text-2xl font-bold">{iWon ? "Victory!" : "Defeat"}</div>
+              <div className="text-sm text-muted-foreground">
+                {iWon ? mySpider.nickname : opponentSpider.nickname} wins after {battle.turn_count} rounds.
+              </div>
+              <div className="flex flex-wrap justify-center gap-2 text-xs">
+                <Badge variant="secondary">{mySpider.nickname}: +{iWon ? RULES.battle.spiderXpWin : RULES.battle.spiderXpLoss} spider XP{iWon ? " + stat boosts" : ""}</Badge>
+                {!!rookieXp && <Badge>Rookie Season: first battle +{rookieXp} XP</Badge>}
+              </div>
+              <div className="rounded-md border border-border bg-muted/30 p-3 text-left text-xs">
+                <p className="font-semibold text-foreground mb-0.5">Lesson</p>
+                <p className="text-muted-foreground">{combatLesson(myBuckets, iWon, oppPower, myPower)}</p>
+              </div>
+              <div className="flex flex-wrap gap-2 justify-center pt-2">
+                {isPractice ? (
+                  <>
+                    <Button onClick={() => navigate("/upload")}>Catch your own spider</Button>
+                    <Button onClick={() => navigate("/")} variant="outline">Back to my Starting 5</Button>
+                  </>
+                ) : (
+                  <Button onClick={() => navigate(returnPath)} variant="default">Done</Button>
+                )}
+                <Button onClick={() => navigate("/battle-history")} variant="outline">Battle history</Button>
+                <ShareButton
+                  variant="outline"
+                  size="default"
+                  title={iWon ? "I won my Spider League battle!" : "My Spider League battle just ended"}
+                  text={
+                    iWon
+                      ? `🏆 ${mySpider.nickname} defeated ${opponentSpider.nickname} in ${battle.turn_count} rounds on Spider League!`
+                      : `🕷️ ${opponentSpider.nickname} beat my ${mySpider.nickname} in ${battle.turn_count} rounds on Spider League. Time for a rematch!`
+                  }
+                  url={`${window.location.origin}/battle/${battle.id}`}
+                  imageFileName={`spider-league-${iWon ? "win" : "loss"}-${battle.id.slice(0, 8)}.png`}
+                  getShareImage={() =>
+                    generateBattleShareImage({
+                      iWon,
+                      rounds: battle.turn_count || 0,
+                      winnerName: iWon ? mySpider.nickname : opponentSpider.nickname,
+                      winnerImageUrl: iWon ? mySpider.image_url : opponentSpider.image_url,
+                      loserName: iWon ? opponentSpider.nickname : mySpider.nickname,
+                      loserImageUrl: iWon ? opponentSpider.image_url : mySpider.image_url,
+                      tagline: "Upload your spider. Battle for glory. spiderleague.app",
+                    })
+                  }
+                  prepareShareUrl={async () => {
+                    const { shareUrl } = await ensureShareCard({
+                      kind: "battle",
+                      id: battle.id,
+                      existingImageUrl: (battle as any).share_image_url ?? null,
+                      generate: () =>
+                        generateBattleShareImage({
+                          iWon: true, // store the winner's perspective
+                          rounds: battle.turn_count || 0,
+                          winnerName: iWon ? mySpider.nickname : opponentSpider.nickname,
+                          winnerImageUrl: iWon ? mySpider.image_url : opponentSpider.image_url,
+                          loserName: iWon ? opponentSpider.nickname : mySpider.nickname,
+                          loserImageUrl: iWon ? opponentSpider.image_url : mySpider.image_url,
+                          tagline: "Spider League — spiderleague.app",
+                        }),
+                    });
+                    return shareUrl;
+                  }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
         {/* Last turn recap */}
         {lastTurn && (
           <Card className="mb-4">
@@ -326,62 +429,6 @@ export default function InteractiveBattleArena({ battleId }: Props) {
           </Card>
         )}
 
-        {finished && (
-          <Card className="mt-4">
-            <CardContent className="p-6 text-center space-y-3">
-              <Trophy className={`h-10 w-10 mx-auto ${iWon ? "text-yellow-400" : "text-muted-foreground"}`} />
-              <div className="text-2xl font-bold">{iWon ? "Victory!" : "Defeat"}</div>
-              <div className="text-sm text-muted-foreground">
-                {iWon ? mySpider.nickname : opponentSpider.nickname} wins after {battle.turn_count} rounds.
-              </div>
-              <div className="flex flex-wrap gap-2 justify-center pt-2">
-                <Button onClick={() => navigate(returnPath)} variant="default">Done</Button>
-                <Button onClick={() => navigate("/battle-history")} variant="outline">Battle history</Button>
-                <ShareButton
-                  variant="outline"
-                  size="default"
-                  title={iWon ? "I won my Spider League battle!" : "My Spider League battle just ended"}
-                  text={
-                    iWon
-                      ? `🏆 ${mySpider.nickname} defeated ${opponentSpider.nickname} in ${battle.turn_count} rounds on Spider League!`
-                      : `🕷️ ${opponentSpider.nickname} beat my ${mySpider.nickname} in ${battle.turn_count} rounds on Spider League. Time for a rematch!`
-                  }
-                  url={`${window.location.origin}/battle/${battle.id}`}
-                  imageFileName={`spider-league-${iWon ? "win" : "loss"}-${battle.id.slice(0, 8)}.png`}
-                  getShareImage={() =>
-                    generateBattleShareImage({
-                      iWon,
-                      rounds: battle.turn_count || 0,
-                      winnerName: iWon ? mySpider.nickname : opponentSpider.nickname,
-                      winnerImageUrl: iWon ? mySpider.image_url : opponentSpider.image_url,
-                      loserName: iWon ? opponentSpider.nickname : mySpider.nickname,
-                      loserImageUrl: iWon ? opponentSpider.image_url : mySpider.image_url,
-                      tagline: "Upload your spider. Battle for glory. spiderleague.app",
-                    })
-                  }
-                  prepareShareUrl={async () => {
-                    const { shareUrl } = await ensureShareCard({
-                      kind: "battle",
-                      id: battle.id,
-                      existingImageUrl: (battle as any).share_image_url ?? null,
-                      generate: () =>
-                        generateBattleShareImage({
-                          iWon: true, // store the winner's perspective
-                          rounds: battle.turn_count || 0,
-                          winnerName: iWon ? mySpider.nickname : opponentSpider.nickname,
-                          winnerImageUrl: iWon ? mySpider.image_url : opponentSpider.image_url,
-                          loserName: iWon ? opponentSpider.nickname : mySpider.nickname,
-                          loserImageUrl: iWon ? opponentSpider.image_url : mySpider.image_url,
-                          tagline: "Spider League — spiderleague.app",
-                        }),
-                    });
-                    return shareUrl;
-                  }}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </div>
   );

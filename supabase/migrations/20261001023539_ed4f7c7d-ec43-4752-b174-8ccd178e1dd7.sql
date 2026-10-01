@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.protect_rookie_rewards() FROM PUBLIC, anon, authenticated;

@@ -17,11 +17,13 @@ interface StancePickerProps {
   loading?: boolean;
   title?: string;
   subtitle?: string;
+  hideAutoResolve?: boolean;
 }
 
 export default function StancePicker({
-  open, onOpenChange, onConfirm, onAutoResolve, loading, title, subtitle,
+  open, onOpenChange, onConfirm, onAutoResolve: onAutoResolveProp, loading, title, subtitle, hideAutoResolve,
 }: StancePickerProps) {
+  const onAutoResolve = hideAutoResolve ? undefined : onAutoResolveProp;
   const [attack, setAttack] = useState<AttackStance>("power_strike");
   const [defense, setDefense] = useState<DefenseStance>("iron_web");
 
