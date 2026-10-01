@@ -146,9 +146,12 @@ async function maybeResolveTurn(
     updates.current_turn_user_id = null;
     updates.battle_log = { pending: null, lastRider: newRider ?? null };
 
-    await supabase.from("battles").update(updates).eq("id", battle.id);
+    const { data: closed } = await supabase.from("battles").update(updates)
+      .eq("id", battle.id).eq("is_active", true).select("id");
+    // Another request already finished this battle: never reward twice.
+    const wonRace = (closed?.length ?? 0) > 0;
 
-    if (battle.challenge_id) {
+    if (wonRace && battle.challenge_id) {
       const { error: resolveError } = await supabase.rpc("resolve_battle_challenge", {
         challenge_id: battle.challenge_id,
         winner_user_id: winnerUser,
@@ -157,7 +160,7 @@ async function maybeResolveTurn(
       });
       if (resolveError) console.error("resolve error:", resolveError);
     }
-    await supabase.rpc("award_badges_for_user", { user_id_param: winnerUser });
+    if (wonRace) await supabase.rpc("award_badges_for_user", { user_id_param: winnerUser });
     return { battle: { ...battle, ...updates }, pending: null, finished: true };
   }
 
