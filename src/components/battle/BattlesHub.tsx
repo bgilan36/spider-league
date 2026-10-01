@@ -7,6 +7,15 @@ import { Bell, Swords, Hourglass, Search, Zap, Skull, Users, Loader2 } from "luc
 import { usePlayerActions, spiderState } from "@/hooks/usePlayerActions";
 import { useStartSkillBattle } from "@/components/battle/useStartSkillBattle";
 import { MODES, RULES } from "@/lib/gameRules";
+import { openChallengeComposer, openChallengeResponse, timeLeftLabel } from "@/lib/challenges";
+import { useChallenges, STATE_LABEL, type ChallengeState } from "@/hooks/useChallenges";
+import { Handshake } from "lucide-react";
+
+const STATE_TONE: Record<ChallengeState, string> = {
+  incoming: "border-primary text-primary", your_turn: "border-primary text-primary",
+  pending: "", waiting: "", expired: "text-muted-foreground", declined: "text-muted-foreground",
+  cancelled: "text-muted-foreground", completed: "",
+};
 
 function Section({ id, icon: Icon, title, count, children }: any) {
   return (
@@ -34,6 +43,7 @@ export default function BattlesHub() {
   const { hash } = useLocation();
   const { loading, spiders, battles, incoming, inBattleIds } = usePlayerActions();
   const { open, picker } = useStartSkillBattle();
+  const { rows: challenges } = useChallenges();
 
   useEffect(() => {
     if (!hash || loading) return;
@@ -59,7 +69,7 @@ export default function BattlesHub() {
             {mine.map((b) => (
               <Card key={b.id} className="border-primary/40"><CardContent className="p-3 flex items-center justify-between gap-3">
                 <div className="min-w-0"><p className="font-semibold truncate">{b.mySpider} vs {b.oppSpider}</p>
-                  <p className="text-xs text-muted-foreground">{b.training ? "Training · your move" : "Your turn"}</p></div>
+                  <p className="text-xs text-muted-foreground">{b.training ? "Training · your move" : "Your turn — they're not necessarily online; take your time within the deadline"}</p></div>
                 <Button size="sm" onClick={() => navigate(`/battle/${b.id}`)}>Resume</Button>
               </CardContent></Card>
             ))}
@@ -67,7 +77,7 @@ export default function BattlesHub() {
               <Card key={c.id} className="border-destructive/40"><CardContent className="p-3 flex items-center justify-between gap-3">
                 <div className="min-w-0"><p className="font-semibold truncate">{c.challengerSpider} challenged {c.mySpider}</p>
                   <p className="text-xs text-muted-foreground">{c.capture ? `${MODES.capture.name} · winner takes the losing spider` : MODES.friendly.name}</p></div>
-                <Button size="sm" variant="outline" onClick={() => navigate("/#capture-challenges")}>Respond</Button>
+                <Button size="sm" variant="outline" onClick={() => openChallengeResponse(c.id)}>Review</Button>
               </CardContent></Card>
             ))}
           </div>
@@ -76,25 +86,63 @@ export default function BattlesHub() {
 
       <Section id="in-progress" icon={Hourglass} title="In progress" count={waiting.length}>
         {waiting.length === 0 ? (
-          <Empty text="No battles waiting on an opponent. Challenge a friend in your pod."
-            cta={<Button asChild variant="outline"><Link to="/pods"><Users className="h-4 w-4 mr-1" />Open Pods</Link></Button>} />
+          <Empty text="No battles waiting on an opponent."
+            cta={<Button variant="outline" onClick={() => openChallengeComposer({ mySpiderId: ready[0]?.id })}><Handshake className="h-4 w-4 mr-1" />Send a {MODES.friendly.name}</Button>} />
         ) : (
           <div className="space-y-2">{waiting.map((b) => (
             <Card key={b.id}><CardContent className="p-3 flex items-center justify-between gap-3">
               <div className="min-w-0"><p className="font-semibold truncate">{b.mySpider} vs {b.oppSpider}</p>
-                <p className="text-xs text-muted-foreground">Waiting on your opponent</p></div>
+                <p className="text-xs text-muted-foreground">Waiting on your opponent's move — they'll be notified. If they miss the {RULES.challenge.moveHours}h deadline, the computer plays for them.</p></div>
               <Button size="sm" variant="ghost" onClick={() => navigate(`/battle/${b.id}`)}>View</Button>
             </CardContent></Card>
           ))}</div>
         )}
       </Section>
 
+      <Section id="challenges" icon={Handshake} title="Challenges" count={challenges.filter((c) => c.state === "incoming").length}>
+        {challenges.length === 0 ? (
+          <Empty text={`No challenges yet. A ${MODES.friendly.name} never risks your spider.`}
+            cta={<Button onClick={() => openChallengeComposer({ mySpiderId: ready[0]?.id })}>Challenge a player</Button>} />
+        ) : (
+          <div className="space-y-2">{challenges.slice(0, 12).map((c) => (
+            <Card key={c.id}><CardContent className="p-3 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-semibold truncate text-sm">{c.mySpider} vs {c.theirSpider ?? "open challenge"}</p>
+                <p className="text-xs text-muted-foreground flex flex-wrap items-center gap-1">
+                  <Badge variant="outline" className={`text-[10px] ${STATE_TONE[c.state]}`}>{STATE_LABEL[c.state]}</Badge>
+                  <span>{c.capture ? MODES.capture.name : MODES.friendly.name}</span>
+                  {(c.state === "pending" || c.state === "incoming") && <span>· expires in {timeLeftLabel(c.expires_at)}</span>}
+                  {(c.state === "your_turn" || c.state === "waiting") && c.turn_deadline && <span>· move due in {timeLeftLabel(c.turn_deadline)}</span>}
+                  {c.state === "completed" && c.won !== undefined && <span>· {c.won ? "You won" : "You lost"}</span>}
+                </p>
+              </div>
+              {c.battle_id && c.state !== "pending" && c.state !== "incoming" ? (
+                <Button size="sm" variant={c.state === "your_turn" ? "default" : "ghost"} onClick={() => navigate(`/battle/${c.battle_id}`)}>
+                  {c.state === "your_turn" ? "Play" : "View"}
+                </Button>
+              ) : (c.state === "incoming" || c.state === "pending") ? (
+                <Button size="sm" variant={c.state === "incoming" ? "default" : "ghost"} onClick={() => openChallengeResponse(c.id)}>
+                  {c.state === "incoming" ? "Review" : "Manage"}
+                </Button>
+              ) : c.state !== "completed" ? (
+                <Button size="sm" variant="ghost" onClick={() => openChallengeComposer({ mySpiderId: ready[0]?.id })}>New</Button>
+              ) : null}
+            </CardContent></Card>
+          ))}</div>
+        )}
+      </Section>
+
       <Section id="find" icon={Search} title="Find a battle" count={0}>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          <Card className="border-primary/40"><CardContent className="p-3">
+            <p className="font-semibold flex items-center gap-1"><Handshake className="h-4 w-4" />{MODES.friendly.name}</p>
+            <p className="text-xs text-muted-foreground mb-2">Take turns with a real player. No spider is lost.</p>
+            <Button size="sm" className="w-full" onClick={() => openChallengeComposer({ mySpiderId: ready[0]?.id })}>Challenge a player</Button>
+          </CardContent></Card>
           <Card><CardContent className="p-3">
             <p className="font-semibold flex items-center gap-1"><Zap className="h-4 w-4" />{MODES.training.long}</p>
             <p className="text-xs text-muted-foreground mb-2">{ready.length ? `${ready.length} spider${ready.length > 1 ? "s" : ""} ready.` : spiders.length ? `All spiders resting or retired (${RULES.battleCooldownHours}h cooldown).` : "You need a spider first."}</p>
-            {ready.length ? <Button size="sm" className="w-full" onClick={() => open({ spiderId: ready[0].id })}>Battle now</Button>
+            {ready.length ? <Button size="sm" variant="outline" className="w-full" onClick={() => open({ spiderId: ready[0].id })}>Battle now</Button>
               : <Button size="sm" variant="outline" className="w-full" onClick={() => navigate(spiders.length ? "/#starting-5" : "/upload")}>{spiders.length ? "View Starting 5" : "Upload a spider"}</Button>}
           </CardContent></Card>
           <Card><CardContent className="p-3">
