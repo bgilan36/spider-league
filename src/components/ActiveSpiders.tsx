@@ -571,6 +571,7 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
                                         <div className="flex-1 min-w-0">
                                           <p className="font-medium truncate">{s.nickname}</p>
                                           <p className="text-xs text-muted-foreground truncate">{s.species}</p>
+                                          <p className="text-[10px] text-muted-foreground"><Badge variant="outline" className="text-[10px] mr-1">Retired</Badge>Can't battle until re-enlisted · tap to re-enlist</p>
                                         </div>
                                         <div className="text-right">
                                           <Badge className={`${rarityColors[s.rarity]} text-white text-[10px]`}>
