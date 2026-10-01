@@ -134,7 +134,7 @@ export default function InteractiveBattleArena({ battleId }: Props) {
       });
       if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message);
     } catch (e: any) {
-      toast.error(e.message || "Failed to submit action");
+      toast.error(e.message || "Failed to submit action", { id: "battle-turn-error" });
     } finally {
       setSubmitting(false);
     }
