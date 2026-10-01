@@ -46,10 +46,11 @@ const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
   };
 
   const markComplete = async () => {
-    // Skipping still guarantees a starter attempt has finished first.
-    if (user && starterState !== "ready" && starterState !== "inactive") {
+    // Skipping still waits for the starter so the roster isn't empty when the modal closes.
+    let spiderId = starterSpider?.id;
+    if (user && !spiderId) {
       const res = await ensureStarterSpider(user.id);
-      if (res.status === "ready") setStarterSpider(res.spider);
+      if (res.status === "ready") { setStarterSpider(res.spider); spiderId = res.spider.id; }
     }
     if (user) {
       await supabase
@@ -57,6 +58,8 @@ const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
         .upsert({ id: user.id, has_completed_onboarding: true }, { onConflict: "id" });
     }
     onComplete();
+    // Nudge the Starting 5 to reload now that the starter exists.
+    if (spiderId) navigate('/', { replace: true, state: { newSpiderId: spiderId } });
   };
 
   const handleStartFirstBattle = async () => {
