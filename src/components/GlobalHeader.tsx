@@ -52,7 +52,7 @@ const GlobalHeader: React.FC = () => {
       '/collection': 'My Collection',
       '/leaderboard': 'Leaderboard',
       '/dex': 'SpiderDex',
-      '/battle-history': 'Battle History',
+      '/battle-history': 'Battles',
       '/roadmap': 'Roadmap',
       '/shop': 'Shop',
       '/leagues': 'Friend Pods',

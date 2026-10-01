@@ -10,6 +10,7 @@ import { ArrowLeft, Trophy, Swords, Crown, Calendar, Bug } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
 import { format } from "date-fns";
+import BattlesHub from "@/components/battle/BattlesHub";
 import BattleDetailsModal from "@/components/BattleDetailsModal";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
@@ -272,12 +273,12 @@ const BattleHistory = () => {
         shouldTrigger={shouldTrigger}
       />
       <Helmet>
-        <title>Battle History — Spider League</title>
+        <title>Battles — Spider League</title>
         <meta name="description" content="View your battle history, statistics, and challenge records in Spider League." />
         <link rel="canonical" href={`${window.location.origin}/battle-history`} />
       </Helmet>
       
-      <main className="container mx-auto px-6 py-8">
+      <main className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
         <div className="flex items-center gap-2 mb-6">
           <Button variant="ghost" size="sm" asChild>
             <Link to="/" className="text-muted-foreground hover:text-foreground">
@@ -286,22 +287,15 @@ const BattleHistory = () => {
             </Link>
           </Button>
           <span className="text-muted-foreground">/</span>
-          <span className="text-sm font-medium">Battle History</span>
+          <span className="text-sm font-medium">Battles</span>
         </div>
         
-        <div className="flex items-center justify-center mb-8">
-          <div className="text-center">
-            <div className="flex justify-center mb-4">
-              <img 
-                src="/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png" 
-                alt="Spider League Logo" 
-                className="h-16 w-auto"
-              />
-            </div>
-            <h1 className="text-4xl font-bold mb-2">Battle History</h1>
-            <p className="text-muted-foreground">Your complete combat record and statistics</p>
-          </div>
-        </div>
+        <h1 className="text-2xl sm:text-4xl font-bold mb-1">Battles</h1>
+        <p className="text-sm text-muted-foreground mb-6">What needs you, what's in progress, and your full record.</p>
+
+        <BattlesHub />
+
+        <h2 id="results" className="text-lg font-bold mb-3 scroll-mt-20 flex items-center gap-2"><Trophy className="h-5 w-5 text-primary" />Results</h2>
 
         {/* Statistics Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -393,7 +387,8 @@ const BattleHistory = () => {
                 <CardContent className="text-center py-12">
                   <Swords className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
                   <h3 className="text-lg font-semibold mb-2">No battles yet</h3>
-                  <p className="text-muted-foreground">Your battle results will appear here once you start fighting</p>
+                  <p className="text-muted-foreground mb-4">Your battle results will appear here once you start fighting</p>
+                  <Button asChild><a href="#find">Find a battle</a></Button>
                 </CardContent>
               </Card>
             ) : (
@@ -473,7 +468,8 @@ const BattleHistory = () => {
                 <CardContent className="text-center py-12">
                   <Bug className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
                   <h3 className="text-lg font-semibold mb-2">No spider records yet</h3>
-                  <p className="text-muted-foreground">Your spiders' battle records will appear here once they start fighting</p>
+                  <p className="text-muted-foreground mb-4">Your spiders' battle records will appear here once they start fighting</p>
+                  <Button asChild><a href="#find">Find a battle</a></Button>
                 </CardContent>
               </Card>
             ) : (

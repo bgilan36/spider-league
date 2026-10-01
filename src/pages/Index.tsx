@@ -31,6 +31,7 @@ import ClickableUsername from "@/components/ClickableUsername";
 import NotificationsDropdown from "@/components/NotificationsDropdown";
 import OnlineUsersBar from "@/components/OnlineUsersBar";
 import NewSpiderSpotlight from "@/components/NewSpiderSpotlight";
+import NextUpCard from "@/components/home/NextUpCard";
 import OnboardingModal from "@/components/OnboardingModal";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
@@ -944,17 +945,17 @@ const Index = () => {
       </Dialog>
 
       <main className="container mx-auto px-3 sm:px-6 py-3 sm:py-6">
-        {/* Online users bar - top of page */}
-        <div className="mb-6">
-          <OnlineUsersBar />
-        </div>
+        {user && (
+          <section className="mb-6">
+            <NextUpCard />
+          </section>
+        )}
 
-        {/* Above-the-fold: Your Starting 5 with embedded battle controls */}
         <section className="mb-6">
           <RookieSeasonChecklist />
         </section>
 
-        <section className="mb-8">
+        <section id="starting-5" className="mb-8 scroll-mt-20">
           <ActiveSpiders onSpiderChange={fetchUserSpiders} newSpiderId={newSpiderId} />
         </section>
 
@@ -962,9 +963,25 @@ const Index = () => {
           <WeeklyMatchupCard />
         </section>
 
+        {/* Public Capture Battle challenges */}
+        <section id="capture-challenges" className="mb-6 sm:mb-8 scroll-mt-20">
+          <DeathBattleFeed />
+        </section>
+
         <section className="mb-6 sm:mb-8">
           <FriendPodsHomeSection />
         </section>
+
+        {/* Secondary: Explore — discovery, spotlights, map */}
+        <div id="explore" className="mt-10 pt-6 border-t scroll-mt-20">
+          <div className="mb-5">
+            <h2 className="text-xl sm:text-2xl font-bold">Explore</h2>
+            <p className="text-xs sm:text-sm text-muted-foreground">Who's online, top pods, chat, leaderboards and the spider map.</p>
+          </div>
+
+        <div className="mb-6">
+          <OnlineUsersBar />
+        </div>
 
         <section className="mb-6 sm:mb-8">
           <ActivePodsLeaderboard />
@@ -972,12 +989,6 @@ const Index = () => {
 
         <section className="mb-6 sm:mb-8">
           <GlobalChat />
-        </section>
-
-        {/* Below-the-fold content */}
-        {/* Public Capture Battle challenges */}
-        <section className="mb-6 sm:mb-8">
-          <DeathBattleFeed />
         </section>
 
         {/* Combat Activity Section */}
@@ -1314,10 +1325,10 @@ const Index = () => {
         <section className="mb-6 sm:mb-8">
           <SpiderUploadHeatmap />
         </section>
-
+        </div>
       </main>
       
-      {/* New Spider Spotlight Section */}
+      {/* New Spider Spotlight Section (part of Explore) */}
       {user && <NewSpiderSpotlight />}
       
       {/* Feedback Card */}
