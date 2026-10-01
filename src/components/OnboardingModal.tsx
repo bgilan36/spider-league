@@ -149,6 +149,75 @@ const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
       )}
     </div>,
 
+    // Slide 1: Your Starting 5
+    <div key="starting5" className="flex flex-col items-center text-center gap-4 py-4">
+      <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+        <Target className="h-8 w-8 text-primary" />
+      </div>
+      <h2 className="text-xl font-bold">Your Starting 5</h2>
+      <div className="text-left max-w-sm space-y-3">
+        <div className="flex gap-2">
+          <Camera className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+          <div>
+            <span className="font-semibold">Upload real spiders</span>
+            <span className="text-muted-foreground text-sm"> — Find spiders in the wild, snap a photo, and we'll create a unique fighter.</span>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Shield className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+          <div>
+            <span className="font-semibold">{RULES.roster.baseSlots} active at a time</span>
+            <span className="text-muted-foreground text-sm"> — {ROSTER_COPY.eligibility}</span>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Clock className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+          <div>
+            <span className="text-muted-foreground text-sm">Retiring never costs you the spider: it keeps its XP, level and Power, and can be re-enlisted for another {RULES.roster.eligibleDays} days.</span>
+          </div>
+        </div>
+      </div>
+    </div>,
+
+    // Slide 2: Two ways to fight
+    <div key="combat" className="flex flex-col items-center text-center gap-4 py-4">
+      <div className="flex gap-3">
+        <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+          <Sword className="h-7 w-7 text-primary" />
+        </div>
+        <div className="h-14 w-14 rounded-2xl bg-destructive/10 flex items-center justify-center">
+          <Skull className="h-7 w-7 text-red-400" />
+        </div>
+      </div>
+      <h2 className="text-xl font-bold">Ways to Fight</h2>
+      <div className="text-left max-w-sm space-y-3">
+        <div className="flex gap-2">
+          <Sword className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+          <div>
+            <span className="font-semibold text-primary">{MODES.training.name}</span>
+            <span className="text-muted-foreground text-sm"> — {MODES.training.risk} Earn XP and stat boosts. {MODES.training.cooldown}</span>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Sword className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+          <div>
+            <span className="font-semibold">{MODES.friendly.name}</span>
+            <span className="text-muted-foreground text-sm"> — Post a challenge for another player to accept. {MODES.friendly.risk}</span>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Skull className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+          <div>
+            <span className="font-semibold text-red-400">{MODES.capture.name}</span>
+            <span className="text-muted-foreground text-sm"> — Winner takes the loser's spider forever. Both players must agree before it starts.</span>
+          </div>
+        </div>
+      </div>
+      <p className="text-xs text-muted-foreground/70 max-w-sm mt-1">
+        Battles use your Starting 5. Wild Skirmishes ({RULES.skirmish.dailyLimit}/day) can use any spider.
+      </p>
+    </div>,
+
   ];
 
   return (
