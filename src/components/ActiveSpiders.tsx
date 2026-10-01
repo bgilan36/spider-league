@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import SpiderDetailsModal from '@/components/SpiderDetailsModal';
 import { useStartSkillBattle } from '@/components/battle/useStartSkillBattle';
 import { ensureStarterSpider } from '@/lib/starterSpider';
+import { usePlayerActions } from '@/hooks/usePlayerActions';
 import { RULES, ELIGIBLE_MS, MODES, ROSTER_COPY, cooldownLabel, readyAtLabel } from '@/lib/gameRules';
 
 interface Spider {
@@ -56,6 +57,7 @@ const COOLDOWN_MINUTES = RULES.battleCooldownHours * 60;
 const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpiderId }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { battles: playerBattles, inBattleIds } = usePlayerActions();
   const { open: openStancePicker, picker: skillBattlePicker } = useStartSkillBattle();
   const [MAX_ACTIVE, setMaxActive] = useState<number>(RULES.roster.baseSlots);
   useEffect(() => {
