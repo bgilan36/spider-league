@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import SpiderDetailsModal from '@/components/SpiderDetailsModal';
 import { useStartSkillBattle } from '@/components/battle/useStartSkillBattle';
+import { ensureStarterSpider } from '@/lib/starterSpider';
 
 interface Spider {
   id: string;
@@ -79,6 +80,8 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
   const [opponents, setOpponents] = useState<(Spider & { owner_name?: string })[]>([]);
   const [opponentsLoading, setOpponentsLoading] = useState(false);
 
+  const starterRecoveryRef = useRef(false);
+
   const fetchSpiders = async () => {
     if (!user) return;
     try {
@@ -92,7 +95,17 @@ const ActiveSpiders: React.FC<ActiveSpidersProps> = ({ onSpiderChange, newSpider
         .order('power_score', { ascending: false });
 
       if (error) throw error;
-      const spiders = (data || []) as Spider[];
+      let spiders = (data || []) as Spider[];
+      // Self-heal: an account with no spiders at all gets its starter (idempotent server-side).
+      if (spiders.length === 0 && !starterRecoveryRef.current) {
+        starterRecoveryRef.current = true;
+        const res = await ensureStarterSpider(user.id);
+        if (res.status === 'ready') {
+          spiders = [res.spider as unknown as Spider];
+        } else if (res.status === 'failed') {
+          toast.error("We couldn't hatch your starter spider. Refresh to try again, or upload a spider.", { id: 'starter-recovery' });
+        }
+      }
       const active = spiders.filter(s => s.eligible_until && new Date(s.eligible_until) > new Date(now));
       const retired = spiders.filter(s => !s.eligible_until || new Date(s.eligible_until) <= new Date(now));
       setActiveSpiders(active);
