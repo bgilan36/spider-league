@@ -35,7 +35,7 @@ function underdogBoost(myPower: number, oppPower: number) {
 export default function InteractiveBattleArena({ battleId }: Props) {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { battle, turns, loading, myHp, opponentHp, mySpider, opponentSpider } =
+  const { battle, turns, loading, loadError, refetch, myHp, opponentHp, mySpider, opponentSpider } =
     useTurnBasedBattle(battleId);
   const [submitting, setSubmitting] = useState(false);
   const [aiTriggered, setAiTriggered] = useState<string>("");
@@ -139,6 +139,29 @@ export default function InteractiveBattleArena({ battleId }: Props) {
       setSubmitting(false);
     }
   };
+
+  if (loadError === "session_expired" || loadError === "not_found") {
+    return (
+      <div className="min-h-[70vh] flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="p-6 text-center space-y-3">
+            <h2 className="text-xl font-bold">
+              {loadError === "session_expired" ? "Your session ended" : "Battle not found"}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {loadError === "session_expired"
+                ? "Sign in again from the home screen, then reopen this battle from Battle History. Your battle is saved."
+                : "This battle doesn't exist or isn't visible to your account."}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center pt-2">
+              <Button onClick={refetch}>Retry</Button>
+              <Button asChild variant="outline"><Link to="/">Go home</Link></Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (loading || !battle || !mySpider || !opponentSpider) {
     return (
