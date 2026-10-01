@@ -793,11 +793,11 @@ const Index = () => {
               </li>
               <li className="flex items-start gap-2">
                 <Target className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                <span>Build your weekly battle roster from eligible spiders.</span>
+                <span>Keep up to 5 active spiders in your Starting 5 for battles.</span>
               </li>
               <li className="flex items-start gap-2">
                 <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                <span>Run quick skirmishes to earn XP and modest stat boosts for winning spiders.</span>
+                <span>Run up to 3 Wild Skirmishes a day with any spider for XP and stat boosts.</span>
               </li>
               <li className="flex items-start gap-2">
                 <Sword className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
@@ -975,7 +975,7 @@ const Index = () => {
         </section>
 
         {/* Below-the-fold content */}
-        {/* Public Death Battle Challenges */}
+        {/* Public Capture Battle challenges */}
         <section className="mb-6 sm:mb-8">
           <DeathBattleFeed />
         </section>
@@ -1181,7 +1181,7 @@ const Index = () => {
             
             <p className="text-xs sm:text-sm text-muted-foreground">
               {leaderboardType === 'weekly' ? 'This week\'s ' : 'All-time '}
-              {leaderboardView === 'spiders' ? 'global top 5 most powerful spider fighters' : 'global top 5 trainers by power + XP'}
+              {leaderboardView === 'spiders' ? 'global top 5 most powerful spider fighters' : 'global top 5 trainers by Power + spider XP'}
             </p>
           </div>
 

@@ -8,6 +8,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import { useNavigate } from "react-router-dom";
 import PowerScoreArc from "@/components/PowerScoreArc";
 import { ensureStarterSpider, type StarterSpider } from "@/lib/starterSpider";
+import { RULES, MODES, ROSTER_COPY } from "@/lib/gameRules";
 
 interface OnboardingModalProps {
   open: boolean;
