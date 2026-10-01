@@ -96,7 +96,8 @@ const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
     // Slide 3: Starter Spider Reveal
     <div key="starter" className="flex flex-col items-center text-center gap-3 py-2">
       <Sparkles className="h-6 w-6 text-primary animate-pulse" />
-      <h2 className="text-xl font-bold">Your Starter Spider!</h2>
+      <h2 className="text-xl font-bold">Welcome to Spider League!</h2>
+      <p className="text-sm text-muted-foreground max-w-xs">Here's your starter spider. Try a practice fight — it takes about a minute.</p>
       {creatingSpider ? (
         <div className="flex flex-col items-center gap-3 py-8">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -127,12 +128,17 @@ const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
             {statBar("Venom", "☠️", starterSpider.venom)}
             {statBar("Webcraft", "🕸️", starterSpider.webcraft)}
           </div>
+          <Button onClick={handleStartFirstBattle} disabled={starterState !== "ready"} className="mt-3 w-full max-w-[280px]" size="lg">
+            <Sword className="h-4 w-4 mr-2" />
+            Try your first training battle
+          </Button>
+          <p className="text-[11px] text-muted-foreground">AI-controlled practice opponent · no one else needs to be online · you can't lose your spider</p>
           <p className="text-xs text-muted-foreground mt-1">
             {starterState === "inactive"
               ? "This spider is retired — re-enlist it from your collection to battle."
               : spiderCreated
-                ? "This spider has been added to your Starting 5!"
-                : "Your starter spider is ready in your Starting 5!"}
+                ? "Added to your Starting 5 and ready to battle."
+                : "Ready in your Starting 5."}
           </p>
         </>
       ) : (
@@ -224,7 +230,7 @@ const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
     <>
     <Dialog open={open} onOpenChange={(o) => { if (!o) markComplete(); }}>
       <DialogContent className="max-w-md p-6 gap-0 [&>button]:hidden">
-        <div className="min-h-[380px] flex items-center justify-center">
+        <div className="min-h-[320px] flex items-center justify-center">
           {slides[currentSlide]}
         </div>
 
