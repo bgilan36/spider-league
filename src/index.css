@@ -235,6 +235,12 @@ All colors MUST be HSL.
     max-width: 100%;
     height: auto;
   }
+  /* Map layers position their own tiles/canvases — never resize them. */
+  .leaflet-container img, .leaflet-container canvas, .leaflet-container svg {
+    max-width: none !important;
+    max-height: none !important;
+    height: revert;
+  }
   /* Keep aspect ratios on intrinsically-sized SVG icons (lucide etc.) */
   svg[width][height] {
     height: revert;
