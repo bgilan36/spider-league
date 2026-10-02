@@ -1115,8 +1115,10 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error("❌ Error in spider-identify:", error);
+    const msg = error instanceof Error ? error.message : "";
+    const safe = /rate limit|credits|AI vision|AI failed/i.test(msg) ? msg : "An internal error occurred. Please try again.";
     return new Response(
-      JSON.stringify({ error: 'An internal error occurred. Please try again.' }),
+      JSON.stringify({ error: safe, debug: msg.slice(0, 200) }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
