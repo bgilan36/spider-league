@@ -368,7 +368,7 @@ const FALLBACK_KEYS = new Set<string>();
   };
   const make = (key: string, family: string, label: string, sci: string, list: SpiderData[]) => {
     US_SPIDER_DATABASE[key] = {
-      scientificName: sci, family, commonNames: [label], danger: list.some((d) => d.danger === "extreme" || d.danger === "high") && family !== "Araneae" ? "moderate" : mode(list.map((d) => d.danger)),
+      scientificName: sci, family, commonNames: [label], danger: mode(list.map((d) => d.danger)),
       isUSNative: true,
       size: { min: Math.min(...list.map((d) => d.size.min)), max: Math.max(...list.map((d) => d.size.max)) },
       speedType: mode(list.map((d) => d.speedType)),
@@ -380,12 +380,13 @@ const FALLBACK_KEYS = new Set<string>();
     };
     FALLBACK_KEYS.add(key);
   };
+  const allSpecies = Object.values(US_SPIDER_DATABASE);
   for (const [family, list] of byFamily) {
     const label = FAMILY_LABELS[family];
     if (!label) continue;
     make(`group_${family.toLowerCase()}`, family, `${label} (species unconfirmed)`, `${family} sp.`, list);
   }
-  make("group_unidentified_spider", "Araneae", "Unidentified Spider", "Araneae sp.", Object.values(US_SPIDER_DATABASE).filter((d) => !FALLBACK_KEYS.has(d.scientificName)));
+  make("group_unidentified_spider", "Araneae", "Unidentified Spider", "Araneae sp.", allSpecies);
   US_SPIDER_DATABASE.group_unidentified_spider.visualKeywords = ["LAST RESORT: definitely a spider, but even the family cannot be determined"];
 }
 function refFacts(sci: string) {
