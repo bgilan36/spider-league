@@ -43,11 +43,13 @@ export default function SpiderUploadHeatmap() {
       zoomControl: true,
       scrollWheelZoom: false,
     }).setView([20, 0], 2);
+    // CARTO basemaps now require an API key (tiles render "API KEY REQUIRED"),
+    // so use Esri's keyless dark-gray canvas.
     L.tileLayer(
-      "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+      "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
       {
-        attribution: '&copy; OpenStreetMap &copy; CARTO',
-        maxZoom: 19,
+        attribution: "Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors",
+        maxZoom: 16,
       }
     ).addTo(map);
 
