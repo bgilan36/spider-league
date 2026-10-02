@@ -85,9 +85,11 @@ serve(async (req) => {
       const prof = new Map((profs || []).map((p: any) => [p.id, p]));
       const seen = new Map((pres || []).map((p: any) => [p.user_id, p.last_seen]));
       const byOwner = new Map<string, any>();
+      // Demo players only ever see other demo players, and real players only real ones.
+      const meDemo = await isDemoUser(sb, me);
       for (const s of pool) {
         const p: any = prof.get(s.owner_id);
-        if (!p || p.is_demo) continue;
+        if (!p || !!p.is_demo !== meDemo) continue;
         const prev = byOwner.get(s.owner_id);
         if (!prev || Math.abs(s.power_score - mine.power_score) < Math.abs(prev.power_score - mine.power_score)) {
           byOwner.set(s.owner_id, { ...s, owner_name: p.display_name || "Player", owner_last_seen: seen.get(s.owner_id) ?? null });
