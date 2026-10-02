@@ -334,6 +334,60 @@ for (const r of refSpecies as RefSpecies[]) {
     baseStats: r.base_stats,
   };
 }
+
+// ---- Family-level fallbacks ----
+// When a photo is clearly a spider but no specific species fits (blurry,
+// juvenile, unusual species), the model picks a family group instead of
+// failing. Stats are averaged from that family's catalog species.
+const FAMILY_LABELS: Record<string, string> = {
+  Araneidae: "Orb Weaver", Salticidae: "Jumping Spider", Lycosidae: "Wolf Spider",
+  Theridiidae: "Cobweb Spider", Agelenidae: "Funnel Weaver", Thomisidae: "Crab Spider",
+  Pisauridae: "Fishing / Nursery Web Spider", Pholcidae: "Cellar Spider", Sparassidae: "Huntsman Spider",
+  Theraphosidae: "Tarantula", Linyphiidae: "Sheet Weaver", Tetragnathidae: "Long-jawed Orb Weaver",
+  Oxyopidae: "Lynx Spider", Gnaphosidae: "Ground Spider", Clubionidae: "Sac Spider",
+  Cheiracanthiidae: "Sac Spider", Eutichuridae: "Sac Spider", Dictynidae: "Mesh-web Spider",
+  Uloboridae: "Hackled Orb Weaver", Anyphaenidae: "Ghost Spider", Philodromidae: "Running Crab Spider",
+  Sicariidae: "Recluse Spider", Corinnidae: "Ant-mimic Sac Spider", Trachelidae: "Sac Spider",
+};
+const FALLBACK_KEYS = new Set<string>();
+{
+  const byFamily = new Map<string, SpiderData[]>();
+  for (const d of Object.values(US_SPIDER_DATABASE)) {
+    if (!byFamily.has(d.family)) byFamily.set(d.family, []);
+    byFamily.get(d.family)!.push(d);
+  }
+  const avg = (list: SpiderData[]): SpiderData["baseStats"] => {
+    const k = ["hp", "damage", "speed", "defense", "venom", "webcraft"] as const;
+    const out = {} as SpiderData["baseStats"];
+    for (const s of k) out[s] = Math.round(list.reduce((a, d) => a + d.baseStats[s], 0) / list.length);
+    return out;
+  };
+  const mode = <T,>(arr: T[]): T => {
+    const c = new Map<T, number>(); arr.forEach((x) => c.set(x, (c.get(x) ?? 0) + 1));
+    return [...c.entries()].sort((a, b) => b[1] - a[1])[0][0];
+  };
+  const make = (key: string, family: string, label: string, sci: string, list: SpiderData[]) => {
+    US_SPIDER_DATABASE[key] = {
+      scientificName: sci, family, commonNames: [label], danger: list.some((d) => d.danger === "extreme" || d.danger === "high") && family !== "Araneae" ? "moderate" : mode(list.map((d) => d.danger)),
+      isUSNative: true,
+      size: { min: Math.min(...list.map((d) => d.size.min)), max: Math.max(...list.map((d) => d.size.max)) },
+      speedType: mode(list.map((d) => d.speedType)),
+      venomPotency: Math.round(list.reduce((a, d) => a + d.venomPotency, 0) / list.length),
+      webBuilder: list.filter((d) => d.webBuilder).length * 2 >= list.length,
+      specialAbilities: mode(list.map((d) => d.specialAbilities)) ?? [],
+      visualKeywords: [`FALLBACK group: pick only if the spider clearly belongs to ${family} but no specific species above fits`],
+      baseStats: avg(list),
+    };
+    FALLBACK_KEYS.add(key);
+  };
+  for (const [family, list] of byFamily) {
+    const label = FAMILY_LABELS[family];
+    if (!label) continue;
+    make(`group_${family.toLowerCase()}`, family, `${label} (species unconfirmed)`, `${family} sp.`, list);
+  }
+  make("group_unidentified_spider", "Araneae", "Unidentified Spider", "Araneae sp.", Object.values(US_SPIDER_DATABASE).filter((d) => !FALLBACK_KEYS.has(d.scientificName)));
+  US_SPIDER_DATABASE.group_unidentified_spider.visualKeywords = ["LAST RESORT: definitely a spider, but even the family cannot be determined"];
+}
 function refFacts(sci: string) {
   const r = REF_BY_SCI.get(sci.toLowerCase());
   if (!r) return null;
