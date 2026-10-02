@@ -1118,7 +1118,7 @@ serve(async (req) => {
     const msg = error instanceof Error ? error.message : "";
     const safe = /rate limit|credits|AI vision|AI failed/i.test(msg) ? msg : "An internal error occurred. Please try again.";
     return new Response(
-      JSON.stringify({ error: safe, debug: msg.slice(0, 200) }),
+      JSON.stringify({ error: safe }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
