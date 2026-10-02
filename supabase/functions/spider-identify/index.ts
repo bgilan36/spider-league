@@ -659,20 +659,18 @@ serve(async (req) => {
     // actually score. The model picks from these keys — closed-set
     // classification is dramatically more reliable than open-vocabulary
     // free-text parsing.
-    const catalogEntries = Object.entries(US_SPIDER_DATABASE)
+    // Speed: the catalog dominated input (~12.7k tokens/call). One compact
+    // pipe-delimited line per species with a trimmed diagnostic cuts it by
+    // more than half; habitat/range are applied after the model answers.
+    const clip = (s: string, n: number) => (s.length > n ? s.slice(0, n).replace(/[,;\s]+\S*$/, "") : s);
+    const catalogLines = Object.entries(US_SPIDER_DATABASE)
       .filter(([, d]) => d.isUSNative || d.isCommonInvasive)
       .map(([key, d]) => {
         const ref = REF_BY_SCI.get(d.scientificName.toLowerCase());
-        return {
-          key,
-          scientific: d.scientificName,
-          common: d.commonNames[0],
-          family: d.family,
-          size_mm: `${d.size.min}-${d.size.max}`,
-          diagnostic: ref?.diagnostic_features ?? d.visualKeywords.slice(0, 8).join(", "),
-          ...(ref ? { habitat: ref.habitat, range: ref.us_range } : {}),
-        };
-      });
+        const diag = clip(ref?.diagnostic_features ?? d.visualKeywords.slice(0, 6).join(", "), 110);
+        return `${key}|${d.commonNames[0]}|${d.scientificName}|${d.size.min}-${d.size.max}mm|${diag}`;
+      })
+      .join("\n");
 
     const locationHint = (() => {
       if (!location) return "Unknown — assume continental United States.";
@@ -697,17 +695,17 @@ serve(async (req) => {
       "Reply ONLY with a single JSON object matching the requested schema — no prose, no markdown.";
 
     const userInstruction =
-      `Catalog of allowed species (pick the species_key from this list ONLY):\n` +
-      JSON.stringify(catalogEntries) +
+      `Catalog of allowed species, one per line as key|common|scientific|size|diagnostic features (species_key = first field):\n` +
+      catalogLines +
       `\n\nObservation location: ${locationHint}\n` +
       `Use the location to disambiguate similar species (e.g. western vs southern black widow, regional tarantulas).` +
-      `\n\nReturn JSON with this exact shape:\n` +
+      `\n\nReturn JSON with this exact shape (be brief):\n` +
       `{\n` +
       `  "isSpider": boolean,\n` +
-      `  "observedFeatures": string,  // 1-2 sentences naming the diagnostic features you saw\n` +
+      `  "observedFeatures": string,  // one short sentence\n` +
       `  "candidates": [\n` +
-      `    { "species_key": string, "confidence": number /* 0-100 */, "reasoning": string }\n` +
-      `  ]  // up to 5 entries, sorted most likely first; species_key MUST be one of the catalog keys\n` +
+      `    { "species_key": string, "confidence": number /* 0-100 */, "reasoning": string /* max 15 words */ }\n` +
+      `  ]  // 3-4 entries, most likely first; species_key MUST be a catalog key\n` +
       `}`;
 
     async function callVision(model: string, priorHint?: string) {
