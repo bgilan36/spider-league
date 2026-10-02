@@ -689,7 +689,11 @@ serve(async (req) => {
       "body coloration and markings (e.g. hourglass, violin, stabilimentum), abdomen shape, leg banding/length, " +
       "eye arrangement when visible, posture, web type if visible, and approximate body size. " +
       "You MUST choose species ONLY from the provided catalog of US-relevant species. " +
-      "If the image clearly does not show a spider, return isSpider=false. " +
+      "Work step by step: first describe what you see (observedFeatures), then rank candidates. " +
+      "Partial, blurry, distant, dead, juvenile or web-only views of a spider still count as a spider — " +
+      "return isSpider=false ONLY if there is no spider at all (e.g. an insect, harvestman/daddy-longlegs opilionid, tick, or no animal). " +
+      "If no specific species fits, use the matching group_* family fallback key (or group_unidentified_spider) rather than forcing a wrong species. " +
+      "Always return at least 3 candidates with honest, calibrated confidences. " +
       "Reply ONLY with a single JSON object matching the requested schema — no prose, no markdown.";
 
     const userInstruction =
@@ -792,46 +796,41 @@ serve(async (req) => {
     const STRONG_MODEL = "openai/gpt-6-astra";
     const LITE_FALLBACK = "google/gemini-3.6-flash";
 
+    type AiCandidate = { species_key: string; confidence: number; reasoning?: string };
+    type Parsed = { isSpider?: boolean; observedFeatures?: string; candidates?: AiCandidate[] };
+    function parseAI(raw: string): Parsed {
+      if (!raw) return {};
+      const cleaned = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/```$/i, "").trim();
+      try { return JSON.parse(cleaned); } catch { /* try block extract */ }
+      const m = raw.match(/\{[\s\S]*\}/);
+      if (m) { try { return JSON.parse(m[0]); } catch { /* ignore */ } }
+      return {};
+    }
+    const validCands = (p: Parsed) =>
+      (Array.isArray(p.candidates) ? p.candidates : []).filter(
+        (c) => c && typeof c.species_key === "string" && US_SPIDER_DATABASE[c.species_key.trim()],
+      ).map((c) => ({ ...c, species_key: c.species_key.trim(), confidence: Math.max(0, Math.min(100, Number(c.confidence) || 0)) }));
+    const summarize = (cs: AiCandidate[]) => cs.slice(0, 3).map((c) => `${c.species_key} (${Math.round(c.confidence)}%)`).join(", ");
+
     let tierUsed = "fast";
+    let fastRaw = "";
     let visionResponse = await callVision(FAST_MODEL);
     if (visionResponse.status === 429 || visionResponse.status === 503) {
       console.warn("Fast vision rate-limited; falling back to lite");
       visionResponse = await callVision(LITE_FALLBACK);
       tierUsed = "lite-fallback";
     }
-
-    if (!visionResponse.ok) {
+    if (visionResponse.ok) {
+      const visionData = await visionResponse.json();
+      fastRaw = visionData.choices?.[0]?.message?.content || "";
+      console.log(`AI Vision (${tierUsed}) Response:`, fastRaw.slice(0, 800));
+    } else {
       const errorText = await visionResponse.text();
-      console.error("Lovable AI vision error:", visionResponse.status, errorText);
-      if (visionResponse.status === 429) {
-        throw new Error("Rate limit exceeded. Please try again in a moment.");
-      }
-      if (visionResponse.status === 402) {
-        throw new Error("AI credits exhausted. Please add credits to continue.");
-      }
-      throw new Error("AI vision analysis failed. Please try again.");
+      console.error("Fast vision error:", visionResponse.status, errorText);
+      if (visionResponse.status === 402) throw new Error("AI credits exhausted. Please add credits to continue.");
     }
-
-    let visionData = await visionResponse.json();
-    let aiResponse: string = visionData.choices?.[0]?.message?.content || "";
-    console.log(`AI Vision (${tierUsed}) Response:`, aiResponse.slice(0, 800));
-
-    // Peek at the fast-pass confidence to decide whether to escalate.
-    function peekTopTwo(raw: string): { top1?: number; top2?: number; summary?: string } {
-      try {
-        const cleaned = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/```$/i, "").trim();
-        const obj = JSON.parse(cleaned);
-        const cands = Array.isArray(obj?.candidates) ? obj.candidates : [];
-        const top1 = Number(cands[0]?.confidence);
-        const top2 = Number(cands[1]?.confidence);
-        const summary = cands
-          .slice(0, 3)
-          .map((c: { species_key?: string; confidence?: number }) =>
-            `${c?.species_key ?? "?"} (${Math.round(Number(c?.confidence) || 0)}%)`)
-          .join(", ");
-        return { top1, top2, summary };
-      } catch { return {}; }
-    }
+    const fast = parseAI(fastRaw);
+    const fastCands = validCands(fast);
 
     // Configurable escalation thresholds (admin-tunable, defaults 70 / 10).
     let minConfidence = 70, minMargin = 10, escalationEnabled = true;
@@ -848,48 +847,68 @@ serve(async (req) => {
       }
     } catch (e) { console.warn("Config load failed, using defaults", e); }
 
-    if (tierUsed === "fast" && escalationEnabled) {
-      const { top1, top2, summary } = peekTopTwo(aiResponse);
-      const uncertain =
-        !Number.isFinite(top1) ||
-        (top1 as number) < minConfidence ||
-        (Number.isFinite(top2) && (top1 as number) - (top2 as number) < minMargin);
-      console.log(`Escalation check: top1=${top1} top2=${top2} thresholds=${minConfidence}/${minMargin} → ${uncertain ? "escalate" : "keep"}`);
-      if (uncertain) {
-        console.log(`Escalating to ${STRONG_MODEL}; fast pass: ${summary}`);
-        const priorHint = summary
-          ? `A first-pass model suggested: ${summary}. Verify or correct these using the diagnostic features you actually see; prefer accuracy over agreement.`
+    const top1 = fastCands[0]?.confidence, top2 = fastCands[1]?.confidence;
+    const fastFailed = !visionResponse.ok || fastCands.length === 0;
+    const uncertain = top1 === undefined || top1 < minConfidence ||
+      (top2 !== undefined && top1 - top2 < minMargin) ||
+      FALLBACK_KEYS.has(fastCands[0]?.species_key ?? "");
+    // Always get a second opinion before rejecting a photo or failing an ID,
+    // even when escalation is turned off — those are the costly mistakes.
+    const mustEscalate = fastFailed || fast.isSpider === false;
+    console.log(`Escalation check: top1=${top1} top2=${top2} thresholds=${minConfidence}/${minMargin} fastFailed=${fastFailed} notSpider=${fast.isSpider === false}`);
+
+    let finalCands: AiCandidate[] = fastCands;
+    let finalIsSpider = fast.isSpider;
+    if (mustEscalate || (escalationEnabled && uncertain)) {
+      const priorHint = fast.isSpider === false
+        ? "A first-pass model thought this might not be a spider. Look carefully — partial, blurry, distant, dead or web-only views of a spider still count as a spider. Only answer isSpider=false if there is truly no spider."
+        : fastCands.length
+          ? `A first-pass model suggested: ${summarize(fastCands)}. Verify or correct these using the diagnostic features you actually see; prefer accuracy over agreement.`
           : undefined;
-        const strong = await callStrong(priorHint);
-        if (strong.ok && strong.text.length > 5) {
-          aiResponse = strong.text;
-          tierUsed = "strong";
-          console.log("AI Vision (strong) Response:", aiResponse.slice(0, 800));
+      console.log(`Escalating to ${STRONG_MODEL}`);
+      const strongRes = await callStrong(priorHint);
+      const strong = strongRes.ok ? parseAI(strongRes.text) : {};
+      const strongCands = validCands(strong);
+      console.log("AI Vision (strong) Response:", strongRes.text.slice(0, 800));
+      if (strongCands.length) {
+        if (fastCands.length && fast.isSpider !== false) {
+          // Ensemble: two independent model families agreeing is the strongest signal.
+          const score = new Map<string, AiCandidate>();
+          for (const [list, w] of [[fastCands, 0.35], [strongCands, 0.65]] as const) {
+            for (const c of list) {
+              const cur = score.get(c.species_key) ?? { species_key: c.species_key, confidence: 0, reasoning: c.reasoning };
+              cur.confidence += c.confidence * w;
+              if (list === strongCands && c.reasoning) cur.reasoning = c.reasoning;
+              score.set(c.species_key, cur);
+            }
+          }
+          const agree = fastCands[0].species_key === strongCands[0].species_key;
+          finalCands = [...score.values()].map((c) => ({ ...c, confidence: Math.min(99, Math.round(c.confidence + (agree && c.species_key === strongCands[0].species_key ? 8 : 0))) }))
+            .sort((x, y) => y.confidence - x.confidence);
+          tierUsed = "ensemble";
         } else {
-          console.warn("Escalation failed with status", strong.status, "— keeping fast result");
+          finalCands = strongCands;
+          tierUsed = "strong";
         }
+        finalIsSpider = true;
+      } else if (strong.isSpider === false && (fast.isSpider === false || !fastCands.length)) {
+        finalIsSpider = false;
+      } else if (!fastCands.length && !strongRes.ok && !visionResponse.ok) {
+        throw new Error(visionResponse.status === 429 ? "Rate limit exceeded. Please try again in a moment." : "AI vision analysis failed. Please try again.");
+      } else if (fast.isSpider === false && strong.isSpider !== false && strongRes.ok) {
+        finalIsSpider = true; // strong saw a spider but couldn't place it → family fallback below
+      }
+    }
+    // Prefer a specific species over a family group when both are close.
+    if (finalCands.length > 1 && FALLBACK_KEYS.has(finalCands[0].species_key)) {
+      const specific = finalCands.find((c) => !FALLBACK_KEYS.has(c.species_key));
+      if (specific && finalCands[0].confidence - specific.confidence < 10) {
+        finalCands = [specific, ...finalCands.filter((c) => c !== specific)];
       }
     }
     console.log(`Final tier used: ${tierUsed}`);
-
-    if (!aiResponse || aiResponse.length < 5) {
-      throw new Error("AI failed to identify the image. Please ensure it shows a spider.");
-    }
-
-    // ---- Parse structured response (with robust fallbacks) ----
-    type AiCandidate = { species_key: string; confidence: number; reasoning?: string };
-    let parsed: { isSpider?: boolean; observedFeatures?: string; candidates?: AiCandidate[] } = {};
-    try {
-      // Strip markdown fences if the model added them despite instructions.
-      const cleaned = aiResponse.trim().replace(/^```(?:json)?\s*/i, "").replace(/```$/i, "").trim();
-      parsed = JSON.parse(cleaned);
-    } catch (e) {
-      // Try to extract the first {...} block.
-      const m = aiResponse.match(/\{[\s\S]*\}/);
-      if (m) {
-        try { parsed = JSON.parse(m[0]); } catch { /* ignore */ }
-      }
-    }
+    const parsed: Parsed = { isSpider: finalIsSpider, candidates: finalCands };
+    const aiResponse = fastRaw;
 
     if (parsed.isSpider === false) {
       return new Response(
@@ -952,7 +971,12 @@ serve(async (req) => {
     }
 
     if (candidatesWithDB.length === 0) {
-      throw new Error("Could not identify any US-native spider species. Please ensure image shows a clear spider photo.");
+      // Never dead-end: a spider photo always gets a fighter. The player can
+      // pick a better match from the species list on the result screen.
+      console.warn("No species matched — using Unidentified Spider fallback");
+      const data = US_SPIDER_DATABASE.group_unidentified_spider;
+      candidatesWithDB.push({ dbKey: "group_unidentified_spider", dbData: data, aiLabel: data.commonNames[0], aiScore: 0.3, dbConfidence: 30, combinedScore: 0.3,
+        reasoning: "The photo looks like a spider, but the species couldn't be pinned down. Try a closer, sharper photo or pick the species yourself." });
     }
 
     // Optional: small bump for region-consistent species when a US location is provided.
