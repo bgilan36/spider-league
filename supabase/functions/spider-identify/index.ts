@@ -726,7 +726,7 @@ serve(async (req) => {
             { role: "user", content: userContent },
           ],
           response_format: { type: "json_object" },
-          max_tokens: 1200,
+          max_tokens: 700,
         }),
       });
     }
@@ -746,8 +746,7 @@ serve(async (req) => {
           model: STRONG_MODEL,
           stream: true,
           store: false,
-          reasoning: { effort: "medium", summary: "auto" },
-          include: ["reasoning.encrypted_content"],
+          reasoning: { effort: "low" }, // speed: low effort is enough for closed-set picks
           text: { format: { type: "json_object" } },
           input: [
             { role: "system", content: [{ type: "input_text", text: systemPrompt }] },
@@ -812,6 +811,15 @@ serve(async (req) => {
 
     let tierUsed = "fast";
     let fastRaw = "";
+    // Speed: load admin thresholds while the first AI call runs.
+    const cfgPromise = (async () => {
+      try {
+        const { data: cfg } = await supabase.from("species_id_config")
+          .select("min_confidence, min_margin, escalation_enabled").eq("id", 1).maybeSingle();
+        if (cfg) return { minConfidence: cfg.min_confidence, minMargin: cfg.min_margin, escalationEnabled: cfg.escalation_enabled };
+      } catch (e) { console.warn("Config load failed, using defaults", e); }
+      return { minConfidence: 70, minMargin: 10, escalationEnabled: true };
+    })();
     let visionResponse = await callVision(FAST_MODEL);
     if (visionResponse.status === 429 || visionResponse.status === 503) {
       console.warn("Fast vision rate-limited; falling back to lite");
@@ -830,20 +838,8 @@ serve(async (req) => {
     const fast = parseAI(fastRaw);
     const fastCands = validCands(fast);
 
-    // Configurable escalation thresholds (admin-tunable, defaults 70 / 10).
-    let minConfidence = 70, minMargin = 10, escalationEnabled = true;
-    try {
-      const { data: cfg } = await supabase
-        .from("species_id_config")
-        .select("min_confidence, min_margin, escalation_enabled")
-        .eq("id", 1)
-        .maybeSingle();
-      if (cfg) {
-        minConfidence = cfg.min_confidence;
-        minMargin = cfg.min_margin;
-        escalationEnabled = cfg.escalation_enabled;
-      }
-    } catch (e) { console.warn("Config load failed, using defaults", e); }
+    // Thresholds were loaded in parallel with the first AI call.
+    const { minConfidence, minMargin, escalationEnabled } = await cfgPromise;
 
     const top1 = fastCands[0]?.confidence, top2 = fastCands[1]?.confidence;
     const fastFailed = !visionResponse.ok || fastCands.length === 0;
