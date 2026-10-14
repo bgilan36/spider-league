@@ -847,24 +847,29 @@ serve(async (req) => {
     const uncertain = top1 === undefined || top1 < minConfidence ||
       (top2 !== undefined && top1 - top2 < minMargin) ||
       FALLBACK_KEYS.has(fastCands[0]?.species_key ?? "");
-    // Always get a second opinion before rejecting a photo or failing an ID,
-    // even when escalation is turned off — those are the costly mistakes.
+    // Speed (<5s target): unsure photos no longer get a slow second AI check —
+    // the group fallback handles them. Only a failed ID or a "not a spider"
+    // verdict gets one quick second look from the lite model.
     const mustEscalate = fastFailed || fast.isSpider === false;
+    void escalationEnabled; void uncertain;
     console.log(`Escalation check: top1=${top1} top2=${top2} thresholds=${minConfidence}/${minMargin} fastFailed=${fastFailed} notSpider=${fast.isSpider === false}`);
 
     let finalCands: AiCandidate[] = fastCands;
     let finalIsSpider = fast.isSpider;
-    if (mustEscalate || (escalationEnabled && uncertain)) {
+    if (mustEscalate) {
       const priorHint = fast.isSpider === false
         ? "A first-pass model thought this might not be a spider. Look carefully — partial, blurry, distant, dead or web-only views of a spider still count as a spider. Only answer isSpider=false if there is truly no spider."
         : fastCands.length
           ? `A first-pass model suggested: ${summarize(fastCands)}. Verify or correct these using the diagnostic features you actually see; prefer accuracy over agreement.`
           : undefined;
-      console.log(`Escalating to ${STRONG_MODEL}`);
-      const strongRes = await callStrong(priorHint);
+      const quickModel = tierUsed === "lite-fallback" ? FAST_MODEL : LITE_FALLBACK;
+      console.log(`Quick second look with ${quickModel}`);
+      const qr = await callVision(quickModel, priorHint);
+      const qText = qr.ok ? ((await qr.json()).choices?.[0]?.message?.content || "") : "";
+      const strongRes = { ok: qr.ok && qText.length > 0, status: qr.status, text: qText };
       const strong = strongRes.ok ? parseAI(strongRes.text) : {};
       const strongCands = validCands(strong);
-      console.log("AI Vision (strong) Response:", strongRes.text.slice(0, 800));
+      console.log("AI Vision (second look) Response:", strongRes.text.slice(0, 800));
       if (strongCands.length) {
         if (fastCands.length && fast.isSpider !== false) {
           // Ensemble: two independent model families agreeing is the strongest signal.
