@@ -727,7 +727,7 @@ serve(async (req) => {
           ],
           response_format: { type: "json_object" },
           max_tokens: 700,
-          reasoning_effort: "low", // speed: little thinking needed to pick from a closed list
+          reasoning_effort: "none", // speed (<5s target): thinking roughly doubled response time
         }),
       });
     }
