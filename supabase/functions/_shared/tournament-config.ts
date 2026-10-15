@@ -49,7 +49,8 @@ export const TOURNAMENT = {
   /** Lovable AI model used for final recaps. */
   RECAP_MODEL: "google/gemini-3.8-flash",
 
-  EMAIL_FROM: "Spider League <results@spiderleague.app>",
+  EMAIL_FROM: "Spider League <hello@spiderleague.app>",
+  EMAIL_REPLY_TO: "bgilan@gmail.com",
   SITE_URL: "https://spiderleague.app",
   /** Starter spiders are gifts, not catches — never count as fresh. */
   STARTER_SPECIES: "Spider League Starter Spider",

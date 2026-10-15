@@ -20,7 +20,7 @@ async function sendEmail(to: string, subject: string, html: string, unsubUrl: st
       "X-Connection-Api-Key": Deno.env.get("RESEND_API_KEY")!,
     },
     body: JSON.stringify({
-      from: TOURNAMENT.EMAIL_FROM, to: [to], subject, html,
+      from: TOURNAMENT.EMAIL_FROM, reply_to: TOURNAMENT.EMAIL_REPLY_TO, to: [to], subject, html,
       headers: { "List-Unsubscribe": `<${unsubUrl}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" },
     }),
   });
