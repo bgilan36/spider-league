@@ -20,6 +20,8 @@ interface Profile {
   avatar_url: string | null;
   bio: string | null;
   email_communications_enabled: boolean;
+  weekly_results_email?: boolean;
+  friday_reminder_email?: boolean;
   share_spider_locations: boolean;
 }
 
@@ -83,7 +85,7 @@ export const UserProfileMenu = () => {
       // Fetch settings data
       const { data: settingsData, error: settingsError } = await supabase
         .from('profile_settings')
-        .select('email_communications_enabled, share_spider_locations')
+        .select('email_communications_enabled, share_spider_locations, weekly_results_email, friday_reminder_email' as any)
         .eq('id', user.id)
         .single();
 
@@ -95,8 +97,10 @@ export const UserProfileMenu = () => {
         display_name: profileData?.display_name || null,
         avatar_url: profileData?.avatar_url || null,
         bio: profileData?.bio || null,
-        email_communications_enabled: settingsData?.email_communications_enabled ?? true,
-        share_spider_locations: settingsData?.share_spider_locations ?? false,
+        email_communications_enabled: (settingsData as any)?.email_communications_enabled ?? true,
+        share_spider_locations: (settingsData as any)?.share_spider_locations ?? false,
+        weekly_results_email: (settingsData as any)?.weekly_results_email ?? true,
+        friday_reminder_email: (settingsData as any)?.friday_reminder_email ?? true,
       });
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -128,6 +132,8 @@ export const UserProfileMenu = () => {
           id: user.id,
           email_communications_enabled: profile.email_communications_enabled,
           share_spider_locations: profile.share_spider_locations,
+          weekly_results_email: profile.weekly_results_email ?? true,
+          friday_reminder_email: profile.friday_reminder_email ?? true,
           updated_at: new Date().toISOString()
         });
 
@@ -383,6 +389,20 @@ export const UserProfileMenu = () => {
                   }
                 />
               </div>
+
+              {([
+                ["weekly_results_email", "Weekly results", "Your brackets, pod standings and the Global Cup teaser every Sunday night."],
+                ["friday_reminder_email", "Friday reminder", "A heads-up on Friday if you haven't caught a spider this week."],
+              ] as const).map(([key, label, desc]) => (
+                <div key={key} className="flex items-center justify-between space-x-2">
+                  <div className="space-y-1">
+                    <Label htmlFor={key} className="text-sm font-medium">{label}</Label>
+                    <p className="text-sm text-muted-foreground">{desc}</p>
+                  </div>
+                  <Switch id={key} checked={profile[key] ?? true}
+                    onCheckedChange={(checked) => setProfile(prev => ({ ...prev, [key]: checked }))} />
+                </div>
+              ))}
 
               {/* Share Spider Locations */}
               <div className="flex items-center justify-between space-x-2">
