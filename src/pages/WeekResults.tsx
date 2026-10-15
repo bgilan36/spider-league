@@ -10,6 +10,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import BracketView from "@/components/week/BracketView";
 import ChampionReveal from "@/components/week/ChampionReveal";
 import SpiderLogoLoader from "@/components/SpiderLogoLoader";
+import { ensureCupCard } from "@/lib/cupShareImage";
 import { cupShareUrl, logEvent, weekLabel, type Bracket, type GameWeek, type Match } from "@/lib/tournament";
 
 const db = supabase as any;
@@ -75,6 +76,7 @@ export default function WeekResults() {
   const share = async () => {
     const url = cupShareUrl(weekId);
     logEvent("share_clicked", { surface: "results" }, weekId);
+    if (user && gChamp && week && !week.is_test) await ensureCupCard(weekId, { name: gChamp.name, species: gChamp.species, imageUrl: gChamp.image_url, weekLabel: weekLabel(week), owner: gChamp.owner_name });
     const text = `The ${weekLabel(week)} Global Cup champion has been crowned 🕷️`;
     try {
       if (navigator.share) await navigator.share({ title: "Spider League Global Cup", text, url });
