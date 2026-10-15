@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.reject_duplicate_spider_photo() FROM PUBLIC, anon, authenticated;
