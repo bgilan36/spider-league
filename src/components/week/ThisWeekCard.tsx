@@ -136,7 +136,7 @@ export default function ThisWeekCard() {
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <h3 className="font-bold">My entries <span className="text-muted-foreground font-normal">({entries.length || (veteran ? 1 : 0)}/{max})</span></h3>
+              <h3 className="font-bold">My entries <span className="text-muted-foreground font-normal">({entries.length || (veteran ? 1 : 0)}/{Math.min(max, Math.max(tw.fresh.length, 1))} fresh)</span></h3>
               {tw.fresh.length > 0 && tw.week && (
                 <Button variant="ghost" size="sm" onClick={openSwap}>Swap</Button>
               )}
@@ -146,6 +146,9 @@ export default function ThisWeekCard() {
                 {entries.map((s) => <SpiderTile key={s.id} s={s} badge="Fresh" onClick={openSwap} />)}
                 {!tw.explicit && tw.fresh.length > max && (
                   <p className="text-xs text-muted-foreground">We've entered your top {max} by Power. Tap Swap to choose.</p>
+                )}
+                {tw.fresh.length < max && (
+                  <p className="text-xs text-muted-foreground">Only spiders caught this week can enter — catch {max - tw.fresh.length} more before {TOURNAMENT.LOCK_LABEL} to fill your remaining slot{max - tw.fresh.length === 1 ? "" : "s"}.</p>
                 )}
               </div>
             ) : (
@@ -201,7 +204,7 @@ export default function ThisWeekCard() {
         <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Choose your entries</DialogTitle>
-            <DialogDescription>Pick up to {max} of this week's catches. They enter the Global Cup and your pods.</DialogDescription>
+            <DialogDescription>Pick up to {max} of this week's catches — only spiders caught since this week opened are eligible. They enter the Global Cup and your pods.</DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
             {tw.fresh.map((s) => (
