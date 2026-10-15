@@ -791,19 +791,15 @@ const Index = () => {
             <ul className="space-y-2 text-xs sm:text-sm text-muted-foreground">
               <li className="flex items-start gap-2">
                 <Camera className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                <span>Take photos of real spiders you find in everyday life, upload them, and Spider League turns them into digital fighters with battle skills for your squad.</span>
+                <span><b className="text-foreground">Catch spiders all week.</b> Photograph real spiders you find. Each one becomes a fighter with real stats.</span>
               </li>
               <li className="flex items-start gap-2">
                 <Target className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                <span>Keep up to 5 active spiders in your Starting 5 for battles.</span>
+                <span><b className="text-foreground">Entries lock Sunday at 5pm PT.</b> Your top 3 fresh catches enter the Global Cup and your friend pods.</span>
               </li>
               <li className="flex items-start gap-2">
                 <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                <span>Run up to 3 Wild Skirmishes a day with any spider for XP and stat boosts.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Sword className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                <span>Enter battles against other players, where the winner can take ownership of the losing spider.</span>
+                <span><b className="text-foreground">Results are revealed Sunday night.</b> Watch your brackets play out and see who's crowned champion.</span>
               </li>
             </ul>
           </section>
