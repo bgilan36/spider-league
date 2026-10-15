@@ -47,7 +47,7 @@ export const TOURNAMENT = {
   NUDGE_ACTIVE_WEEKS: 4,
 
   /** Lovable AI model used for final recaps. */
-  RECAP_MODEL: "google/gemini-2.5-flash",
+  RECAP_MODEL: "google/gemini-3.8-flash",
 
   EMAIL_FROM: "Spider League <results@spiderleague.app>",
   SITE_URL: "https://spiderleague.app",
