@@ -174,7 +174,7 @@ export async function buildAndSimulate(db: DB, week: any) {
   const globalReal = all.filter((p) => !p.is_veteran && !p.is_demo);
   if (globalReal.length > 0) {
     const size = bracketSize(globalReal.length, TOURNAMENT.MIN_GLOBAL_BRACKET);
-    const wild = makeWildChallengers(size - globalReal.length > 0 ? Math.max(0, TOURNAMENT.MIN_GLOBAL_BRACKET - globalReal.length) : 0, await wildSample(db, globalReal), `${week.id}:global`);
+    const wild = makeWildChallengers(Math.max(0, TOURNAMENT.MIN_GLOBAL_BRACKET - globalReal.length), await wildSample(db, globalReal), `${week.id}:global`);
     const result = simulateBracket([...globalReal, ...wild], size, `${week.id}:global`, false);
     const recap = await writeRecap(result, "Global Cup");
     await insertBracket(db, week.id, "global", null, result, recap);
