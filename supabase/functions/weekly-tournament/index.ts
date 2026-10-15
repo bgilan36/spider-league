@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.55.0";
 import { TOURNAMENT } from "../_shared/tournament-config.ts";
 import { localParts, weekWindow } from "../_shared/tournament-engine.ts";
 import { ensureOpenWeek, log, runPipeline } from "./pipeline.ts";
-import { sendFridayNudges, sendTest, sendWeeklyResults } from "./emails.ts";
+import { previewTest, sendFridayNudges, sendTest, sendWeeklyResults } from "./emails.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -113,8 +113,10 @@ Deno.serve(async (req) => {
         return json({ ok: true, ...(await tick(admin)) });
       }
       case "send_test_results":
-      case "send_test_nudge": {
-        const kind = action === "send_test_results" ? "weekly_results" : "friday_nudge";
+      case "send_test_nudge":
+      case "preview_test_results":
+      case "preview_test_nudge": {
+        const kind = action.endsWith("results") ? "weekly_results" : "friday_nudge";
         let week: any;
         if (kind === "weekly_results") {
           const { data } = await admin.from("game_weeks").select("*").eq("status", "published").order("published_at", { ascending: false }).limit(1).maybeSingle();
@@ -124,7 +126,15 @@ Deno.serve(async (req) => {
           const open = await ensureOpenWeek(admin);
           week = (await admin.from("game_weeks").select("*").eq("id", open.id).single()).data;
         }
-        return json({ ok: true, week: week.id, ...(await sendTest(admin, kind, week, adminId)) });
+        if (action.startsWith("preview")) {
+          const m = await previewTest(admin, kind, week, adminId);
+          return json({ ok: true, week: week.id, subject: m.subject, html: m.html });
+        }
+        try {
+          return json({ ok: true, week: week.id, ...(await sendTest(admin, kind, week, adminId)) });
+        } catch (e) {
+          return json({ ok: false, error: String((e as Error).message ?? e) }, 200);
+        }
       }
       default: return json({ error: "Unknown action" }, 400);
     }
