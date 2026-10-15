@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import PrivateLeagueInvitePanel from "@/components/PrivateLeagueInvitePanel";
 import PodJoinRequestsPanel from "@/components/PodJoinRequestsPanel";
 import PrivateLeagueStandings from "@/components/PrivateLeagueStandings";
+import PodSeasonStandings from "@/components/week/PodSeasonStandings";
 import WeeklyMatchupCard from "@/components/WeeklyMatchupCard";
 import PodChat from "@/components/PodChat";
 import PodImageUploader from "@/components/PodImageUploader";
@@ -300,29 +301,15 @@ const PrivateLeagueDetail = () => {
         </div>
       </div>
 
-      {/* Primary action: prominent, centered Battle CTA */}
       <div className="mb-6 flex justify-center">
-        <Button
-          onClick={openPicker}
-          disabled={battleLoading || members.length < 2}
-          size="lg"
-          className="w-full sm:w-auto sm:min-w-[280px] h-14 text-base shadow-glow"
-        >
-          {battleLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Swords className="h-5 w-5" />}
-          Battle Now
+        <Button asChild size="lg" className="w-full sm:w-auto sm:min-w-[280px] h-14 text-base shadow-glow">
+          <Link to="/upload"><Camera className="h-5 w-5" />Catch a spider for this week</Link>
         </Button>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="space-y-6">
-          <WeeklyMatchupCard podLeagueId={league.id} />
-          <PrivateLeagueStandings
-            standings={standings}
-            timeframe={timeframe}
-            onTimeframeChange={setTimeframe}
-            loading={standingsLoading}
-            refreshing={standingsRefreshing}
-          />
+          <PodSeasonStandings podId={league.id} />
           <PodChat leagueId={leagueId!} members={members} />
           {isCommissioner && leagueId && (
             <PodJoinRequestsPanel leagueId={leagueId} onApproved={fetchLeague} />

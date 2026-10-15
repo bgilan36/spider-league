@@ -15,9 +15,18 @@ export default function TrophyShelf({ userId }: { userId: string }) {
   const [rows, setRows] = useState<any[]>([]);
   useEffect(() => {
     (async () => {
-      const { data } = await db.from("trophies").select("id, kind, week_id, pod_id, spider_id, game_weeks(starts_at, display_name), spiders(nickname, image_url), private_leagues(name)")
+      const { data } = await db.from("trophies").select("id, kind, week_id, pod_id, spider_id, game_weeks(starts_at, display_name)")
         .eq("user_id", userId).order("created_at", { ascending: false });
-      setRows(data ?? []);
+      const list = (data ?? []) as any[];
+      const sIds = [...new Set(list.map((t) => t.spider_id))];
+      const pIds = [...new Set(list.map((t) => t.pod_id).filter(Boolean))];
+      const [{ data: sp }, { data: pods }] = await Promise.all([
+        sIds.length ? db.from("spiders").select("id, nickname, image_url").in("id", sIds) : Promise.resolve({ data: [] }),
+        pIds.length ? db.from("private_leagues").select("id, name").in("id", pIds) : Promise.resolve({ data: [] }),
+      ]);
+      const sm = new Map((sp ?? []).map((s: any) => [s.id, s]));
+      const pm = new Map((pods ?? []).map((p: any) => [p.id, p]));
+      setRows(list.map((t) => ({ ...t, spiders: sm.get(t.spider_id), private_leagues: pm.get(t.pod_id) })));
     })();
   }, [userId]);
   if (!rows.length) return null;
