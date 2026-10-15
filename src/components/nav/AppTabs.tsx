@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { Home, Camera, Users, Trophy, Bug, type LucideIcon } from "lucide-react";
+import { Home, Camera, Plus, Users, Trophy, Bug, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Tab = {
@@ -103,6 +103,26 @@ export const MobileTabBar: React.FC<{ pathname: string }> = ({ pathname }) => {
           const active = tab.match ? tab.match(pathname) : pathname === tab.to;
           const Icon = tab.icon;
           const isHome = i === 0;
+          const isCatch = tab.to === "/upload";
+          if (isCatch) {
+            return (
+              <NavLink
+                key={tab.to}
+                to={tab.to}
+                aria-label="Catch a spider"
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "flex items-center justify-center h-12 w-12 -my-1 shrink-0 rounded-full transition-transform",
+                  "bg-primary text-primary-foreground shadow-lg shadow-primary/30",
+                  "hover:scale-105 active:scale-95",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                  active && "ring-2 ring-ring ring-offset-2 ring-offset-background"
+                )}
+              >
+                <Plus className="h-6 w-6" strokeWidth={2.5} />
+              </NavLink>
+            );
+          }
           return (
             <NavLink
               key={tab.to}
