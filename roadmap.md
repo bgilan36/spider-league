@@ -1,23 +1,10 @@
 # Weekly Tournament Roadmap
 
-## Phase 1 — Engine
-- [ ] Schema: game_weeks, weekly_entries, brackets, matches, game_seasons standings, trophies, pipeline log, photo hash
-- [ ] Shared config + deterministic engine + tests
-- [ ] weekly-tournament edge function (lock → build → simulate → publish → open next), idempotent
-- [ ] Hourly scheduled job
-- [ ] Admin: test week run/reset, display_name, raw bracket inspect
+## Done
+- Engine, hourly job, admin test-week tools
+- This Week home, results reveal, standings, trophies, public Cup + preview image, analytics
+- Results email, Friday reminder, settings switches, unsubscribe, admin test sends
 
-## Phase 2 — Front end
-- [ ] Retire manual battles from nav/home/onboarding
-- [ ] Home "This Week" (countdown, catch CTA, entries + swap, veteran, pod strip, results card)
-- [ ] /week/:weekId results reveal
-- [ ] Pod standings, profile trophies + history
-- [ ] Public /cup/:weekId + OG image
-- [ ] Analytics events + admin view
-
-## Phase 3 — Email (Resend)
-- [ ] Resend connection
-- [ ] Weekly results email, email_log uniqueness
-- [ ] Friday nudge
-- [ ] Preferences + one-click unsubscribe
-- [ ] Admin test sends
+## Open
+- [ ] Verify spiderleague.app in Resend (blocked: needs Brian) — until then no emails deliver
+- [ ] Old manual-battle screens remain reachable from spider profiles/collection (only nav, home, onboarding were retired)
