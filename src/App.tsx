@@ -25,6 +25,9 @@ import SpeciesGuide from "./pages/SpeciesGuide";
 import Pods from "./pages/Pods";
 import BrowsePods from "./pages/BrowsePods";
 import Skirmish from "./pages/Skirmish";
+import WeekResults from "./pages/WeekResults";
+import PublicCup from "./pages/PublicCup";
+import UtmCapture from "@/components/week/UtmCapture";
 import { AuthProvider } from "@/auth/AuthProvider";
 import Layout from "@/components/Layout";
 import NotificationListener from "@/components/NotificationListener";
@@ -53,6 +56,7 @@ const App = () => (
             <NotificationListener />
             <BattleNotification />
             <ReferralCapture />
+            <UtmCapture />
             <Layout>
               <Routes>
                 <Route path="/" element={<Index />} />
@@ -74,6 +78,8 @@ const App = () => (
                 <Route path="/leagues/:leagueId" element={<PrivateLeagueDetail />} />
                 <Route path="/join/:inviteToken" element={<JoinLeague />} />
                 <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/week/:weekId" element={<WeekResults />} />
+                <Route path="/cup/:weekId" element={<PublicCup />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

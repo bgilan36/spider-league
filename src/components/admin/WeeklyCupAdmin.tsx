@@ -62,7 +62,7 @@ export default function WeeklyCupAdmin() {
         return {
           week: wk, wau: active.size,
           freshPct: active.size ? Math.round((fresh / active.size) * 100) : 0,
-          championPct: active.size ? Math.round(([...champs].filter((u) => active.has(u) || true).length / active.size) * 100) : 0,
+          championPct: active.size ? Math.round(([...champs].filter((u) => active.has(u)).length / active.size) * 100) : 0,
           emailVisits: inWeek.filter((e: any) => e.event === "email_visit").length,
         };
       }));
