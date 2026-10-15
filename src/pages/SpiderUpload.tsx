@@ -942,8 +942,13 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                  <div className="space-y-2">
                    <Label>Spider Image</Label>
                     <div
-                      className={`border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 sm:p-8 text-center ${!previewUrl ? 'animate-pulse ring-1 ring-primary/20' : ''}`}
-                   >
+                      role={previewUrl ? undefined : "button"}
+                      tabIndex={previewUrl ? undefined : 0}
+                      aria-label={previewUrl ? undefined : "Upload spider image"}
+                      onClick={previewUrl ? undefined : () => { if (!identifying && !uploading) fileInputRef.current?.click(); }}
+                      onKeyDown={previewUrl ? undefined : (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (!identifying && !uploading) fileInputRef.current?.click(); } }}
+                      className={`border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 sm:p-8 text-center transition-colors hover:border-primary/60 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${!previewUrl ? 'animate-pulse ring-1 ring-primary/20 cursor-pointer select-none' : ''}`}
+                    >
                     {previewUrl ? (
                       <div className="space-y-4">
                         <img 
