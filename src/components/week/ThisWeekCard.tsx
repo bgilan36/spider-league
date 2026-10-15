@@ -147,6 +147,9 @@ export default function ThisWeekCard() {
                 {!tw.explicit && tw.fresh.length > max && (
                   <p className="text-xs text-muted-foreground">We've entered your top {max} by Power. Tap Swap to choose.</p>
                 )}
+                {tw.fresh.length < max && (
+                  <p className="text-xs text-muted-foreground">Only spiders caught this week can enter — catch {max - tw.fresh.length} more before {TOURNAMENT.LOCK_LABEL} to fill your remaining slot{max - tw.fresh.length === 1 ? "" : "s"}.</p>
+                )}
               </div>
             ) : (
               <div className="rounded-lg border border-dashed border-border p-4 space-y-3">
