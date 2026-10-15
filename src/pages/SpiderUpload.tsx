@@ -967,7 +967,7 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                         <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
                         <div>
                           <p className="text-lg font-medium">Upload spider image</p>
-                          <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>Choose photo</Button>
+                          <Button type="button" variant="outline" onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}>Choose photo</Button>
                         </div>
                       </div>
                     )}
