@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.challenge]
 verify_jwt = false
+
+[functions.weekly-tournament]
+verify_jwt = false
