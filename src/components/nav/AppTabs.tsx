@@ -94,12 +94,12 @@ export const MobileTabBar: React.FC<{ pathname: string }> = ({ pathname }) => {
     >
       <div
         className={cn(
-          "flex items-center justify-between gap-0.5 rounded-full border border-border/60 px-1.5 py-2",
+          "grid grid-cols-5 items-center gap-0.5 rounded-full border border-border/60 px-1.5 py-2",
           "bg-background/90 supports-[backdrop-filter]:bg-background/75",
           "backdrop-blur-2xl backdrop-saturate-150 shadow-xl"
         )}
       >
-        {TABS.map((tab, i) => {
+        {[TABS[0], TABS[2], TABS[1], TABS[3], TABS[4]].map((tab, i) => {
           const active = tab.match ? tab.match(pathname) : pathname === tab.to;
           const Icon = tab.icon;
           const isHome = i === 0;
@@ -112,7 +112,7 @@ export const MobileTabBar: React.FC<{ pathname: string }> = ({ pathname }) => {
                 aria-label="Catch a spider"
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex items-center justify-center h-12 w-12 -my-1 shrink-0 rounded-full transition-transform",
+                  "relative -top-3 flex items-center justify-center justify-self-center h-14 w-14 -my-1 rounded-full transition-transform",
                   "bg-primary text-primary-foreground shadow-lg shadow-primary/30",
                   "hover:scale-105 active:scale-95",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
@@ -130,7 +130,7 @@ export const MobileTabBar: React.FC<{ pathname: string }> = ({ pathname }) => {
               aria-label={tab.label}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex min-w-0 flex-col items-center justify-center gap-0.5 h-12 flex-1 rounded-full text-[10px] font-semibold uppercase transition-colors",
+                "flex min-w-0 flex-col items-center justify-center gap-0.5 h-12 rounded-full text-[10px] font-semibold uppercase transition-colors",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 isHome && active && "bg-primary text-primary-foreground",
                 !isHome && active && "text-primary bg-primary/10",

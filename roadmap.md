@@ -6,5 +6,6 @@
 - Results email, Friday reminder, settings switches, unsubscribe, admin test sends
 
 ## Open
+- [ ] Center the raised mobile upload button and verify visible heat map colors
 - [ ] Verify spiderleague.app in Resend (blocked: needs Brian) — until then no emails deliver
 - [ ] Old manual-battle screens remain reachable from spider profiles/collection (only nav, home, onboarding were retired)
