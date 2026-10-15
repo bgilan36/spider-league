@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_events: {
+        Row: {
+          created_at: string
+          event: string
+          id: string
+          props: Json
+          user_id: string | null
+          week_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event: string
+          id?: string
+          props?: Json
+          user_id?: string | null
+          week_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event?: string
+          id?: string
+          props?: Json
+          user_id?: string | null
+          week_id?: string | null
+        }
+        Relationships: []
+      }
       badges: {
         Row: {
           color: string
@@ -325,6 +352,63 @@ export type Database = {
           },
         ]
       }
+      brackets: {
+        Row: {
+          champion_participant_id: string | null
+          created_at: string
+          final_recap: string | null
+          id: string
+          participants: Json
+          pod_id: string | null
+          simulated_at: string | null
+          size: number
+          type: string
+          upset_match_id: string | null
+          week_id: string
+        }
+        Insert: {
+          champion_participant_id?: string | null
+          created_at?: string
+          final_recap?: string | null
+          id?: string
+          participants?: Json
+          pod_id?: string | null
+          simulated_at?: string | null
+          size: number
+          type: string
+          upset_match_id?: string | null
+          week_id: string
+        }
+        Update: {
+          champion_participant_id?: string | null
+          created_at?: string
+          final_recap?: string | null
+          id?: string
+          participants?: Json
+          pod_id?: string | null
+          simulated_at?: string | null
+          size?: number
+          type?: string
+          upset_match_id?: string | null
+          week_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brackets_pod_id_fkey"
+            columns: ["pod_id"]
+            isOneToOne: false
+            referencedRelation: "private_leagues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brackets_week_id_fkey"
+            columns: ["week_id"]
+            isOneToOne: false
+            referencedRelation: "game_weeks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_mentions: {
         Row: {
           created_at: string
@@ -410,6 +494,78 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      email_log: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          kind: string
+          status: string
+          subject: string | null
+          user_id: string
+          week_id: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          kind: string
+          status?: string
+          subject?: string | null
+          user_id: string
+          week_id: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          kind?: string
+          status?: string
+          subject?: string | null
+          user_id?: string
+          week_id?: string
+        }
+        Relationships: []
+      }
+      game_weeks: {
+        Row: {
+          champion_spider_id: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          is_test: boolean
+          locks_at: string
+          published_at: string | null
+          starts_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          champion_spider_id?: string | null
+          created_at?: string
+          display_name?: string | null
+          id: string
+          is_test?: boolean
+          locks_at: string
+          published_at?: string | null
+          starts_at: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          champion_spider_id?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          is_test?: boolean
+          locks_at?: string
+          published_at?: string | null
+          starts_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       global_chat_messages: {
         Row: {
@@ -541,6 +697,56 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      matches: {
+        Row: {
+          bracket_id: string
+          commentary: string | null
+          created_at: string
+          id: string
+          is_upset: boolean
+          round_number: number
+          rounds: Json
+          slot: number
+          spider_a_id: string | null
+          spider_b_id: string | null
+          winner_id: string | null
+        }
+        Insert: {
+          bracket_id: string
+          commentary?: string | null
+          created_at?: string
+          id?: string
+          is_upset?: boolean
+          round_number: number
+          rounds?: Json
+          slot: number
+          spider_a_id?: string | null
+          spider_b_id?: string | null
+          winner_id?: string | null
+        }
+        Update: {
+          bracket_id?: string
+          commentary?: string | null
+          created_at?: string
+          id?: string
+          is_upset?: boolean
+          round_number?: number
+          rounds?: Json
+          slot?: number
+          spider_a_id?: string | null
+          spider_b_id?: string | null
+          winner_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matches_bracket_id_fkey"
+            columns: ["bracket_id"]
+            isOneToOne: false
+            referencedRelation: "brackets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       matchups: {
         Row: {
@@ -724,6 +930,85 @@ export type Database = {
             columns: ["message_id"]
             isOneToOne: false
             referencedRelation: "pod_chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pod_season_standings: {
+        Row: {
+          best_finish: number | null
+          championships: number
+          id: string
+          pod_id: string
+          points: number
+          season_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          best_finish?: number | null
+          championships?: number
+          id?: string
+          pod_id: string
+          points?: number
+          season_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          best_finish?: number | null
+          championships?: number
+          id?: string
+          pod_id?: string
+          points?: number
+          season_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pod_season_standings_pod_id_fkey"
+            columns: ["pod_id"]
+            isOneToOne: false
+            referencedRelation: "private_leagues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pod_season_week_points: {
+        Row: {
+          finish: number | null
+          is_champion: boolean
+          pod_id: string
+          points: number
+          season_id: string
+          user_id: string
+          week_id: string
+        }
+        Insert: {
+          finish?: number | null
+          is_champion?: boolean
+          pod_id: string
+          points: number
+          season_id: string
+          user_id: string
+          week_id: string
+        }
+        Update: {
+          finish?: number | null
+          is_champion?: boolean
+          pod_id?: string
+          points?: number
+          season_id?: string
+          user_id?: string
+          week_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pod_season_week_points_week_id_fkey"
+            columns: ["week_id"]
+            isOneToOne: false
+            referencedRelation: "game_weeks"
             referencedColumns: ["id"]
           },
         ]
@@ -967,6 +1252,7 @@ export type Database = {
         Row: {
           created_at: string
           email_communications_enabled: boolean
+          friday_reminder_email: boolean
           google_id: string | null
           has_completed_first_skirmish: boolean | null
           has_completed_onboarding: boolean | null
@@ -975,11 +1261,14 @@ export type Database = {
           rookie_season_completed: boolean
           rookie_season_dismissed: boolean
           share_spider_locations: boolean
+          unsubscribe_token: string
           updated_at: string
+          weekly_results_email: boolean
         }
         Insert: {
           created_at?: string
           email_communications_enabled?: boolean
+          friday_reminder_email?: boolean
           google_id?: string | null
           has_completed_first_skirmish?: boolean | null
           has_completed_onboarding?: boolean | null
@@ -988,11 +1277,14 @@ export type Database = {
           rookie_season_completed?: boolean
           rookie_season_dismissed?: boolean
           share_spider_locations?: boolean
+          unsubscribe_token?: string
           updated_at?: string
+          weekly_results_email?: boolean
         }
         Update: {
           created_at?: string
           email_communications_enabled?: boolean
+          friday_reminder_email?: boolean
           google_id?: string | null
           has_completed_first_skirmish?: boolean | null
           has_completed_onboarding?: boolean | null
@@ -1001,7 +1293,9 @@ export type Database = {
           rookie_season_completed?: boolean
           rookie_season_dismissed?: boolean
           share_spider_locations?: boolean
+          unsubscribe_token?: string
           updated_at?: string
+          weekly_results_email?: boolean
         }
         Relationships: []
       }
@@ -1250,6 +1544,38 @@ export type Database = {
             columns: ["inviter_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      result_views: {
+        Row: {
+          first_viewed_at: string
+          reached_champion: boolean
+          updated_at: string
+          user_id: string
+          week_id: string
+        }
+        Insert: {
+          first_viewed_at?: string
+          reached_champion?: boolean
+          updated_at?: string
+          user_id: string
+          week_id: string
+        }
+        Update: {
+          first_viewed_at?: string
+          reached_champion?: boolean
+          updated_at?: string
+          user_id?: string
+          week_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "result_views_week_id_fkey"
+            columns: ["week_id"]
+            isOneToOne: false
+            referencedRelation: "game_weeks"
             referencedColumns: ["id"]
           },
         ]
@@ -1675,6 +2001,7 @@ export type Database = {
           eligible_until: string | null
           hit_points: number
           id: string
+          image_hash: string | null
           image_url: string
           is_approved: boolean | null
           last_battled_at: string | null
@@ -1706,6 +2033,7 @@ export type Database = {
           eligible_until?: string | null
           hit_points: number
           id?: string
+          image_hash?: string | null
           image_url: string
           is_approved?: boolean | null
           last_battled_at?: string | null
@@ -1737,6 +2065,7 @@ export type Database = {
           eligible_until?: string | null
           hit_points?: number
           id?: string
+          image_hash?: string | null
           image_url?: string
           is_approved?: boolean | null
           last_battled_at?: string | null
@@ -1766,6 +2095,71 @@ export type Database = {
             columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournament_pipeline_log: {
+        Row: {
+          created_at: string
+          detail: Json | null
+          id: string
+          status: string
+          step: string
+          week_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          detail?: Json | null
+          id?: string
+          status: string
+          step: string
+          week_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          detail?: Json | null
+          id?: string
+          status?: string
+          step?: string
+          week_id?: string | null
+        }
+        Relationships: []
+      }
+      trophies: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          pod_id: string | null
+          spider_id: string
+          user_id: string
+          week_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          pod_id?: string | null
+          spider_id: string
+          user_id: string
+          week_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          pod_id?: string | null
+          spider_id?: string
+          user_id?: string
+          week_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trophies_week_id_fkey"
+            columns: ["week_id"]
+            isOneToOne: false
+            referencedRelation: "game_weeks"
             referencedColumns: ["id"]
           },
         ]
@@ -1843,6 +2237,57 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      weekly_entries: {
+        Row: {
+          created_at: string
+          effective_power: number
+          frozen_at: string | null
+          id: string
+          is_auto: boolean
+          is_veteran: boolean
+          spider_id: string
+          user_id: string
+          week_id: string
+        }
+        Insert: {
+          created_at?: string
+          effective_power: number
+          frozen_at?: string | null
+          id?: string
+          is_auto?: boolean
+          is_veteran?: boolean
+          spider_id: string
+          user_id: string
+          week_id: string
+        }
+        Update: {
+          created_at?: string
+          effective_power?: number
+          frozen_at?: string | null
+          id?: string
+          is_auto?: boolean
+          is_veteran?: boolean
+          spider_id?: string
+          user_id?: string
+          week_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_entries_spider_id_fkey"
+            columns: ["spider_id"]
+            isOneToOne: false
+            referencedRelation: "spiders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_entries_week_id_fkey"
+            columns: ["week_id"]
+            isOneToOne: false
+            referencedRelation: "game_weeks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       weekly_rankings: {
         Row: {
@@ -2079,6 +2524,27 @@ export type Database = {
       create_private_league_with_invite: {
         Args: { name: string }
         Returns: Json
+      }
+      current_open_game_week: {
+        Args: never
+        Returns: {
+          champion_spider_id: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          is_test: boolean
+          locks_at: string
+          published_at: string | null
+          starts_at: string
+          status: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "game_weeks"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       gen_random_bytes: { Args: { length: number }; Returns: string }
       generate_pod_invite: {
@@ -2323,6 +2789,8 @@ export type Database = {
       }
       sanitize_plain_text: { Args: { t: string }; Returns: string }
       select_spider_of_the_day: { Args: never; Returns: undefined }
+      set_my_week_entries: { Args: { p_spider_ids: string[] }; Returns: Json }
+      set_my_week_veteran: { Args: { p_spider_id: string }; Returns: Json }
       start_spider_skirmish: {
         Args: { p_idempotency_key?: string; p_player_spider_id?: string }
         Returns: Json
@@ -2330,6 +2798,10 @@ export type Database = {
       transfer_spider_ownership: {
         Args: { new_owner_id: string; spider_id: string }
         Returns: undefined
+      }
+      unsubscribe_email: {
+        Args: { p_kind: string; p_token: string }
+        Returns: Json
       }
       update_private_league_image: {
         Args: { p_image_url: string; p_league_id: string }
