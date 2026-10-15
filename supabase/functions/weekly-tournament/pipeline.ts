@@ -37,7 +37,7 @@ function statsOf(s: any): Stats {
 export async function lockEntries(db: DB, week: any, explicitWeekId: string) {
   const start = week.starts_at, end = week.locks_at;
   const { data: fresh } = await db.from("spiders").select(SPIDER_COLS)
-    .gte("created_at", start).lt("created_at", end).neq("is_approved", false);
+    .gte("created_at", start).lt("created_at", end).neq("is_approved", false).neq("image_url", TOURNAMENT.STARTER_IMAGE_URL);
   const { data: explicit } = await db.from("weekly_entries").select("spider_id, user_id, is_veteran")
     .eq("week_id", explicitWeekId);
 

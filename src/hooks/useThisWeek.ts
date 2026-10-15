@@ -52,9 +52,9 @@ export function useThisWeek() {
       db.from("private_league_members").select("league_id, private_leagues(name)").eq("user_id", user.id),
     ]);
     const mine = (spRes.data ?? []) as MySpider[];
-    const f = mine.filter((s) => isFresh(s.created_at, open));
+    const f = mine.filter((s) => isFresh(s.created_at, open) && s.image_url !== TOURNAMENT.STARTER_IMAGE_URL);
     setFresh(f);
-    setVeterans(mine.filter((s) => !isFresh(s.created_at, open)));
+    setVeterans(mine.filter((s) => !f.includes(s)));
     const ents = (entRes.data ?? []) as { spider_id: string; is_veteran: boolean }[];
     const chosen = ents.filter((e) => !e.is_veteran).map((e) => e.spider_id).filter((id) => f.some((s) => s.id === id));
     setExplicit(chosen.length > 0);
@@ -69,7 +69,7 @@ export function useThisWeek() {
       const { data: members } = await db.from("private_league_members").select("league_id, user_id, profiles(display_name)").in("league_id", podIds);
       const memberIds = [...new Set((members ?? []).map((m: any) => m.user_id))];
       const [{ data: theirFresh }, { data: theirEntries }] = await Promise.all([
-        db.from("spiders").select("owner_id").in("owner_id", memberIds).gte("created_at", open.starts_at).lt("created_at", open.locks_at),
+        db.from("spiders").select("owner_id").in("owner_id", memberIds).gte("created_at", open.starts_at).lt("created_at", open.locks_at).neq("image_url", TOURNAMENT.STARTER_IMAGE_URL),
         db.from("weekly_entries").select("user_id, is_veteran").eq("week_id", open.id).in("user_id", memberIds),
       ]);
       const freshCount = new Map<string, number>();

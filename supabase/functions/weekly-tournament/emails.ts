@@ -193,7 +193,7 @@ export async function buildNudgeEmail(db: DB, week: any, userId: string, token: 
     ]);
     const mateIds = [...new Set((mates ?? []).map((m: any) => m.user_id))];
     if (mateIds.length) {
-      const { data: fresh } = await db.from("spiders").select("owner_id").in("owner_id", mateIds).gte("created_at", week.starts_at).lt("created_at", week.locks_at);
+      const { data: fresh } = await db.from("spiders").select("owner_id").in("owner_id", mateIds).gte("created_at", week.starts_at).lt("created_at", week.locks_at).neq("image_url", TOURNAMENT.STARTER_IMAGE_URL);
       const counts = new Map<string, number>();
       for (const s of fresh ?? []) counts.set(s.owner_id, Math.min(TOURNAMENT.MAX_ENTRIES_PER_USER, (counts.get(s.owner_id) ?? 0) + 1));
       for (const p of pods ?? []) {
@@ -259,7 +259,7 @@ export async function sendWeeklyResults(db: DB, week: any) {
 
 export async function nudgeCandidates(db: DB, week: any) {
   const since = new Date(new Date(week.starts_at).getTime() - TOURNAMENT.NUDGE_ACTIVE_WEEKS * 7 * 86400000).toISOString();
-  const { data: recent } = await db.from("spiders").select("owner_id, created_at").gte("created_at", since);
+  const { data: recent } = await db.from("spiders").select("owner_id, created_at").gte("created_at", since).neq("image_url", TOURNAMENT.STARTER_IMAGE_URL);
   const active = new Set<string>(), freshNow = new Set<string>();
   for (const s of recent ?? []) {
     if (s.created_at >= week.starts_at) freshNow.add(s.owner_id); else active.add(s.owner_id);
