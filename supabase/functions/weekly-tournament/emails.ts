@@ -277,6 +277,11 @@ export async function sendFridayNudges(db: DB, week: any) {
 }
 
 /** Admin test: send to one address without touching email_log. */
+export async function previewTest(db: DB, kind: "weekly_results" | "friday_nudge", week: any, userId: string) {
+  const s = (await settingsFor(db, [userId])).get(userId);
+  return kind === "weekly_results" ? await buildResultsEmail(db, week, userId, s.unsubscribe_token) : await buildNudgeEmail(db, week, userId, s.unsubscribe_token);
+}
+
 export async function sendTest(db: DB, kind: "weekly_results" | "friday_nudge", week: any, userId: string) {
   if (!emailConfigured()) throw new Error("Resend isn't connected yet");
   const s = (await settingsFor(db, [userId])).get(userId);
