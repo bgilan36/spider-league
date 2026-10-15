@@ -89,6 +89,26 @@ Deno.serve(async (req) => {
   const type = url.searchParams.get("type");
   const id = url.searchParams.get("id");
 
+  if (type === "cup" && id && /^\d{4}-W\d{2}$/.test(id)) {
+    const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
+    const redirectTo = `${APP_ORIGIN}/cup/${id}`;
+    const [{ data: week }, { data: bracket }] = await Promise.all([
+      supabase.from("game_weeks").select("starts_at, display_name, status, is_test").eq("id", id).maybeSingle(),
+      supabase.from("brackets").select("participants, champion_participant_id").eq("week_id", id).eq("type", "global").maybeSingle(),
+    ]);
+    if (!week || week.status !== "published" || week.is_test || !bracket) return fallback(redirectTo, "cup-not-found");
+    const label = week.display_name || `Week of ${new Date(week.starts_at).toLocaleDateString("en-US", { timeZone: "America/Los_Angeles", month: "short", day: "numeric" })}`;
+    const champ = (bracket.participants as any[]).find((p) => p.id === bracket.champion_participant_id);
+    const { data: files } = await supabase.storage.from("spiders").list("cup-cards", { search: `${id}-v1.png` });
+    const card = files?.length ? supabase.storage.from("spiders").getPublicUrl(`cup-cards/${id}-v1.png`).data.publicUrl : null;
+    return new Response(renderHtml({
+      title: `🏆 ${champ?.name ?? "Champion"} · Global Cup Champion · ${label}`,
+      description: `${champ?.name ?? "A spider"} won the Spider League Global Cup. See the full bracket and catch your own contender.`,
+      image: card || champ?.image_url || DEFAULT_OG,
+      url: redirectTo, redirectTo, type: "article",
+    }), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" } });
+  }
+
   if (!type || !id || !/^[0-9a-f-]{36}$/i.test(id)) {
     return fallback(APP_ORIGIN, "missing-or-invalid-params");
   }
