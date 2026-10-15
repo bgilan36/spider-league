@@ -52,7 +52,7 @@ export const TOURNAMENT = {
   EMAIL_FROM: "Spider League <results@spiderleague.app>",
   SITE_URL: "https://spiderleague.app",
   /** Starter spiders are gifts, not catches — never count as fresh. */
-  STARTER_IMAGE_URL: "https://www.spiderleague.app/images/starter-spider.png",
+  STARTER_SPECIES: "Spider League Starter Spider",
 } as const;
 
 export const STAT_KEYS = ["hit_points", "damage", "speed", "defense", "venom", "webcraft"] as const;
