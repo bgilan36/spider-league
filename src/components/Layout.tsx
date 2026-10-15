@@ -16,7 +16,7 @@ const HIDDEN_ROUTES = ['/auth', '/admin'];
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { pathname } = useLocation();
   const { user } = useAuth();
-  const hideNav = HIDDEN_ROUTES.some((r) => pathname.startsWith(r)) || !user;
+  const hideNav = HIDDEN_ROUTES.some((r) => pathname.startsWith(r)) || (!user && !new URLSearchParams(window.location.search).has("navpreview"));
   return (
     <>
       <a
