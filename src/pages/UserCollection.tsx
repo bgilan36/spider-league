@@ -1,3 +1,4 @@
+import TrophyShelf from "@/components/week/TrophyShelf";
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -194,6 +195,7 @@ const UserCollection: React.FC = () => {
       </Helmet>
 
       <main className="container mx-auto px-4 py-8">
+        {userId && <div className="mb-6"><TrophyShelf userId={userId} /></div>}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" asChild>
