@@ -32,6 +32,7 @@ import NotificationsDropdown from "@/components/NotificationsDropdown";
 import OnlineUsersBar from "@/components/OnlineUsersBar";
 import NewSpiderSpotlight from "@/components/NewSpiderSpotlight";
 import NextUpCard from "@/components/home/NextUpCard";
+import ThisWeekCard from "@/components/week/ThisWeekCard";
 import OnboardingModal from "@/components/OnboardingModal";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
@@ -782,7 +783,7 @@ const Index = () => {
           </Card>
           
           <p className="text-center text-sm text-muted-foreground mt-6">
-            Battle with spiders you find in the wild.
+            Catch spiders all week. Win the weekly Cup.
           </p>
 
           <section className="mt-10 border border-border/50 rounded-lg bg-card/40 p-4 sm:p-5">
@@ -947,26 +948,9 @@ const Index = () => {
       <main className="container mx-auto px-3 sm:px-6 py-3 sm:py-6">
         {user && (
           <section className="mb-6">
-            <NextUpCard />
+            <ThisWeekCard />
           </section>
         )}
-
-        <section className="mb-6">
-          <RookieSeasonChecklist />
-        </section>
-
-        <section id="starting-5" className="mb-8 scroll-mt-20">
-          <ActiveSpiders onSpiderChange={fetchUserSpiders} newSpiderId={newSpiderId} />
-        </section>
-
-        <section className="mb-6 sm:mb-8">
-          <WeeklyMatchupCard />
-        </section>
-
-        {/* Public Capture Battle challenges */}
-        <section id="capture-challenges" className="mb-6 sm:mb-8 scroll-mt-20">
-          <DeathBattleFeed />
-        </section>
 
         <section className="mb-6 sm:mb-8">
           <FriendPodsHomeSection />
@@ -990,170 +974,6 @@ const Index = () => {
         <section className="mb-6 sm:mb-8">
           <GlobalChat />
         </section>
-
-        {/* Combat Activity Section */}
-        <div className="mb-6 sm:mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-3">
-            <div>
-              <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-1 sm:mb-2">Combat Activity</h2>
-              <p className="text-xs sm:text-sm text-muted-foreground">
-                Latest battles and spider skirmishes
-              </p>
-            </div>
-            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto min-h-[44px]">
-              <Link to="/battle-history" className="flex items-center justify-center gap-2">
-                <Sword className="h-4 w-4" />
-                <span className="hidden sm:inline">View All History</span>
-                <span className="sm:hidden">View All</span>
-              </Link>
-            </Button>
-          </div>
-
-          {/* Filter pills */}
-           <div className="flex bg-muted rounded-lg p-1 w-full sm:w-fit mb-4">
-            {([['all', 'All'], ['battle', 'Battles'], ['skirmish', 'Skirmishes']] as const).map(([value, label]) => (
-              <button
-                key={value}
-                onClick={() => { setCombatFilter(value); setVisibleRecentCount(3); }}
-                 className={`flex-1 sm:flex-none px-2 py-2.5 min-h-11 rounded-md text-xs sm:text-sm font-medium transition-colors ${
-                  combatFilter === value
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {battlesLoading ? <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin" />
-            </div> : recentBattles.length === 0 ? <Card>
-              <CardContent className="pt-6 text-center py-12">
-                <Sword className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No recent combat yet</h3>
-                <p className="text-muted-foreground">No battles or skirmishes have been recorded yet.</p>
-              </CardContent>
-            </Card> : (() => {
-              const filteredBattles = recentBattles.filter(c => combatFilter === 'all' || c.mode === combatFilter);
-              if (filteredBattles.length === 0) {
-                return (
-                  <Card>
-                    <CardContent className="pt-6 text-center py-12">
-                      <p className="text-muted-foreground">No {combatFilter === 'battle' ? 'battles' : 'skirmishes'} found.</p>
-                    </CardContent>
-                  </Card>
-                );
-              }
-              return <div className="space-y-3">
-                {filteredBattles.slice(0, visibleRecentCount).map((combat) => {
-              const spiderA = combat.spider_a;
-              const spiderB = combat.spider_b;
-              if (!spiderA || !spiderB) return null;
-              const isBattleItem = combat.mode === "battle" && !!combat.battle;
-              const isBattle = combat.mode === "battle";
-
-              const winnerSide = combat.winner;
-              const isWinnerA = winnerSide === "A";
-              const isWinnerB = winnerSide === "B";
-
-              let resultBadge;
-              if (!combat.winner) {
-                resultBadge = <Badge variant="secondary">In Progress</Badge>;
-              } else if (combat.winner === "TIE") {
-                resultBadge = <Badge variant="outline">Tie</Badge>;
-              }
-
-              return <Card
-                      key={combat.id}
-                      className={`${isBattleItem ? 'hover:shadow-md cursor-pointer' : 'cursor-default'} transition-shadow border-l-4 ${
-                        isBattle ? 'border-l-destructive' : 'border-l-primary'
-                      }`}
-                      onClick={() => {
-                        if (isBattleItem) {
-                          handleBattleClick(combat.battle);
-                        }
-                      }}
-                    >
-                      <CardContent className="p-3 sm:p-4">
-                        <div className="flex items-center gap-3">
-                          {/* Spider A */}
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <div
-                              className="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-primary/50 rounded-md transition-all"
-                              onClick={(e) => { e.stopPropagation(); handleSpiderThumbnailClick(spiderA?.id); }}
-                            >
-                              <div className="w-full h-full rounded-md overflow-hidden">
-                                <img src={spiderA?.image_url} alt={spiderA?.nickname} className="w-full h-full object-cover" />
-                              </div>
-                              {isWinnerA && (
-                                <Trophy className="absolute -top-1.5 -right-1.5 h-4 w-4 text-yellow-500 drop-shadow-md" />
-                              )}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="font-medium text-sm truncate">{spiderA?.nickname}</p>
-                              <p className="text-xs text-muted-foreground truncate">{spiderA?.species}</p>
-                            </div>
-                          </div>
-                          
-                          {/* VS */}
-                          <span className="text-xs font-bold text-muted-foreground flex-shrink-0">VS</span>
-                          
-                          {/* Spider B */}
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <div
-                              className="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-primary/50 rounded-md transition-all"
-                              onClick={(e) => { e.stopPropagation(); handleSpiderThumbnailClick(spiderB?.id); }}
-                            >
-                              <div className="w-full h-full rounded-md overflow-hidden">
-                                <img src={spiderB?.image_url} alt={spiderB?.nickname} className="w-full h-full object-cover" />
-                              </div>
-                              {isWinnerB && (
-                                <Trophy className="absolute -top-1.5 -right-1.5 h-4 w-4 text-yellow-500 drop-shadow-md" />
-                              )}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="font-medium text-sm truncate">{spiderB?.nickname}</p>
-                              <p className="text-xs text-muted-foreground truncate">{spiderB?.species}</p>
-                            </div>
-                          </div>
-                          
-                          {/* Mode, Result, Date */}
-                          <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-1 max-w-[110px] sm:max-w-none">
-                            <div className={`flex items-center gap-1 text-xs font-medium ${isBattle ? 'text-destructive' : 'text-primary'}`}>
-                              {isBattle ? <Sword className="h-3 w-3" /> : <Bug className="h-3 w-3" />}
-                              {isBattle ? 'Battle' : 'Skirmish'}
-                            </div>
-                            {resultBadge && <div className="max-w-full [&>span]:max-w-full [&>span]:truncate [&>span]:block">{resultBadge}</div>}
-                            <p className="text-xs text-muted-foreground whitespace-nowrap">
-                              {format(new Date(combat.created_at), 'MMM d')}
-                            </p>
-                            <p className="text-[10px] text-muted-foreground/70 whitespace-nowrap hidden sm:block">
-                              {isBattle && (combat.battle as any)?.stakes_type === 'all_or_nothing'
-                                ? 'Stakes: Spider Transfer'
-                                : 'Stakes: XP'}
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>;
-            })}
-
-                {filteredBattles.length > visibleRecentCount ? (
-                  <div className="pt-2 text-center">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setVisibleRecentCount((count) => count + 3)}
-                      className="min-w-32"
-                    >
-                      See more
-                    </Button>
-                  </div>
-                ) : null}
-              </div>;
-            })()}
-        </div>
 
         {/* Leaderboard Section */}
         <div className="mb-6 sm:mb-8">
