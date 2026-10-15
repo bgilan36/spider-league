@@ -1,3 +1,4 @@
+import WeeklyCupAdmin from "@/components/admin/WeeklyCupAdmin";
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate, Link } from 'react-router-dom';
@@ -326,8 +327,8 @@ const AdminDashboard = () => {
           </div>
 
           {/* Charts */}
-          <Tabs defaultValue="trends" className="space-y-6">
-            <TabsList className="bg-muted/50">
+          <Tabs defaultValue="weekly-cup" className="space-y-6">
+            <TabsList className="bg-muted/50 flex-wrap h-auto">
               <TabsTrigger value="trends" className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
                 Trends
@@ -341,6 +342,7 @@ const AdminDashboard = () => {
                 Activity
               </TabsTrigger>
               <TabsTrigger value="species-id">Species ID</TabsTrigger>
+              <TabsTrigger value="weekly-cup">Weekly Cup</TabsTrigger>
             </TabsList>
 
             <TabsContent value="trends" className="space-y-6">
@@ -538,6 +540,10 @@ const AdminDashboard = () => {
 
             <TabsContent value="species-id" className="space-y-6">
               <SpeciesIdSettings />
+            </TabsContent>
+
+            <TabsContent value="weekly-cup" className="space-y-6">
+              <WeeklyCupAdmin />
             </TabsContent>
           </Tabs>
         </div>

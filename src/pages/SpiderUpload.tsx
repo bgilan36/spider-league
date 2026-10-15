@@ -1,3 +1,4 @@
+import { logEvent, sha256Hex } from "@/lib/tournament";
 import { useState, useRef, useEffect } from "react";
 import SpeciesReferencePanel from "@/components/dex/SpeciesReferencePanel";
 import { Helmet } from "react-helmet-async";
@@ -773,6 +774,9 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
       // they'll be prompted to retire one after returning to the dashboard.
 
 
+      // Fingerprint the photo so exact duplicates are rejected.
+      const imageHash = await sha256Hex(selectedFile).catch(() => null);
+
       // Upload image to storage
       const fileExt = selectedFile.name.split('.').pop();
       const fileName = `${authUser.id}/${Date.now()}.${fileExt}`;
@@ -806,11 +810,20 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
           location_name: locationName.trim() || null,
           location_accuracy_m: locationAccuracy,
           ...finalStats,
-        })
+          image_hash: imageHash,
+        } as any)
         .select('id')
         .single();
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        await supabase.storage.from('spiders').remove([fileName]).catch(() => {});
+        if (String(insertError.message).includes("DUPLICATE_PHOTO")) {
+          toast({ title: "We've seen this photo before", description: "This exact photo is already in Spider League. Snap a new one of your spider to enter it.", variant: "destructive" });
+          return;
+        }
+        throw insertError;
+      }
+      logEvent("spider_uploaded", { spider_id: insertData.id, power: finalStats?.power_score ?? null });
 
       // If the user attached a location, ensure their profile opts into sharing it.
       if (latitude !== null && longitude !== null) {

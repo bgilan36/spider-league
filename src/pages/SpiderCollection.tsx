@@ -1,3 +1,4 @@
+import TrophyShelf from "@/components/week/TrophyShelf";
 import { useEffect, useState, useCallback } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
@@ -459,6 +460,7 @@ const SpiderCollection = () => {
       </Helmet>
 
       <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 pb-safe">
+        {user && <div className="mb-4"><TrophyShelf userId={user.id} /></div>}
         <div className="flex items-center gap-2 mb-4 sm:mb-6">
           <Button variant="ghost" size="sm" asChild>
             <Link to="/" className="text-muted-foreground hover:text-foreground">

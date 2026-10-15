@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { Home, Swords, Users, Trophy, Bug, type LucideIcon } from "lucide-react";
+import { Home, Camera, Users, Trophy, Bug, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Tab = {
@@ -12,12 +12,12 @@ type Tab = {
 };
 
 const TABS: Tab[] = [
-  { to: "/", label: "Home", icon: Home, match: (p) => p === "/" },
+  { to: "/", label: "This Week", icon: Home, match: (p) => p === "/" || p.startsWith("/week/") },
   {
-    to: "/battle-history",
-    label: "Battles",
-    icon: Swords,
-    match: (p) => p.startsWith("/battle-history") || p.startsWith("/battle/"),
+    to: "/upload",
+    label: "Catch",
+    icon: Camera,
+    match: (p) => p.startsWith("/upload"),
   },
   {
     to: "/pods",
@@ -35,7 +35,7 @@ const TABS: Tab[] = [
     to: "/collection",
     label: "Spiders",
     icon: Bug,
-    match: (p) => p.startsWith("/collection") || p.startsWith("/upload"),
+    match: (p) => p.startsWith("/collection"),
   },
 ];
 

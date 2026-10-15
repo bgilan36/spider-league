@@ -1,3 +1,4 @@
+import SpiderTournamentHistory from "@/components/week/SpiderTournamentHistory";
 import * as React from "react";
 import {
   Dialog,
@@ -353,6 +354,7 @@ const SpiderDetailsModal: React.FC<SpiderDetailsModalProps> = ({
             </div>
           )}
         </div>
+        {spider?.id && <div className="mt-4"><SpiderTournamentHistory spiderId={spider.id} /></div>}
       </DialogContent>
 
       <BattleDetailsModal

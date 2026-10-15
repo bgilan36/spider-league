@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.55.0";
 import { TOURNAMENT } from "../_shared/tournament-config.ts";
-import { localParts, weekWindow } from "../_shared/tournament-engine.ts";
+import { localParts, weekLabel, weekWindow } from "../_shared/tournament-engine.ts";
 import { ensureOpenWeek, log, runPipeline } from "./pipeline.ts";
 import { previewTest, sendFridayNudges, sendTest, sendWeeklyResults } from "./emails.ts";
 
@@ -86,6 +86,24 @@ Deno.serve(async (req) => {
 
     if (action === "tick") return json({ ok: true, ...(await tick(admin)) });
 
+    if (action === "store_cup_card") {
+      // Any signed-in player can provide the cup preview image once; the server stores it at a fixed path.
+      const token = req.headers.get("Authorization")?.replace("Bearer ", "");
+      const { data: u } = token ? await admin.auth.getUser(token) : { data: { user: null } };
+      if (!u?.user) return json({ error: "Sign in required" }, 401);
+      const weekId = String(body.week_id ?? "");
+      if (!/^\d{4}-W\d{2}$/.test(weekId)) return json({ error: "Bad week" }, 400);
+      const { data: wk } = await admin.from("game_weeks").select("status").eq("id", weekId).maybeSingle();
+      if (wk?.status !== "published") return json({ error: "Not published" }, 400);
+      const path = `cup-cards/${weekId}-v1.png`;
+      const { data: existing } = await admin.storage.from("spiders").list("cup-cards", { search: `${weekId}-v1.png` });
+      if (existing?.length) return json({ ok: true, existed: true });
+      const bytes = Uint8Array.from(atob(String(body.png ?? "")), (c) => c.charCodeAt(0));
+      if (bytes.length < 1000 || bytes.length > 3_000_000 || bytes[0] !== 0x89 || bytes[1] !== 0x50) return json({ error: "Bad image" }, 400);
+      await admin.storage.from("spiders").upload(path, bytes, { contentType: "image/png", upsert: false });
+      return json({ ok: true });
+    }
+
     const adminId = await requireAdmin(req, admin);
     if (!adminId) return json({ error: "Admins only" }, 403);
 
@@ -96,7 +114,7 @@ Deno.serve(async (req) => {
         const { data: realWeek } = await admin.from("game_weeks").select("*").eq("id", real.id).single();
         await admin.from("game_weeks").insert({
           id, starts_at: realWeek.starts_at, locks_at: new Date().toISOString(), status: "open", is_test: true,
-          display_name: `Test · ${realWeek.display_name ?? real.id}`,
+          display_name: `Test · ${weekLabel(realWeek.starts_at, realWeek.display_name)}`,
         });
         const week = await runPipeline(admin, id, real.id);
         return json({ ok: true, week });

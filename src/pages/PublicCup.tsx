@@ -9,6 +9,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import BracketView from "@/components/week/BracketView";
 import ChampionReveal from "@/components/week/ChampionReveal";
 import SpiderLogoLoader from "@/components/SpiderLogoLoader";
+import { ensureCupCard } from "@/lib/cupShareImage";
 import { TOURNAMENT, cupShareUrl, logEvent, weekLabel, type Bracket, type GameWeek, type Match } from "@/lib/tournament";
 
 const db = supabase as any;
@@ -39,6 +40,7 @@ export default function PublicCup() {
   const champ = bracket?.participants.find((p) => p.id === bracket.champion_participant_id);
   const share = async () => {
     logEvent("share_clicked", { surface: "cup" }, weekId);
+    if (user && champ && week && !week.is_test) await ensureCupCard(weekId, { name: champ.name, species: champ.species, imageUrl: champ.image_url, weekLabel: weekLabel(week), owner: champ.owner_name });
     const url = cupShareUrl(weekId);
     try {
       if (navigator.share) await navigator.share({ title: `Global Cup Champion · ${label}`, url });
