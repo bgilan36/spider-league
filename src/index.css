@@ -235,13 +235,6 @@ All colors MUST be HSL.
     max-width: 100%;
     height: auto;
   }
-  /* Leaflet panes have no intrinsic width. Capping their canvas collapses
-     the heat layer to 0×0; preserve the renderer's pixel dimensions. */
-  .leaflet-container canvas,
-  .leaflet-container svg {
-    max-width: none;
-    height: revert;
-  }
   /* Keep aspect ratios on intrinsically-sized SVG icons (lucide etc.) */
   svg[width][height] {
     height: revert;
@@ -265,6 +258,14 @@ All colors MUST be HSL.
     overflow-x: clip;
     max-width: 100%;
   }
+}
+
+/* Keep outside Tailwind layers: Leaflet adds these elements dynamically,
+   so its renderer selectors must not be removed as unused styles. */
+.leaflet-container canvas,
+.leaflet-container svg {
+  max-width: none;
+  height: revert;
 }
 
 @layer components {
