@@ -260,6 +260,14 @@ All colors MUST be HSL.
   }
 }
 
+/* Keep outside Tailwind layers: Leaflet adds these elements dynamically,
+   so its renderer selectors must not be removed as unused styles. */
+.leaflet-container canvas,
+.leaflet-container svg {
+  max-width: none;
+  height: revert;
+}
+
 @layer components {
   .gradient-button {
     @apply relative overflow-hidden bg-primary text-primary-foreground transition-all duration-500 transform-gpu;

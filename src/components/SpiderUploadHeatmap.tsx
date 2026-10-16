@@ -20,6 +20,7 @@ export default function SpiderUploadHeatmap() {
   const mapEl = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const heatRef = useRef<any>(null);
+  const fittedRef = useRef(false);
   const [range, setRange] = useState<Range>("all");
   const [loading, setLoading] = useState(true);
   const [count, setCount] = useState(0);
@@ -85,10 +86,14 @@ export default function SpiderUploadHeatmap() {
     });
 
     mapRef.current = map;
+    const resizeObserver = new ResizeObserver(() => map.invalidateSize());
+    resizeObserver.observe(mapEl.current);
     return () => {
+      resizeObserver.disconnect();
       map.remove();
       mapRef.current = null;
       heatRef.current = null;
+      fittedRef.current = false;
     };
   }, [globalCount]);
 
@@ -121,6 +126,14 @@ export default function SpiderUploadHeatmap() {
           heatRef.current = null;
         }
         if (points.length > 0) {
+          if (!fittedRef.current) {
+            mapRef.current.invalidateSize();
+            mapRef.current.fitBounds(
+              L.latLngBounds(points.map(([lat, lng]) => L.latLng(lat, lng))),
+              { padding: [40, 40], maxZoom: 5, animate: false }
+            );
+            fittedRef.current = true;
+          }
           // @ts-ignore - heatLayer added by leaflet.heat
           heatRef.current = L.heatLayer(points, {
             radius: 30,

@@ -12,3 +12,4 @@
 - The weekly tournament is server-only: `supabase/functions/weekly-tournament` (hourly pg_cron `tick`) runs lock → simulate → publish → emails, resuming from `game_weeks.status`; the pure engine lives in `_shared/tournament-engine.ts` (tested), so results are deterministic and never re-simulated on view.
 - Every tunable tournament number lives in `supabase/functions/_shared/tournament-config.ts`, imported by both edge functions and the web app (via `src/lib/tournament.ts`), so copy and server never disagree.
 - Players change weekly entries only via `set_my_week_entries` / `set_my_week_veteran` RPCs; emails are claimed via a unique `email_log` row before sending, guaranteeing one per user per week per kind.
+- Exempt Leaflet renderer canvases/SVGs from global responsive media sizing and fit the initial heat map to actual sightings; otherwise zero-width panes hide heat colors and hotspots may start offscreen.
