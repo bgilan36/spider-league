@@ -4,8 +4,8 @@
 - Engine, hourly job, admin test-week tools
 - This Week home, results reveal, standings, trophies, public Cup + preview image, analytics
 - Results email, Friday reminder, settings switches, unsubscribe, admin test sends
+- Centered raised mobile upload button and visible heat map colors verified with real public sightings
 
 ## Open
-- [ ] Center the raised mobile upload button and verify visible heat map colors
 - [ ] Verify spiderleague.app in Resend (blocked: needs Brian) — until then no emails deliver
 - [ ] Old manual-battle screens remain reachable from spider profiles/collection (only nav, home, onboarding were retired)
