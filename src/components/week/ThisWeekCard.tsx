@@ -53,6 +53,23 @@ function SpiderTile({ s, badge, onClick, selected }: { s: MySpider; badge?: stri
   );
 }
 
+/** Decorative bracket lines (8 → 4 → 2 → 1) behind the hero. */
+function MiniBracket() {
+  const col = (n: number, x: number) =>
+    Array.from({ length: n }, (_, i) => {
+      const h = 160 / n;
+      const y = i * h + h / 2;
+      return <path key={`${x}-${i}`} d={`M${x} ${y} h18 ${i % 2 === 0 ? `v${h / 2}` : `v-${h / 2}`}`} />;
+    });
+  return (
+    <svg aria-hidden viewBox="0 0 90 160" className="pointer-events-none absolute -right-2 top-1/2 h-[140%] -translate-y-1/2 text-primary opacity-25 sm:opacity-40" fill="none" stroke="currentColor" strokeWidth="2">
+      {col(8, 0)}{col(4, 18)}{col(2, 36)}
+      <path d="M54 80 h18" />
+      <circle cx="80" cy="80" r="7" fill="currentColor" />
+    </svg>
+  );
+}
+
 export default function ThisWeekCard() {
   const tw = useThisWeek();
   const { toast } = useToast();
@@ -115,11 +132,38 @@ export default function ThisWeekCard() {
       )}
 
       <Card className="overflow-hidden border-primary/30">
+        <div className="relative overflow-hidden border-b border-primary/30 bg-gradient-to-br from-primary/30 via-primary/10 to-background p-4 sm:p-6">
+          <MiniBracket />
+          <div className="relative">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-primary">
+              <Trophy className="h-4 w-4" /> The Global Cup · Every Sunday
+            </div>
+            <h2 className="mt-1 text-2xl sm:text-4xl font-black leading-tight">
+              Bracket madness.<br className="sm:hidden" /> One champion.
+            </h2>
+            <p className="mt-2 max-w-md text-sm text-muted-foreground">
+              Every spider caught this week goes into a single-elimination bracket. Sunday at 5pm PT the field locks and it's
+              Sweet 16 → Elite 8 → Final Four → Final until one spider is crowned.
+            </p>
+            <ol className="mt-4 grid grid-cols-3 gap-2 text-center text-[11px] sm:text-xs">
+              {[
+                { t: "Mon–Sun", d: "Catch & enter" },
+                { t: TOURNAMENT.LOCK_LABEL.replace("Sunday at ", "Sun "), d: "Bracket locks" },
+                { t: "Sunday night", d: "Champion crowned" },
+              ].map((s, i) => (
+                <li key={s.d} className="rounded-lg border border-primary/30 bg-background/60 px-2 py-2">
+                  <div className="font-black text-primary">{i + 1}. {s.t}</div>
+                  <div className="text-muted-foreground">{s.d}</div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
         <CardContent className="p-4 sm:p-6 space-y-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="text-xs font-semibold uppercase tracking-widest text-primary">This week</div>
-              <h2 className="text-xl sm:text-2xl font-black">{weekLabel(tw.week)}</h2>
+              <div className="text-xs font-semibold uppercase tracking-widest text-primary">Countdown to tip-off</div>
+              <h3 className="text-lg sm:text-xl font-black">{weekLabel(tw.week)}</h3>
             </div>
             <div className="flex items-center gap-1 text-xs text-muted-foreground pt-1">
               <Clock className="h-3.5 w-3.5" /> Locks {TOURNAMENT.LOCK_LABEL}
@@ -127,11 +171,11 @@ export default function ThisWeekCard() {
           </div>
 
           {tw.week ? <Countdown locksAt={tw.week.locks_at} /> : (
-            <p className="text-sm text-muted-foreground">This week's tournament is being decided. The next week opens shortly.</p>
+            <p className="text-sm text-muted-foreground">This week's bracket is being played out. The next week opens shortly.</p>
           )}
 
           <Button asChild size="lg" className="w-full h-14 text-lg font-bold">
-            <Link to="/upload"><Camera className="mr-2 h-5 w-5" /> Catch a spider</Link>
+            <Link to="/upload"><Camera className="mr-2 h-5 w-5" /> Catch a contender</Link>
           </Button>
 
           <div>
