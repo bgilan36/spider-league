@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
-import { TOURNAMENT, type GameWeek, isFresh } from "@/lib/tournament";
+import { TOURNAMENT, type Bracket, type GameWeek, isFresh } from "@/lib/tournament";
 
 export interface MySpider {
   id: string;
@@ -33,6 +33,7 @@ export function useThisWeek() {
   const [explicit, setExplicit] = useState(false);
   const [pods, setPods] = useState<PodActivity[]>([]);
   const [unwatched, setUnwatched] = useState<GameWeek | null>(null);
+  const [unwatchedBracket, setUnwatchedBracket] = useState<Bracket | null>(null);
   const [lastPublished, setLastPublished] = useState<GameWeek | null>(null);
 
   const load = useCallback(async () => {
