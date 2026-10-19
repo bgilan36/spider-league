@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useThisWeek, useCountdown, type MySpider } from "@/hooks/useThisWeek";
 import { TOURNAMENT, logEvent, weekLabel } from "@/lib/tournament";
 import { cn } from "@/lib/utils";
+import ChampionReveal from "@/components/week/ChampionReveal";
 
 function Countdown({ locksAt }: { locksAt: string }) {
   const c = useCountdown(locksAt);
@@ -115,21 +116,40 @@ export default function ThisWeekCard() {
 
   return (
     <div className="space-y-4">
-      {tw.unwatched && (
-        <Link
-          to={`/week/${tw.unwatched.id}`}
-          className="block rounded-xl border-2 border-primary bg-gradient-to-br from-primary/25 via-primary/10 to-transparent p-4 shadow-lg shadow-primary/20 animate-in fade-in"
-        >
-          <div className="flex items-center gap-3">
-            <Trophy className="h-8 w-8 text-primary shrink-0" />
-            <div className="min-w-0 flex-1">
-              <div className="text-lg font-black">Your results are in</div>
-              <div className="text-sm text-muted-foreground truncate">{weekLabel(tw.unwatched)} · watch your brackets play out</div>
-            </div>
-            <ChevronRight className="h-5 w-5 shrink-0" />
+      {tw.unwatched && (() => {
+        const champ = tw.unwatchedBracket?.participants.find((p) => p.id === tw.unwatchedBracket!.champion_participant_id) ?? null;
+        if (!champ) {
+          return (
+            <Link
+              to={`/week/${tw.unwatched.id}`}
+              className="block rounded-xl border-2 border-primary bg-gradient-to-br from-primary/25 via-primary/10 to-transparent p-4 shadow-lg shadow-primary/20 animate-in fade-in"
+            >
+              <div className="flex items-center gap-3">
+                <Trophy className="h-8 w-8 text-primary shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-lg font-black">Your results are in</div>
+                  <div className="text-sm text-muted-foreground truncate">{weekLabel(tw.unwatched)} · watch your brackets play out</div>
+                </div>
+                <ChevronRight className="h-5 w-5 shrink-0" />
+              </div>
+            </Link>
+          );
+        }
+        return (
+          <div className="space-y-3">
+            <ChampionReveal
+              champion={champ}
+              title={`Global Cup Champion · ${weekLabel(tw.unwatched)}`}
+              recap={tw.unwatchedBracket!.final_recap}
+            />
+            <Button asChild size="lg" className="w-full h-12 text-base font-bold">
+              <Link to={`/week/${tw.unwatched.id}`}>
+                <Trophy className="mr-2 h-5 w-5" /> Watch your brackets play out
+              </Link>
+            </Button>
           </div>
-        </Link>
-      )}
+        );
+      })()}
 
       <Card className="overflow-hidden border-primary/30">
         <div className="relative overflow-hidden border-b border-primary/30 bg-gradient-to-br from-primary/30 via-primary/10 to-background p-4 sm:p-6">
