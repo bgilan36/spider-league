@@ -61,7 +61,12 @@ export function useThisWeek() {
     setExplicit(chosen.length > 0);
     setEntryIds(chosen.length ? chosen : f.slice(0, TOURNAMENT.MAX_ENTRIES_PER_USER).map((s) => s.id));
     setVeteranId(ents.find((e) => e.is_veteran)?.spider_id ?? null);
-    setUnwatched(published && !viewRes.data?.reached_champion ? published : null);
+    const isUnwatched = published && !viewRes.data?.reached_champion;
+    setUnwatched(isUnwatched ? published : null);
+    if (isUnwatched) {
+      const { data: gb } = await db.from("brackets").select("*").eq("week_id", published.id).eq("type", "global").maybeSingle();
+      setUnwatchedBracket((gb as Bracket) ?? null);
+    } else setUnwatchedBracket(null);
 
     // Pod activity
     const memberships = (memRes.data ?? []) as any[];
@@ -91,7 +96,7 @@ export function useThisWeek() {
 
   useEffect(() => { load(); }, [load]);
 
-  return { loading, week, fresh, veterans, entryIds, veteranId, explicit, pods, unwatched, lastPublished, reload: load };
+  return { loading, week, fresh, veterans, entryIds, veteranId, explicit, pods, unwatched, unwatchedBracket, lastPublished, reload: load };
 }
 
 export function useCountdown(target: string | null | undefined) {
