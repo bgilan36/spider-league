@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -31,15 +32,20 @@ function Name({ p, highlight }: { p: Participant | undefined; highlight: boolean
 export default function BracketView({ bracket, matches, myUserId, playback = true, onFinished }: Props) {
   const totalRounds = Math.log2(bracket.size);
   const [shown, setShown] = useState(playback ? 0 : totalRounds);
+  const [banner, setBanner] = useState<string | null>(null);
   const [full, setFull] = useState(false);
   const [open, setOpen] = useState<Match | null>(null);
   const byId = useMemo(() => new Map(bracket.participants.map((p) => [p.id, p])), [bracket]);
   const labels = roundLabels(bracket.size);
 
-  useEffect(() => { setShown(playback ? 0 : totalRounds); }, [bracket.id, playback, totalRounds]);
+  useEffect(() => { setShown(playback ? 0 : totalRounds); setBanner(null); }, [bracket.id, playback, totalRounds]);
   useEffect(() => {
-    if (shown >= totalRounds) { onFinished?.(); return; }
-    const t = setTimeout(() => setShown((s) => s + 1), TOURNAMENT.REVEAL_MS_PER_ROUND);
+    if (shown >= totalRounds) { setBanner(null); onFinished?.(); return; }
+    // Cinematic: flash the round's title card, then reveal its results.
+    setBanner(labels[Math.min(shown, totalRounds - 1)]);
+    // Drumroll: the Final lingers longer before the champion is known.
+    const ms = shown === totalRounds - 1 ? TOURNAMENT.REVEAL_MS_PER_ROUND * 1.6 : TOURNAMENT.REVEAL_MS_PER_ROUND;
+    const t = setTimeout(() => { setBanner(null); setShown((s) => s + 1); }, ms);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shown, totalRounds]);
@@ -56,15 +62,18 @@ export default function BracketView({ bracket, matches, myUserId, playback = tru
 
   const MatchBox = ({ m }: { m: Match }) => {
     const revealed = m.round_number <= shown;
+    const fresh = revealed && m.round_number === shown;
     const isBye = !m.spider_b_id;
     return (
       <button
         type="button"
         disabled={isBye}
         onClick={() => setOpen(m)}
+        style={{ transitionDelay: fresh ? `${m.slot * 110}ms` : "0ms" }}
         className={cn(
-          "w-full rounded-md border bg-card/80 p-1.5 text-left text-xs transition-all duration-500",
+          "w-full rounded-md border bg-card/80 p-1.5 text-left text-xs transition-all duration-700",
           revealed ? "opacity-100" : "opacity-40",
+          fresh && "ring-1 ring-primary/50",
           (mine(m.spider_a_id) || mine(m.spider_b_id)) ? "border-primary/60" : "border-border",
           m.is_upset && revealed && "ring-1 ring-amber-400/70",
         )}
@@ -107,6 +116,24 @@ export default function BracketView({ bracket, matches, myUserId, playback = tru
         </div>
       )}
 
+      <div className="relative">
+      <AnimatePresence>
+        {banner && (
+          <motion.div
+            key={`${banner}-${shown}`}
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.08 }}
+            transition={{ duration: 0.45, ease: "easeOut" }}
+            className="pointer-events-none absolute inset-0 z-10 grid place-items-center"
+          >
+            <div className="rounded-2xl border border-primary/40 bg-background/90 px-8 py-5 text-center shadow-xl backdrop-blur">
+              <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground">Now playing</div>
+              <div className="text-3xl font-black uppercase tracking-wide text-primary">{banner}</div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="-mx-3 overflow-x-auto px-3 pb-2">
         <div className="flex gap-3" style={{ minWidth: rounds.length * 168 }}>
           {rounds.map((r) => (
@@ -118,6 +145,7 @@ export default function BracketView({ bracket, matches, myUserId, playback = tru
             </div>
           ))}
         </div>
+      </div>
       </div>
 
       {focusFrom > 1 && (

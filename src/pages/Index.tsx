@@ -33,6 +33,7 @@ import OnlineUsersBar from "@/components/OnlineUsersBar";
 import NewSpiderSpotlight from "@/components/NewSpiderSpotlight";
 import NextUpCard from "@/components/home/NextUpCard";
 import ThisWeekCard from "@/components/week/ThisWeekCard";
+import PastChampions from "@/components/week/PastChampions";
 import OnboardingModal from "@/components/OnboardingModal";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
@@ -947,6 +948,9 @@ const Index = () => {
             <ThisWeekCard />
           </section>
         )}
+
+        <PastChampions />
+
 
         <section className="mb-6 sm:mb-8">
           <FriendPodsHomeSection />
