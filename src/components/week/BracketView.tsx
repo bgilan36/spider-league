@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -31,15 +32,20 @@ function Name({ p, highlight }: { p: Participant | undefined; highlight: boolean
 export default function BracketView({ bracket, matches, myUserId, playback = true, onFinished }: Props) {
   const totalRounds = Math.log2(bracket.size);
   const [shown, setShown] = useState(playback ? 0 : totalRounds);
+  const [banner, setBanner] = useState<string | null>(null);
   const [full, setFull] = useState(false);
   const [open, setOpen] = useState<Match | null>(null);
   const byId = useMemo(() => new Map(bracket.participants.map((p) => [p.id, p])), [bracket]);
   const labels = roundLabels(bracket.size);
 
-  useEffect(() => { setShown(playback ? 0 : totalRounds); }, [bracket.id, playback, totalRounds]);
+  useEffect(() => { setShown(playback ? 0 : totalRounds); setBanner(null); }, [bracket.id, playback, totalRounds]);
   useEffect(() => {
-    if (shown >= totalRounds) { onFinished?.(); return; }
-    const t = setTimeout(() => setShown((s) => s + 1), TOURNAMENT.REVEAL_MS_PER_ROUND);
+    if (shown >= totalRounds) { setBanner(null); onFinished?.(); return; }
+    // Cinematic: flash the round's title card, then reveal its results.
+    setBanner(labels[Math.min(shown, totalRounds - 1)]);
+    // Drumroll: the Final lingers longer before the champion is known.
+    const ms = shown === totalRounds - 1 ? TOURNAMENT.REVEAL_MS_PER_ROUND * 1.6 : TOURNAMENT.REVEAL_MS_PER_ROUND;
+    const t = setTimeout(() => { setBanner(null); setShown((s) => s + 1); }, ms);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shown, totalRounds]);
