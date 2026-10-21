@@ -782,6 +782,9 @@ const Index = () => {
               </div>
             </CardContent>
           </Card>
+          <div className="mt-8">
+            <PastChampions />
+          </div>
           
           <p className="text-center text-sm text-muted-foreground mt-6">
             Catch spiders all week. Win the weekly Cup.
