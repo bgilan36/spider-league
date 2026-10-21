@@ -35,8 +35,8 @@ export const TOURNAMENT = {
 
   /** Large brackets show my path plus this round size onward. */
   FOCUS_FROM_ROUND_OF: 16,
-  /** Results reveal playback speed per round (ms). */
-  REVEAL_MS_PER_ROUND: 1000,
+  /** Results reveal playback speed per round (ms). Cinematic: each round gets a title card first. */
+  REVEAL_MS_PER_ROUND: 2600,
 
   POINTS_PER_MATCH_WIN: 1,
   POINTS_POD_CHAMPION: 3,
