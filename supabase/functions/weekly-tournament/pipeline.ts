@@ -172,10 +172,11 @@ export async function buildAndSimulate(db: DB, week: any) {
 
   // Global Cup: fresh catches from real (non-demo) players only.
   const globalReal = all.filter((p) => !p.is_veteran && !p.is_demo);
-  if (globalReal.length > 0) {
-    const size = bracketSize(globalReal.length, TOURNAMENT.MIN_GLOBAL_BRACKET);
-    const wild = makeWildChallengers(Math.max(0, TOURNAMENT.MIN_GLOBAL_BRACKET - globalReal.length), await wildSample(db, globalReal), `${week.id}:global`);
-    const result = simulateBracket([...globalReal, ...wild], size, `${week.id}:global`, false);
+  // Real spiders only: bracket size = next power of two of real entries; top seeds get byes.
+  if (globalReal.length >= 2) {
+    const size = bracketSize(globalReal.length, 2);
+    const wild: Participant[] = [];
+    const result = simulateBracket(globalReal, size, `${week.id}:global`, false);
     const recap = await writeRecap(result, "Global Cup");
     await insertBracket(db, week.id, "global", null, result, recap);
     summary.push({ type: "global", real: globalReal.length, wild: wild.length, size });
@@ -193,9 +194,10 @@ export async function buildAndSimulate(db: DB, week: any) {
     const mem = membersByPod.get(pod.id) ?? new Set();
     const real = all.filter((p) => p.owner_id && mem.has(p.owner_id));
     if (real.length < TOURNAMENT.MIN_REAL_POD_ENTRIES) continue;
-    const size = bracketSize(real.length, TOURNAMENT.MIN_POD_BRACKET);
-    const wild = makeWildChallengers(Math.max(0, TOURNAMENT.MIN_POD_BRACKET - real.length), await wildSample(db, real), `${week.id}:${pod.id}`);
-    const result = simulateBracket([...real, ...wild], size, `${week.id}:${pod.id}`, true);
+    if (real.length < 2) continue;
+    const size = bracketSize(real.length, 2);
+    const wild: Participant[] = [];
+    const result = simulateBracket(real, size, `${week.id}:${pod.id}`, true);
     const recap = await writeRecap(result, `${pod.name} pod`);
     await insertBracket(db, week.id, "pod", pod.id, result, recap);
     summary.push({ type: "pod", pod: pod.id, real: real.length, wild: wild.length, size });
