@@ -146,6 +146,7 @@ export default function BracketView({ bracket, matches, myUserId, playback = tru
           ))}
         </div>
       </div>
+      </div>
 
       {focusFrom > 1 && (
         <Button variant="ghost" size="sm" className="w-full" onClick={() => setFull((f) => !f)}>
