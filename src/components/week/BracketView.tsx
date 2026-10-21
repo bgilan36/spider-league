@@ -62,15 +62,18 @@ export default function BracketView({ bracket, matches, myUserId, playback = tru
 
   const MatchBox = ({ m }: { m: Match }) => {
     const revealed = m.round_number <= shown;
+    const fresh = revealed && m.round_number === shown;
     const isBye = !m.spider_b_id;
     return (
       <button
         type="button"
         disabled={isBye}
         onClick={() => setOpen(m)}
+        style={{ transitionDelay: fresh ? `${m.slot * 110}ms` : "0ms" }}
         className={cn(
-          "w-full rounded-md border bg-card/80 p-1.5 text-left text-xs transition-all duration-500",
+          "w-full rounded-md border bg-card/80 p-1.5 text-left text-xs transition-all duration-700",
           revealed ? "opacity-100" : "opacity-40",
+          fresh && "ring-1 ring-primary/50",
           (mine(m.spider_a_id) || mine(m.spider_b_id)) ? "border-primary/60" : "border-border",
           m.is_upset && revealed && "ring-1 ring-amber-400/70",
         )}
@@ -113,6 +116,24 @@ export default function BracketView({ bracket, matches, myUserId, playback = tru
         </div>
       )}
 
+      <div className="relative">
+      <AnimatePresence>
+        {banner && (
+          <motion.div
+            key={`${banner}-${shown}`}
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.08 }}
+            transition={{ duration: 0.45, ease: "easeOut" }}
+            className="pointer-events-none absolute inset-0 z-10 grid place-items-center"
+          >
+            <div className="rounded-2xl border border-primary/40 bg-background/90 px-8 py-5 text-center shadow-xl backdrop-blur">
+              <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground">Now playing</div>
+              <div className="text-3xl font-black uppercase tracking-wide text-primary">{banner}</div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="-mx-3 overflow-x-auto px-3 pb-2">
         <div className="flex gap-3" style={{ minWidth: rounds.length * 168 }}>
           {rounds.map((r) => (
