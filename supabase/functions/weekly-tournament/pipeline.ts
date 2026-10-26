@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.55.0";
 import { STAT_KEYS, STAT_LABELS, TOURNAMENT } from "../_shared/tournament-config.ts";
 import {
-  applyVeteran, bracketSize, finishDepth, makeWildChallengers, openWeekFor, podPoints,
+  applyVeteran, bracketSize, finishDepth, makeWildChallengers, noCupReason, openWeekFor, podPoints,
   seasonIdFor, simulateBracket, type BracketResult, type Participant, type Stats,
 } from "../_shared/tournament-engine.ts";
 
@@ -179,7 +179,11 @@ export async function buildAndSimulate(db: DB, week: any) {
     const result = simulateBracket(globalReal, size, `${week.id}:global`, false);
     const recap = await writeRecap(result, "Global Cup");
     await insertBracket(db, week.id, "global", null, result, recap);
+    await db.from("game_weeks").update({ no_cup_reason: null }).eq("id", week.id);
     summary.push({ type: "global", real: globalReal.length, wild: wild.length, size });
+  } else {
+    await db.from("game_weeks").update({ no_cup_reason: noCupReason(globalReal.length) }).eq("id", week.id);
+    await log(db, week.id, "global_cup_skipped", "ok", { real: globalReal.length });
   }
 
   // Pods

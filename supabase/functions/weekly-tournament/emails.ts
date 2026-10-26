@@ -162,9 +162,10 @@ ${lastOfSeason && rows[0] ? `<div style="font-size:13px;color:#fbbf24;margin-top
   }
 
   const hasGames = spiderLines.length > 0 || pods.length > 0;
+  const cupReason = week.no_cup_reason ?? "The Global Cup didn't run this week — at least two spiders need to be entered.";
   const cup = global
     ? `${h2("🏆 The Global Cup")}<div style="font-size:15px;line-height:1.5">${global.participants.length} spiders battled. A champion has been crowned — and we're not telling you who.</div>${button(resultsUrl, "See who won the Global Cup →")}`
-    : button(utm(`/week/${week.id}`, `weekly_results_${week.id}`), "See this week's results →");
+    : `${h2("🏆 The Global Cup")}<div style="font-size:15px;line-height:1.5">${esc(cupReason)}</div>${button(utm("/upload", `weekly_results_${week.id}`), "Catch a contender for next week →")}`;
   const next = `<div style="font-size:15px;line-height:1.5;margin-top:20px">Next week is open. Entries lock ${TOURNAMENT.LOCK_LABEL}. <a href="${utm("/upload", `weekly_results_${week.id}`)}" style="color:#7dd3a8;font-weight:700">Go catch a contender.</a></div>`;
 
   const body = hasGames
@@ -172,8 +173,8 @@ ${lastOfSeason && rows[0] ? `<div style="font-size:13px;color:#fbbf24;margin-top
 ${spiderLines.length ? `${h2("Your spiders")}<table style="width:100%;border-collapse:collapse">${spiderLines.join("")}</table>` : ""}
 ${podBlocks.length ? `${h2("Your pods")}${podBlocks.join("")}` : ""}
 ${upsetHtml}${cup}${next}`
-    : `<h1 style="font-size:24px;margin:10px 0 4px;color:#fff">${esc(label)}: the Global Cup is decided</h1>${cup}
-<div style="font-size:15px;line-height:1.5">You didn't have a spider in this week's tournaments. Next week is open — entries lock ${TOURNAMENT.LOCK_LABEL}.</div>
+    : `<h1 style="font-size:24px;margin:10px 0 4px;color:#fff">${esc(label)}${global ? ": the Global Cup is decided" : " results"}</h1>${cup}
+<div style="font-size:15px;line-height:1.5">${global ? "You didn't have a spider in this week's tournaments." : esc(cupReason)} Next week is open — entries lock ${TOURNAMENT.LOCK_LABEL}.</div>
 ${button(utm("/upload", `weekly_results_${week.id}`), "Catch a spider")}`;
 
   const unsub = unsubLink(token, "weekly_results");

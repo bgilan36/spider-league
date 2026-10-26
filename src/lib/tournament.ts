@@ -14,6 +14,7 @@ export interface GameWeek {
   display_name: string | null;
   is_test: boolean;
   published_at: string | null;
+  no_cup_reason: string | null;
 }
 
 export interface Participant {
