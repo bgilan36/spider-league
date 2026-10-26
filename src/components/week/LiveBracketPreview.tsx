@@ -17,7 +17,7 @@ interface Preview {
 function Fighter({ spider, mine }: { spider: Participant | null; mine?: string }) {
   if (!spider) return <div className="h-16 flex items-center px-3 text-xs text-muted-foreground">Bye · automatic advance</div>;
   return (
-    <Link to={`/spider/${spider.id}`} className={cn("flex h-16 min-w-0 items-center gap-2 px-3 transition-colors hover:bg-accent", spider.owner_id === mine && "bg-primary/10")}>
+    <Link to={spider.owner_id ? `/collection/${spider.owner_id}` : "/collection"} className={cn("flex h-16 min-w-0 items-center gap-2 px-3 transition-colors hover:bg-accent", spider.owner_id === mine && "bg-primary/10")}>
       <span className="w-5 shrink-0 text-xs font-bold text-primary">{spider.seed}</span>
       {spider.image_url && <img src={spider.image_url} alt={spider.name} loading="lazy" className="h-10 w-10 shrink-0 rounded object-cover" />}
       <div className="min-w-0 flex-1">
