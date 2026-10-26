@@ -50,6 +50,22 @@ export default function PublicCup() {
 
   if (loading) return <div className="min-h-[60vh] grid place-items-center"><SpiderLogoLoader /></div>;
   if (!week || !bracket || !champ) {
+    // Published week with no Global Cup at all — explain why.
+    if (week?.status === "published" && week.is_test === false && !bracket) {
+      const reason = week.no_cup_reason ?? "The Global Cup needs at least two real spiders entered — not enough were entered this week.";
+      return (
+        <div className="container mx-auto max-w-xl px-4 py-12 text-center space-y-3">
+          <Helmet>
+            <title>{`Global Cup · ${label} — Spider League`}</title>
+            <meta name="description" content={reason} />
+          </Helmet>
+          <div className="text-xs font-semibold uppercase tracking-[0.25em] text-primary">Spider League</div>
+          <h1 className="text-3xl font-black">Global Cup · {label}</h1>
+          <p className="text-muted-foreground max-w-md mx-auto">{reason}</p>
+          <Button asChild size="lg" className="w-full max-w-xs mx-auto"><Link to="/auth"><Camera className="mr-2 h-5 w-5" />Catch your first spider</Link></Button>
+        </div>
+      );
+    }
     return <div className="container mx-auto px-4 py-12 text-center space-y-3">
       <h1 className="text-2xl font-bold">This Global Cup isn't public yet</h1>
       <Button asChild><Link to="/">Go to Spider League</Link></Button>
