@@ -34,6 +34,7 @@ import NewSpiderSpotlight from "@/components/NewSpiderSpotlight";
 import NextUpCard from "@/components/home/NextUpCard";
 import ThisWeekCard from "@/components/week/ThisWeekCard";
 import PastChampions from "@/components/week/PastChampions";
+import LiveBracketPreview from "@/components/week/LiveBracketPreview";
 import OnboardingModal from "@/components/OnboardingModal";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
@@ -782,6 +783,9 @@ const Index = () => {
               </div>
             </CardContent>
           </Card>
+          <div className="mt-8">
+            <LiveBracketPreview />
+          </div>
           <div className="mt-8">
             <PastChampions />
           </div>
