@@ -84,5 +84,5 @@ Deno.test("pod points: 1 per match win, +3 for the champion", () => {
 Deno.test("no-cup reason explains zero and one entries, never two", () => {
   assertEquals(noCupReason(0), "No spiders were entered this week — the Global Cup needs at least two real catches to run.");
   assertEquals(noCupReason(1), "Only 1 spider was entered this week — the Global Cup needs at least two.");
-  assert(!noCupReason(2).includes("needs at least two") || false);
+  assertEquals(noCupReason(3), "Only 3 spiders were entered this week — the Global Cup needs at least two.");
 });

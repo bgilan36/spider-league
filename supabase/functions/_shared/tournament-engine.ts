@@ -216,7 +216,9 @@ export function noCupReason(realCount: number): string {
   if (realCount <= 0) {
     return "No spiders were entered this week — the Global Cup needs at least two real catches to run.";
   }
-  return `Only ${realCount} spider${realCount === 1 ? "" : "s"} was entered this week — the Global Cup needs at least two.`;
+  return realCount === 1
+    ? "Only 1 spider was entered this week — the Global Cup needs at least two."
+    : `Only ${realCount} spiders were entered this week — the Global Cup needs at least two.`;
 }
 
 /** Standard seed order for a bracket: size 4 -> [1,4,2,3]; pairs are (0,1),(2,3)... */
