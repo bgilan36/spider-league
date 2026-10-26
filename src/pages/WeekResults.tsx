@@ -155,7 +155,16 @@ export default function WeekResults() {
 
         <TabsContent value="global" className="space-y-4 pt-2">
           {!global ? (
-            <p className="text-center text-muted-foreground py-8">No Global Cup this week.</p>
+            <div className="rounded-xl border border-dashed border-border p-6 text-center space-y-3">
+              <Globe className="h-10 w-10 mx-auto text-muted-foreground" />
+              <h2 className="text-lg font-black">No Global Cup this week</h2>
+              <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                {week.no_cup_reason ?? "The Global Cup needs at least two real spiders entered — not enough were entered this week."}
+              </p>
+              <Button asChild size="lg" className="w-full max-w-xs mx-auto font-bold">
+                <Link to="/upload"><Camera className="mr-2 h-5 w-5" />Catch a contender for next week</Link>
+              </Button>
+            </div>
           ) : (
             <>
               <BracketView key={global.id} bracket={global} matches={mFor(global)} myUserId={user?.id} onFinished={onGlobalFinished} />
