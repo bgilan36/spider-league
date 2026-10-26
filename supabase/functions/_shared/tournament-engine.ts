@@ -211,6 +211,14 @@ export function bracketSize(realCount: number, min: number): number {
   return nextPow2(Math.max(realCount, min));
 }
 
+/** Plain-English reason the Global Cup can't run with `realCount` real entries. */
+export function noCupReason(realCount: number): string {
+  if (realCount <= 0) {
+    return "No spiders were entered this week — the Global Cup needs at least two real catches to run.";
+  }
+  return `Only ${realCount} spider${realCount === 1 ? "" : "s"} was entered this week — the Global Cup needs at least two.`;
+}
+
 /** Standard seed order for a bracket: size 4 -> [1,4,2,3]; pairs are (0,1),(2,3)... */
 export function seedOrder(size: number): number[] {
   let order = [1];
