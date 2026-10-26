@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
 import BracketView from "@/components/week/BracketView";
+import LiveBracketPreview from "@/components/week/LiveBracketPreview";
 import ChampionReveal from "@/components/week/ChampionReveal";
 import SpiderLogoLoader from "@/components/SpiderLogoLoader";
 import { ensureCupCard } from "@/lib/cupShareImage";
@@ -89,6 +90,17 @@ export default function WeekResults() {
   const gChamp = useMemo(() => champ(global), [global]);
 
   if (loading) return <div className="min-h-[60vh] grid place-items-center"><SpiderLogoLoader /></div>;
+
+  if (week?.status === "open") {
+    return (
+      <div className="container mx-auto max-w-3xl px-3 py-6 space-y-4">
+        <Helmet><title>{label} bracket preview — Spider League</title></Helmet>
+        <Button variant="ghost" asChild><Link to="/"><ArrowLeft className="mr-2 h-4 w-4" />Home</Link></Button>
+        <h1 className="text-2xl font-black">{label} · Global Cup</h1>
+        <LiveBracketPreview weekId={weekId} myUserId={user?.id} />
+      </div>
+    );
+  }
 
   if (!week || week.status !== "published") {
     return (

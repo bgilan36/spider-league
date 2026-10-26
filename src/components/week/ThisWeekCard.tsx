@@ -11,6 +11,7 @@ import { useThisWeek, useCountdown, type MySpider } from "@/hooks/useThisWeek";
 import { TOURNAMENT, logEvent, weekLabel } from "@/lib/tournament";
 import { cn } from "@/lib/utils";
 import ChampionReveal from "@/components/week/ChampionReveal";
+import LiveBracketPreview from "@/components/week/LiveBracketPreview";
 
 function Countdown({ locksAt }: { locksAt: string }) {
   const c = useCountdown(locksAt);
@@ -197,6 +198,8 @@ export default function ThisWeekCard() {
           <Button asChild size="lg" className="w-full h-14 text-lg font-bold">
             <Link to="/upload"><Camera className="mr-2 h-5 w-5" /> Catch a contender</Link>
           </Button>
+
+          {tw.week && <LiveBracketPreview weekId={tw.week.id} revision={tw.entryIds.join(",")} />}
 
           <div>
             <div className="flex items-center justify-between mb-2">

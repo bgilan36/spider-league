@@ -5,6 +5,7 @@
 - This Week home, results reveal, standings, trophies, public Cup + preview image, analytics
 - Results email, Friday reminder, settings switches, unsubscribe, admin test sends
 - Centered raised mobile upload button and visible heat map colors verified with real public sightings
+- Live provisional Global Cup preview on Home and open-week pages, with shared selection/seeding, automatic refresh and real-only byes
 
 ## Open
 - [ ] Verify spiderleague.app in Resend (blocked: needs Brian) — until then no emails deliver

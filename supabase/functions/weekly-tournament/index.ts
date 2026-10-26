@@ -3,6 +3,7 @@ import { TOURNAMENT } from "../_shared/tournament-config.ts";
 import { localParts, weekLabel, weekWindow } from "../_shared/tournament-engine.ts";
 import { ensureOpenWeek, log, runPipeline } from "./pipeline.ts";
 import { previewTest, sendFridayNudges, sendTest, sendWeeklyResults } from "./emails.ts";
+import { previewGlobalCup } from "./preview.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -83,6 +84,12 @@ Deno.serve(async (req) => {
   try {
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const action = body.action ?? url.searchParams.get("action") ?? "tick";
+
+    if (action === "preview_bracket") {
+      const id = body.week_id ?? url.searchParams.get("week_id") ?? undefined;
+      if (id !== undefined && (typeof id !== "string" || !/^\d{4}-W\d{2}$/.test(id))) return json({ error: "Bad week" }, 400);
+      return json(await previewGlobalCup(admin, id));
+    }
 
     if (action === "tick") return json({ ok: true, ...(await tick(admin)) });
 

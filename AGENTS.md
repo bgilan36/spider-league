@@ -14,3 +14,4 @@
 - Players change weekly entries only via `set_my_week_entries` / `set_my_week_veteran` RPCs; emails are claimed via a unique `email_log` row before sending, guaranteeing one per user per week per kind.
 - Exempt Leaflet renderer canvases/SVGs from global responsive media sizing and fit the initial heat map to actual sightings; otherwise zero-width panes hide heat colors and hotspots may start offscreen.
 - Weekly brackets contain only real entered spiders (no generated filler); size is the next power of two of real entries with byes for top seeds, and a bracket needs at least 2 real spiders; this keeps every matchup genuine.
+- Live Global Cup previews use the read-only weekly-tournament preview_bracket action, shared fresh-entry selection and engine seeding; polling refreshes the provisional field without freezing entries or simulating results.

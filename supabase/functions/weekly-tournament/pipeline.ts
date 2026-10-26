@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.55.0";
 import { STAT_KEYS, STAT_LABELS, TOURNAMENT } from "../_shared/tournament-config.ts";
+import { selectFreshEntries } from "../_shared/tournament-entries.ts";
 import {
   applyVeteran, bracketSize, finishDepth, makeWildChallengers, noCupReason, openWeekFor, podPoints,
   seasonIdFor, simulateBracket, type BracketResult, type Participant, type Stats,
@@ -54,15 +55,9 @@ export async function lockEntries(db: DB, week: any, explicitWeekId: string) {
 
   const rows: any[] = [];
   const frozenAt = new Date().toISOString();
-  for (const [uid, spiders] of freshByUser) {
-    const freshIds = new Set(spiders.map((s) => s.id));
-    const chosen = (explicitByUser.get(uid) ?? []).filter((e) => !e.is_veteran && freshIds.has(e.spider_id)).map((e) => e.spider_id);
-    const pick = chosen.length
-      ? spiders.filter((s) => chosen.includes(s.id))
-      : [...spiders].sort((a, b) => b.power_score - a.power_score);
-    for (const s of pick.slice(0, TOURNAMENT.MAX_ENTRIES_PER_USER)) {
-      rows.push({ week_id: week.id, spider_id: s.id, user_id: uid, is_veteran: false, effective_power: s.power_score, is_auto: !chosen.length, frozen_at: frozenAt });
-    }
+  for (const s of selectFreshEntries(fresh ?? [], explicit ?? [])) {
+    const chosen = (explicitByUser.get(s.owner_id) ?? []).some((e) => !e.is_veteran && (freshByUser.get(s.owner_id) ?? []).some((f) => f.id === e.spider_id));
+    rows.push({ week_id: week.id, spider_id: s.id, user_id: s.owner_id, is_veteran: false, effective_power: s.power_score, is_auto: !chosen, frozen_at: frozenAt });
   }
   // Veterans: only players with zero fresh catches who opted in.
   const vetRows = (explicit ?? []).filter((e) => e.is_veteran && !freshByUser.has(e.user_id));
