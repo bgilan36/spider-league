@@ -7,5 +7,6 @@
 - Centered raised mobile upload button and visible heat map colors verified with real public sightings
 
 ## Open
+- [ ] Add a live provisional Global Cup bracket preview during the entry week
 - [ ] Verify spiderleague.app in Resend (blocked: needs Brian) — until then no emails deliver
 - [ ] Old manual-battle screens remain reachable from spider profiles/collection (only nav, home, onboarding were retired)
