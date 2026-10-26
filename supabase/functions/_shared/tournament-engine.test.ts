@@ -1,6 +1,6 @@
 import { assert, assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
-  bracketSize, layoutBracket, makeWildChallengers, podPoints, roundWinProbability, seedOrder,
+  bracketSize, layoutBracket, makeWildChallengers, noCupReason, podPoints, roundWinProbability, seedOrder,
   simulateBracket, weekWindow, type Participant,
 } from "./tournament-engine.ts";
 
@@ -79,4 +79,10 @@ Deno.test("pod points: 1 per match win, +3 for the champion", () => {
   const r = simulateBracket(ps, 2, "k", false);
   const pts = podPoints(r);
   assertEquals(pts.get(r.champion.owner_id!), 4);
+});
+
+Deno.test("no-cup reason explains zero and one entries, never two", () => {
+  assertEquals(noCupReason(0), "No spiders were entered this week — the Global Cup needs at least two real catches to run.");
+  assertEquals(noCupReason(1), "Only 1 spider was entered this week — the Global Cup needs at least two.");
+  assert(!noCupReason(2).includes("needs at least two") || false);
 });
