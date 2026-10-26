@@ -1,0 +1,1 @@
+ALTER TABLE public.game_weeks ADD COLUMN IF NOT EXISTS no_cup_reason text;

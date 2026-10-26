@@ -536,6 +536,7 @@ export type Database = {
           id: string
           is_test: boolean
           locks_at: string
+          no_cup_reason: string | null
           published_at: string | null
           starts_at: string
           status: string
@@ -548,6 +549,7 @@ export type Database = {
           id: string
           is_test?: boolean
           locks_at: string
+          no_cup_reason?: string | null
           published_at?: string | null
           starts_at: string
           status?: string
@@ -560,6 +562,7 @@ export type Database = {
           id?: string
           is_test?: boolean
           locks_at?: string
+          no_cup_reason?: string | null
           published_at?: string | null
           starts_at?: string
           status?: string
@@ -2534,6 +2537,7 @@ export type Database = {
           id: string
           is_test: boolean
           locks_at: string
+          no_cup_reason: string | null
           published_at: string | null
           starts_at: string
           status: string
