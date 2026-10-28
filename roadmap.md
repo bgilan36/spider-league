@@ -8,5 +8,6 @@
 - Live provisional Global Cup preview on Home and open-week pages, with shared selection/seeding, automatic refresh and real-only byes
 
 ## Open
+- [ ] Add permanent pod season standings and past champion history, with links from pod pages and results
 - [ ] Verify spiderleague.app in Resend (blocked: needs Brian) — until then no emails deliver
 - [ ] Old manual-battle screens remain reachable from spider profiles/collection (only nav, home, onboarding were retired)
