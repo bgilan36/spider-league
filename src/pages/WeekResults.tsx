@@ -151,7 +151,10 @@ export default function WeekResults() {
               )}
               {pod && (
                 <>
-                  <h2 className="text-lg font-bold">{podNames[pod.pod_id!] ?? "Pod"} bracket</h2>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-bold">{podNames[pod.pod_id!] ?? "Pod"} bracket</h2>
+                    <Button asChild size="sm" variant="outline" className="ml-auto"><Link to={`/pods/${pod.pod_id}/week/${weekId}`}>Full results & stats</Link></Button>
+                  </div>
                   <BracketView key={pod.id} bracket={pod} matches={mFor(pod)} myUserId={user?.id} onFinished={() => setFinished((f) => ({ ...f, [pod.id]: true }))} />
                   {finished[pod.id] && champ(pod) && (
                     <ChampionReveal champion={champ(pod)!} title={`${podNames[pod.pod_id!] ?? "Pod"} champion`} recap={pod.final_recap} />
