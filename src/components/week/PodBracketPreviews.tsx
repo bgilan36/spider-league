@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import LiveBracketPreview from "@/components/week/LiveBracketPreview";
 import type { Participant } from "@/lib/tournament";
@@ -7,7 +8,9 @@ interface PodPreview { id: string; name: string; participants: Participant[]; sl
 interface Resp { week: { id: string; locks_at: string; status: string } | null; closed?: boolean; pods: PodPreview[] }
 
 /** Live provisional bracket for each of the signed-in player's pods (members only). */
-export default function PodBracketPreviews({ weekId, myUserId, revision = "" }: { weekId?: string; myUserId?: string; revision?: string }) {
+export default function PodBracketPreviews({ weekId, myUserId: given, revision = "" }: { weekId?: string; myUserId?: string; revision?: string }) {
+  const { user } = useAuth();
+  const myUserId = given ?? user?.id;
   const { data } = useQuery({
     queryKey: ["live-pod-brackets", weekId, myUserId, revision],
     enabled: !!myUserId,

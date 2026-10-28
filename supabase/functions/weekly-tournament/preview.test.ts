@@ -17,3 +17,10 @@ Deno.test("five actual spiders preview an eight-slot bracket with three top-seed
   assertEquals(slots[0]?.id, "s0");
   assertEquals(slots[1], null);
 });
+Deno.test("a three-spider pod previews a four-slot real-only bracket with one bye", () => {
+  const participants = ["a", "b", "c"].map((o, i) => ({ id: `p${i}`, owner_id: o, power: 90 - i, spider_id: `p${i}`, is_wild: false })) as Participant[];
+  const slots = layoutBracket(participants, bracketSize(participants.length, 2), true);
+  assertEquals(slots.length, 4);
+  assertEquals(slots.filter((s) => s === null).length, 1);
+  assertEquals(slots.every((s) => !s || !s.is_wild), true);
+});

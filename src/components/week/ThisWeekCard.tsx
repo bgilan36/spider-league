@@ -201,7 +201,7 @@ export default function ThisWeekCard() {
           </Button>
 
           {tw.week && <LiveBracketPreview weekId={tw.week.id} revision={tw.entryIds.join(",")} />}
-          {tw.week && <PodBracketPreviews weekId={tw.week.id} myUserId={user?.id} revision={tw.entryIds.join(",")} />}
+          {tw.week && <PodBracketPreviews weekId={tw.week.id} revision={tw.entryIds.join(",")} />}
 
           <div>
             <div className="flex items-center justify-between mb-2">
