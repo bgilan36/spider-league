@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Camera, Loader2, Pencil, Settings, Share2, Swords, Trash2, Users } from "lucide-react";
+import { ArrowLeft, Camera, Loader2, Pencil, Settings, Share2, Swords, Trash2, Trophy, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -268,6 +268,7 @@ const PrivateLeagueDetail = () => {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
+          {isMember && <Button asChild variant="outline" size="lg"><Link to={`/pods/${league.id}/standings`}><Trophy className="h-4 w-4" />Standings & champions</Link></Button>}
           {(inviteUrl || isCommissioner) && (
             <Button variant="outline" size="lg" onClick={() => setInviteOpen(true)}>
               <Share2 className="h-4 w-4" />Invite
