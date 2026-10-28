@@ -28,8 +28,9 @@ function Fighter({ spider, mine }: { spider: Participant | null; mine?: string }
   );
 }
 
-export default function LiveBracketPreview({ weekId, myUserId, revision = "" }: { weekId?: string; myUserId?: string; revision?: string }) {
-  const { data, error, isPending, isFetching, refetch } = useQuery({
+export default function LiveBracketPreview({ weekId, myUserId, revision = "", preset, title }: { weekId?: string; myUserId?: string; revision?: string; preset?: Preview; title?: string }) {
+  const q = useQuery({
+    enabled: !preset,
     queryKey: ["live-global-bracket", weekId, revision],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke("weekly-tournament", { body: { action: "preview_bracket", ...(weekId ? { week_id: weekId } : {}) } });
@@ -39,15 +40,21 @@ export default function LiveBracketPreview({ weekId, myUserId, revision = "" }: 
     refetchInterval: 20_000,
     refetchOnWindowFocus: true,
   });
+  const data = preset ?? q.data;
+  const error = preset ? null : q.error;
+  const isPending = preset ? false : q.isPending;
+  const isFetching = q.isFetching;
+  const refetch = q.refetch;
+  const isPod = !!title;
   const labels = roundLabels(data?.size ?? 0);
 
   return (
-    <section className="min-w-0 space-y-3 border-t border-border pt-4" aria-label="Live Global Cup bracket">
+    <section className="min-w-0 space-y-3 border-t border-border pt-4" aria-label={title ?? "Live Global Cup bracket"}>
       <div className="flex items-center justify-between gap-2">
-        <h2 className="flex items-center gap-2 text-lg font-black"><GitBranch className="h-5 w-5 text-primary" />Live bracket preview</h2>
-        <Button variant="ghost" size="icon" aria-label="Refresh bracket" title="Refresh bracket" disabled={isFetching} onClick={() => refetch()}>
+        <h2 className="flex items-center gap-2 text-lg font-black"><GitBranch className="h-5 w-5 text-primary" />{title ?? "Live bracket preview"}</h2>
+        {!preset && <Button variant="ghost" size="icon" aria-label="Refresh bracket" title="Refresh bracket" disabled={isFetching} onClick={() => refetch()}>
           <RefreshCw className={cn("h-4 w-4", isFetching && "animate-spin")} />
-        </Button>
+        </Button>}
       </div>
       {isPending ? <p role="status" className="text-sm text-muted-foreground">Loading the field…</p> : error ? (
         <div className="space-y-2"><p role="alert" className="text-sm text-destructive">Couldn't load this week's bracket.</p><Button variant="outline" onClick={() => refetch()}>Try again</Button></div>
@@ -64,7 +71,7 @@ export default function LiveBracketPreview({ weekId, myUserId, revision = "" }: 
           {data.size === 0 ? (
             <div className="space-y-3 py-3">
               <p className="text-sm font-semibold">{data.participants.length === 1 ? "One contender is waiting for a rival." : "The field is open. Who will be first?"}</p>
-              <p className="text-xs text-muted-foreground">At least two real entered spiders are needed for a Global Cup. No generated opponents.</p>
+              <p className="text-xs text-muted-foreground">At least two real entered spiders are needed for a {isPod ? "pod tournament" : "Global Cup"}. No generated opponents.</p>
               {data.participants.map((s) => <Fighter key={s.id} spider={{ ...s, seed: 1 }} mine={myUserId} />)}
               <Button asChild variant="outline"><Link to="/upload"><Camera className="mr-2 h-4 w-4" />Catch a contender</Link></Button>
             </div>

@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
 import BracketView from "@/components/week/BracketView";
 import LiveBracketPreview from "@/components/week/LiveBracketPreview";
+import PodBracketPreviews from "@/components/week/PodBracketPreviews";
 import ChampionReveal from "@/components/week/ChampionReveal";
 import SpiderLogoLoader from "@/components/SpiderLogoLoader";
 import { ensureCupCard } from "@/lib/cupShareImage";
@@ -98,6 +99,7 @@ export default function WeekResults() {
         <Button variant="ghost" asChild><Link to="/"><ArrowLeft className="mr-2 h-4 w-4" />Home</Link></Button>
         <h1 className="text-2xl font-black">{label} · Global Cup</h1>
         <LiveBracketPreview weekId={weekId} myUserId={user?.id} />
+        <PodBracketPreviews weekId={weekId} myUserId={user?.id} />
       </div>
     );
   }

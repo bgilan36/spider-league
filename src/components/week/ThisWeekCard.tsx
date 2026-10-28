@@ -12,6 +12,7 @@ import { TOURNAMENT, logEvent, weekLabel } from "@/lib/tournament";
 import { cn } from "@/lib/utils";
 import ChampionReveal from "@/components/week/ChampionReveal";
 import LiveBracketPreview from "@/components/week/LiveBracketPreview";
+import PodBracketPreviews from "@/components/week/PodBracketPreviews";
 
 function Countdown({ locksAt }: { locksAt: string }) {
   const c = useCountdown(locksAt);
@@ -200,6 +201,7 @@ export default function ThisWeekCard() {
           </Button>
 
           {tw.week && <LiveBracketPreview weekId={tw.week.id} revision={tw.entryIds.join(",")} />}
+          {tw.week && <PodBracketPreviews weekId={tw.week.id} revision={tw.entryIds.join(",")} />}
 
           <div>
             <div className="flex items-center justify-between mb-2">

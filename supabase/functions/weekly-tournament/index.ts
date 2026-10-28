@@ -3,7 +3,7 @@ import { TOURNAMENT } from "../_shared/tournament-config.ts";
 import { localParts, weekLabel, weekWindow } from "../_shared/tournament-engine.ts";
 import { ensureOpenWeek, log, runPipeline } from "./pipeline.ts";
 import { previewTest, sendFridayNudges, sendTest, sendWeeklyResults } from "./emails.ts";
-import { previewGlobalCup } from "./preview.ts";
+import { previewGlobalCup, previewPods } from "./preview.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -89,6 +89,15 @@ Deno.serve(async (req) => {
       const id = body.week_id ?? url.searchParams.get("week_id") ?? undefined;
       if (id !== undefined && (typeof id !== "string" || !/^\d{4}-W\d{2}$/.test(id))) return json({ error: "Bad week" }, 400);
       return json(await previewGlobalCup(admin, id));
+    }
+
+    if (action === "preview_pod_brackets") {
+      const id = body.week_id ?? undefined;
+      if (id !== undefined && (typeof id !== "string" || !/^\d{4}-W\d{2}$/.test(id))) return json({ error: "Bad week" }, 400);
+      const token = req.headers.get("Authorization")?.replace("Bearer ", "");
+      const { data: u } = token ? await admin.auth.getUser(token) : { data: { user: null } };
+      if (!u.user) return json({ error: "Sign in to see your pod brackets" }, 401);
+      return json(await previewPods(admin, u.user.id, id));
     }
 
     if (action === "tick") return json({ ok: true, ...(await tick(admin)) });
