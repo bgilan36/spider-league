@@ -26,6 +26,7 @@ import Pods from "./pages/Pods";
 import BrowsePods from "./pages/BrowsePods";
 import Skirmish from "./pages/Skirmish";
 import WeekResults from "./pages/WeekResults";
+import PodCupResults from "./pages/PodCupResults";
 import PublicCup from "./pages/PublicCup";
 import UtmCapture from "@/components/week/UtmCapture";
 import { AuthProvider } from "@/auth/AuthProvider";
@@ -80,6 +81,7 @@ const App = () => (
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/week/:weekId" element={<WeekResults />} />
                 <Route path="/cup/:weekId" element={<PublicCup />} />
+                <Route path="/pods/:podId/week/:weekId" element={<PodCupResults />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
