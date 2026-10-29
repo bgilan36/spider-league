@@ -9,6 +9,7 @@
 - Permanent pod standings page with season selection, past season champions and paginated weekly Hall of Champions; linked from pod pages and weekly results
 
 ## Open
+- [ ] Mobile design pass: navigation clearance, touch targets, forms, tournament layouts and phone-sized verification
 - [ ] Verify populated pod standings and champion links while signed in (blocked: external sign-in is unavailable to automated checks)
 - [ ] Verify spiderleague.app in Resend (blocked: needs Brian) — until then no emails deliver
 - [ ] Old manual-battle screens remain reachable from spider profiles/collection (only nav, home, onboarding were retired)
