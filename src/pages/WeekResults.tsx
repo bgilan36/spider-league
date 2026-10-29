@@ -127,7 +127,7 @@ export default function WeekResults() {
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="grid w-full grid-cols-2 h-12">
+        <TabsList className="grid w-full grid-cols-2 h-[52px]">
           <TabsTrigger value="pods" className="h-10"><Users className="h-4 w-4 mr-1.5" />My Pods</TabsTrigger>
           <TabsTrigger value="global" className="h-10"><Globe className="h-4 w-4 mr-1.5" />Global Cup</TabsTrigger>
         </TabsList>
@@ -151,9 +151,9 @@ export default function WeekResults() {
               )}
               {pod && (
                 <>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
                     <h2 className="text-lg font-bold">{podNames[pod.pod_id!] ?? "Pod"} bracket</h2>
-                    <Button asChild size="sm" variant="outline" className="ml-auto"><Link to={`/pods/${pod.pod_id}/week/${weekId}`}>Full results & stats</Link></Button>
+                    <Button asChild size="sm" variant="outline" className="sm:ml-auto"><Link to={`/pods/${pod.pod_id}/week/${weekId}`}>Full results & stats</Link></Button>
                   </div>
                   <BracketView key={pod.id} bracket={pod} matches={mFor(pod)} myUserId={user?.id} onFinished={() => setFinished((f) => ({ ...f, [pod.id]: true }))} />
                   {finished[pod.id] && champ(pod) && (

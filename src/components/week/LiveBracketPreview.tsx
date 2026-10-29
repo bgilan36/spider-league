@@ -51,7 +51,7 @@ export default function LiveBracketPreview({ weekId, myUserId, revision = "", pr
   return (
     <section className="min-w-0 space-y-3 border-t border-border pt-4" aria-label={title ?? "Live Global Cup bracket"}>
       <div className="flex items-center justify-between gap-2">
-        <h2 className="flex items-center gap-2 text-lg font-black"><GitBranch className="h-5 w-5 text-primary" />{title ?? "Live bracket preview"}</h2>
+        <h2 className="flex min-w-0 items-center gap-2 text-lg font-black"><GitBranch className="h-5 w-5 shrink-0 text-primary" />{title ?? "Live bracket preview"}</h2>
         {!preset && <Button variant="ghost" size="icon" aria-label="Refresh bracket" title="Refresh bracket" disabled={isFetching} onClick={() => refetch()}>
           <RefreshCw className={cn("h-4 w-4", isFetching && "animate-spin")} />
         </Button>}
@@ -76,7 +76,7 @@ export default function LiveBracketPreview({ weekId, myUserId, revision = "", pr
               <Button asChild variant="outline"><Link to="/upload"><Camera className="mr-2 h-4 w-4" />Catch a contender</Link></Button>
             </div>
           ) : (
-            <div className="max-h-[520px] w-full overflow-auto pb-3" tabIndex={0} aria-label="Provisional tournament rounds">
+            <div className="max-h-[min(520px,65dvh)] w-full overflow-auto overscroll-x-contain pb-3" tabIndex={0} aria-label="Provisional tournament rounds">
               <div className="flex min-w-max gap-5">
                 {labels.map((label, r) => (
                   <div key={label} className="flex w-64 shrink-0 flex-col">

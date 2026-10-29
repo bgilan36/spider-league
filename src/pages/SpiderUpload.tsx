@@ -904,10 +904,10 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
       
        <main className="container mx-auto px-3 py-4 sm:px-6 sm:py-8 overscroll-y-contain [touch-action:pan-y]">
         <div className="max-w-2xl mx-auto">
-          <div className="mb-6">
+          <div className="mb-2 sm:mb-6">
             <Link 
               to="/" 
-              className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="inline-flex min-h-11 items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="mr-1 h-4 w-4" />
               Back to Home
@@ -915,7 +915,7 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
           </div>
           
            <div className="text-center mb-5 sm:mb-8">
-            <div className="flex justify-center mb-4">
+            <div className="hidden sm:flex justify-center mb-4">
               <img 
                 src="/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png" 
                 alt="Spider League Logo" 
@@ -927,7 +927,7 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
           </div>
 
           <Card>
-            <CardHeader>
+            <CardHeader className="px-4 py-4 sm:p-6">
               <CardTitle className="flex items-center gap-2">
                 <Camera className="h-5 w-5" />
                 Create Your Fighter
@@ -936,7 +936,7 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                 Choose an image and give your spider a name and species
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
               <form onSubmit={handleUpload} className="space-y-6">
                 {/* Image Upload */}
                  <div className="space-y-2">
@@ -1016,7 +1016,7 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                       required
                     />
                     {species && !identifying && (
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
                         <p className="text-xs text-muted-foreground">
                           ✨ Auto-identified by {analysisSource === 'server' ? 'Server AI' : analysisSource === 'local' ? 'Local AI' : 'AI'} (editable)
                         </p>
@@ -1026,7 +1026,7 @@ const applySpeciesBias = (speciesName: string, stats: { hit_points: number; dama
                             variant="ghost"
                             size="sm"
                             onClick={() => analyzeImage(selectedFile)}
-                            className="h-6 px-2 text-xs"
+                            className="px-2 text-xs"
                           >
                             Re-analyze
                           </Button>

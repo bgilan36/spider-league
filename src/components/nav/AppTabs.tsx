@@ -138,7 +138,7 @@ export const MobileTabBar: React.FC<{ pathname: string }> = ({ pathname }) => {
               )}
             >
               <Icon className={cn("h-4 w-4", active && "scale-110")} />
-              <span className="w-full truncate text-center">{tab.label}</span>
+              <span className="w-full truncate text-center">{tab.to === "/leaderboard" ? "Ranks" : tab.label}</span>
             </NavLink>
           );
         })}
