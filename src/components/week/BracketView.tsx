@@ -20,8 +20,8 @@ function Name({ p, highlight }: { p: Participant | undefined; highlight: boolean
   if (!p) return <span className="text-muted-foreground italic">Bye</span>;
   return (
     <span className={cn("flex min-w-0 items-center gap-1.5", highlight && "text-primary font-bold")}>
-      {p.image_url ? <img src={p.image_url} alt="" className="h-5 w-5 shrink-0 rounded object-cover" loading="lazy" /> :
-        <span className="h-5 w-5 shrink-0 rounded bg-muted grid place-items-center text-[9px]">🕷</span>}
+      {p.image_url ? <img src={p.image_url} alt="" className="h-7 w-7 shrink-0 rounded object-cover" loading="lazy" /> :
+        <span className="h-7 w-7 shrink-0 rounded bg-muted grid place-items-center text-xs">🕷</span>}
       <span className="truncate">{p.name}</span>
       {p.is_wild && <Badge variant="outline" className="h-4 px-1 text-[9px] shrink-0">Wild</Badge>}
       {p.is_veteran && <Badge variant="outline" className="h-4 px-1 text-[9px] shrink-0">Vet</Badge>}
@@ -65,13 +65,14 @@ export default function BracketView({ bracket, matches, myUserId, playback = tru
     const fresh = revealed && m.round_number === shown;
     const isBye = !m.spider_b_id;
     return (
-      <button
+      <Button
+        variant="ghost"
         type="button"
         disabled={isBye}
         onClick={() => setOpen(m)}
         style={{ transitionDelay: fresh ? `${m.slot * 110}ms` : "0ms" }}
         className={cn(
-          "w-full rounded-md border bg-card/80 p-1.5 text-left text-xs transition-all duration-700",
+          "block h-auto min-h-20 w-full whitespace-normal rounded-md border bg-card/80 p-2 text-left text-sm font-normal transition-all duration-700 hover:scale-100 [&_svg]:size-4",
           revealed ? "opacity-100" : "opacity-40",
           fresh && "ring-1 ring-primary/50",
           (mine(m.spider_a_id) || mine(m.spider_b_id)) ? "border-primary/60" : "border-border",
@@ -87,7 +88,7 @@ export default function BracketView({ bracket, matches, myUserId, playback = tru
             </div>
           );
         })}
-      </button>
+      </Button>
     );
   };
 
@@ -127,17 +128,17 @@ export default function BracketView({ bracket, matches, myUserId, playback = tru
             transition={{ duration: 0.45, ease: "easeOut" }}
             className="pointer-events-none absolute inset-0 z-10 grid place-items-center"
           >
-            <div className="rounded-2xl border border-primary/40 bg-background/90 px-8 py-5 text-center shadow-xl backdrop-blur">
+            <div className="max-w-full rounded-lg border border-primary/40 bg-background/90 px-4 py-5 sm:px-8 text-center shadow-xl backdrop-blur">
               <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground">Now playing</div>
               <div className="text-3xl font-black uppercase tracking-wide text-primary">{banner}</div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-      <div className="-mx-3 overflow-x-auto px-3 pb-2">
-        <div className="flex gap-3" style={{ minWidth: rounds.length * 168 }}>
+      <div className="-mx-3 overflow-x-auto overscroll-x-contain px-3 pb-2" tabIndex={0} aria-label="Tournament bracket rounds">
+        <div className="flex min-w-max gap-3">
           {rounds.map((r) => (
-            <div key={r} className="flex w-40 shrink-0 flex-col">
+            <div key={r} className="flex w-56 shrink-0 flex-col">
               <div className={cn("mb-2 text-xs font-bold uppercase tracking-wider", r <= shown ? "text-foreground" : "text-muted-foreground")}>{labels[r - 1]}</div>
               <div className="flex flex-1 flex-col justify-around gap-2">
                 {matches.filter((m) => m.round_number === r).sort((a, b) => a.slot - b.slot).map((m) => <MatchBox key={m.id} m={m} />)}
@@ -164,7 +165,8 @@ export default function BracketView({ bracket, matches, myUserId, playback = tru
       <Dialog open={!!open} onOpenChange={(o) => !o && setOpen(null)}>
         <DialogContent>
           {open && (() => {
-            const a = byId.get(open.spider_a_id!), b = byId.get(open.spider_b_id!);
+            const a = open.spider_a_id ? byId.get(open.spider_a_id) : undefined;
+            const b = open.spider_b_id ? byId.get(open.spider_b_id) : undefined;
             return (
               <>
                 <DialogHeader>

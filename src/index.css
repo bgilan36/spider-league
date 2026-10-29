@@ -227,6 +227,16 @@ All colors MUST be HSL.
     overscroll-behavior-y: contain;
   }
 
+  @media (max-width: 767px) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea, select {
+      font-size: 16px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+
   /* --- Mobile overflow safety net ---------------------------------------
    * Prevents any single element from forcing horizontal page scroll on
    * narrow viewports. Media is capped to its container; long words break
@@ -324,6 +334,12 @@ All colors MUST be HSL.
 
   .spider-card-mini:hover {
     transform: translateY(-4px) scale(1.02);
+  }
+
+  @media (hover: none) {
+    .glass-card:hover, .spider-card-mini:hover, .gradient-button:hover {
+      transform: none;
+    }
   }
 
   .modern-input {

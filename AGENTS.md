@@ -16,3 +16,4 @@
 - Weekly brackets contain only real entered spiders (no generated filler); size is the next power of two of real entries with byes for top seeds, and a bracket needs at least 2 real spiders; this keeps every matchup genuine.
 - Live Global Cup and pod previews use the read-only weekly-tournament preview actions (`preview_bracket` public, `preview_pod_brackets` members-only), shared fresh-entry selection and engine seeding; polling refreshes the provisional field without freezing entries or simulating results.
 - Persistent pod standings live at `/pods/:podId/standings`, reuse stored season scores and published non-test bracket snapshots, and check existing pod membership before fetching history; this preserves historical winners without recomputing tournament results.
+- Reserve mobile tab-bar and safe-area clearance in Layout, not individual pages; shared mobile controls use touch-sized targets and form text that avoids phone auto-zoom.
