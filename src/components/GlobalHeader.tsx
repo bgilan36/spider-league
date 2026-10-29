@@ -56,10 +56,14 @@ const GlobalHeader: React.FC = () => {
       '/roadmap': 'Roadmap',
       '/shop': 'Shop',
       '/leagues': 'Friend Pods',
+      '/pods': 'Friend Pods',
+      '/species': 'Field Guide',
       '/admin': 'Admin Dashboard',
     };
     
     // Check for dynamic routes
+    if (location.pathname.startsWith('/pods/')) return location.pathname.endsWith('/standings') ? 'Pod Standings' : 'Pod Tournament';
+    if (location.pathname.startsWith('/week/') || location.pathname.startsWith('/cup/')) return 'Weekly Cup';
     if (location.pathname.startsWith('/battle/')) {
       return 'Battle Arena';
     }
@@ -78,12 +82,12 @@ const GlobalHeader: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/40">
-      <div className="container mx-auto px-4 py-3">
-        <div className="flex items-center justify-between">
+      <div className="container mx-auto px-3 py-2 sm:px-4 sm:py-3">
+        <div className="flex min-w-0 items-center justify-between gap-2">
           {/* Left section - Logo/Home link */}
           <Link 
             to="/" 
-            className="flex items-center gap-2 group transition-all duration-200 hover:opacity-80"
+            className="flex min-h-11 min-w-11 shrink-0 items-center gap-2 group transition-all duration-200 hover:opacity-80"
           >
             <img 
               src="/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png" 
@@ -96,19 +100,19 @@ const GlobalHeader: React.FC = () => {
           </Link>
           
           {/* Center - Page title (mobile only) */}
-          <span className="sm:hidden text-sm font-semibold truncate max-w-[140px]">
+          <span className="sm:hidden min-w-0 flex-1 text-center text-sm font-semibold truncate">
             {getPageTitle()}
           </span>
           
           {/* Right section - Tip + Home button */}
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-0 sm:gap-2">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   asChild
                   variant="ghost"
                   size="sm"
-                  className="text-muted-foreground hover:text-foreground"
+                  className="h-11 w-11 px-0 sm:w-auto sm:px-4 text-muted-foreground hover:text-foreground"
                   aria-label="Open SpiderDex"
                 >
                   <Link to="/dex">
@@ -126,7 +130,7 @@ const GlobalHeader: React.FC = () => {
                   size="sm"
                   type="button"
                   onClick={() => setTipModalOpen(true)}
-                  className="text-muted-foreground hover:text-foreground"
+                  className="h-11 w-11 px-0 sm:w-auto sm:px-4 text-muted-foreground hover:text-foreground"
                   aria-label="Buy the devs a coffee"
                 >
                   <Heart className="h-4 w-4" />
@@ -141,7 +145,8 @@ const GlobalHeader: React.FC = () => {
               variant="ghost" 
               size="sm" 
               asChild 
-              className="gap-1.5 text-muted-foreground hover:text-foreground"
+              className="h-11 w-11 px-0 sm:w-auto sm:px-4 gap-1.5 text-muted-foreground hover:text-foreground"
+              aria-label="Home"
             >
               <Link to="/">
                 <Home className="h-4 w-4" />

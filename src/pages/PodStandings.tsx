@@ -97,9 +97,9 @@ export default function PodStandings() {
       </header>
       {error ? <div role="alert" className="space-y-3 border-l-2 border-destructive pl-4"><p>Couldn’t load pod standings. Please try again.</p><Button variant="outline" onClick={retry}><RefreshCw className="mr-2 h-4 w-4" />Retry</Button></div> : <>
         <section className="space-y-4" aria-labelledby="season-standings">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 id="season-standings" className="flex items-center gap-2 text-xl font-bold"><Trophy className="h-5 w-5 text-primary" />Season standings</h2>
-            <Select value={season} onValueChange={setSelectedSeason}><SelectTrigger aria-label="Season" className="w-[210px]"><SelectValue /></SelectTrigger><SelectContent>{seasons.map((s) => <SelectItem key={s} value={s}>{seasonName(s)}</SelectItem>)}</SelectContent></Select>
+            <Select value={season} onValueChange={setSelectedSeason}><SelectTrigger aria-label="Season" className="w-full sm:w-[210px]"><SelectValue /></SelectTrigger><SelectContent>{seasons.map((s) => <SelectItem key={s} value={s}>{seasonName(s)}</SelectItem>)}</SelectContent></Select>
           </div>
           {standings.isPending ? <div className="h-32 animate-pulse rounded-md bg-muted" /> : rows.length === 0 ? <div className="space-y-3 border-y border-border py-6"><p className="text-muted-foreground">No points yet for {seasonName(season)}.</p><Button asChild variant="outline"><Link to="/upload"><Camera className="mr-2 h-4 w-4" />Catch a contender</Link></Button></div> :
             <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="border-y border-border text-left text-xs text-muted-foreground"><tr><th className="py-3 pr-2">Rank</th><th className="py-3">Player</th><th className="px-2 py-3 text-right">Points</th><th className="py-3 text-right">Titles</th></tr></thead><tbody>{rows.map((r, i) => {

@@ -182,7 +182,7 @@ export default function ThisWeekCard() {
           </div>
         </div>
         <CardContent className="p-4 sm:p-6 space-y-4">
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
             <div>
               <div className="text-xs font-semibold uppercase tracking-widest text-primary">Countdown to tip-off</div>
               <h3 className="text-lg sm:text-xl font-black">{weekLabel(tw.week)}</h3>

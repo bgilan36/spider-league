@@ -30,7 +30,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <DemoBanner />
       <ChallengeHost />
       {!hideNav && <AppTabs pathname={pathname} />}
-      <main id="main-content" className={hideNav ? '' : 'pb-20 md:pb-0'}>{children}</main>
+      <main id="main-content" className={hideNav ? '' : 'pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:pb-0'}>{children}</main>
     </>
   );
 };
