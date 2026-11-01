@@ -5,14 +5,15 @@
 import { supabase } from "@/integrations/supabase/client";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const APP_ORIGIN = "https://spiderleague.app";
 const CARD_VERSION = "v2";
 
 export type ShareKind = "spider" | "battle";
 
 export function buildShareUrl(kind: ShareKind, id: string): string {
-  // Public crawler-friendly URL with OG tags. Browsers get redirected to the
-  // SPA route by the edge function.
-  return `${SUPABASE_URL}/functions/v1/og-card?type=${kind}&id=${id}`;
+  // Share the app's own URL. Supabase serves edge-function HTML as text/plain,
+  // so messaging apps (iMessage) showed og-card links as a raw text file.
+  return kind === "battle" ? `${APP_ORIGIN}/battle/${id}` : `${APP_ORIGIN}/?spider=${id}`;
 }
 
 async function uploadCard(

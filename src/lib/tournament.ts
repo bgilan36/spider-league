@@ -86,8 +86,8 @@ export async function logEvent(event: AppEvent, props: Record<string, unknown> =
 
 /** Public share link: crawlers get an OG card; people get redirected to /cup/:weekId. */
 export function cupShareUrl(weekId: string) {
-  const id = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-  return `https://${id}.supabase.co/functions/v1/og-card?type=cup&id=${encodeURIComponent(weekId)}`;
+  // App URL, not the og-card function: Supabase serves function HTML as text/plain.
+  return `https://spiderleague.app/cup/${encodeURIComponent(weekId)}`;
 }
 
 export async function sha256Hex(blob: Blob): Promise<string> {
