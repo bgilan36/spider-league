@@ -72,7 +72,7 @@ export default function PodSeasonStandings({ podId }: { podId: string }) {
       <CardContent className="space-y-4">
         <Button asChild variant="outline" className="w-full"><Link to={`/pods/${podId}/standings`}><Trophy className="mr-2 h-4 w-4" />All standings & champions</Link></Button>
         {lastChamp && (
-          <Link to={`/week/${lastChamp.week.id}`} className="flex items-center gap-3 rounded-lg border border-amber-400/40 bg-amber-400/10 p-3">
+          <Link to={`/pods/${podId}/week/${lastChamp.week.id}`} className="flex items-center gap-3 rounded-lg border border-amber-400/40 bg-amber-400/10 p-3">
             {lastChamp.p.image_url ? <img src={lastChamp.p.image_url} alt="" className="h-12 w-12 rounded-md object-cover" /> : <div className="h-12 w-12 rounded-md bg-muted grid place-items-center">🕷️</div>}
             <div className="min-w-0">
               <div className="text-xs font-semibold uppercase tracking-wider text-amber-300">{weekLabel(lastChamp.week)} champion</div>
