@@ -45,8 +45,8 @@ export default function PastChampions() {
   return (
     <section className="mb-6 sm:mb-8">
       <div className="mb-3 flex items-center gap-2">
-        <Crown className="h-5 w-5 text-amber-300" />
-        <h2 className="text-xl sm:text-2xl font-bold">Hall of Champions</h2>
+        <Crown className="h-4 w-4 text-champion" />
+        <h2 className="text-base sm:text-lg font-semibold">Hall of Champions</h2>
       </div>
       <div className="-mx-3 flex gap-3 overflow-x-auto px-3 pb-2">
         {rows.map(({ week, bracket }) => {
@@ -56,7 +56,7 @@ export default function PastChampions() {
             <Link
               key={week.id}
               to={`/week/${week.id}`}
-              className="group w-40 shrink-0 overflow-hidden rounded-xl border border-amber-400/40 bg-card transition-colors hover:border-amber-300"
+              className="group w-36 shrink-0 overflow-hidden rounded-lg border border-champion/20 bg-card/60 transition-colors hover:border-champion/45"
             >
               {champ.image_url ? (
                 <img src={champ.image_url} alt={champ.name} className="aspect-square w-full object-cover" loading="lazy" />
@@ -64,8 +64,8 @@ export default function PastChampions() {
                 <div className="aspect-square w-full grid place-items-center bg-muted text-4xl">🕷️</div>
               )}
               <div className="p-2.5">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-amber-300">{weekLabel(week)}</div>
-                <div className="truncate text-sm font-bold">{champ.name}</div>
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-champion/80">{weekLabel(week)}</div>
+                <div className="truncate text-sm font-semibold">{champ.name}</div>
                 <div className="truncate text-xs text-muted-foreground">
                   {champ.species}
                   {champ.owner_name ? ` · ${champ.owner_name}` : ""}

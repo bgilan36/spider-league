@@ -78,6 +78,10 @@ All colors MUST be HSL.
     --rarity-epic: 270 76% 62%;         /* purple */
     --rarity-legendary: 43 96% 56%;     /* gold */
 
+    /* Champion accent (Global Cup / pod champions) */
+    --champion: 40 74% 42%;
+    --champion-foreground: 0 0% 100%;
+
     /* Per-stat colors */
     --stat-hp: 142 71% 45%;
     --stat-damage: 0 84% 60%;
@@ -153,6 +157,10 @@ All colors MUST be HSL.
     --rarity-rare: 217 91% 70%;
     --rarity-epic: 270 76% 72%;
     --rarity-legendary: 43 96% 64%;
+
+    /* Champion — brighter gold for dark mode */
+    --champion: 43 82% 62%;
+    --champion-foreground: 222 84% 5%;
 
     --stat-hp: 142 71% 55%;
     --stat-damage: 0 84% 65%;

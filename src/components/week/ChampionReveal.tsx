@@ -11,14 +11,56 @@ interface Props {
   title: string;
   recap: string | null;
   onShare?: () => void;
+  /** "full" = cinematic reveal (results pages). "compact" = quiet one-line banner (home). */
+  variant?: "full" | "compact";
 }
 
-export default function ChampionReveal({ champion, title, recap, onShare }: Props) {
+export default function ChampionReveal({ champion, title, recap, onShare, variant = "full" }: Props) {
   const { fireConfetti } = useConfetti();
   useEffect(() => {
+    if (variant !== "full") return;
     const t = setTimeout(() => fireConfetti("victory"), 1100);
     return () => clearTimeout(t);
-  }, [champion.id, fireConfetti]);
+  }, [champion.id, fireConfetti, variant]);
+
+  if (variant === "compact") {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: "easeOut" }}
+        className="flex items-center gap-3 rounded-xl border border-champion/25 bg-champion/5 p-3"
+      >
+        {champion.image_url ? (
+          <img
+            src={champion.image_url}
+            alt={champion.name}
+            className="h-12 w-12 shrink-0 rounded-lg object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-muted text-xl">🕷️</div>
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-champion">
+            <Crown className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">{title}</span>
+          </div>
+          <div className="truncate text-sm font-semibold">{champion.name}</div>
+          <div className="truncate text-xs text-muted-foreground">
+            {champion.species}
+            {champion.owner_name ? ` · ${champion.owner_name}` : ""}
+          </div>
+        </div>
+        {onShare && (
+          <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" onClick={onShare} aria-label="Share champion">
+            <Share2 className="h-4 w-4" />
+          </Button>
+        )}
+      </motion.div>
+    );
+  }
+
   const maxStat = Math.max(1, ...STAT_KEYS.map((k) => champion.stats?.[k] ?? 0));
 
   return (

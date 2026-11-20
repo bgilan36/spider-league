@@ -47,6 +47,10 @@ export default {
 					epic: 'hsl(var(--rarity-epic))',
 					legendary: 'hsl(var(--rarity-legendary))',
 				},
+				champion: {
+					DEFAULT: 'hsl(var(--champion))',
+					foreground: 'hsl(var(--champion-foreground))',
+				},
 				stat: {
 					hp: 'hsl(var(--stat-hp))',
 					damage: 'hsl(var(--stat-damage))',

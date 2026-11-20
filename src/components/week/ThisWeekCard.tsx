@@ -124,29 +124,28 @@ export default function ThisWeekCard() {
           return (
             <Link
               to={`/week/${tw.unwatched.id}`}
-              className="block rounded-xl border-2 border-primary bg-gradient-to-br from-primary/25 via-primary/10 to-transparent p-4 shadow-lg shadow-primary/20 animate-in fade-in"
+              className="flex items-center gap-3 rounded-xl border border-border bg-card/60 p-3 transition-colors hover:border-primary/40"
             >
-              <div className="flex items-center gap-3">
-                <Trophy className="h-8 w-8 text-primary shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <div className="text-lg font-black">Your results are in</div>
-                  <div className="text-sm text-muted-foreground truncate">{weekLabel(tw.unwatched)} · watch your brackets play out</div>
-                </div>
-                <ChevronRight className="h-5 w-5 shrink-0" />
+              <Trophy className="h-5 w-5 text-primary shrink-0" />
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold">Your results are in</div>
+                <div className="truncate text-xs text-muted-foreground">{weekLabel(tw.unwatched)} · watch your brackets play out</div>
               </div>
+              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
             </Link>
           );
         }
         return (
-          <div className="space-y-3">
+          <div className="space-y-2">
             <ChampionReveal
               champion={champ}
               title={`Global Cup Champion · ${weekLabel(tw.unwatched)}`}
               recap={tw.unwatchedBracket!.final_recap}
+              variant="compact"
             />
-            <Button asChild size="lg" className="w-full h-12 text-base font-bold">
+            <Button asChild variant="secondary" size="sm" className="w-full h-11 text-sm font-semibold">
               <Link to={`/week/${tw.unwatched.id}`}>
-                <Trophy className="mr-2 h-5 w-5" /> Watch your brackets play out
+                <Trophy className="mr-2 h-4 w-4" /> Watch your brackets play out
               </Link>
             </Button>
           </div>
