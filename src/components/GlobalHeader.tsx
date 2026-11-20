@@ -81,7 +81,7 @@ const GlobalHeader: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/40">
+    <header className="sticky top-0 z-40 bg-background/90 backdrop-blur-lg border-b border-border md:static">
       <div className="container mx-auto px-3 py-2 sm:px-4 sm:py-3">
         <div className="flex min-w-0 items-center justify-between gap-2">
           {/* Left section - Logo/Home link */}

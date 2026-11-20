@@ -685,7 +685,7 @@ const Index = () => {
       </div>;
   }
   if (!user) {
-    return <div className="min-h-screen flex items-center justify-center bg-background">
+    return <div className="min-h-screen bg-background py-8 sm:py-12">
         <Helmet>
           <title>Spider League — Spider Battling & Weekly Matchups</title>
           <meta name="description" content="Upload spiders, generate battle stats, and compete in weekly Spider League matchups with friends." />
@@ -704,7 +704,7 @@ const Index = () => {
             }
           })}</script>
         </Helmet>
-        <div className="w-full max-w-md px-6">
+        <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
               <img src="/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png" alt="Spider League Logo" className="h-20 w-auto" />
@@ -712,7 +712,8 @@ const Index = () => {
             <h1 className="text-3xl font-bold mb-2">Spider League</h1>
           </div>
 
-          <Card>
+          <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)] lg:gap-12">
+          <Card className="w-full max-w-md mx-auto lg:sticky lg:top-8">
             <CardHeader>
               <CardTitle>{isSignUp ? "Create Account" : "Sign In"}</CardTitle>
               <CardDescription>
@@ -783,7 +784,8 @@ const Index = () => {
               </div>
             </CardContent>
           </Card>
-          <div className="mt-8">
+          <div className="min-w-0">
+          <div className="mt-0">
             <LiveBracketPreview />
           </div>
           <div className="mt-8">
@@ -794,7 +796,7 @@ const Index = () => {
             Catch spiders all week. Win the weekly Cup.
           </p>
 
-          <section className="mt-10 border border-border/50 rounded-lg bg-card/40 p-4 sm:p-5">
+          <section className="mt-8 border-t border-border py-5">
             <h2 className="text-sm font-semibold mb-2">How Spider League Works</h2>
             <ul className="space-y-2 text-xs sm:text-sm text-muted-foreground">
               <li className="flex items-start gap-2">
@@ -813,9 +815,9 @@ const Index = () => {
           </section>
 
           <div className="mt-12 text-center">
-            <button
+            <Button variant="ghost" size="sm"
               type="button"
-              className="text-[10px] text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors"
+              className="text-xs text-muted-foreground"
               onClick={async () => {
                 setLoading(true);
                 const { error } = await signInAsDemo();
@@ -829,7 +831,9 @@ const Index = () => {
               disabled={loading}
             >
               demo access
-            </button>
+            </Button>
+          </div>
+          </div>
           </div>
         </div>
       </div>;
@@ -854,7 +858,7 @@ const Index = () => {
       <PublishErrorPanel />
       
       {/* Header */}
-      <header className="glass-card border-b border-border/30 sticky top-0 z-40 backdrop-blur-xl">
+      <header className="border-b border-border sticky top-0 z-40 bg-background/90 backdrop-blur-xl md:static">
          <div className="container mx-auto px-2 sm:px-6 py-2 sm:py-5">
           <div className="flex items-center justify-between gap-2">
              <div className="flex items-center gap-1 sm:gap-4 min-w-0">
@@ -862,7 +866,7 @@ const Index = () => {
                  <img src="/lovable-uploads/12c04e49-1f4c-4ed1-b840-514c07b83c24.png" alt="Spider League Logo" className="h-8 sm:h-12 w-auto object-contain drop-shadow-lg" />
               </div>
               <div className="min-w-0">
-                 <h1 className="hidden min-[380px]:block text-base sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent truncate">
+                 <h1 className="hidden min-[380px]:block text-base sm:text-2xl font-bold text-foreground truncate">
                   Spider League
                 </h1>
               </div>

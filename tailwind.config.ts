@@ -25,8 +25,8 @@ export default {
 		},
 		extend: {
 			fontFamily: {
-				sans: ['Inter', 'system-ui', 'sans-serif'],
-				display: ['Oswald', 'Inter', 'system-ui', 'sans-serif'],
+				sans: ['"Segoe UI"', 'system-ui', 'sans-serif'],
+				display: ['Oswald', '"Segoe UI"', 'system-ui', 'sans-serif'],
 			},
 			minHeight: {
 				'touch': '44px', // Minimum touch target size
@@ -39,6 +39,7 @@ export default {
 				'mobile-sm': ['14px', { lineHeight: '20px' }],
 			},
 			colors: {
+				overlay: 'hsl(var(--overlay))',
 				'primary-glow': 'hsl(var(--primary-glow))',
 				rarity: {
 					common: 'hsl(var(--rarity-common))',

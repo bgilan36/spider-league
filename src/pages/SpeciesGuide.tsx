@@ -57,18 +57,18 @@ export default function SpeciesGuide() {
           <Link to="/"><ArrowLeft className="h-4 w-4 mr-1" />Home</Link>
         </Button>
 
-        <Card className="p-5 sm:p-6 bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 text-white border-zinc-800">
-          <div className="flex items-center gap-2 text-yellow-300 text-xs font-bold tracking-[0.2em] uppercase">
+        <header className="border-b border-border pb-6">
+          <div className="flex items-center gap-2 text-champion text-xs font-bold uppercase">
             <BookOpen className="h-3.5 w-3.5" />
             Field Guide
           </div>
           <h1 className="mt-1 text-2xl sm:text-3xl font-extrabold">
             {library?.length ?? "…"} real North American species
           </h1>
-          <p className="mt-1 text-sm text-white/70">
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
             Photos, habitats, ranges and key features for every species the AI can identify — check its guess against the real facts.
           </p>
-        </Card>
+        </header>
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-2">
@@ -76,6 +76,7 @@ export default function SpeciesGuide() {
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search name, habitat, range…"
+              aria-label="Search species"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="pl-8"
@@ -84,7 +85,7 @@ export default function SpeciesGuide() {
           <select
             value={family}
             onChange={(e) => setFamily(e.target.value)}
-            className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+            className="h-11 w-full rounded-md border border-input bg-background px-3 text-base sm:w-auto sm:text-sm"
             aria-label="Filter by family"
           >
             <option value="all">All families</option>
@@ -98,6 +99,7 @@ export default function SpeciesGuide() {
               size="sm"
               variant={danger === d ? "default" : "outline"}
               onClick={() => setDanger(d)}
+              aria-pressed={danger === d}
               className="capitalize"
             >
               {d === "medical" ? "Medically significant" : d}
@@ -128,21 +130,23 @@ export default function SpeciesGuide() {
 
 function SpeciesCard({ species: s }: { species: SpeciesReference }) {
   const tier = dangerTier(s.danger);
+  const [imageFailed, setImageFailed] = useState(false);
   return (
     <Card className="overflow-hidden flex flex-col">
-      {s.image_url ? (
+      {s.image_url && !imageFailed ? (
         <img
           src={s.image_url}
           alt={`Real photo of ${s.common_name}`}
           loading="lazy"
+          onError={() => setImageFailed(true)}
           className="w-full h-44 object-cover"
         />
       ) : (
-        <div className="w-full h-44 bg-muted/40 flex items-center justify-center text-xs text-muted-foreground">
+        <div className="w-full h-44 bg-muted/40 flex items-center justify-center text-sm text-muted-foreground">
           No photo available
         </div>
       )}
-      <div className="p-3 space-y-1.5 flex-1 flex flex-col">
+      <div className="p-4 space-y-2 flex-1 flex flex-col">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <div className="font-semibold leading-tight">{s.common_name}</div>
@@ -160,7 +164,7 @@ function SpeciesCard({ species: s }: { species: SpeciesReference }) {
         <div className="text-xs"><span className="font-medium">Range:</span> <span className="text-muted-foreground">{s.us_range}</span></div>
         <div className="text-xs"><span className="font-medium">Size:</span> <span className="text-muted-foreground">{s.size_min_mm}–{s.size_max_mm} mm body length</span></div>
         <div className="text-xs"><span className="font-medium">Looks like:</span> <span className="text-muted-foreground">{s.diagnostic_features}</span></div>
-        {s.summary && <p className="text-[11px] text-muted-foreground line-clamp-3">{s.summary}</p>}
+        {s.summary && <p className="text-xs leading-relaxed text-muted-foreground line-clamp-3">{s.summary}</p>}
         <div className="mt-auto pt-1 text-[10px] text-muted-foreground flex items-center gap-2 flex-wrap">
           {s.image_credit && <span className="truncate">Photo: {s.image_credit}</span>}
           {s.wikipedia_url && (

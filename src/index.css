@@ -13,10 +13,10 @@ All colors MUST be HSL.
     --foreground: 210 40% 8%;
 
     /* Glass-morphism Cards */
-    --card: 0 0% 100% / 0.7;
+    --card: 0 0% 100%;
     --card-foreground: 210 40% 8%;
 
-    --popover: 0 0% 100% / 0.95;
+    --popover: 0 0% 100%;
     --popover-foreground: 210 40% 8%;
 
     /* Sophisticated Primary Colors */
@@ -44,9 +44,10 @@ All colors MUST be HSL.
     --border: 214 32% 88%;
     --input: 214 32% 91%;
     --ring: 221 83% 53%;
+    --overlay: 220 16% 4%;
 
     /* Modern Radius */
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
     /* Enhanced Sidebar System */
     --sidebar-background: 210 20% 98% / 0.8;
@@ -93,14 +94,14 @@ All colors MUST be HSL.
 
   .dark {
     /* Dark Glass-morphism Background */
-    --background: 222 84% 5% / 0.85;
-    --foreground: 210 40% 98%;
+    --background: 220 16% 8%;
+    --foreground: 210 20% 96%;
 
     /* Dark Glass Cards */
-    --card: 222 84% 4% / 0.8;
+    --card: 220 13% 12%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222 84% 4% / 0.95;
+    --popover: 220 13% 12%;
     --popover-foreground: 210 40% 98%;
 
     /* Dark Primary System */
@@ -109,15 +110,15 @@ All colors MUST be HSL.
     --primary-glow: 221 100% 80%;
 
     /* Dark Secondary */
-    --secondary: 217 33% 15% / 0.8;
+    --secondary: 220 12% 18%;
     --secondary-foreground: 210 40% 98%;
 
     /* Dark Muted */
-    --muted: 217 33% 15% / 0.7;
-    --muted-foreground: 215 20% 65%;
+    --muted: 220 12% 16%;
+    --muted-foreground: 215 12% 72%;
 
     /* Dark Accent */
-    --accent: 217 33% 17% / 0.8;
+    --accent: 220 12% 20%;
     --accent-foreground: 210 40% 98%;
 
     /* Dark Destructive */
@@ -125,8 +126,8 @@ All colors MUST be HSL.
     --destructive-foreground: 210 40% 98%;
 
     /* Dark Borders */
-    --border: 217 33% 17% / 0.4;
-    --input: 217 33% 17% / 0.8;
+    --border: 220 10% 25%;
+    --input: 220 10% 34%;
     --ring: 221 100% 70%;
 
     /* Dark Sidebar */
@@ -193,7 +194,13 @@ All colors MUST be HSL.
     /* Better mobile text rendering */
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
+    letter-spacing: 0;
   }
+
+  h1, h2, h3, h4, h5, h6 { text-wrap: balance; }
+  p { text-wrap: pretty; }
+  :focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 3px; }
+  ::selection { background: hsl(var(--primary) / 0.25); color: hsl(var(--foreground)); }
 
   /* Mobile viewport height fix */
   @supports (-webkit-touch-callout: none) {
@@ -243,6 +250,11 @@ All colors MUST be HSL.
 
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 
   /* --- Mobile overflow safety net ---------------------------------------
@@ -322,18 +334,13 @@ All colors MUST be HSL.
 
   .glass-card {
     @apply relative;
-    background: var(--gradient-glass);
-    backdrop-filter: blur(20px) saturate(120%);
-    -webkit-backdrop-filter: blur(20px) saturate(120%);
-    border: 1px solid hsl(var(--border) / 0.5);
-    box-shadow: var(--shadow-lg);
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    box-shadow: var(--shadow-sm);
   }
 
   .glass-card:hover {
-    background: hsl(var(--card) / 0.9);
-    box-shadow: var(--shadow-xl);
-    transform: translateY(-2px);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: hsl(var(--card));
   }
 
   .spider-card-mini {
@@ -499,19 +506,19 @@ All colors MUST be HSL.
 
   /* Display font helper */
   .font-display {
-    font-family: 'Oswald', 'Inter', system-ui, sans-serif;
-    letter-spacing: 0.01em;
+    font-family: 'Oswald', 'Segoe UI', system-ui, sans-serif;
+    letter-spacing: 0;
   }
 
   /* Latin species name treatment */
   .species-name {
     @apply text-xs italic text-muted-foreground;
-    letter-spacing: 0.01em;
+    letter-spacing: 0;
   }
 
   /* Metadata label — small caps, tracked */
   .meta-label {
-    @apply text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground;
+    @apply text-xs font-medium uppercase text-muted-foreground;
   }
 
   @media (prefers-reduced-motion: reduce) {

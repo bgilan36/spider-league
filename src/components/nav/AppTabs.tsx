@@ -53,7 +53,7 @@ export const DesktopTabs: React.FC<{ pathname: string }> = ({ pathname }) => {
       className="hidden md:flex sticky top-0 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur-lg"
     >
       <div className="container mx-auto px-4">
-        <ul className="flex items-center gap-1 h-12">
+        <ul className="flex items-center gap-2 h-14">
           {TABS.map((tab) => {
             const active = tab.match ? tab.match(pathname) : pathname === tab.to;
             const Icon = tab.icon;
@@ -61,10 +61,11 @@ export const DesktopTabs: React.FC<{ pathname: string }> = ({ pathname }) => {
               <li key={tab.to}>
                 <NavLink
                   to={tab.to}
+                  aria-current={active ? "page" : undefined}
                   className={cn(
-                    "relative inline-flex items-center gap-2 px-3 h-12 text-sm font-medium transition-colors",
+                    "relative inline-flex items-center gap-2 rounded-md px-4 h-11 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     "text-muted-foreground hover:text-foreground",
-                    active && "text-foreground"
+                    active && "text-primary bg-primary/10"
                   )}
                 >
                   <Icon className="h-4 w-4" />
@@ -94,7 +95,7 @@ export const MobileTabBar: React.FC<{ pathname: string }> = ({ pathname }) => {
     >
       <div
         className={cn(
-          "grid grid-cols-5 items-center gap-0.5 rounded-full border border-border/60 px-1.5 py-2",
+          "grid grid-cols-5 items-center gap-0.5 rounded-full border border-border px-1.5 py-2",
           "bg-background/90 supports-[backdrop-filter]:bg-background/75",
           "backdrop-blur-2xl backdrop-saturate-150 shadow-xl"
         )}
@@ -130,14 +131,14 @@ export const MobileTabBar: React.FC<{ pathname: string }> = ({ pathname }) => {
               aria-label={tab.label}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex min-w-0 flex-col items-center justify-center gap-0.5 h-12 rounded-full text-[10px] font-semibold uppercase transition-colors",
+                "flex min-w-0 flex-col items-center justify-center gap-1 h-12 rounded-full text-[11px] font-medium transition-colors",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 isHome && active && "bg-primary text-primary-foreground",
                 !isHome && active && "text-primary bg-primary/10",
                 !active && "text-muted-foreground hover:text-foreground"
               )}
             >
-              <Icon className={cn("h-4 w-4", active && "scale-110")} />
+              <Icon className="h-5 w-5" />
               <span className="w-full truncate text-center">{tab.to === "/leaderboard" ? "Ranks" : tab.label}</span>
             </NavLink>
           );
