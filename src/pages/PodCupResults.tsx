@@ -113,19 +113,28 @@ export default function PodCupResults() {
 
       <h2 className="text-lg font-bold">Spider stats</h2>
       <div className="rounded-xl border bg-card divide-y">
-        {stats.map(({ p, wins, losses, duelsWon, duels, finish }) => (
-          <div key={p.id} className={`flex items-center gap-3 p-3 ${p.owner_id === user?.id ? "bg-primary/5" : ""}`}>
-            {p.image_url ? <img src={p.image_url} alt={p.name} className="h-11 w-11 rounded-lg object-cover shrink-0" /> : <div className="h-11 w-11 rounded-lg bg-muted shrink-0" />}
-            <div className="min-w-0 flex-1">
-              <div className="font-semibold truncate">{p.seed ? <span className="text-muted-foreground mr-1">#{p.seed}</span> : null}{p.name}</div>
-              <div className="text-xs text-muted-foreground truncate">{p.species}{p.owner_name ? ` · ${p.owner_name}` : ""}{p.is_veteran ? " · Veteran" : ""}</div>
-            </div>
-            <div className="text-right text-xs shrink-0">
-              <div className={`font-bold ${finish === "Champion" ? "text-primary" : ""}`}>{finish}</div>
-              <div className="text-muted-foreground">{wins}–{losses} · {duelsWon}/{duels} duels · {p.power} pwr</div>
-            </div>
-          </div>
-        ))}
+        {stats.map(({ p, wins, losses, duelsWon, duels, finish }) => {
+          const spiderHref = !p.is_wild ? `/spiders/${p.spider_id ?? p.id}` : null;
+          const rowClass = `flex items-center gap-3 p-3 ${p.owner_id === user?.id ? "bg-primary/5" : ""} ${spiderHref ? "hover:bg-muted/40 transition" : ""}`;
+          const content = (
+            <>
+              {p.image_url ? <img src={p.image_url} alt={p.name} className="h-11 w-11 rounded-lg object-cover shrink-0" /> : <div className="h-11 w-11 rounded-lg bg-muted shrink-0" />}
+              <div className="min-w-0 flex-1">
+                <div className="font-semibold truncate">{p.seed ? <span className="text-muted-foreground mr-1">#{p.seed}</span> : null}{p.name}</div>
+                <div className="text-xs text-muted-foreground truncate">{p.species}{p.owner_name ? ` · ${p.owner_name}` : ""}{p.is_veteran ? " · Veteran" : ""}</div>
+              </div>
+              <div className="text-right text-xs shrink-0">
+                <div className={`font-bold ${finish === "Champion" ? "text-primary" : ""}`}>{finish}</div>
+                <div className="text-muted-foreground">{wins}–{losses} · {duelsWon}/{duels} duels · {p.power} pwr</div>
+              </div>
+            </>
+          );
+          return spiderHref ? (
+            <Link key={p.id} to={spiderHref} className={rowClass}>{content}</Link>
+          ) : (
+            <div key={p.id} className={rowClass}>{content}</div>
+          );
+        })}
       </div>
 
       <PodSeasonStandings podId={podId} />
