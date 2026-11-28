@@ -1,31 +1,25 @@
-# Spider League: suggested improvements
+# Fix the open security warnings
 
-What I looked at: visits from Oct 30 to Nov 28, 2026, plus the app's pages.
-- 119 visits, 287 page views, 2.4 pages per visit, about 22 seconds per visit on average, 60% leave after one page.
-- 78% of visits are on phones. The home page gets the most visits (82). The upload page got only 18.
-- Visits have dropped since mid-November (0 to 6 a day).
+The latest scan still has these open:
 
-## 1. Fix first: security
-- Two critical security warnings are still open. One is the skirmish database step that builds commands from player input. Fix both and run the scan again.
+1. **Skirmish step builds commands as it runs.** The "start a skirmish" step in the database picks which stat to boost and then builds a command from that stat's name. The names come from a fixed list, so the risk is low today, but the scan is right that the pattern is risky.
+   - Fix: replace the built command with a fixed choice for each of the six stats (hit points, damage, speed, defense, venom, webcraft). Skirmishes play exactly as before, including the 3-per-day limit.
 
-## 2. Help new visitors play right away (biggest drop-off)
-- Signed-out home page: one clear message ("Catch a spider. It fights in Sunday's Global Cup.") with a big "Catch your first spider" button, the live bracket preview and the countdown at the top.
-- Let visitors upload and identify one spider before signing up. Ask them to sign up only to save it and enter it ("Save your fighter").
-- Shorter sign-in screen: Google first, email second.
+2. **Old battle screen moves spider ownership directly.** One older battle screen, still reachable from Home, hands the losing spider to the winner itself. It skips the checked transfer step that the rest of the game uses.
+   - Fix: stop that screen from changing ownership. Only Capture Battles, which go through the server with both players' consent, can move a spider. If the screen still offers a capture, send it through the checked transfer step instead.
+   - Then check that the server rules block any direct change of a spider's owner.
 
-## 3. Bring players back each week
-- Turn on browser and phone notifications for "Entries lock in 2 hours", "Your spider is in the Elite 8" and "Results are in", alongside the emails.
-- Weekly streak badge for entering spiders several weeks in a row.
-- The invite link to join a pod shows a preview of that pod's bracket, so people want to join.
+3. **Profile wall posts are readable by any signed-in player.** Confirm whether this is intended, since walls are public on profiles. If it is, mark it as intentional. If not, limit reading to the wall owner, the person who wrote the post, and that profile's visitors as the app shows today, and keep demo and real players apart.
 
-## 4. Sharing and finding the app on Google
-- Bring back a custom image per battle or spider in text previews, served from spiderleague.app. Right now every shared link shows the same picture.
-- Make the public spider profile, species and Cup pages show up well on Google (titles, descriptions, a sitemap). The species guide can bring in visitors who search for spider names.
+4. **Settings only you can change** (the app can't change these for you):
+   - Turn on leaked-password protection.
+   - Shorten how long sign-in codes stay valid.
+   - Upgrade the database to get security patches.
+   I'll give you the exact steps.
 
-## 5. Tidy up
-- Split up the largest pages (upload, home, battle, each over 1,000 lines) so they load faster on phones.
-- Hide or remove pages with little use (Shop, Roadmap) if they aren't active.
-- Track key steps (upload started, identification finished, spider entered, signed up) so we can see where people drop off.
+5. Run the scan again, mark the fixed items as resolved, and check that skirmishes and battles still work.
 
-## Suggested order
-1, then 2, then 4, then 3, then 5. Approve the plan and I'll start with security and the first-time visitor experience, or tell me which items to pick.
+## Technical details
+- Migration: `CREATE OR REPLACE FUNCTION start_spider_skirmish` with the `EXECUTE format(... %I ...)` read and update replaced by a static `CASE` / per-column `UPDATE`. Keep SECURITY DEFINER with the `auth.uid()` checks.
+- `BattleArena.tsx`: remove `.update({ owner_id })` and use `transfer_spider_ownership` RPC or the `challenge` edge function. Check that RLS/column grants prevent `owner_id` updates from clients.
+- Read the `profile_wall_posts` policies before changing them.
