@@ -1,39 +1,31 @@
-# Improve spider species identification: model upgrade + smart escalation
+# Spider League: suggested improvements
 
-## Current state (verified in `supabase/functions/spider-identify/index.ts`)
-- Primary model: `google/gemini-2.5-pro` (slow — 3–8s typical on image reasoning)
-- Fallback: `google/gemini-2.5-flash`, only on 429/503
-- Single-pass call, closed-set catalog, JSON output
+What I looked at: visits from Oct 30 to Nov 28, 2026, plus the app's pages.
+- 119 visits, 287 page views, 2.4 pages per visit, about 22 seconds per visit on average, 60% leave after one page.
+- 78% of visits are on phones. The home page gets the most visits (82). The upload page got only 18.
+- Visits have dropped since mid-November (0 to 6 a day).
 
-Two problems: Gemini 2.5 Pro is the slowest option in the catalog, and there's no accuracy-based escalation — a low-confidence Pro answer is just accepted.
+## 1. Fix first: security
+- Two critical security warnings are still open. One is the skirmish database step that builds commands from player input. Fix both and run the scan again.
 
-## Proposed change
+## 2. Help new visitors play right away (biggest drop-off)
+- Signed-out home page: one clear message ("Catch a spider. It fights in Sunday's Global Cup.") with a big "Catch your first spider" button, the live bracket preview and the countdown at the top.
+- Let visitors upload and identify one spider before signing up. Ask them to sign up only to save it and enter it ("Save your fighter").
+- Shorter sign-in screen: Google first, email second.
 
-**Two-tier confidence-gated pipeline** using newer, faster models from the catalog:
+## 3. Bring players back each week
+- Turn on browser and phone notifications for "Entries lock in 2 hours", "Your spider is in the Elite 8" and "Results are in", alongside the emails.
+- Weekly streak badge for entering spiders several weeks in a row.
+- The invite link to join a pod shows a preview of that pod's bracket, so people want to join.
 
-1. **Fast first pass** — `google/gemini-3.6-flash` (latest-gen flash, multimodal, materially faster than 2.5 Pro; the project's documented default chat model). Runs on every upload.
-2. **Escalate on uncertainty** — if the top candidate's confidence is below a threshold (e.g. `< 70`) OR the top two candidates are within 10 points of each other, re-run on `google/gemini-3.1-pro-preview` (stronger reasoning than 2.5 Pro, newer generation) with the flash result included in the prompt as a "second opinion" hint. High-confidence answers skip this and return in a single fast call.
-3. **Fallback on 429/503** — same as today, drop one tier (pro-preview → 3.6-flash → 3.1-flash-lite).
+## 4. Sharing and finding the app on Google
+- Bring back a custom image per battle or spider in text previews, served from spiderleague.app. Right now every shared link shows the same picture.
+- Make the public spider profile, species and Cup pages show up well on Google (titles, descriptions, a sitemap). The species guide can bring in visitors who search for spider names.
 
-Expected impact:
-- **Speed**: majority of uploads (clear photos, high confidence) return from a single flash call — noticeably faster than today's Pro-first path.
-- **Accuracy**: ambiguous cases get a stronger model (3.1 Pro Preview > 2.5 Pro) *and* a two-model cross-check, which is more accurate than a single Pro call.
+## 5. Tidy up
+- Split up the largest pages (upload, home, battle, each over 1,000 lines) so they load faster on phones.
+- Hide or remove pages with little use (Shop, Roadmap) if they aren't active.
+- Track key steps (upload started, identification finished, spider entered, signed up) so we can see where people drop off.
 
-## Why these models (from `ai-models-chat`)
-- `google/gemini-3.6-flash` — latest Flash, fast coding/reasoning, multimodal (T,I,A,V→T). Better speed/quality tradeoff than 2.5-flash.
-- `google/gemini-3.1-pro-preview` — "stronger next-generation Gemini reasoning when quality matters more than latency." Newer than 2.5-pro.
-- Considered `openai/gpt-5.5` (frontier, priority-serving capable) — rejected as primary because it's more expensive and the Gemini models handle the closed-set classification well; leaving as a future option if accuracy still lags.
-
-## Files to change
-- `supabase/functions/spider-identify/index.ts`
-  - Rename/restructure `callVision(model)` to accept an optional `priorHint` string.
-  - Replace lines ~629–634 with the two-tier pipeline:
-    - Call `gemini-3.6-flash` first.
-    - Parse; if top confidence `< 70` or (top1 - top2 `< 10`), call `gemini-3.1-pro-preview` passing the flash result as context ("A first-pass model suggested X (n%) and Y (n%); verify or correct using the diagnostic features you see").
-    - Merge: use the escalation result when it runs; otherwise use flash.
-  - Keep JSON schema, catalog, location hint, and downstream parsing unchanged.
-  - Log which tier answered (for future tuning).
-
-## Out of scope
-- Changing the catalog, the prompt schema, or the client-side reveal UI.
-- Adding a third provider (OpenAI). Can revisit if accuracy still lags after this rollout.
+## Suggested order
+1, then 2, then 4, then 3, then 5. Approve the plan and I'll start with security and the first-time visitor experience, or tell me which items to pick.
