@@ -182,66 +182,9 @@ const BattleArena: React.FC<BattleArenaProps> = ({
 
   const saveBattleResult = async () => {
     if (!winner) return;
-
-    try {
-      const loser = winner.id === spider1.id ? spider2 : spider1;
-      
-      // Create battle record with MATCHUP type for challenge battles  
-      const { data: battleData, error: battleError } = await supabase
-        .from('battles')
-        .insert({
-          type: 'MATCHUP',
-          team_a: [spider1.id],
-          team_b: [spider2.id],
-          winner: winner.id === spider1.id ? 'A' : 'B',
-          battle_log: {
-            rounds: battleLog,
-            final_health: {
-              spider1: spider1Health,
-              spider2: spider2Health
-            }
-          },
-          rng_seed: Math.random().toString()
-        })
-        .select()
-        .single();
-
-      if (battleError) {
-        console.error('Error creating battle record:', battleError);
-        throw battleError;
-      }
-
-      if (battleData) {
-        setBattleId(battleData.id);
-        
-        // Transfer ownership of the losing spider to the winner's owner
-        console.log('Transferring ownership:', {
-          losingSpider: loser.nickname,
-          fromOwner: loser.owner_id,
-          toOwner: winner.owner_id
-        });
-        
-        const { error: transferError } = await supabase
-          .from('spiders')
-          .update({ owner_id: winner.owner_id })
-          .eq('id', loser.id);
-          
-        if (transferError) {
-          console.error('Error transferring spider ownership:', transferError);
-          throw transferError;
-        }
-        
-        console.log(`Successfully transferred ${loser.nickname} to ${winner.owner_id}`);
-        setShowRecapModal(true);
-      }
-    } catch (error) {
-      console.error('Error saving battle:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save battle results",
-        variant: "destructive"
-      });
-    }
+    // Spider ownership transfers and battle persistence are server-authoritative
+    // (handled by the challenge/battle-turn edge functions), never client writes.
+    setShowRecapModal(true);
   };
 
   return (
